@@ -31,9 +31,10 @@ const App = {
     });
   },
 
-  createAccountSelect(side) {
+  createAccountSelect(side, rowNumber) {
     const select = document.createElement('select');
     select.className = `${side}-account`;
+    select.setAttribute('aria-label', `${side === 'debit' ? '借方' : '貸方'} ${rowNumber}行目の勘定科目`);
     select.innerHTML = '<option value="">--勘定科目--</option>';
     this.accountNames.forEach(account => {
       const option = document.createElement('option');
@@ -49,6 +50,11 @@ const App = {
     const container = document.getElementById('journal-container');
     container.replaceChildren();
 
+    const header = document.createElement('div');
+    header.className = 'journal-header';
+    header.innerHTML = '<span>借方</span><span aria-hidden="true"></span><span>貸方</span>';
+    container.appendChild(header);
+
     for (let index = 0; index < rowCount; index += 1) {
       const row = document.createElement('div');
       row.className = 'journal-row';
@@ -56,13 +62,14 @@ const App = {
       ['debit', 'credit'].forEach((side, sideIndex) => {
         const journalSide = document.createElement('div');
         journalSide.className = 'journal-side';
-        journalSide.appendChild(this.createAccountSelect(side));
+        journalSide.appendChild(this.createAccountSelect(side, index + 1));
 
         const amount = document.createElement('input');
         amount.type = 'text';
         amount.className = `${side}-amount amount-input`;
         amount.placeholder = '金額';
         amount.inputMode = 'numeric';
+        amount.setAttribute('aria-label', `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`);
         journalSide.appendChild(amount);
         row.appendChild(journalSide);
 
