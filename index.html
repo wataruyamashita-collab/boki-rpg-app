@@ -12,12 +12,12 @@
   
   <!-- ストーリービュー -->
   <div id="view-story" class="view active">
-    <h2>Chapter 1: 会社が見えない社長</h2>
-    <div class="story-box">
+    <h2 id="story-title">Chapter 1: 会社が見えない社長</h2>
+    <div id="story-content" class="story-box">
       <p><strong>社長:</strong> 「君が新しい経理の担当者だね。実はうちの会社、売上は上がっているはずなんだが、今現金がいくらあるのかよく分からなくてね…。」</p>
       <p><strong>主人公:</strong> 「はじめまして。一つずつ数字を整理して、会社の状態を見えるようにしていきます！」</p>
     </div>
-    <button onclick="App.startQuestion('J001')">最初の取引を処理する</button>
+    <button id="story-start-button" onclick="App.startQuestion('J001')">最初の取引を処理する</button>
   </div>
 
   <!-- 問題回答ビュー -->
@@ -26,35 +26,7 @@
     <div id="q-text" class="question-text"></div>
     
     <!-- 仕訳入力エリア -->
-    <div class="journal-entry-area" id="journal-container">
-      <div class="journal-row">
-        <!-- 借方 -->
-        <div class="journal-side">
-          <select class="debit-account">
-            <option value="">--勘定科目--</option>
-            <option value="現金">現金</option>
-            <option value="普通預金">普通預金</option>
-            <option value="売上">売上</option>
-            <option value="資本金">資本金</option>
-            <option value="通信費">通信費</option>
-          </select>
-          <input type="text" class="debit-amount amount-input" placeholder="金額" inputmode="numeric">
-        </div>
-        <div class="divider">｜</div>
-        <!-- 貸方 -->
-        <div class="journal-side">
-          <select class="credit-account">
-            <option value="">--勘定科目--</option>
-            <option value="現金">現金</option>
-            <option value="普通預金">普通預金</option>
-            <option value="売上">売上</option>
-            <option value="資本金">資本金</option>
-            <option value="通信費">通信費</option>
-          </select>
-          <input type="text" class="credit-amount amount-input" placeholder="金額" inputmode="numeric">
-        </div>
-      </div>
-    </div>
+    <div class="journal-entry-area" id="journal-container"></div>
     
     <button onclick="App.submitAnswer()">仕訳を確定する</button>
   </div>
