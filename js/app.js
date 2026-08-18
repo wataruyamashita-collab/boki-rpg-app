@@ -3,9 +3,19 @@
 // =========================================
 const App = {
   currentQuestionId: null,
+  questionIds: [],
+  accountNames: [],
 
   // ★追加：画面起動時の初期設定
   init() {
+    this.questionIds = Object.keys(QuestionData).filter(id => QuestionData[id].type === 'journal');
+    this.accountNames = [...new Set(this.questionIds.flatMap(id => {
+      const answer = QuestionData[id].answer;
+      return [...answer.debit, ...answer.credit].map(item => item.account);
+    }))].sort((a, b) => a.localeCompare(b, 'ja'));
+  },
+
+  setupAmountInputs() {
     // 金額入力欄に「自動カンマ付与」の機能を設定
     document.querySelectorAll('.amount-input').forEach(input => {
       input.addEventListener('input', function() {
@@ -20,6 +30,53 @@ const App = {
       });
     });
   },
+
+  createAccountSelect(side) {
+    const select = document.createElement('select');
+    select.className = `${side}-account`;
+    select.innerHTML = '<option value="">--勘定科目--</option>';
+    this.accountNames.forEach(account => {
+      const option = document.createElement('option');
+      option.value = account;
+      option.textContent = account;
+      select.appendChild(option);
+    });
+    return select;
+  },
+
+  renderJournalRows(q) {
+    const rowCount = Math.max(q.answer.debit.length, q.answer.credit.length);
+    const container = document.getElementById('journal-container');
+    container.replaceChildren();
+
+    for (let index = 0; index < rowCount; index += 1) {
+      const row = document.createElement('div');
+      row.className = 'journal-row';
+
+      ['debit', 'credit'].forEach((side, sideIndex) => {
+        const journalSide = document.createElement('div');
+        journalSide.className = 'journal-side';
+        journalSide.appendChild(this.createAccountSelect(side));
+
+        const amount = document.createElement('input');
+        amount.type = 'text';
+        amount.className = `${side}-amount amount-input`;
+        amount.placeholder = '金額';
+        amount.inputMode = 'numeric';
+        journalSide.appendChild(amount);
+        row.appendChild(journalSide);
+
+        if (sideIndex === 0) {
+          const divider = document.createElement('div');
+          divider.className = 'divider';
+          divider.textContent = '｜';
+          row.appendChild(divider);
+        }
+      });
+      container.appendChild(row);
+    }
+    this.setupAmountInputs();
+  },
   
   switchView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -33,37 +90,27 @@ const App = {
     // UIの初期化
     document.getElementById('q-category').textContent = `分野: ${q.category} (Chapter ${q.chapter})`;
     document.getElementById('q-text').textContent = q.question;
-    
-    // 入力欄のリセット
-    document.querySelector('.debit-account').value = "";
-    document.querySelector('.debit-amount').value = "";
-    document.querySelector('.credit-account').value = "";
-    document.querySelector('.credit-amount').value = "";
+    this.renderJournalRows(q);
 
     this.switchView('view-question');
   },
 
   submitAnswer() {
-    // UIから値を取得
-    const dAcc = document.querySelector('.debit-account').value;
-    // ★修正：入力された文字列からカンマ(,)を取り除いて数値に変換する
-    const dAmtStr = document.querySelector('.debit-amount').value.replace(/,/g, '');
-    const dAmt = parseInt(dAmtStr, 10);
+    const readSide = side => [...document.querySelectorAll(`.${side}-account`)].map((account, index) => {
+      const amountText = document.querySelectorAll(`.${side}-amount`)[index].value.replace(/,/g, '');
+      return { account: account.value, amount: Number.parseInt(amountText, 10) };
+    }).filter(item => item.account || !Number.isNaN(item.amount));
 
-    const cAcc = document.querySelector('.credit-account').value;
-    const cAmtStr = document.querySelector('.credit-amount').value.replace(/,/g, '');
-    const cAmt = parseInt(cAmtStr, 10);
+    const debit = readSide('debit');
+    const credit = readSide('credit');
+    const hasInvalidRow = [...debit, ...credit].some(item => !item.account || Number.isNaN(item.amount));
 
-    // 入力チェック
-    if (!dAcc || isNaN(dAmt) || !cAcc || isNaN(cAmt)) {
+    if (hasInvalidRow || debit.length === 0 || credit.length === 0) {
       alert("勘定科目と金額を正しく入力してください。");
       return;
     }
 
-    const userAnswer = {
-      debit: [{ account: dAcc, amount: dAmt }],
-      credit: [{ account: cAcc, amount: cAmt }]
-    };
+    const userAnswer = { debit, credit };
 
     const q = QuestionData[this.currentQuestionId];
     
@@ -86,7 +133,17 @@ const App = {
   },
 
   nextStep() {
-    alert("次のストーリー展開、または次の問題へ移行する処理をここに実装します。");
+    const currentIndex = this.questionIds.indexOf(this.currentQuestionId);
+    const nextQuestionId = this.questionIds[currentIndex + 1];
+
+    if (nextQuestionId) {
+      this.startQuestion(nextQuestionId);
+      return;
+    }
+
+    document.getElementById('story-title').textContent = '仕訳問題を完了しました！';
+    document.getElementById('story-content').innerHTML = '<p>全ての仕訳問題への取り組み、お疲れさまでした。</p>';
+    document.getElementById('story-start-button').hidden = true;
     this.switchView('view-story');
   }
 };
