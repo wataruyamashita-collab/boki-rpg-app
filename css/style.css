@@ -1,0 +1,127 @@
+@charset "UTF-8";
+/* =========================================
+   CSS (iPhone対応・レスポンシブ・横型仕訳UI)
+   ========================================= */
+:root {
+  --primary-color: #2c3e50;
+  --accent-color: #3498db;
+  --bg-color: #f4f6f7;
+  --correct-color: #27ae60;
+  --incorrect-color: #e74c3c;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  background-color: var(--bg-color);
+  color: var(--primary-color);
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+  background: #fff;
+  min-height: 100vh;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* ビューの切り替え用 */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ストーリーUI */
+.story-box {
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+  padding: 16px;
+  background: #eef2f5;
+  margin-bottom: 20px;
+}
+
+/* 問題UI */
+.question-text {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #fffbea;
+  border-left: 5px solid #f1c40f;
+}
+
+/* 仕様書15・16に基づく横型仕訳入力UI (iPhoneでも維持) */
+.journal-entry-area {
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.journal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #ccc;
+  min-width: 320px;
+}
+
+.journal-side {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+}
+
+.divider {
+  font-weight: bold;
+  color: #7f8c8d;
+  padding: 0 4px;
+}
+
+select, input[type="number"] {
+  width: 100%;
+  padding: 8px 4px;
+  font-size: 1rem;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+input[type="number"] {
+  text-align: right;
+}
+
+button {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: var(--accent-color);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+button:hover { background-color: #2980b9; }
+
+.result-box {
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 20px;
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.2rem;
+}
+.result-correct { background-color: #d5f5e3; color: var(--correct-color); }
+.result-incorrect { background-color: #fadbd8; color: var(--incorrect-color); }
+
+.explanation-box {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f9f9f9;
+  border-left: 4px solid var(--accent-color);
+}
