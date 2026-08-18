@@ -51,27 +51,41 @@ body {
   border-left: 5px solid #f1c40f;
 }
 
-/* 仕様書15・16に基づく横型仕訳入力UI (iPhoneでも維持) */
+/* 借方と貸方を横並びのまま、画面幅に収める仕訳入力UI */
 .journal-entry-area {
   margin-bottom: 20px;
-  overflow-x: auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.journal-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+  color: #566573;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-align: center;
 }
 
 .journal-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 4px;
   margin-bottom: 8px;
   padding-bottom: 8px;
   border-bottom: 1px dashed #ccc;
-  min-width: 320px;
+  width: 100%;
+  min-width: 0;
 }
 
 .journal-side {
-  flex: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: 4px;
+  min-width: 0;
 }
 
 .divider {
@@ -81,6 +95,7 @@ body {
 }
 
 select, .amount-input {
+  min-width: 0;
   width: 100%;
   padding: 8px 4px;
   font-size: 1rem;
@@ -91,6 +106,44 @@ select, .amount-input {
 
 .amount-input {
   text-align: right;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+
+  .question-text {
+    margin-bottom: 14px;
+    padding: 10px;
+    font-size: 1rem;
+  }
+
+  .journal-header,
+  .journal-row {
+    grid-template-columns: minmax(0, 1fr) 8px minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .journal-side {
+    gap: 2px;
+  }
+
+  .divider {
+    padding: 0;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  select,
+  .amount-input {
+    padding: 8px 2px;
+    font-size: 16px;
+  }
+
+  .amount-input::placeholder {
+    font-size: 0.75rem;
+  }
 }
 
 button {
