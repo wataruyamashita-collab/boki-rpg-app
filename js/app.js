@@ -6,6 +6,23 @@ const App = {
   questionIds: [],
   accountNames: [],
 
+  // 同じ取引で混同しやすい科目をまとめ、全科目を並べずに判断できるようにする。
+  accountConfusionGroups: [
+    ['現金', '小口現金', '普通預金', '当座預金', '現金過不足', '受取商品券'],
+    ['売掛金', '買掛金', '未収利息', '未払利息', '未払金', 'クレジット売掛金'],
+    ['前払金', '前受金', '仮払金', '仮受金', '立替金', '差入保証金'],
+    ['電子記録債権', '電子記録債務', '売掛金', '買掛金', '貸付金', '借入金'],
+    ['仕入', '売上', '繰越商品', '発送費', '消耗品費', '貯蔵品'],
+    ['備品', '消耗品費', '減価償却費', '減価償却累計額', '固定資産売却損', '貯蔵品'],
+    ['保険料', '前払保険料', '支払利息', '未払利息', '受取利息', '未収利息'],
+    ['受取家賃', '前受家賃', '売上', '前受金', '受取利息', '未収利息'],
+    ['仮払消費税', '仮受消費税', '未払消費税', '租税公課', '未払法人税等', '法人税、住民税及び事業税'],
+    ['給料', '所得税預り金', '社会保険料預り金', '法定福利費', '立替金', '未払金'],
+    ['貸倒引当金', '貸倒引当金繰入', '売掛金', '固定資産売却損', '減価償却累計額', '減価償却費'],
+    ['資本金', '繰越利益剰余金', '損益', '借入金', '売上', '仕入'],
+    ['支払手数料', '旅費交通費', '通信費', '発送費', '雑費', '消耗品費']
+  ],
+
   // ★追加：画面起動時の初期設定
   init() {
     this.questionIds = Object.keys(QuestionData).filter(id => QuestionData[id].type === 'journal');
@@ -31,12 +48,38 @@ const App = {
     });
   },
 
-  createAccountSelect(side, rowNumber) {
+  getAccountChoices(correctAccount) {
+    const relatedAccounts = this.accountConfusionGroups
+      .filter(group => group.includes(correctAccount))
+      .flat()
+      .filter((account, index, accounts) => account !== correctAccount && accounts.indexOf(account) === index);
+    const fallbackAccounts = this.accountNames.filter(account =>
+      account !== correctAccount && !relatedAccounts.includes(account)
+    );
+
+    const choices = [correctAccount, ...relatedAccounts, ...fallbackAccounts].slice(0, 5);
+    let seed = `${this.currentQuestionId}-${correctAccount}`
+      .split('')
+      .reduce((value, character) => ((value * 31) + character.charCodeAt(0)) >>> 0, 0);
+
+    // 問題を開き直しても並びは変えず、正答だけが常に先頭になることは避ける。
+    for (let index = choices.length - 1; index > 0; index -= 1) {
+      seed = ((seed * 1664525) + 1013904223) >>> 0;
+      const swapIndex = seed % (index + 1);
+      [choices[index], choices[swapIndex]] = [choices[swapIndex], choices[index]];
+    }
+    return choices;
+  },
+
+  createAccountSelect(side, rowNumber, correctAccount) {
     const select = document.createElement('select');
     select.className = `${side}-account`;
     select.setAttribute('aria-label', `${side === 'debit' ? '借方' : '貸方'} ${rowNumber}行目の勘定科目`);
-    select.innerHTML = '<option value="">--勘定科目--</option>';
-    this.accountNames.forEach(account => {
+    select.innerHTML = `<option value="">${correctAccount ? '--勘定科目--' : '--入力なし--'}</option>`;
+    select.disabled = !correctAccount;
+    if (!correctAccount) return select;
+
+    this.getAccountChoices(correctAccount).forEach(account => {
       const option = document.createElement('option');
       option.value = account;
       option.textContent = account;
@@ -62,7 +105,8 @@ const App = {
       ['debit', 'credit'].forEach((side, sideIndex) => {
         const journalSide = document.createElement('div');
         journalSide.className = 'journal-side';
-        journalSide.appendChild(this.createAccountSelect(side, index + 1));
+        const correctAccount = q.answer[side][index]?.account;
+        journalSide.appendChild(this.createAccountSelect(side, index + 1, correctAccount));
 
         const amount = document.createElement('input');
         amount.type = 'text';
@@ -70,6 +114,7 @@ const App = {
         amount.placeholder = '金額';
         amount.inputMode = 'numeric';
         amount.setAttribute('aria-label', `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`);
+        amount.disabled = !correctAccount;
         journalSide.appendChild(amount);
         row.appendChild(journalSide);
 
