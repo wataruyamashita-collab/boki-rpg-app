@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>経理シミュレーションRPG</title>
+  <style>
+    /* =========================================
+       CSS (iPhone対応・レスポンシブ・横型仕訳UI)
+       ========================================= */
+    :root {
+      --primary-color: #2c3e50;
+      --accent-color: #3498db;
+      --bg-color: #f4f6f7;
+      --correct-color: #27ae60;
+      --incorrect-color: #e74c3c;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      background-color: var(--bg-color);
+      color: var(--primary-color);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 16px;
+      background: #fff;
+      min-height: 100vh;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    /* ビューの切り替え用 */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ストーリーUI */
+    .story-box {
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+      padding: 16px;
+      background: #eef2f5;
+      margin-bottom: 20px;
+    }
+
+    /* 問題UI */
+    .question-text {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: #fffbea;
+      border-left: 5px solid #f1c40f;
+    }
+
+    /* 仕様書15・16に基づく横型仕訳入力UI (iPhoneでも維持) */
+    .journal-entry-area {
+      margin-bottom: 20px;
+      overflow-x: auto; /* 画面幅が狭い場合はスクロール許容、ただし基本は収める */
+    }
+    
+    .journal-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #ccc;
+      min-width: 320px; /* iPhone SE等での崩れ防止 */
+    }
+
+    .journal-side {
+      flex: 1;
+      display: flex;
+      gap: 4px;
+    }
+
+    .divider {
+      font-weight: bold;
+      color: #7f8c8d;
+      padding: 0 4px;
+    }
+
+    /* 入力要素の最適化 */
+    select, input[type="number"] {
+      width: 100%;
+      padding: 8px 4px;
+      font-size: 1rem;
+      border: 1px solid #bdc3c7;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    input[type="number"] {
+      text-align: right;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #fff;
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover { background-color: #2980b9; }
+
+    /* 結果・解説UI */
+    .result-box {
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+      font-size: 1.2rem;
+    }
+    .result-correct { background-color: #d5f5e3; color: var(--correct-color); }
+    .result-incorrect { background-color: #fadbd8; color: var(--incorrect-color); }
+    
+    .explanation-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f9f9f9;
+      border-left: 4px solid var(--accent-color);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- ストーリービュー -->
+  <div id="view-story" class="view active">
+    <h2>Chapter 1: 会社が見えない社長</h2>
+    <div class="story-box">
+      <p><strong>社長:</strong> 「君が新しい経理の担当者だね。実はうちの会社、売上は上がっているはずなんだが、今現金がいくらあるのかよく分からなくてね…。」</p>
+      <p><strong>主人公:</strong> 「はじめまして。一つずつ数字を整理して、会社の状態を見えるようにしていきます！」</p>
+    </div>
+    <button onclick="App.startQuestion('J001')">最初の取引を処理する</button>
+  </div>
+
+  <!-- 問題回答ビュー -->
+  <div id="view-question" class="view">
+    <div id="q-category" style="color:#7f8c8d; font-size: 0.9rem;"></div>
+    <div id="q-text" class="question-text"></div>
+    
+    <!-- 仕訳入力エリア (動的生成) -->
+    <div class="journal-entry-area" id="journal-container">
+      <div class="journal-row">
+        <!-- 借方 -->
+        <div class="journal-side">
+          <select class="debit-account">
+            <option value="">--勘定科目--</option>
+            <option value="現金">現金</option>
+            <option value="普通預金">普通預金</option>
+            <option value="売上">売上</option>
+            <option value="資本金">資本金</option>
+            <option value="通信費">通信費</option>
+          </select>
+          <input type="number" class="debit-amount" placeholder="金額" inputmode="numeric">
+        </div>
+        <div class="divider">｜</div>
+        <!-- 貸方 -->
+        <div class="journal-side">
+          <select class="credit-account">
+            <option value="">--勘定科目--</option>
+            <option value="現金">現金</option>
+            <option value="普通預金">普通預金</option>
+            <option value="売上">売上</option>
+            <option value="資本金">資本金</option>
+            <option value="通信費">通信費</option>
+          </select>
+          <input type="number" class="credit-amount" placeholder="金額" inputmode="numeric">
+        </div>
+      </div>
+      <!-- 複合仕訳用の行追加ボタンもここに配置想定 -->
+    </div>
+    
+    <button onclick="App.submitAnswer()">仕訳を確定する</button>
+  </div>
+
+  <!-- 結果・解説ビュー -->
+  <div id="view-result" class="view">
+    <div id="result-status" class="result-box"></div>
+    <div id="explanation" class="explanation-box"></div>
+    <button onclick="App.nextStep()">次へ進む</button>
+  </div>
+
+</div>
+
+<script>
+  /* =========================================
+     JavaScript (データとロジックの分離・採点エンジン)
+     ========================================= */
+
+  // 1. 問題データ (仕様書35)
+  const QuestionData = {
+    "J001": {
+      id: "J001",
+      type: "journal",
+      category: "資本金・開始記帳",
+      difficulty: 1,
+      chapter: 1,
+      question: "会社設立にあたり、現金 3,000,000円 を出資し、営業を開始した。",
+      answer: {
+        debit:  [{ account: "現金", amount: 3000000 }],
+        credit: [{ account: "資本金", amount: 3000000 }]
+      },
+      explanation: "【なぜその勘定科目なのか】\n現金を受け取ったため資産の増加として借方に「現金」、出資を受けたため純資産の増加として貸方に「資本金」を計上します。\n【実務MEMO】実際の会社設立では別段預金等が使われますが、試験上は指示に従い現金を処理します。"
+    }
+  };
+
+  // 2. 採点エンジン基盤 (仕様書37)
+  const GradingEngine = {
+    /**
+     * 仕訳の採点を行う (複合仕訳・順不同対応)
+     * @param {Object} userAnswer - ユーザー入力 { debit: [{account, amount}], credit: [{account, amount}] }
+     * @param {Object} correctAnswer - 正答データ
+     * @returns {boolean} 正誤
+     */
+    gradeJournalEntry(userAnswer, correctAnswer) {
+      // 貸借の合計一致チェック (仕様書40: 不変条件)
+      const userDebitTotal = userAnswer.debit.reduce((sum, item) => sum + item.amount, 0);
+      const userCreditTotal = userAnswer.credit.reduce((sum, item) => sum + item.amount, 0);
+      if (userDebitTotal !== userCreditTotal) return false;
+
+      // 行単位での完全一致確認 (順不同を許容するためのヘルパー関数)
+      const matchSides = (userSide, correctSide) => {
+        if (userSide.length !== correctSide.length) return false;
+        
+        // ユーザー入力のコピーを作り、マッチしたものを消していく
+        let remainingCorrect = [...correctSide];
+        for (let uItem of userSide) {
+          const matchIndex = remainingCorrect.findIndex(cItem => 
+            cItem.account === uItem.account && cItem.amount === uItem.amount
+          );
+          if (matchIndex === -1) return false; // 一致する科目・金額がない
+          remainingCorrect.splice(matchIndex, 1);
+        }
+        return remainingCorrect.length === 0;
+      };
+
+      return matchSides(userAnswer.debit, correctAnswer.debit) && 
+             matchSides(userAnswer.credit, correctAnswer.credit);
+    }
+  };
+
+  // 3. アプリコントローラー・状態管理 (仕様書34, 39)
+  const App = {
+    currentQuestionId: null,
+    
+    switchView(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+    },
+
+    startQuestion(qId) {
+      this.currentQuestionId = qId;
+      const q = QuestionData[qId];
+      
+      // UIの初期化
+      document.getElementById('q-category').textContent = `分野: ${q.category} (Chapter ${q.chapter})`;
+      document.getElementById('q-text').textContent = q.question;
+      
+      // 入力欄のリセット
+      document.querySelector('.debit-account').value = "";
+      document.querySelector('.debit-amount').value = "";
+      document.querySelector('.credit-account').value = "";
+      document.querySelector('.credit-amount').value = "";
+
+      this.switchView('view-question');
+    },
+
+    submitAnswer() {
+      // UIから値を取得
+      const dAcc = document.querySelector('.debit-account').value;
+      const dAmt = parseInt(document.querySelector('.debit-amount').value, 10);
+      const cAcc = document.querySelector('.credit-account').value;
+      const cAmt = parseInt(document.querySelector('.credit-amount').value, 10);
+
+      // 入力チェック
+      if (!dAcc || isNaN(dAmt) || !cAcc || isNaN(cAmt)) {
+        alert("勘定科目と金額を正しく入力してください。");
+        return;
+      }
+
+      const userAnswer = {
+        debit: [{ account: dAcc, amount: dAmt }],
+        credit: [{ account: cAcc, amount: cAmt }]
+      };
+
+      const q = QuestionData[this.currentQuestionId];
+      
+      // 採点実行
+      const isCorrect = GradingEngine.gradeJournalEntry(userAnswer, q.answer);
+      
+      // 結果表示画面の構築
+      const resultBox = document.getElementById('result-status');
+      if (isCorrect) {
+        resultBox.textContent = "正解！";
+        resultBox.className = "result-box result-correct";
+      } else {
+        resultBox.textContent = "不正解...";
+        resultBox.className = "result-box result-incorrect";
+      }
+
+      document.getElementById('explanation').innerText = q.explanation;
+      
+      this.switchView('view-result');
+    },
+
+    nextStep() {
+      alert("次のストーリー展開、または次の問題へ移行する処理をここに実装します。");
+      // 例: 進捗の保存、レベルアップ判定などを挟み、次のIDへ遷移
+      this.switchView('view-story');
+    }
+  };
+</script>
+
+</body>
+</html>
