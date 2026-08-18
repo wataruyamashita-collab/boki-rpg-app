@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>経理シミュレーションRPG</title>
-  
-  <!-- Step 1で作ったCSSを読み込む -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -40,7 +38,7 @@
             <option value="資本金">資本金</option>
             <option value="通信費">通信費</option>
           </select>
-          <input type="number" class="debit-amount" placeholder="金額" inputmode="numeric">
+          <input type="text" class="debit-amount amount-input" placeholder="金額" inputmode="numeric">
         </div>
         <div class="divider">｜</div>
         <!-- 貸方 -->
@@ -53,7 +51,7 @@
             <option value="資本金">資本金</option>
             <option value="通信費">通信費</option>
           </select>
-          <input type="number" class="credit-amount" placeholder="金額" inputmode="numeric">
+          <input type="text" class="credit-amount amount-input" placeholder="金額" inputmode="numeric">
         </div>
       </div>
     </div>
@@ -70,7 +68,7 @@
 
 </div>
 
-<!-- 外部ファイルの読み込み (※依存関係があるため、この順番が非常に重要です) -->
+<!-- 外部ファイルの読み込み -->
 <script src="data/questions.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/app.js"></script>
