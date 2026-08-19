@@ -33,6 +33,30 @@ body {
 .view { display: none; }
 .view.active { display: block; }
 
+.app-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid #dfe6e9; }
+.app-header h1 { margin: 0; font-size: clamp(1.25rem, 4vw, 1.65rem); line-height: 1.25; }
+.app-kicker, .section-label { margin: 0 0 2px; color: var(--accent-color); font-size: 0.72rem; font-weight: bold; letter-spacing: .08em; }
+button.header-button { flex: 0 0 auto; width: auto; margin: 0; padding: 9px 14px; color: var(--accent-color); font-size: .9rem; background: #fff; border: 1px solid var(--accent-color); }
+
+.toc-section { margin-top: 36px; padding-top: 24px; border-top: 4px solid #eef2f5; }
+.toc-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+.toc-heading h2 { margin: 0; }
+.toc-progress { color: #566573; font-size: .85rem; font-weight: bold; }
+.toc-guide { margin: 8px 0 16px; color: #566573; font-size: .9rem; }
+.toc-chapter { margin-bottom: 10px; border: 1px solid #d5dce0; border-radius: 8px; overflow: hidden; }
+.toc-chapter summary { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; cursor: pointer; background: #f8fafb; }
+.toc-chapter-number { color: var(--accent-color); font-weight: bold; }
+.toc-chapter-title { font-weight: bold; }
+.toc-chapter-count { color: #566573; font-size: .8rem; }
+.toc-questions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 10px; }
+button.toc-question { display: grid; grid-template-columns: 28px 1fr; grid-template-rows: auto auto; column-gap: 8px; width: 100%; margin: 0; padding: 9px; color: var(--primary-color); text-align: left; background: #fff; border: 1px solid #dfe6e9; }
+button.toc-question:hover { color: #fff; background: var(--accent-color); }
+.toc-question > span { grid-row: 1 / span 2; align-self: center; color: var(--accent-color); text-align: center; }
+.toc-question.completed > span { color: var(--correct-color); }
+.toc-question strong { overflow: hidden; font-size: .85rem; text-overflow: ellipsis; white-space: nowrap; }
+.toc-question small { color: #7f8c8d; font-size: .72rem; }
+.toc-question:hover span, .toc-question:hover small { color: #fff; }
+
 /* ストーリーUI */
 .story-box {
   border: 2px solid var(--primary-color);
@@ -72,6 +96,9 @@ body {
 .calculator summary { min-height: 44px; box-sizing: border-box; padding: 9px 12px; cursor: pointer; color: #fff; font-weight: bold; touch-action: manipulation; }
 .calculator-body { padding: 2px 12px 14px; }
 .calculator-display { width: 100%; box-sizing: border-box; padding: 10px; border: 2px inset #85929e; border-radius: 4px; color: #17202a; text-align: right; font-family: "SFMono-Regular", Consolas, monospace; font-size: 1.35rem; background: #dfe6d5; }
+.calculator-transfer { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; margin-top: 8px; color: #fff; font-size: .75rem; }
+.calculator-transfer span { line-height: 1.35; }
+.calculator-transfer button { width: auto; margin: 0; padding: 9px 10px; font-size: .82rem; white-space: nowrap; }
 .calculator-keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(5, 46px); gap: 7px; margin-top: 10px; }
 .calculator-keys button { min-width: 0; min-height: 44px; margin: 0; padding: 0; border: 1px solid #aeb6bf; border-radius: 5px; color: #17202a; font-size: 1.05rem; background: #f4f6f7; box-shadow: 0 2px 0 #909497; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
 .calculator-keys button:hover { background: #e5e8e8; }
@@ -140,6 +167,7 @@ select, .amount-input {
 .amount-input {
   text-align: right;
 }
+.amount-input.calculator-selected { border-color: var(--accent-color); outline: 3px solid rgba(52, 152, 219, .2); }
 
 @media (max-width: 480px) {
   .container {
@@ -177,6 +205,9 @@ select, .amount-input {
   .amount-input::placeholder {
     font-size: 0.75rem;
   }
+
+  .toc-questions { grid-template-columns: 1fr; }
+  .toc-chapter-title { font-size: .88rem; }
 }
 
 button {
