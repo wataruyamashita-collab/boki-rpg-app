@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>経理シミュレーションRPG</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -26,35 +26,36 @@
     <div id="q-category" style="color:#7f8c8d; font-size: 0.9rem;"></div>
     <div id="q-text" class="question-text"></div>
 
+    <!-- 仕訳入力エリア -->
+    <div class="journal-entry-area" id="journal-container"></div>
+
+    <!-- 問題文の金額計算用。一般的な実務電卓と同じ数字・演算キー配列にする。 -->
     <details class="calculator">
       <summary>計算機を使う</summary>
       <div class="calculator-body">
         <input id="calculator-display" class="calculator-display" type="text" value="0" readonly aria-label="計算機の表示">
         <div id="calculator-keys" class="calculator-keys" aria-label="計算機">
           <button type="button" data-calc="AC" class="calculator-clear">AC</button>
-          <button type="button" data-calc="C">C</button>
-          <button type="button" data-calc="÷">÷</button>
+          <button type="button" data-calc="C" class="calculator-clear">C</button>
+          <button type="button" data-calc="÷" class="calculator-operator">÷</button>
+          <button type="button" data-calc="×" class="calculator-operator">×</button>
           <button type="button" data-calc="7">7</button>
           <button type="button" data-calc="8">8</button>
           <button type="button" data-calc="9">9</button>
-          <button type="button" data-calc="×">×</button>
+          <button type="button" data-calc="−" class="calculator-operator">−</button>
           <button type="button" data-calc="4">4</button>
           <button type="button" data-calc="5">5</button>
           <button type="button" data-calc="6">6</button>
-          <button type="button" data-calc="−">−</button>
+          <button type="button" data-calc="＋" class="calculator-operator">＋</button>
           <button type="button" data-calc="1">1</button>
           <button type="button" data-calc="2">2</button>
           <button type="button" data-calc="3">3</button>
-          <button type="button" data-calc="＋">＋</button>
+          <button type="button" data-calc="＝" class="calculator-equals">＝</button>
           <button type="button" data-calc="0" class="calculator-zero">0</button>
           <button type="button" data-calc=".">.</button>
-          <button type="button" data-calc="＝" class="calculator-equals">＝</button>
         </div>
       </div>
     </details>
-    
-    <!-- 仕訳入力エリア -->
-    <div class="journal-entry-area" id="journal-container"></div>
     
     <div id="save-status" class="save-status" aria-live="polite"></div>
     <button class="secondary-button" onclick="App.saveDraft(true)">ここまで保存する</button>
