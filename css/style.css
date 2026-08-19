@@ -51,6 +51,38 @@ body {
   border-left: 5px solid #f1c40f;
 }
 
+.progress {
+  margin-bottom: 10px;
+  color: #566573;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-align: right;
+}
+
+.calculator {
+  max-width: 340px;
+  margin: 0 auto 20px;
+  border: 1px solid #34495e;
+  border-radius: 10px;
+  background: #3f4b55;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.calculator summary { padding: 10px 12px; cursor: pointer; color: #fff; font-weight: bold; }
+.calculator-body { padding: 2px 12px 14px; }
+.calculator-display { width: 100%; box-sizing: border-box; padding: 10px; border: 2px inset #85929e; border-radius: 4px; color: #17202a; text-align: right; font-family: "SFMono-Regular", Consolas, monospace; font-size: 1.35rem; background: #dfe6d5; }
+.calculator-keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(5, 46px); gap: 7px; margin-top: 10px; }
+.calculator-keys button { min-width: 0; margin: 0; padding: 0; border: 1px solid #aeb6bf; border-radius: 5px; color: #17202a; font-size: 1.05rem; background: #f4f6f7; box-shadow: 0 2px 0 #909497; }
+.calculator-keys button:hover { background: #e5e8e8; }
+.calculator-zero { grid-column: 1 / span 2; grid-row: 5; }
+.calculator-keys .calculator-clear { color: #fff; background: #c0392b; border-color: #922b21; }
+.calculator-keys .calculator-operator { background: #d5d8dc; }
+.calculator-keys .calculator-equals { grid-column: 4; grid-row: 4 / span 2; color: #fff; background: #2980b9; border-color: #1f618d; }
+
+.save-status { min-height: 1.6em; color: var(--correct-color); font-size: 0.9rem; text-align: center; }
+button.secondary-button { color: var(--accent-color); background: #fff; border: 1px solid var(--accent-color); }
+button.secondary-button:hover { color: #fff; }
+
 /* 借方と貸方を横並びのまま、画面幅に収める仕訳入力UI */
 .journal-entry-area {
   margin-bottom: 20px;
@@ -178,3 +210,13 @@ button:hover { background-color: #2980b9; }
   background: #f9f9f9;
   border-left: 4px solid var(--accent-color);
 }
+
+.correct-journal { margin-top: 20px; }
+.correct-journal h3, .explanation-box h3 { margin: 0 0 8px; font-size: 1rem; }
+.journal-table-wrap { overflow-x: auto; }
+.journal-table { width: 100%; border-collapse: collapse; background: #fff; }
+.journal-table th, .journal-table td { padding: 8px; border: 1px solid #bdc3c7; }
+.journal-table th { background: #eef2f5; }
+.journal-amount { text-align: right; white-space: nowrap; }
+.explanation-text { white-space: pre-wrap; }
+.account-types { margin: 0; padding-left: 1.4em; }
