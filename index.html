@@ -22,18 +22,49 @@
 
   <!-- 問題回答ビュー -->
   <div id="view-question" class="view">
+    <div id="progress" class="progress" aria-live="polite"></div>
     <div id="q-category" style="color:#7f8c8d; font-size: 0.9rem;"></div>
     <div id="q-text" class="question-text"></div>
+
+    <details class="calculator">
+      <summary>計算機を使う</summary>
+      <div class="calculator-body">
+        <input id="calculator-display" class="calculator-display" type="text" value="0" readonly aria-label="計算機の表示">
+        <div id="calculator-keys" class="calculator-keys" aria-label="計算機">
+          <button type="button" data-calc="AC" class="calculator-clear">AC</button>
+          <button type="button" data-calc="C">C</button>
+          <button type="button" data-calc="÷">÷</button>
+          <button type="button" data-calc="7">7</button>
+          <button type="button" data-calc="8">8</button>
+          <button type="button" data-calc="9">9</button>
+          <button type="button" data-calc="×">×</button>
+          <button type="button" data-calc="4">4</button>
+          <button type="button" data-calc="5">5</button>
+          <button type="button" data-calc="6">6</button>
+          <button type="button" data-calc="−">−</button>
+          <button type="button" data-calc="1">1</button>
+          <button type="button" data-calc="2">2</button>
+          <button type="button" data-calc="3">3</button>
+          <button type="button" data-calc="＋">＋</button>
+          <button type="button" data-calc="0" class="calculator-zero">0</button>
+          <button type="button" data-calc=".">.</button>
+          <button type="button" data-calc="＝" class="calculator-equals">＝</button>
+        </div>
+      </div>
+    </details>
     
     <!-- 仕訳入力エリア -->
     <div class="journal-entry-area" id="journal-container"></div>
     
+    <div id="save-status" class="save-status" aria-live="polite"></div>
+    <button class="secondary-button" onclick="App.saveDraft(true)">ここまで保存する</button>
     <button onclick="App.submitAnswer()">仕訳を確定する</button>
   </div>
 
   <!-- 結果・解説ビュー -->
   <div id="view-result" class="view">
     <div id="result-status" class="result-box"></div>
+    <div id="correct-journal" class="correct-journal"></div>
     <div id="explanation" class="explanation-box"></div>
     <button onclick="App.nextStep()">次へ進む</button>
   </div>
