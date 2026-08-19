@@ -140,7 +140,7 @@ const App = {
     const q = QuestionData[qId];
     
     // UIの初期化
-    document.getElementById('q-category').textContent = `分野: ${q.category} (Chapter ${q.chapter})`;
+    document.getElementById('q-category').textContent = `第${q.chapter}章｜分野：${q.category}`;
     document.getElementById('q-text').textContent = q.question;
     this.renderJournalRows(q);
 
@@ -158,7 +158,7 @@ const App = {
     const hasInvalidRow = [...debit, ...credit].some(item => !item.account || Number.isNaN(item.amount));
 
     if (hasInvalidRow || debit.length === 0 || credit.length === 0) {
-      alert("勘定科目と金額を正しく入力してください。");
+      alert("借方・貸方の勘定科目と金額を、すべて入力してください。");
       return;
     }
 
@@ -172,10 +172,10 @@ const App = {
     // 結果表示画面の構築
     const resultBox = document.getElementById('result-status');
     if (isCorrect) {
-      resultBox.textContent = "正解！";
+      resultBox.textContent = "正解です！";
       resultBox.className = "result-box result-correct";
     } else {
-      resultBox.textContent = "不正解...";
+      resultBox.textContent = "もう一歩です";
       resultBox.className = "result-box result-incorrect";
     }
 
@@ -193,8 +193,8 @@ const App = {
       return;
     }
 
-    document.getElementById('story-title').textContent = '仕訳問題を完了しました！';
-    document.getElementById('story-content').innerHTML = '<p>全ての仕訳問題への取り組み、お疲れさまでした。</p>';
+    document.getElementById('story-title').textContent = 'すべての仕訳問題が終了しました！';
+    document.getElementById('story-content').innerHTML = '<p>すべての仕訳問題に取り組みました。お疲れさまでした。</p>';
     document.getElementById('story-start-button').hidden = true;
     this.switchView('view-story');
   }
