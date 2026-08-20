@@ -54,4 +54,10 @@ context.testApp.calculatorExpression = '1234567＋8900.5';
 context.testApp.updateCalculatorDisplay();
 assert.strictEqual(elements['calculator-display'].value, '1,234,567＋8,900.5', '計算途中の各数値にも3桁カンマを表示してください');
 
+context.testApp.calculatorExpression = '1';
+const doubleZeroButton = { dataset: { calc: '00' }, parentElement: elements['calculator-keys'] };
+calculatorClick({ target: doubleZeroButton, currentTarget: elements['calculator-keys'] });
+assert.strictEqual(context.testApp.calculatorExpression, '100', '「00」キーでゼロを2桁入力してください');
+assert.strictEqual(elements['calculator-display'].value, '100', '「00」キーの入力を電卓へ表示してください');
+
 console.log('app tests: ok');
