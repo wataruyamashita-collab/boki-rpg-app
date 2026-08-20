@@ -372,8 +372,11 @@ const App = {
 
   setupCalculator() {
     document.getElementById('calculator-keys').addEventListener('click', event => {
-      const calculatorKey = event.target.closest('[data-calc]');
-      const key = calculatorKey ? calculatorKey.dataset.calc : null;
+      let calculatorKey = event.target;
+      while (calculatorKey && calculatorKey !== event.currentTarget && (!calculatorKey.dataset || !calculatorKey.dataset.calc)) {
+        calculatorKey = calculatorKey.parentElement;
+      }
+      const key = calculatorKey && calculatorKey.dataset ? calculatorKey.dataset.calc : null;
       if (!key) return;
       if (key === 'AC') this.calculatorExpression = '';
       else if (key === 'C') this.calculatorExpression = this.calculatorExpression.slice(0, -1);
@@ -461,6 +464,9 @@ const App = {
     this.switchView('view-story');
   }
 };
+
+// インライン操作とブラウザーのグローバル名前解決の差異に影響されないよう明示的に公開する。
+window.App = App;
 
 // ★追加：HTMLの読み込みが終わったら初期設定を実行
 document.addEventListener('DOMContentLoaded', () => {

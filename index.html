@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260820-2">
+  <link rel="stylesheet" href="css/style.css?v=20260820-3">
 </head>
 <body>
 
@@ -84,8 +84,10 @@
     </details>
     
     <div id="save-status" class="save-status" aria-live="polite"></div>
-    <button onclick="App.submitAnswer()">仕訳を確定する</button>
-    <button class="secondary-button" onclick="App.saveDraft(true)">ここまで保存する</button>
+    <div class="question-actions">
+      <button class="confirm-button" type="button" onclick="App.submitAnswer()">仕訳を確定する</button>
+      <button class="secondary-button save-button" type="button" onclick="App.saveDraft(true)">ここまで保存する</button>
+    </div>
   </div>
 
   <!-- 結果・解説ビュー -->
@@ -99,9 +101,9 @@
 </div>
 
 <!-- 外部ファイルの読み込み -->
-<script src="data/questions.js?v=20260820-2"></script>
-<script src="js/engine.js?v=20260820-2"></script>
-<script src="js/app.js?v=20260820-2"></script>
+<script src="data/questions.js?v=20260820-3"></script>
+<script src="js/engine.js?v=20260820-3"></script>
+<script src="js/app.js?v=20260820-3"></script>
 
 </body>
 </html>

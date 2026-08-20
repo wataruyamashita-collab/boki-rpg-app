@@ -109,6 +109,9 @@ button.toc-question:hover { color: #fff; background: var(--accent-color); }
 .calculator-keys .calculator-equals { grid-column: 4; grid-row: 4 / span 2; color: #fff; background: #2980b9; border-color: #1f618d; }
 
 .save-status { min-height: 1.6em; color: var(--correct-color); font-size: 0.9rem; text-align: center; }
+.question-actions { display: flex; flex-direction: column; }
+.question-actions .confirm-button { order: 1; }
+.question-actions .save-button { order: 2; }
 button.secondary-button { color: var(--accent-color); background: #fff; border: 1px solid var(--accent-color); }
 button.secondary-button:hover { color: #fff; }
 
