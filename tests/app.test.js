@@ -29,7 +29,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form">[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-3'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-4'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -48,11 +48,15 @@ const calculatorController = {
   expression: '1200＋300',
   document: { body: { contains: element => element === calculatorTarget }, getElementById: id => calculatorElements[id] },
   formatAmount: browserSandbox.window.AppController.prototype.formatAmount,
+  formatCalculatorExpression: browserSandbox.window.AppController.prototype.formatCalculatorExpression,
+  updateCalculatorDisplay: browserSandbox.window.AppController.prototype.updateCalculatorDisplay,
   saveDraft() { this.saved = true; }
 };
 browserSandbox.window.AppController.prototype.insertCalculatorResult.call(calculatorController, true);
 assert.strictEqual(calculatorTarget.value, '1,500', '電卓の計算結果を選択中の仕訳金額欄へ転記する');
+assert.strictEqual(calculatorElements['calculator-display'].value, '1,500', '電卓の計算結果にも3桁区切りのカンマを表示する');
 assert.strictEqual(calculatorController.saved, true, '電卓から転記した金額を下書きへ保存する');
+assert.strictEqual(browserSandbox.window.AppController.prototype.formatCalculatorExpression('1234567＋8900.5'), '1,234,567＋8,900.5', '計算途中の各数値にもカンマを表示する');
 const questionDataSource = fs.readFileSync('data/questions.js', 'utf8');
 vm.runInNewContext(questionDataSource, browserSandbox);
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');

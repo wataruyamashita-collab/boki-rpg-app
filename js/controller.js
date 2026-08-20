@@ -73,19 +73,27 @@
       this.document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
       this.calculatorTarget = input; this.document.getElementById('calculator-target').textContent = `${input.getAttribute('aria-label')}へ入力します`;
     }
+    formatCalculatorExpression(expression) {
+      return String(expression).replace(/\d+(?:\.\d*)?/g, numberText => {
+        const [integer, decimal] = numberText.split('.');
+        const formatted = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return decimal === undefined ? formatted : `${formatted}.${decimal}`;
+      });
+    }
+    updateCalculatorDisplay() { this.document.getElementById('calculator-display').value = this.formatCalculatorExpression(this.expression) || '0'; }
     insertCalculatorResult(shouldCalculate) {
       const target = this.calculatorTarget;
       if (!target || !this.document.body.contains(target)) { this.document.getElementById('calculator-target').textContent = '先に金額欄を選んでください'; return; }
       if (shouldCalculate) { try { this.expression = String(root.SafeCalculator.evaluate(this.expression)); } catch (_) { this.expression = 'エラー'; } }
       const amount = Number(this.expression);
-      if (!Number.isFinite(amount) || amount < 0) { this.document.getElementById('calculator-target').textContent = '0以上の計算結果を確認してください'; this.document.getElementById('calculator-display').value = this.expression || '0'; return; }
+      if (!Number.isFinite(amount) || amount < 0) { this.document.getElementById('calculator-target').textContent = '0以上の計算結果を確認してください'; this.updateCalculatorDisplay(); return; }
       target.value = String(Math.round(amount)); this.formatAmount(target); this.saveDraft(false);
-      this.document.getElementById('calculator-display').value = this.expression;
+      this.updateCalculatorDisplay();
       this.document.getElementById('calculator-target').textContent = `${target.getAttribute('aria-label')}へ${target.value}円を入力しました`;
     }
     calcKey(key) {
       if (key === 'AC') this.expression = ''; else if (key === 'C') this.expression = this.expression.slice(0, -1); else if (key === '＝') { this.insertCalculatorResult(true); return; } else { if (this.expression === 'エラー') this.expression = ''; this.expression += key; }
-      this.document.getElementById('calculator-display').value = this.expression || '0';
+      this.updateCalculatorDisplay();
     }
   }
   root.AppController = Controller;
