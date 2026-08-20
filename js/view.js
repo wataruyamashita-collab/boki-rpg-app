@@ -60,7 +60,7 @@
     }
     result(question, score) {
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
-      box.textContent = score.correct ? '正解です！' : `部分点 ${score.earned} / ${score.possible}`;
+      box.textContent = score.correct ? '正解です！' : 'もう一歩です';
       this.renderCorrectJournal(question);
       this.byId('explanation').textContent = question.explanation;
     }
