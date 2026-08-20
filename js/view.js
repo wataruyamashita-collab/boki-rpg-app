@@ -14,7 +14,7 @@
       if (question.type === 'journal') this.renderJournal(question, draft); else this.renderTable(question, draft);
     }
     makeAmount(className, label, value = '') {
-      const input = this.document.createElement('input'); input.type = 'text'; input.inputMode = 'numeric';
+      const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'numeric');
       input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.value = value;
       return input;
     }

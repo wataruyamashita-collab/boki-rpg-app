@@ -20,6 +20,14 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* 指先でも確実に操作できる44px以上のタップ領域を全フォーム部品に確保する */
+button,
+select,
+input {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
 .container {
   max-width: 800px;
   margin: 0 auto;
@@ -127,8 +135,14 @@ button.secondary-button:hover { color: #fff; }
   margin-bottom: 20px;
   width: 100%;
   min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
-.table-question-wrap { width: 100%; margin-bottom: 20px; overflow-x: auto; overscroll-behavior-inline: contain; -webkit-overflow-scrolling: touch; }
+.table-question-wrap { width: 100%; margin-bottom: 20px; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.journal-entry-area::-webkit-scrollbar,
+.table-question-wrap::-webkit-scrollbar { display: none; }
 .answer-table { min-width: 620px; width: 100%; border-collapse: separate; border-spacing: 0; }
 .answer-table th, .answer-table td { min-width: 120px; padding: 8px; border-right: 1px solid #bdc3c7; border-bottom: 1px solid #bdc3c7; background: #fff; text-align: right; }
 .answer-table th { position: sticky; top: 0; z-index: 2; background: #eef2f5; text-align: center; }
@@ -206,7 +220,6 @@ select, .amount-input {
     gap: 2px;
   }
 
-  .journal-entry-area { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .journal-header, .journal-row { min-width: 520px; }
 
   .journal-side {

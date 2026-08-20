@@ -33,6 +33,7 @@ assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
+assert(controllerSource.includes('this.document.activeElement?.blur()'), '回答確定前にソフトウェアキーボードを閉じる');
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
 const amountInput = { value: '1234', selectionStart: 2, selectionEnd: 3, selectionDirection: 'forward', setSelectionRange(...range) { this.range = range; } };
@@ -40,6 +41,12 @@ browserSandbox.window.AppController.prototype.formatAmount(amountInput);
 assert.strictEqual(amountInput.value, '1,234', '金額を3桁区切りにする');
 assert.deepStrictEqual([...amountInput.range], [3, 4, 'forward'], '整形後も選択範囲を同じ桁位置に保つ');
 const viewSource = fs.readFileSync('js/view.js', 'utf8');
+assert(viewSource.includes("input.type = 'text'; input.setAttribute('inputmode', 'numeric')"), '金額欄ではモバイル端末の数字キーパッドを呼び出す');
 assert(viewSource.includes('select.title = select.selectedOptions[0]?.textContent'), '選択中の勘定科目をtitleに反映する');
+const cssSource = fs.readFileSync('css/style.css', 'utf8');
+assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
+['.journal-entry-area', '.table-question-wrap'].forEach(selector => {
+  assert(new RegExp(`\\.${selector.slice(1)}[^}]*-webkit-overflow-scrolling:\\s*touch`, 's').test(cssSource), `${selector}でiOSの慣性スクロールを有効にする`);
+});
 assert(!fs.readFileSync('js/app.js', 'utf8').includes('Function('), 'Functionによる式評価を禁止する');
 console.log('app tests: ok');
