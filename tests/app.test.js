@@ -29,13 +29,30 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form">[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-2'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-3'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
 assert(controllerSource.includes('this.document.activeElement?.blur()'), '回答確定前にソフトウェアキーボードを閉じる');
+assert(html.includes('data-action="calc-insert"'), '電卓の表示金額を入力するボタンを表示する');
+assert(controllerSource.includes("'calc-insert': () => this.insertCalculatorResult(true)"), '電卓の入力ボタンを転記処理へ接続する');
+assert(controllerSource.includes("if (key === '＝') { this.insertCalculatorResult(true); return; }"), 'イコールキーで計算結果を選択中の金額欄へ転記する');
+assert(controllerSource.includes("addEventListener('focusin'"), '選択した金額欄を電卓の転記先にする');
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
+browserSandbox.window.SafeCalculator = Calculator;
+const calculatorTarget = { value: '', getAttribute() { return '借方 1行目の金額'; }, setSelectionRange() {} };
+const calculatorElements = { 'calculator-target': { textContent: '' }, 'calculator-display': { value: '' } };
+const calculatorController = {
+  calculatorTarget,
+  expression: '1200＋300',
+  document: { body: { contains: element => element === calculatorTarget }, getElementById: id => calculatorElements[id] },
+  formatAmount: browserSandbox.window.AppController.prototype.formatAmount,
+  saveDraft() { this.saved = true; }
+};
+browserSandbox.window.AppController.prototype.insertCalculatorResult.call(calculatorController, true);
+assert.strictEqual(calculatorTarget.value, '1,500', '電卓の計算結果を選択中の仕訳金額欄へ転記する');
+assert.strictEqual(calculatorController.saved, true, '電卓から転記した金額を下書きへ保存する');
 const questionDataSource = fs.readFileSync('data/questions.js', 'utf8');
 vm.runInNewContext(questionDataSource, browserSandbox);
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
