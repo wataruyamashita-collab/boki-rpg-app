@@ -216,17 +216,25 @@ select, .amount-input {
     font-size: 1rem;
   }
 
-  .journal-header,
-  .journal-row { grid-template-columns: minmax(0, 1fr) 8px minmax(0, 1fr); gap: 2px; }
+  .journal-header { display: none; }
+
+  .journal-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
 
   .journal-side {
-    gap: 2px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .journal-side::before {
+    content: attr(data-side-label);
+    grid-column: 1 / -1;
+    color: #566573;
+    font-size: .75rem;
+    font-weight: bold;
   }
 
   .divider {
-    padding: 0;
-    font-size: 0.8rem;
-    text-align: center;
+    display: none;
   }
 
   select,
