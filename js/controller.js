@@ -21,7 +21,11 @@
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) { this.formatAmount(event.target); this.saveDraft(false); } });
       this.document.addEventListener('change', event => { if (event.target.matches('.journal-side select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
-      this.document.getElementById('question-form').addEventListener('submit', event => { event.preventDefault(); this.submit(); });
+      this.document.getElementById('question-form').addEventListener('submit', event => {
+        event.preventDefault();
+        this.document.activeElement?.blur();
+        this.submit();
+      });
     }
     showMode(mode) { this.model.state.mode = mode; if (mode === 'exam') this.examScores = []; this.model.save(); this.view.show(`view-${mode}`); this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false')); }
     modeIds() { const mode = this.model.state.mode; if (mode === 'review') return this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids; if (mode === 'exam') return this.ids.slice(-15); if (mode === 'training') return this.ids.filter(id => this.questions[id].type !== 'journal'); return this.ids; }
