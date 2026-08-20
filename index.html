@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260820-2">
 </head>
 <body>
 
@@ -14,7 +17,7 @@
       <p class="app-kicker">日商簿記3級を物語で学ぶ</p>
       <h1>経理シミュレーションRPG</h1>
     </div>
-    <button id="toc-button" class="header-button" type="button" onclick="App.showTableOfContents()" hidden>目次へ</button>
+    <button id="toc-button" class="header-button" type="button" onclick="App.showTableOfContents()">目次</button>
   </header>
   
   <!-- ストーリービュー -->
@@ -35,6 +38,7 @@
       </div>
       <p class="toc-guide">章を開くと問題を選べます。解答済みの問題にはチェックが付きます。</p>
       <div id="table-of-contents" class="table-of-contents"></div>
+      <noscript><p class="toc-error">目次を表示するにはJavaScriptを有効にしてください。</p></noscript>
     </section>
   </div>
 
@@ -80,8 +84,8 @@
     </details>
     
     <div id="save-status" class="save-status" aria-live="polite"></div>
-    <button class="secondary-button" onclick="App.saveDraft(true)">ここまで保存する</button>
     <button onclick="App.submitAnswer()">仕訳を確定する</button>
+    <button class="secondary-button" onclick="App.saveDraft(true)">ここまで保存する</button>
   </div>
 
   <!-- 結果・解説ビュー -->
@@ -95,9 +99,9 @@
 </div>
 
 <!-- 外部ファイルの読み込み -->
-<script src="data/questions.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/app.js"></script>
+<script src="data/questions.js?v=20260820-2"></script>
+<script src="js/engine.js?v=20260820-2"></script>
+<script src="js/app.js?v=20260820-2"></script>
 
 </body>
 </html>

@@ -47,10 +47,10 @@ const App = {
   // ★追加：画面起動時の初期設定
   init() {
     this.questionIds = Object.keys(QuestionData).filter(id => QuestionData[id].type === 'journal');
-    this.accountNames = [...new Set(this.questionIds.flatMap(id => {
+    this.accountNames = [...new Set(this.questionIds.reduce((accounts, id) => {
       const answer = QuestionData[id].answer;
-      return [...answer.debit, ...answer.credit].map(item => item.account);
-    }))].sort((a, b) => a.localeCompare(b, 'ja'));
+      return accounts.concat([...answer.debit, ...answer.credit].map(item => item.account));
+    }, []))].sort((a, b) => a.localeCompare(b, 'ja'));
     this.loadProgress();
     this.setupCalculator();
     this.renderTableOfContents();
@@ -145,7 +145,7 @@ const App = {
   renderJournalRows(q) {
     const rowCount = Math.max(q.answer.debit.length, q.answer.credit.length);
     const container = document.getElementById('journal-container');
-    container.replaceChildren();
+    container.innerHTML = '';
 
     const header = document.createElement('div');
     header.className = 'journal-header';
@@ -159,7 +159,8 @@ const App = {
       ['debit', 'credit'].forEach((side, sideIndex) => {
         const journalSide = document.createElement('div');
         journalSide.className = 'journal-side';
-        const correctAccount = q.answer[side][index]?.account;
+        const answerItem = q.answer[side][index];
+        const correctAccount = answerItem ? answerItem.account : undefined;
         journalSide.appendChild(this.createAccountSelect(side, index + 1, correctAccount));
 
         const amount = document.createElement('input');
@@ -232,7 +233,7 @@ const App = {
   renderTableOfContents() {
     const container = document.getElementById('table-of-contents');
     if (!container) return;
-    container.replaceChildren();
+    container.innerHTML = '';
     const chapters = [...new Set(this.questionIds.map(id => QuestionData[id].chapter))];
 
     chapters.forEach(chapter => {
@@ -361,7 +362,7 @@ const App = {
     const classifications = accounts.map(account =>
       `<li><strong>${account}</strong>：${this.accountTypes[account] || '分類未設定'}</li>`).join('');
     const explanation = document.getElementById('explanation');
-    explanation.replaceChildren();
+    explanation.innerHTML = '';
     const text = document.createElement('div');
     text.className = 'explanation-text';
     text.textContent = q.explanation;
@@ -371,7 +372,8 @@ const App = {
 
   setupCalculator() {
     document.getElementById('calculator-keys').addEventListener('click', event => {
-      const key = event.target.closest('[data-calc]')?.dataset.calc;
+      const calculatorKey = event.target.closest('[data-calc]');
+      const key = calculatorKey ? calculatorKey.dataset.calc : null;
       if (!key) return;
       if (key === 'AC') this.calculatorExpression = '';
       else if (key === 'C') this.calculatorExpression = this.calculatorExpression.slice(0, -1);
@@ -421,7 +423,11 @@ const App = {
   },
 
   calculateResult() {
-    const normalized = this.calculatorExpression.replaceAll('×', '*').replaceAll('÷', '/').replaceAll('＋', '+').replaceAll('−', '-');
+    const normalized = this.calculatorExpression
+      .replace(/×/g, '*')
+      .replace(/÷/g, '/')
+      .replace(/＋/g, '+')
+      .replace(/−/g, '-');
     if (!normalized || !/^[0-9+*/.() -]+$/.test(normalized)) return;
     try {
       const result = Function(`"use strict"; return (${normalized})`)();
