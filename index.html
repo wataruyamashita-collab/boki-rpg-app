@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#2c3e50">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260820-9">
+  <link rel="stylesheet" href="css/style.css?v=20260820-10">
 </head>
 <body>
 <div class="container">
@@ -25,7 +27,7 @@
     <section id="view-exam" class="view"><h2>模擬試験モード</h2><p>試験中は正誤や経験値を表示せず、終了後に採点します。</p><div id="exam-list" class="question-list"></div></section>
 
     <section id="view-question" class="view">
-      <form id="question-form">
+      <form id="question-form" autocomplete="off">
         <p id="q-category" class="question-category"></p><div id="q-text" class="question-text"></div>
         <div id="journal-container" class="journal-entry-area"></div>
         <div id="table-container" class="table-question-wrap"></div>
@@ -46,6 +48,6 @@
     <section id="view-result" class="view"><div id="result-status" class="result-box"></div><div id="correct-journal" class="correct-journal"></div><div id="explanation" class="explanation-box"></div><button type="button" data-action="next">次へ進む</button></section>
   </main>
 </div>
-<script src="data/questions.js?v=20260820-9"></script><script src="js/calculator.js?v=20260820-9"></script><script src="js/model.js?v=20260820-9"></script><script src="js/rpg.js?v=20260820-9"></script><script src="js/engine.js?v=20260820-9"></script><script src="js/view.js?v=20260820-9"></script><script src="js/controller.js?v=20260820-9"></script><script src="js/app.js?v=20260820-9"></script>
+<script src="data/questions.js?v=20260820-10"></script><script src="js/calculator.js?v=20260820-10"></script><script src="js/model.js?v=20260820-10"></script><script src="js/rpg.js?v=20260820-10"></script><script src="js/engine.js?v=20260820-10"></script><script src="js/view.js?v=20260820-10"></script><script src="js/controller.js?v=20260820-10"></script><script src="js/app.js?v=20260820-10"></script>
 </body>
 </html>
