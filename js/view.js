@@ -18,6 +18,9 @@
       input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.value = value;
       return input;
     }
+    updateSelectTitle(select) {
+      select.title = select.selectedOptions[0]?.textContent || '';
+    }
     renderJournal(question, draft = {}) {
       const container = this.byId('journal-container'); container.replaceChildren();
       const header = this.document.createElement('div'); header.className = 'journal-header'; header.innerHTML = '<span>借方科目・金額</span><span></span><span>貸方科目・金額</span>'; container.append(header);
@@ -30,6 +33,7 @@
           select.innerHTML = `<option value="">${answer ? '--勘定科目--' : '--入力なし--'}</option>`;
           if (answer) root.AppController.accountChoices(question, answer.account).forEach(name => select.append(new Option(name, name)));
           const saved = draft[side] && draft[side][index]; if (saved) select.value = saved.account;
+          this.updateSelectTitle(select);
           wrap.append(select, this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : ''));
           if (!answer) wrap.lastChild.disabled = true;
           row.append(wrap); if (sideIndex === 0) { const divider = this.document.createElement('span'); divider.className = 'divider'; divider.textContent = '｜'; row.append(divider); }

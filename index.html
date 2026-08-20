@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260820">
 </head>
 <body>
 <div class="container">
@@ -25,24 +25,26 @@
     <section id="view-exam" class="view"><h2>模擬試験モード</h2><p>試験中は正誤や経験値を表示せず、終了後に採点します。</p><div id="exam-list" class="question-list"></div></section>
 
     <section id="view-question" class="view">
-      <p id="q-category" class="question-category"></p><div id="q-text" class="question-text"></div>
-      <div id="journal-container" class="journal-entry-area"></div>
-      <div id="table-container" class="table-question-wrap"></div>
-      <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
-        <input id="calculator-display" class="calculator-display" value="0" readonly aria-label="計算機の表示">
-        <div class="calculator-keys" aria-label="計算機">
-          <button type="button" data-action="calc" data-calc="AC">AC</button><button type="button" data-action="calc" data-calc="C">C</button><button type="button" data-action="calc" data-calc="÷">÷</button><button type="button" data-action="calc" data-calc="×">×</button>
-          <button type="button" data-action="calc" data-calc="7">7</button><button type="button" data-action="calc" data-calc="8">8</button><button type="button" data-action="calc" data-calc="9">9</button><button type="button" data-action="calc" data-calc="−">−</button>
-          <button type="button" data-action="calc" data-calc="4">4</button><button type="button" data-action="calc" data-calc="5">5</button><button type="button" data-action="calc" data-calc="6">6</button><button type="button" data-action="calc" data-calc="＋">＋</button>
-          <button type="button" data-action="calc" data-calc="1">1</button><button type="button" data-action="calc" data-calc="2">2</button><button type="button" data-action="calc" data-calc="3">3</button><button type="button" data-action="calc" data-calc="＝">＝</button>
-          <button type="button" data-action="calc" data-calc="0">0</button><button type="button" data-action="calc" data-calc="00">00</button><button type="button" data-action="calc" data-calc=".">.</button>
-        </div></div></details>
-      <p id="save-status" class="save-status" aria-live="polite"></p>
-      <div class="question-actions"><button class="confirm-button" type="button" data-action="submit">回答を確定する</button><button class="secondary-button save-button" type="button" data-action="save">ここまで保存する</button></div>
+      <form id="question-form">
+        <p id="q-category" class="question-category"></p><div id="q-text" class="question-text"></div>
+        <div id="journal-container" class="journal-entry-area"></div>
+        <div id="table-container" class="table-question-wrap"></div>
+        <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
+          <input id="calculator-display" class="calculator-display" value="0" readonly aria-label="計算機の表示">
+          <div class="calculator-keys" aria-label="計算機">
+            <button type="button" data-action="calc" data-calc="AC">AC</button><button type="button" data-action="calc" data-calc="C">C</button><button type="button" data-action="calc" data-calc="÷">÷</button><button type="button" data-action="calc" data-calc="×">×</button>
+            <button type="button" data-action="calc" data-calc="7">7</button><button type="button" data-action="calc" data-calc="8">8</button><button type="button" data-action="calc" data-calc="9">9</button><button type="button" data-action="calc" data-calc="−">−</button>
+            <button type="button" data-action="calc" data-calc="4">4</button><button type="button" data-action="calc" data-calc="5">5</button><button type="button" data-action="calc" data-calc="6">6</button><button type="button" data-action="calc" data-calc="＋">＋</button>
+            <button type="button" data-action="calc" data-calc="1">1</button><button type="button" data-action="calc" data-calc="2">2</button><button type="button" data-action="calc" data-calc="3">3</button><button type="button" data-action="calc" data-calc="＝">＝</button>
+            <button type="button" data-action="calc" data-calc="0">0</button><button type="button" data-action="calc" data-calc="00">00</button><button type="button" data-action="calc" data-calc=".">.</button>
+          </div></div></details>
+        <p id="save-status" class="save-status" aria-live="polite"></p>
+        <div class="question-actions"><button class="confirm-button" type="submit">回答を確定する</button><button class="secondary-button save-button" type="button" data-action="save">ここまで保存する</button></div>
+      </form>
     </section>
     <section id="view-result" class="view"><div id="result-status" class="result-box"></div><div id="explanation" class="explanation-box"></div><button type="button" data-action="next">次へ進む</button></section>
   </main>
 </div>
-<script src="data/questions.js"></script><script src="js/calculator.js"></script><script src="js/model.js"></script><script src="js/rpg.js"></script><script src="js/engine.js"></script><script src="js/view.js"></script><script src="js/controller.js"></script><script src="js/app.js"></script>
+<script src="data/questions.js?v=20260820"></script><script src="js/calculator.js?v=20260820"></script><script src="js/model.js?v=20260820"></script><script src="js/rpg.js?v=20260820"></script><script src="js/engine.js?v=20260820"></script><script src="js/view.js?v=20260820"></script><script src="js/controller.js?v=20260820"></script><script src="js/app.js?v=20260820"></script>
 </body>
 </html>
