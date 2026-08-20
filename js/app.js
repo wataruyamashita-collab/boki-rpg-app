@@ -8,6 +8,7 @@ const App = {
   storageKey: 'boki-rpg-progress-v1',
   progressState: { currentQuestionId: null, answeredIds: [], drafts: {}, completed: false },
   calculatorExpression: '',
+  calculatorTarget: null,
 
   accountTypes: {
     '現金': '資産', '小口現金': '資産', '普通預金': '資産', '当座預金': '資産', '現金過不足': '仮勘定',
@@ -52,6 +53,7 @@ const App = {
     }))].sort((a, b) => a.localeCompare(b, 'ja'));
     this.loadProgress();
     this.setupCalculator();
+    this.renderTableOfContents();
     const resumeId = this.progressState.currentQuestionId;
     if (resumeId && this.questionIds.includes(resumeId) && !this.progressState.completed) {
       const button = document.getElementById('story-start-button');
@@ -180,6 +182,7 @@ const App = {
       container.appendChild(row);
     }
     this.setupAmountInputs();
+    this.setupCalculatorTargets();
     this.restoreDraft(q.id);
     container.querySelectorAll('select, input').forEach(field => {
       field.addEventListener('change', () => this.saveDraft(false));
@@ -225,10 +228,53 @@ const App = {
     document.getElementById('progress').textContent =
       `問題 ${index + 1} / ${this.questionIds.length}｜解答済み ${this.progressState.answeredIds.length} 問`;
   },
+
+  renderTableOfContents() {
+    const container = document.getElementById('table-of-contents');
+    if (!container) return;
+    container.replaceChildren();
+    const chapters = [...new Set(this.questionIds.map(id => QuestionData[id].chapter))];
+
+    chapters.forEach(chapter => {
+      const ids = this.questionIds.filter(id => QuestionData[id].chapter === chapter);
+      const completed = ids.filter(id => this.progressState.answeredIds.includes(id)).length;
+      const details = document.createElement('details');
+      details.className = 'toc-chapter';
+      if (this.currentQuestionId && ids.includes(this.currentQuestionId)) details.open = true;
+      const firstQuestion = QuestionData[ids[0]];
+      details.innerHTML = `<summary><span class="toc-chapter-number">第${chapter}章</span><span class="toc-chapter-title">${firstQuestion.scene}</span><span class="toc-chapter-count">${completed}/${ids.length}</span></summary>`;
+      const questions = document.createElement('div');
+      questions.className = 'toc-questions';
+      ids.forEach(id => {
+        const question = QuestionData[id];
+        const button = document.createElement('button');
+        const isCompleted = this.progressState.answeredIds.includes(id);
+        button.type = 'button';
+        button.className = `toc-question${isCompleted ? ' completed' : ''}`;
+        button.innerHTML = `<span>${isCompleted ? '✓' : this.questionIds.indexOf(id) + 1}</span><strong>${question.category}</strong><small>${isCompleted ? '解答済み' : `難易度 ${question.difficulty}`}</small>`;
+        button.setAttribute('aria-label', `問題${this.questionIds.indexOf(id) + 1} ${question.category}${isCompleted ? ' 解答済み' : ''}`);
+        button.addEventListener('click', () => this.startQuestion(id));
+        questions.appendChild(button);
+      });
+      details.appendChild(questions);
+      container.appendChild(details);
+    });
+    document.getElementById('toc-progress').textContent = `${this.progressState.answeredIds.length} / ${this.questionIds.length} 問完了`;
+  },
+
+  showTableOfContents() {
+    if (document.getElementById('view-question').classList.contains('active')) {
+      this.saveDraft(false);
+    }
+    this.renderTableOfContents();
+    this.switchView('view-story');
+    document.getElementById('toc-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
   
   switchView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
+    document.getElementById('toc-button').hidden = viewId === 'view-story';
   },
 
   startQuestion(qId) {
@@ -329,10 +375,49 @@ const App = {
       if (!key) return;
       if (key === 'AC') this.calculatorExpression = '';
       else if (key === 'C') this.calculatorExpression = this.calculatorExpression.slice(0, -1);
-      else if (key === '＝') this.calculateResult();
+      else if (key === '＝') {
+        this.calculateResult();
+        this.insertCalculatorResult(false);
+      }
       else this.calculatorExpression += key;
       this.updateCalculatorDisplay();
     });
+    document.getElementById('calculator-insert').addEventListener('click', () => this.insertCalculatorResult());
+  },
+
+  setupCalculatorTargets() {
+    this.calculatorTarget = null;
+    document.querySelectorAll('.amount-input:not(:disabled)').forEach(input => {
+      input.addEventListener('focus', () => this.selectCalculatorTarget(input));
+      input.addEventListener('click', () => this.selectCalculatorTarget(input));
+    });
+    const firstAmount = document.querySelector('.amount-input:not(:disabled)');
+    if (firstAmount) this.selectCalculatorTarget(firstAmount);
+  },
+
+  selectCalculatorTarget(input) {
+    document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
+    this.calculatorTarget = input;
+    document.getElementById('calculator-target').textContent = `${input.getAttribute('aria-label')}へ入力します`;
+  },
+
+  insertCalculatorResult(shouldCalculate = true) {
+    if (!this.calculatorTarget || !document.body.contains(this.calculatorTarget)) {
+      document.getElementById('calculator-target').textContent = '先に仕訳の金額欄を選んでください';
+      return;
+    }
+    if (shouldCalculate) this.calculateResult();
+    const amount = Number(this.calculatorExpression);
+    if (!Number.isFinite(amount) || amount < 0) {
+      document.getElementById('calculator-target').textContent = '0以上の計算結果を確認してください';
+      return;
+    }
+    this.calculatorTarget.value = Math.round(amount).toLocaleString('ja-JP');
+    this.calculatorTarget.dispatchEvent(new Event('input', { bubbles: true }));
+    this.updateCalculatorDisplay();
+    const targetName = this.calculatorTarget.getAttribute('aria-label');
+    this.calculatorTarget.focus();
+    document.getElementById('calculator-target').textContent = `${targetName}へ${this.calculatorTarget.value}円を入力しました`;
   },
 
   calculateResult() {
@@ -362,6 +447,7 @@ const App = {
     this.progressState.currentQuestionId = null;
     this.progressState.completed = true;
     this.persistProgress();
+    this.renderTableOfContents();
 
     document.getElementById('story-title').textContent = 'すべての仕訳問題が終了しました！';
     document.getElementById('story-content').innerHTML = '<p>すべての仕訳問題に取り組みました。お疲れさまでした。</p>';

@@ -9,6 +9,13 @@
 <body>
 
 <div class="container">
+  <header class="app-header">
+    <div>
+      <p class="app-kicker">日商簿記3級を物語で学ぶ</p>
+      <h1>経理シミュレーションRPG</h1>
+    </div>
+    <button id="toc-button" class="header-button" type="button" onclick="App.showTableOfContents()" hidden>目次へ</button>
+  </header>
   
   <!-- ストーリービュー -->
   <div id="view-story" class="view active">
@@ -18,6 +25,17 @@
       <p><strong>主人公：</strong>「初めまして。一つひとつ数字を整理して、会社の状況を見えるようにしていきましょう！」</p>
     </div>
     <button id="story-start-button" onclick="App.startQuestion('J001')">最初の取引を処理する</button>
+    <section class="toc-section" aria-labelledby="toc-title">
+      <div class="toc-heading">
+        <div>
+          <p class="section-label">CONTENTS</p>
+          <h2 id="toc-title">学習の目次</h2>
+        </div>
+        <span id="toc-progress" class="toc-progress"></span>
+      </div>
+      <p class="toc-guide">章を開くと問題を選べます。解答済みの問題にはチェックが付きます。</p>
+      <div id="table-of-contents" class="table-of-contents"></div>
+    </section>
   </div>
 
   <!-- 問題回答ビュー -->
@@ -34,6 +52,10 @@
       <summary>計算機を使う</summary>
       <div class="calculator-body">
         <input id="calculator-display" class="calculator-display" type="text" value="0" readonly aria-label="計算機の表示">
+        <div class="calculator-transfer">
+          <span id="calculator-target" aria-live="polite">金額欄を選んで「＝」を押すと直接入力されます</span>
+          <button id="calculator-insert" type="button">表示中の金額を入力</button>
+        </div>
         <div id="calculator-keys" class="calculator-keys" aria-label="計算機">
           <button type="button" data-calc="AC" class="calculator-clear">AC</button>
           <button type="button" data-calc="C" class="calculator-clear">C</button>
