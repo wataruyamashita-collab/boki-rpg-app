@@ -18,6 +18,8 @@ body {
   padding: 0;
   line-height: 1.6;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* 指先でも確実に操作できる44px以上のタップ領域を全フォーム部品に確保する */
@@ -35,6 +37,7 @@ input {
   background: #fff;
   min-height: 100vh;
   box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  box-sizing: border-box;
 }
 
 /* ビューの切り替え用 */
@@ -135,20 +138,17 @@ button.secondary-button:hover { color: #fff; }
   margin-bottom: 20px;
   width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
-.table-question-wrap { width: 100%; margin-bottom: 20px; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.journal-entry-area::-webkit-scrollbar,
-.table-question-wrap::-webkit-scrollbar { display: none; }
-.answer-table { min-width: 620px; width: 100%; border-collapse: separate; border-spacing: 0; }
-.answer-table th, .answer-table td { min-width: 120px; padding: 8px; border-right: 1px solid #bdc3c7; border-bottom: 1px solid #bdc3c7; background: #fff; text-align: right; }
+.table-question-wrap { width: 100%; max-width: 100%; margin-bottom: 20px; overflow-x: hidden; overflow-x: clip; }
+.answer-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+.answer-table th, .answer-table td { min-width: 0; padding: 8px; overflow-wrap: anywhere; border-right: 1px solid #bdc3c7; border-bottom: 1px solid #bdc3c7; background: #fff; text-align: right; }
 .answer-table th { position: sticky; top: 0; z-index: 2; background: #eef2f5; text-align: center; }
-.answer-table th:first-child, .answer-table td:first-child { position: sticky; left: 0; z-index: 1; min-width: 150px; text-align: left; background: #f8fafb; }
+.answer-table th:first-child, .answer-table td:first-child { text-align: left; background: #f8fafb; }
 .answer-table th:first-child { z-index: 3; background: #eef2f5; }
-.table-input { min-width: 110px; }
+.table-input { min-width: 0; }
 
 .journal-header {
   display: grid;
@@ -159,6 +159,7 @@ button.secondary-button:hover { color: #fff; }
   font-size: 0.8rem;
   font-weight: bold;
   text-align: center;
+  max-width: 100%;
 }
 
 .journal-row {
@@ -171,6 +172,7 @@ button.secondary-button:hover { color: #fff; }
   border-bottom: 1px dashed #ccc;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
 }
 
 .journal-side {
@@ -215,12 +217,7 @@ select, .amount-input {
   }
 
   .journal-header,
-  .journal-row {
-    grid-template-columns: minmax(250px, 1fr) 8px minmax(250px, 1fr);
-    gap: 2px;
-  }
-
-  .journal-header, .journal-row { min-width: 520px; }
+  .journal-row { grid-template-columns: minmax(0, 1fr) 8px minmax(0, 1fr); gap: 2px; }
 
   .journal-side {
     gap: 2px;
@@ -241,6 +238,9 @@ select, .amount-input {
   .amount-input::placeholder {
     font-size: 0.75rem;
   }
+
+  .answer-table th, .answer-table td { padding: 5px 2px; font-size: .75rem; }
+  .table-input { padding: 6px 1px; font-size: 16px; }
 
   .toc-questions { grid-template-columns: 1fr; }
   .toc-chapter-title { font-size: .88rem; }
@@ -282,9 +282,9 @@ button:hover { background-color: #2980b9; }
 
 .correct-journal { margin-top: 20px; }
 .correct-journal h3, .explanation-box h3 { margin: 0 0 8px; font-size: 1rem; }
-.journal-table-wrap { overflow-x: auto; }
-.journal-table { width: 100%; border-collapse: collapse; background: #fff; }
-.journal-table th, .journal-table td { padding: 8px; border: 1px solid #bdc3c7; }
+.journal-table-wrap { width: 100%; max-width: 100%; overflow-x: hidden; overflow-x: clip; }
+.journal-table { width: 100%; table-layout: fixed; border-collapse: collapse; background: #fff; }
+.journal-table th, .journal-table td { min-width: 0; padding: 8px 4px; overflow-wrap: anywhere; border: 1px solid #bdc3c7; }
 .journal-table th { background: #eef2f5; }
 .journal-amount { text-align: right; white-space: nowrap; }
 .explanation-text { white-space: pre-wrap; }

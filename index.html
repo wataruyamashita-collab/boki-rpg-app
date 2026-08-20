@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260820">
+  <link rel="stylesheet" href="css/style.css?v=20260820-3">
 </head>
 <body>
 <div class="container">
@@ -31,6 +31,7 @@
         <div id="table-container" class="table-question-wrap"></div>
         <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
           <input id="calculator-display" class="calculator-display" value="0" readonly aria-label="計算機の表示">
+          <div class="calculator-transfer"><span id="calculator-target" aria-live="polite">金額欄を選んでください</span><button type="button" data-action="calc-insert">表示中の金額を入力</button></div>
           <div class="calculator-keys" aria-label="計算機">
             <button type="button" data-action="calc" data-calc="AC">AC</button><button type="button" data-action="calc" data-calc="C">C</button><button type="button" data-action="calc" data-calc="÷">÷</button><button type="button" data-action="calc" data-calc="×">×</button>
             <button type="button" data-action="calc" data-calc="7">7</button><button type="button" data-action="calc" data-calc="8">8</button><button type="button" data-action="calc" data-calc="9">9</button><button type="button" data-action="calc" data-calc="−">−</button>
@@ -42,9 +43,9 @@
         <div class="question-actions"><button class="confirm-button" type="submit">回答を確定する</button><button class="secondary-button save-button" type="button" data-action="save">ここまで保存する</button></div>
       </form>
     </section>
-    <section id="view-result" class="view"><div id="result-status" class="result-box"></div><div id="explanation" class="explanation-box"></div><button type="button" data-action="next">次へ進む</button></section>
+    <section id="view-result" class="view"><div id="result-status" class="result-box"></div><div id="correct-journal" class="correct-journal"></div><div id="explanation" class="explanation-box"></div><button type="button" data-action="next">次へ進む</button></section>
   </main>
 </div>
-<script src="data/questions.js?v=20260820"></script><script src="js/calculator.js?v=20260820"></script><script src="js/model.js?v=20260820"></script><script src="js/rpg.js?v=20260820"></script><script src="js/engine.js?v=20260820"></script><script src="js/view.js?v=20260820"></script><script src="js/controller.js?v=20260820"></script><script src="js/app.js?v=20260820"></script>
+<script src="data/questions.js?v=20260820-3"></script><script src="js/calculator.js?v=20260820-3"></script><script src="js/model.js?v=20260820-3"></script><script src="js/rpg.js?v=20260820-3"></script><script src="js/engine.js?v=20260820-3"></script><script src="js/view.js?v=20260820-3"></script><script src="js/controller.js?v=20260820-3"></script><script src="js/app.js?v=20260820-3"></script>
 </body>
 </html>
