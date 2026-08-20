@@ -375,7 +375,10 @@ const App = {
       if (!key) return;
       if (key === 'AC') this.calculatorExpression = '';
       else if (key === 'C') this.calculatorExpression = this.calculatorExpression.slice(0, -1);
-      else if (key === '＝') this.calculateResult();
+      else if (key === '＝') {
+        this.calculateResult();
+        this.insertCalculatorResult(false);
+      }
       else this.calculatorExpression += key;
       this.updateCalculatorDisplay();
     });
@@ -398,9 +401,12 @@ const App = {
     document.getElementById('calculator-target').textContent = `${input.getAttribute('aria-label')}へ入力します`;
   },
 
-  insertCalculatorResult() {
-    if (!this.calculatorTarget || !document.body.contains(this.calculatorTarget)) return;
-    this.calculateResult();
+  insertCalculatorResult(shouldCalculate = true) {
+    if (!this.calculatorTarget || !document.body.contains(this.calculatorTarget)) {
+      document.getElementById('calculator-target').textContent = '先に仕訳の金額欄を選んでください';
+      return;
+    }
+    if (shouldCalculate) this.calculateResult();
     const amount = Number(this.calculatorExpression);
     if (!Number.isFinite(amount) || amount < 0) {
       document.getElementById('calculator-target').textContent = '0以上の計算結果を確認してください';
@@ -409,7 +415,9 @@ const App = {
     this.calculatorTarget.value = Math.round(amount).toLocaleString('ja-JP');
     this.calculatorTarget.dispatchEvent(new Event('input', { bubbles: true }));
     this.updateCalculatorDisplay();
+    const targetName = this.calculatorTarget.getAttribute('aria-label');
     this.calculatorTarget.focus();
+    document.getElementById('calculator-target').textContent = `${targetName}へ${this.calculatorTarget.value}円を入力しました`;
   },
 
   calculateResult() {
