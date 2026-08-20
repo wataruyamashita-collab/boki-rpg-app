@@ -4,7 +4,7 @@
   class Controller {
     constructor(document, questions) {
       this.document = document; this.questions = questions; this.ids = Object.keys(questions); this.view = new root.AppView(document);
-      this.model = new root.ProgressModel(questions, root.localStorage); this.rpg = new root.RPGModel(root.localStorage); this.currentId = null; this.expression = ''; this.examScores = [];
+      this.model = new root.ProgressModel(questions, root.localStorage); this.rpg = new root.RPGModel(root.localStorage); this.currentId = null; this.expression = ''; this.calculatorTarget = null; this.examScores = [];
     }
     static accountChoices(question, correct) {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
@@ -16,10 +16,11 @@
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), calc: () => this.calcKey(action.dataset.calc) };
+        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(true) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) { this.formatAmount(event.target); this.saveDraft(false); } });
+      this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
       this.document.addEventListener('change', event => { if (event.target.matches('.journal-side select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
       this.document.getElementById('question-form').addEventListener('submit', event => {
         event.preventDefault();
@@ -33,7 +34,7 @@
       const render = (id, ids) => { const list = this.document.getElementById(id); list.replaceChildren(...ids.slice(0, 30).map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; button.textContent = `${qid}｜${this.questions[qid].category}`; return button; })); };
       render('story-list', this.ids.filter(id => this.questions[id].type === 'journal')); render('training-list', this.ids.filter(id => this.questions[id].type !== 'journal')); render('review-list', this.modeIds()); render('exam-list', this.ids.slice(-15));
     }
-    start(id) { this.currentId = id; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id]); this.view.show('view-question'); }
+    start(id) { this.currentId = id; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id]); this.view.show('view-question'); const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
     saveDraft(message) { if (!this.currentId) return; this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) this.document.getElementById('save-status').textContent = '入力内容を保存しました。'; }
     submit() {
       const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question); const score = root.GradingEngine.grade(question, answer);
@@ -68,7 +69,32 @@
       input.value = formatted;
       input.setSelectionRange?.(caretAt(digitOffset(selectionStart)), caretAt(digitOffset(selectionEnd)), selectionDirection);
     }
-    calcKey(key) { if (key === 'AC') this.expression = ''; else if (key === 'C') this.expression = this.expression.slice(0, -1); else if (key === '＝') { try { this.expression = String(root.SafeCalculator.evaluate(this.expression)); } catch (_) { this.expression = 'エラー'; } } else { if (this.expression === 'エラー') this.expression = ''; this.expression += key; } this.document.getElementById('calculator-display').value = this.expression || '0'; }
+    selectCalculatorTarget(input) {
+      this.document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
+      this.calculatorTarget = input; this.document.getElementById('calculator-target').textContent = `${input.getAttribute('aria-label')}へ入力します`;
+    }
+    formatCalculatorExpression(expression) {
+      return String(expression).replace(/\d+(?:\.\d*)?/g, numberText => {
+        const [integer, decimal] = numberText.split('.');
+        const formatted = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return decimal === undefined ? formatted : `${formatted}.${decimal}`;
+      });
+    }
+    updateCalculatorDisplay() { this.document.getElementById('calculator-display').value = this.formatCalculatorExpression(this.expression) || '0'; }
+    insertCalculatorResult(shouldCalculate) {
+      const target = this.calculatorTarget;
+      if (!target || !this.document.body.contains(target)) { this.document.getElementById('calculator-target').textContent = '先に金額欄を選んでください'; return; }
+      if (shouldCalculate) { try { this.expression = String(root.SafeCalculator.evaluate(this.expression)); } catch (_) { this.expression = 'エラー'; } }
+      const amount = Number(this.expression);
+      if (!Number.isFinite(amount) || amount < 0) { this.document.getElementById('calculator-target').textContent = '0以上の計算結果を確認してください'; this.updateCalculatorDisplay(); return; }
+      target.value = String(Math.round(amount)); this.formatAmount(target); this.saveDraft(false);
+      this.updateCalculatorDisplay();
+      this.document.getElementById('calculator-target').textContent = `${target.getAttribute('aria-label')}へ${target.value}円を入力しました`;
+    }
+    calcKey(key) {
+      if (key === 'AC') this.expression = ''; else if (key === 'C') this.expression = this.expression.slice(0, -1); else if (key === '＝') { this.insertCalculatorResult(true); return; } else { if (this.expression === 'エラー') this.expression = ''; this.expression += key; }
+      this.updateCalculatorDisplay();
+    }
   }
   root.AppController = Controller;
 }(window));

@@ -60,8 +60,34 @@
     }
     result(question, score) {
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
-      box.textContent = score.correct ? '正解です！' : `部分点 ${score.earned} / ${score.possible}`;
+      box.textContent = score.correct ? '正解です！' : 'もう一歩です';
+      this.renderCorrectJournal(question);
       this.byId('explanation').textContent = question.explanation;
+    }
+    renderCorrectJournal(question) {
+      let container = this.byId('correct-journal');
+      if (!container) {
+        container = this.document.createElement('div'); container.id = 'correct-journal'; container.className = 'correct-journal';
+        this.byId('explanation').before(container);
+      }
+      container.replaceChildren();
+      if (question.type !== 'journal' || !question.answer) return;
+      const heading = this.document.createElement('h3'); heading.textContent = '正しい仕訳';
+      const wrap = this.document.createElement('div'); wrap.className = 'journal-table-wrap';
+      const table = this.document.createElement('table'); table.className = 'journal-table';
+      const head = table.createTHead().insertRow();
+      ['借方科目', '金額', '貸方科目', '金額'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; head.append(th); });
+      const body = table.createTBody();
+      const rows = Math.max(question.answer.debit.length, question.answer.credit.length);
+      for (let index = 0; index < rows; index += 1) {
+        const row = body.insertRow();
+        ['debit', 'credit'].forEach(side => {
+          const item = question.answer[side][index];
+          const account = row.insertCell(); account.textContent = item?.account || '';
+          const amount = row.insertCell(); amount.className = 'journal-amount'; amount.textContent = item ? `${yen(item.amount)}円` : '';
+        });
+      }
+      wrap.append(table); container.append(heading, wrap);
     }
   }
   root.AppView = AppView;
