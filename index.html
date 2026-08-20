@@ -2,109 +2,47 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260820-5">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>日商簿記3級 経理シミュレーションRPG</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
 <div class="container">
   <header class="app-header">
-    <div>
-      <p class="app-kicker">日商簿記3級を物語で学ぶ</p>
-      <h1>経理シミュレーションRPG</h1>
-    </div>
-    <button id="toc-button" class="header-button" type="button" onclick="App.showTableOfContents()">目次</button>
+    <div><p class="app-kicker">日商簿記3級を物語で学ぶ</p><h1>経理シミュレーションRPG</h1><p id="player-status" class="player-status" aria-live="polite"></p></div>
   </header>
-  
-  <!-- ストーリービュー -->
-  <div id="view-story" class="view active">
-    <h2 id="story-title">第1章　会社の姿が見えない社長</h2>
-    <div id="story-content" class="story-box">
-      <p><strong>社長：</strong>「君が新しい経理担当者だね。売上は伸びているはずなのだが、会社に今いくら現金があるのか、よく分からなくてね……」</p>
-      <p><strong>主人公：</strong>「初めまして。一つひとつ数字を整理して、会社の状況を見えるようにしていきましょう！」</p>
-    </div>
-    <button id="story-start-button" onclick="App.startQuestion('J001')">最初の取引を処理する</button>
-    <section class="toc-section" aria-labelledby="toc-title">
-      <div class="toc-heading">
-        <div>
-          <p class="section-label">CONTENTS</p>
-          <h2 id="toc-title">学習の目次</h2>
-        </div>
-        <span id="toc-progress" class="toc-progress"></span>
-      </div>
-      <p class="toc-guide">章を開くと問題を選べます。解答済みの問題にはチェックが付きます。</p>
-      <div id="table-of-contents" class="table-of-contents"></div>
-      <noscript><p class="toc-error">目次を表示するにはJavaScriptを有効にしてください。</p></noscript>
+  <nav class="mode-nav" aria-label="学習モード">
+    <button type="button" data-action="mode" data-mode="story">ストーリー</button>
+    <button type="button" data-action="mode" data-mode="training">トレーニング</button>
+    <button type="button" data-action="mode" data-mode="review">復習</button>
+    <button type="button" data-action="mode" data-mode="exam">模擬試験</button>
+  </nav>
+
+  <main>
+    <section id="view-story" class="view"><h2>ストーリーモード</h2><p>取引を処理して、会社の数字を見えるようにしましょう。</p><div id="story-list" class="question-list"></div></section>
+    <section id="view-training" class="view"><h2>トレーニングモード</h2><p>試算表・元帳・精算表などを形式別に練習します。</p><div id="training-list" class="question-list"></div></section>
+    <section id="view-review" class="view"><h2>復習モード</h2><p>間違えた問題を優先して解き直します。</p><div id="review-list" class="question-list"></div></section>
+    <section id="view-exam" class="view"><h2>模擬試験モード</h2><p>試験中は正誤や経験値を表示せず、終了後に採点します。</p><div id="exam-list" class="question-list"></div></section>
+
+    <section id="view-question" class="view">
+      <p id="q-category" class="question-category"></p><div id="q-text" class="question-text"></div>
+      <div id="journal-container" class="journal-entry-area"></div>
+      <div id="table-container" class="table-question-wrap"></div>
+      <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
+        <input id="calculator-display" class="calculator-display" value="0" readonly aria-label="計算機の表示">
+        <div class="calculator-keys" aria-label="計算機">
+          <button type="button" data-action="calc" data-calc="AC">AC</button><button type="button" data-action="calc" data-calc="C">C</button><button type="button" data-action="calc" data-calc="÷">÷</button><button type="button" data-action="calc" data-calc="×">×</button>
+          <button type="button" data-action="calc" data-calc="7">7</button><button type="button" data-action="calc" data-calc="8">8</button><button type="button" data-action="calc" data-calc="9">9</button><button type="button" data-action="calc" data-calc="−">−</button>
+          <button type="button" data-action="calc" data-calc="4">4</button><button type="button" data-action="calc" data-calc="5">5</button><button type="button" data-action="calc" data-calc="6">6</button><button type="button" data-action="calc" data-calc="＋">＋</button>
+          <button type="button" data-action="calc" data-calc="1">1</button><button type="button" data-action="calc" data-calc="2">2</button><button type="button" data-action="calc" data-calc="3">3</button><button type="button" data-action="calc" data-calc="＝">＝</button>
+          <button type="button" data-action="calc" data-calc="0">0</button><button type="button" data-action="calc" data-calc="00">00</button><button type="button" data-action="calc" data-calc=".">.</button>
+        </div></div></details>
+      <p id="save-status" class="save-status" aria-live="polite"></p>
+      <div class="question-actions"><button class="confirm-button" type="button" data-action="submit">回答を確定する</button><button class="secondary-button save-button" type="button" data-action="save">ここまで保存する</button></div>
     </section>
-  </div>
-
-  <!-- 問題回答ビュー -->
-  <div id="view-question" class="view">
-    <div id="progress" class="progress" aria-live="polite"></div>
-    <div id="q-category" style="color:#7f8c8d; font-size: 0.9rem;"></div>
-    <div id="q-text" class="question-text"></div>
-
-    <!-- 仕訳入力エリア -->
-    <div class="journal-entry-area" id="journal-container"></div>
-
-    <!-- 問題文の金額計算用。一般的な実務電卓と同じ数字・演算キー配列にする。 -->
-    <details class="calculator">
-      <summary>計算機を使う</summary>
-      <div class="calculator-body">
-        <input id="calculator-display" class="calculator-display" type="text" value="0" readonly aria-label="計算機の表示">
-        <div class="calculator-transfer">
-          <span id="calculator-target" aria-live="polite">金額欄を選んで「＝」を押すと直接入力されます</span>
-          <button id="calculator-insert" type="button">表示中の金額を入力</button>
-        </div>
-        <div id="calculator-keys" class="calculator-keys" aria-label="計算機">
-          <button type="button" data-calc="AC" class="calculator-clear">AC</button>
-          <button type="button" data-calc="C" class="calculator-clear">C</button>
-          <button type="button" data-calc="÷" class="calculator-operator">÷</button>
-          <button type="button" data-calc="×" class="calculator-operator">×</button>
-          <button type="button" data-calc="7">7</button>
-          <button type="button" data-calc="8">8</button>
-          <button type="button" data-calc="9">9</button>
-          <button type="button" data-calc="−" class="calculator-operator">−</button>
-          <button type="button" data-calc="4">4</button>
-          <button type="button" data-calc="5">5</button>
-          <button type="button" data-calc="6">6</button>
-          <button type="button" data-calc="＋" class="calculator-operator">＋</button>
-          <button type="button" data-calc="1">1</button>
-          <button type="button" data-calc="2">2</button>
-          <button type="button" data-calc="3">3</button>
-          <button type="button" data-calc="＝" class="calculator-equals">＝</button>
-          <button type="button" data-calc="0" class="calculator-zero">0</button>
-          <button type="button" data-calc="00" class="calculator-double-zero">00</button>
-          <button type="button" data-calc=".">.</button>
-        </div>
-      </div>
-    </details>
-    
-    <div id="save-status" class="save-status" aria-live="polite"></div>
-    <div class="question-actions">
-      <button class="confirm-button" type="button" onclick="App.submitAnswer()">仕訳を確定する</button>
-      <button class="secondary-button save-button" type="button" onclick="App.saveDraft(true)">ここまで保存する</button>
-    </div>
-  </div>
-
-  <!-- 結果・解説ビュー -->
-  <div id="view-result" class="view">
-    <div id="result-status" class="result-box"></div>
-    <div id="correct-journal" class="correct-journal"></div>
-    <div id="explanation" class="explanation-box"></div>
-    <button onclick="App.nextStep()">次へ進む</button>
-  </div>
-
+    <section id="view-result" class="view"><div id="result-status" class="result-box"></div><div id="explanation" class="explanation-box"></div><button type="button" data-action="next">次へ進む</button></section>
+  </main>
 </div>
-
-<!-- 外部ファイルの読み込み -->
-<script src="data/questions.js?v=20260820-5"></script>
-<script src="js/engine.js?v=20260820-5"></script>
-<script src="js/app.js?v=20260820-5"></script>
-
+<script src="data/questions.js"></script><script src="js/calculator.js"></script><script src="js/model.js"></script><script src="js/rpg.js"></script><script src="js/engine.js"></script><script src="js/view.js"></script><script src="js/controller.js"></script><script src="js/app.js"></script>
 </body>
 </html>
