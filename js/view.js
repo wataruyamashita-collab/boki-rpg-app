@@ -65,7 +65,12 @@
       this.byId('explanation').textContent = question.explanation;
     }
     renderCorrectJournal(question) {
-      const container = this.byId('correct-journal'); container.replaceChildren();
+      let container = this.byId('correct-journal');
+      if (!container) {
+        container = this.document.createElement('div'); container.id = 'correct-journal'; container.className = 'correct-journal';
+        this.byId('explanation').before(container);
+      }
+      container.replaceChildren();
       if (question.type !== 'journal' || !question.answer) return;
       const heading = this.document.createElement('h3'); heading.textContent = '正しい仕訳';
       const wrap = this.document.createElement('div'); wrap.className = 'journal-table-wrap';

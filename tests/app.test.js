@@ -29,7 +29,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form">[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820'), 'すべてのローカルCSS/JSにキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-2'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -51,7 +51,9 @@ assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 
 assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');
 assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');
 assert(viewSource.includes("heading.textContent = '正しい仕訳'"), '正しい仕訳の見出しを表示する');
+assert(viewSource.includes("this.byId('explanation').before(container)"), '古いHTMLがキャッシュされていても正しい仕訳の表示領域を補完する');
 assert(!/\.journal-header,\s*\.journal-row\s*{[^}]*min-width:\s*520px/s.test(cssSource), 'モバイルの仕訳欄を画面幅より広くしない');
+assert(/\.journal-entry-area\s*{[^}]*max-width:\s*100%[^}]*overflow-x:\s*clip/s.test(cssSource), '仕訳票自体を画面幅内に収めて横スクロールを発生させない');
 assert(/\.answer-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '表を画面幅に収める');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
 assert(!fs.readFileSync('js/app.js', 'utf8').includes('Function('), 'Functionによる式評価を禁止する');

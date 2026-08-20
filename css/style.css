@@ -19,6 +19,7 @@ body {
   line-height: 1.6;
   -webkit-text-size-adjust: 100%;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* 指先でも確実に操作できる44px以上のタップ領域を全フォーム部品に確保する */
@@ -137,9 +138,11 @@ button.secondary-button:hover { color: #fff; }
   margin-bottom: 20px;
   width: 100%;
   min-width: 0;
-  overflow-x: visible;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
-.table-question-wrap { width: 100%; margin-bottom: 20px; overflow-x: visible; }
+.table-question-wrap { width: 100%; max-width: 100%; margin-bottom: 20px; overflow-x: hidden; overflow-x: clip; }
 .answer-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
 .answer-table th, .answer-table td { min-width: 0; padding: 8px; overflow-wrap: anywhere; border-right: 1px solid #bdc3c7; border-bottom: 1px solid #bdc3c7; background: #fff; text-align: right; }
 .answer-table th { position: sticky; top: 0; z-index: 2; background: #eef2f5; text-align: center; }
@@ -156,6 +159,7 @@ button.secondary-button:hover { color: #fff; }
   font-size: 0.8rem;
   font-weight: bold;
   text-align: center;
+  max-width: 100%;
 }
 
 .journal-row {
@@ -168,6 +172,7 @@ button.secondary-button:hover { color: #fff; }
   border-bottom: 1px dashed #ccc;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
 }
 
 .journal-side {
@@ -277,7 +282,7 @@ button:hover { background-color: #2980b9; }
 
 .correct-journal { margin-top: 20px; }
 .correct-journal h3, .explanation-box h3 { margin: 0 0 8px; font-size: 1rem; }
-.journal-table-wrap { width: 100%; overflow-x: visible; }
+.journal-table-wrap { width: 100%; max-width: 100%; overflow-x: hidden; overflow-x: clip; }
 .journal-table { width: 100%; table-layout: fixed; border-collapse: collapse; background: #fff; }
 .journal-table th, .journal-table td { min-width: 0; padding: 8px 4px; overflow-wrap: anywhere; border: 1px solid #bdc3c7; }
 .journal-table th { background: #eef2f5; }
