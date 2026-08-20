@@ -28,7 +28,7 @@
       for (let index = 0; index < count; index += 1) {
         const row = this.document.createElement('div'); row.className = 'journal-row';
         ['debit', 'credit'].forEach((side, sideIndex) => {
-          const answer = question.answer[side][index]; const wrap = this.document.createElement('div'); wrap.className = 'journal-side';
+          const answer = question.answer[side][index]; const wrap = this.document.createElement('div'); wrap.className = 'journal-side'; wrap.dataset.sideLabel = side === 'debit' ? '借方' : '貸方';
           const select = this.document.createElement('select'); select.className = `${side}-account`; select.disabled = !answer;
           select.innerHTML = `<option value="">${answer ? '--勘定科目--' : '--入力なし--'}</option>`;
           if (answer) root.AppController.accountChoices(question, answer.account).forEach(name => select.append(new Option(name, name)));
