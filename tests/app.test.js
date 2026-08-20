@@ -48,5 +48,10 @@ const equalsButton = { dataset: { calc: '＝' }, parentElement: elements['calcul
 calculatorClick({ target: equalsButton, currentTarget: elements['calculator-keys'] });
 assert.strictEqual(amountInput.value, '1,500', '計算結果を仕訳金額欄へ転記してください');
 assert.strictEqual(inputEvents, 1, '転記時にinputイベントを発火してください');
+assert.strictEqual(elements['calculator-display'].value, '1,500', '電卓の計算結果を3桁カンマ付きで表示してください');
+
+context.testApp.calculatorExpression = '1234567＋8900.5';
+context.testApp.updateCalculatorDisplay();
+assert.strictEqual(elements['calculator-display'].value, '1,234,567＋8,900.5', '計算途中の各数値にも3桁カンマを表示してください');
 
 console.log('app tests: ok');

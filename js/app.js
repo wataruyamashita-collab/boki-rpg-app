@@ -441,7 +441,15 @@ const App = {
   },
 
   updateCalculatorDisplay() {
-    document.getElementById('calculator-display').value = this.calculatorExpression || '0';
+    document.getElementById('calculator-display').value = this.formatCalculatorExpression(this.calculatorExpression) || '0';
+  },
+
+  formatCalculatorExpression(expression) {
+    return expression.replace(/\d+(?:\.\d*)?/g, numberText => {
+      const parts = numberText.split('.');
+      const integer = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.length === 2 ? `${integer}.${parts[1]}` : integer;
+    });
   },
 
   nextStep() {
