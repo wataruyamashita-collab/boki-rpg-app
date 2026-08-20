@@ -14520,3 +14520,9 @@ function validateQuestionData(questionData = QuestionData) {
     counts: Object.freeze({ total: entries.length, ...typeCounts })
   });
 }
+
+// Top-level `const` declarations are not added to `window` in classic scripts.
+// Expose the data explicitly because the application bootstrap reads it there.
+if (typeof window !== 'undefined') {
+  window.QuestionData = QuestionData;
+}

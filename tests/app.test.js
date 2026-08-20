@@ -36,6 +36,9 @@ assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信�
 assert(controllerSource.includes('this.document.activeElement?.blur()'), '回答確定前にソフトウェアキーボードを閉じる');
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
+const questionDataSource = fs.readFileSync('data/questions.js', 'utf8');
+vm.runInNewContext(questionDataSource, browserSandbox);
+assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
 const amountInput = { value: '1234', selectionStart: 2, selectionEnd: 3, selectionDirection: 'forward', setSelectionRange(...range) { this.range = range; } };
 browserSandbox.window.AppController.prototype.formatAmount(amountInput);
 assert.strictEqual(amountInput.value, '1,234', '金額を3桁区切りにする');
