@@ -29,7 +29,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form">[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-5'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-8'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -58,8 +58,17 @@ assert.strictEqual(calculatorElements['calculator-display'].value, '1,500', '電
 assert.strictEqual(calculatorController.saved, true, '電卓から転記した金額を下書きへ保存する');
 assert.strictEqual(browserSandbox.window.AppController.prototype.formatCalculatorExpression('1234567＋8900.5'), '1,234,567＋8,900.5', '計算途中の各数値にもカンマを表示する');
 const questionDataSource = fs.readFileSync('data/questions.js', 'utf8');
-vm.runInNewContext(questionDataSource, browserSandbox);
+vm.runInNewContext(`${questionDataSource}\nwindow.QuestionDataAudit = validateQuestionData();`, browserSandbox);
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
+assert.strictEqual(browserSandbox.window.QuestionDataAudit.ok, true, `全問題の品質検証を通過する: ${browserSandbox.window.QuestionDataAudit.errors.join(', ')}`);
+assert.deepStrictEqual([...browserSandbox.window.QuestionDataAudit.warnings], [], '全問題に品質上の警告がない');
+Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal').forEach(question => {
+  [...question.answer.debit, ...question.answer.credit].forEach(item => {
+    const choices = browserSandbox.window.AppController.accountChoices(question, item.account);
+    assert.strictEqual(choices.length, 5, `${question.id}の勘定科目は5択にする`);
+    assert(choices.includes(item.account), `${question.id}の勘定科目に正答を含める`);
+  });
+});
 const amountInput = { value: '1234', selectionStart: 2, selectionEnd: 3, selectionDirection: 'forward', setSelectionRange(...range) { this.range = range; } };
 browserSandbox.window.AppController.prototype.formatAmount(amountInput);
 assert.strictEqual(amountInput.value, '1,234', '金額を3桁区切りにする');
@@ -79,5 +88,8 @@ assert(!/\.journal-header,\s*\.journal-row\s*{[^}]*min-width:\s*520px/s.test(css
 assert(/\.journal-entry-area\s*{[^}]*max-width:\s*100%[^}]*overflow-x:\s*clip/s.test(cssSource), '仕訳票自体を画面幅内に収めて横スクロールを発生させない');
 assert(/\.answer-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '表を画面幅に収める');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 8px minmax\(0, 1fr\)/s.test(cssSource), '狭い画面でも借方と貸方を必ず横並びにする');
+assert(/@media \(max-width: 480px\)[\s\S]*?select,\s*\.amount-input\s*{[^}]*font-size:\s*clamp\(11px, 3vw, 16px\)/s.test(cssSource), '横並びのまま長い勘定科目と金額が収まるよう文字サイズを調整する');
+assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦並び用ラベルを追加しない');
 assert(!fs.readFileSync('js/app.js', 'utf8').includes('Function('), 'Functionによる式評価を禁止する');
 console.log('app tests: ok');

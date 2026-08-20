@@ -220,6 +220,7 @@ select, .amount-input {
   .journal-row { grid-template-columns: minmax(0, 1fr) 8px minmax(0, 1fr); gap: 2px; }
 
   .journal-side {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     gap: 2px;
   }
 
@@ -232,7 +233,7 @@ select, .amount-input {
   select,
   .amount-input {
     padding: 8px 2px;
-    font-size: 16px;
+    font-size: clamp(11px, 3vw, 16px);
   }
 
   .amount-input::placeholder {
