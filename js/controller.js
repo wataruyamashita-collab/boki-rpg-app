@@ -21,7 +21,7 @@
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) { this.formatAmount(event.target); this.saveDraft(false); } });
       this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
-      this.document.addEventListener('change', event => { if (event.target.matches('.journal-side select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
+      this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
       this.document.getElementById('question-form').addEventListener('submit', event => {
         event.preventDefault();
         this.document.activeElement?.blur();

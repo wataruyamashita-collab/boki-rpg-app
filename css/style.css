@@ -152,7 +152,7 @@ button.secondary-button:hover { color: #fff; }
 
 .journal-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
   gap: 4px;
   margin-bottom: 4px;
   color: #566573;
@@ -164,7 +164,7 @@ button.secondary-button:hover { color: #fff; }
 
 .journal-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
   align-items: center;
   gap: 4px;
   margin-bottom: 8px;
@@ -175,20 +175,9 @@ button.secondary-button:hover { color: #fff; }
   max-width: 100%;
 }
 
-.journal-side {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 4px;
-  min-width: 0;
-}
-.journal-side select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.journal-side select:focus { text-overflow: clip; outline: 3px solid rgba(52, 152, 219, .25); outline-offset: 1px; }
-
-.divider {
-  font-weight: bold;
-  color: #7f8c8d;
-  padding: 0 4px;
-}
+.journal-row > .credit-account { border-left-width: 2px; border-left-color: #7f8c8d; }
+.journal-row select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.journal-row select:focus { text-overflow: clip; outline: 3px solid rgba(52, 152, 219, .25); outline-offset: 1px; }
 
 select, .amount-input {
   min-width: 0;
@@ -216,18 +205,13 @@ select, .amount-input {
     font-size: 1rem;
   }
 
-  .journal-header { display: none; }
-
-  .journal-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-
-  .journal-side {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  .journal-header,
+  .journal-row {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
     gap: 2px;
   }
 
-  .divider {
-    display: none;
-  }
+  .journal-header { display: grid; font-size: 0.7rem; }
 
   select,
   .amount-input {
