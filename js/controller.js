@@ -9,7 +9,7 @@
     static accountChoices(question, correct) {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
       const related = JOURNAL_GROUPS.find(group => group.includes(correct)) || [];
-      return [...new Set([correct, ...related, ...all])].slice(0, 8).sort(() => 0.5 - Controller.hash(`${question.id}-${correct}`));
+      return [...new Set([correct, ...related, ...all])].slice(0, 5).sort(() => 0.5 - Controller.hash(`${question.id}-${correct}`));
     }
     static hash(text) { return ([...text].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 10) / 10; }
     init() { this.bindEvents(); this.renderModes(); this.view.updateRpg(this.rpg); this.showMode('story'); }
