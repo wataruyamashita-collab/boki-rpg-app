@@ -30,7 +30,29 @@ const GradingEngine = {
       return remainingCorrect.length === 0;
     };
 
-    return matchSides(userAnswer.debit, correctAnswer.debit) && 
+    return matchSides(userAnswer.debit, correctAnswer.debit) &&
            matchSides(userAnswer.credit, correctAnswer.credit);
+  },
+
+  gradeTable(userAnswer, correctAnswer) {
+    const expected = correctAnswer.cells || {};
+    const details = Object.keys(expected).map(cellId => {
+      const raw = userAnswer.cells ? userAnswer.cells[cellId] : undefined;
+      const normalized = typeof expected[cellId] === 'number' ? Number(String(raw ?? '').replace(/,/g, '')) : String(raw ?? '').trim();
+      return { cellId, correct: normalized === expected[cellId], expected: expected[cellId], actual: normalized };
+    });
+    const earned = details.filter(item => item.correct).length;
+    return { correct: earned === details.length, earned, possible: details.length, ratio: details.length ? earned / details.length : 0, details };
+  },
+
+  grade(question, userAnswer) {
+    if (question.type === 'journal') {
+      const correct = this.gradeJournalEntry(userAnswer, question.answer);
+      return { correct, earned: correct ? 1 : 0, possible: 1, ratio: correct ? 1 : 0, details: [] };
+    }
+    return this.gradeTable(userAnswer, question.answer);
   }
 };
+
+if (typeof window !== 'undefined') window.GradingEngine = GradingEngine;
+if (typeof module !== 'undefined') module.exports = GradingEngine;

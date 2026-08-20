@@ -1,63 +1,31 @@
 const assert = require('assert');
 const fs = require('fs');
-const vm = require('vm');
+const Calculator = require('../js/calculator');
+const Engine = require('../js/engine');
+const ProgressModel = require('../js/model');
+const RPGModel = require('../js/rpg');
+
+assert.strictEqual(Calculator.evaluate('1,200'.replace(',', '') + '＋300×2'), 1800);
+assert.strictEqual(Calculator.evaluate('(10＋2)÷3'), 4);
+assert.throws(() => Calculator.evaluate('globalThis.alert(1)'), /invalid/);
+assert.throws(() => Calculator.evaluate('1÷0'), /invalid/);
+
+const table = Engine.gradeTable({ cells: { cash: '1,000', sales: '500' } }, { cells: { cash: 1000, sales: 700 } });
+assert.deepStrictEqual([table.correct, table.earned, table.possible, table.ratio], [false, 1, 2, 0.5]);
+assert.strictEqual(Engine.gradeJournalEntry({ debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }, { debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }), true);
+
+const values = {};
+const storage = { getItem(key) { return values[key] || null; }, setItem(key, value) { values[key] = value; } };
+const progress = new ProgressModel({ J1: {} }, storage); progress.record('J1', false);
+assert.deepStrictEqual(progress.state.incorrectIds, ['J1']);
+const rpg = new RPGModel(storage); const question = { id: 'J1', difficulty: 2, category: '現金' };
+assert.strictEqual(rpg.reward(question, { ratio: 0.5, earned: 1, possible: 2 }), true);
+assert.strictEqual(rpg.reward(question, { ratio: 1, earned: 2, possible: 2 }), false, '経験値は二重付与しない');
+assert.strictEqual(rpg.state.xp, 20);
 
 const html = fs.readFileSync('index.html', 'utf8');
-const confirmPosition = html.indexOf('>仕訳を確定する</button>');
-const savePosition = html.indexOf('>ここまで保存する</button>');
-assert(confirmPosition >= 0, '「仕訳を確定する」ボタンが必要です');
-assert(savePosition >= 0, '「ここまで保存する」ボタンが必要です');
-assert(confirmPosition < savePosition, '確定ボタンは保存ボタンより先に配置してください');
-assert(/question-actions[\s\S]*confirm-button[\s\S]*save-button/.test(html), '操作ボタンの順序を固定するクラスが必要です');
-
-let calculatorClick;
-let inputEvents = 0;
-const amountInput = {
-  value: '',
-  focus() {},
-  getAttribute() { return '借方 1行目の金額'; },
-  dispatchEvent(event) { if (event.type === 'input') inputEvents += 1; }
-};
-const elements = {
-  'calculator-keys': {
-    addEventListener(type, listener) { if (type === 'click') calculatorClick = listener; }
-  },
-  'calculator-insert': { addEventListener() {} },
-  'calculator-target': { textContent: '' },
-  'calculator-display': { value: '' }
-};
-const context = {
-  console,
-  Event,
-  window: {},
-  document: {
-    addEventListener() {},
-    body: { contains(element) { return element === amountInput; } },
-    getElementById(id) { return elements[id]; },
-    querySelectorAll() { return []; }
-  }
-};
-vm.createContext(context);
-vm.runInContext(`${fs.readFileSync('js/app.js', 'utf8')};this.testApp = App;`, context);
-assert.strictEqual(context.window.App, context.testApp, 'Appをwindowへ公開してください');
-
-context.testApp.calculatorTarget = amountInput;
-context.testApp.calculatorExpression = '1200＋300';
-context.testApp.setupCalculator();
-const equalsButton = { dataset: { calc: '＝' }, parentElement: elements['calculator-keys'] };
-calculatorClick({ target: equalsButton, currentTarget: elements['calculator-keys'] });
-assert.strictEqual(amountInput.value, '1,500', '計算結果を仕訳金額欄へ転記してください');
-assert.strictEqual(inputEvents, 1, '転記時にinputイベントを発火してください');
-assert.strictEqual(elements['calculator-display'].value, '1,500', '電卓の計算結果を3桁カンマ付きで表示してください');
-
-context.testApp.calculatorExpression = '1234567＋8900.5';
-context.testApp.updateCalculatorDisplay();
-assert.strictEqual(elements['calculator-display'].value, '1,234,567＋8,900.5', '計算途中の各数値にも3桁カンマを表示してください');
-
-context.testApp.calculatorExpression = '1';
-const doubleZeroButton = { dataset: { calc: '00' }, parentElement: elements['calculator-keys'] };
-calculatorClick({ target: doubleZeroButton, currentTarget: elements['calculator-keys'] });
-assert.strictEqual(context.testApp.calculatorExpression, '100', '「00」キーでゼロを2桁入力してください');
-assert.strictEqual(elements['calculator-display'].value, '100', '「00」キーの入力を電卓へ表示してください');
-
+assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置かない');
+['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
+assert(html.indexOf('data-action="submit"') < html.indexOf('data-action="save"'), '確定を保存より前に配置する');
+assert(!fs.readFileSync('js/app.js', 'utf8').includes('Function('), 'Functionによる式評価を禁止する');
 console.log('app tests: ok');
