@@ -48,8 +48,11 @@ assert(viewSource.includes("input.type = 'text'; input.setAttribute('inputmode',
 assert(viewSource.includes('select.title = select.selectedOptions[0]?.textContent'), '選択中の勘定科目をtitleに反映する');
 const cssSource = fs.readFileSync('css/style.css', 'utf8');
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
-['.journal-entry-area', '.table-question-wrap'].forEach(selector => {
-  assert(new RegExp(`\\.${selector.slice(1)}[^}]*-webkit-overflow-scrolling:\\s*touch`, 's').test(cssSource), `${selector}でiOSの慣性スクロールを有効にする`);
-});
+assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');
+assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');
+assert(viewSource.includes("heading.textContent = '正しい仕訳'"), '正しい仕訳の見出しを表示する');
+assert(!/\.journal-header,\s*\.journal-row\s*{[^}]*min-width:\s*520px/s.test(cssSource), 'モバイルの仕訳欄を画面幅より広くしない');
+assert(/\.answer-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '表を画面幅に収める');
+assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
 assert(!fs.readFileSync('js/app.js', 'utf8').includes('Function('), 'Functionによる式評価を禁止する');
 console.log('app tests: ok');
