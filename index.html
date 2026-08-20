@@ -3,12 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260820-2">
 </head>
 <body>
 
 <div class="container">
+  <header class="app-header">
+    <div>
+      <p class="app-kicker">日商簿記3級を物語で学ぶ</p>
+      <h1>経理シミュレーションRPG</h1>
+    </div>
+    <button id="toc-button" class="header-button" type="button" onclick="App.showTableOfContents()">目次</button>
+  </header>
   
   <!-- ストーリービュー -->
   <div id="view-story" class="view active">
@@ -18,6 +28,18 @@
       <p><strong>主人公：</strong>「初めまして。一つひとつ数字を整理して、会社の状況を見えるようにしていきましょう！」</p>
     </div>
     <button id="story-start-button" onclick="App.startQuestion('J001')">最初の取引を処理する</button>
+    <section class="toc-section" aria-labelledby="toc-title">
+      <div class="toc-heading">
+        <div>
+          <p class="section-label">CONTENTS</p>
+          <h2 id="toc-title">学習の目次</h2>
+        </div>
+        <span id="toc-progress" class="toc-progress"></span>
+      </div>
+      <p class="toc-guide">章を開くと問題を選べます。解答済みの問題にはチェックが付きます。</p>
+      <div id="table-of-contents" class="table-of-contents"></div>
+      <noscript><p class="toc-error">目次を表示するにはJavaScriptを有効にしてください。</p></noscript>
+    </section>
   </div>
 
   <!-- 問題回答ビュー -->
@@ -34,6 +56,10 @@
       <summary>計算機を使う</summary>
       <div class="calculator-body">
         <input id="calculator-display" class="calculator-display" type="text" value="0" readonly aria-label="計算機の表示">
+        <div class="calculator-transfer">
+          <span id="calculator-target" aria-live="polite">金額欄を選んで「＝」を押すと直接入力されます</span>
+          <button id="calculator-insert" type="button">表示中の金額を入力</button>
+        </div>
         <div id="calculator-keys" class="calculator-keys" aria-label="計算機">
           <button type="button" data-calc="AC" class="calculator-clear">AC</button>
           <button type="button" data-calc="C" class="calculator-clear">C</button>
@@ -58,8 +84,8 @@
     </details>
     
     <div id="save-status" class="save-status" aria-live="polite"></div>
-    <button class="secondary-button" onclick="App.saveDraft(true)">ここまで保存する</button>
     <button onclick="App.submitAnswer()">仕訳を確定する</button>
+    <button class="secondary-button" onclick="App.saveDraft(true)">ここまで保存する</button>
   </div>
 
   <!-- 結果・解説ビュー -->
@@ -73,9 +99,9 @@
 </div>
 
 <!-- 外部ファイルの読み込み -->
-<script src="data/questions.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/app.js"></script>
+<script src="data/questions.js?v=20260820-2"></script>
+<script src="js/engine.js?v=20260820-2"></script>
+<script src="js/app.js?v=20260820-2"></script>
 
 </body>
 </html>
