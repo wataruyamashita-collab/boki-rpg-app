@@ -16,10 +16,12 @@
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), submit: () => this.submit(), next: () => this.next(), save: () => this.saveDraft(true), calc: () => this.calcKey(action.dataset.calc) };
+        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), calc: () => this.calcKey(action.dataset.calc) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) { this.formatAmount(event.target); this.saveDraft(false); } });
+      this.document.addEventListener('change', event => { if (event.target.matches('.journal-side select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
+      this.document.getElementById('question-form').addEventListener('submit', event => { event.preventDefault(); this.submit(); });
     }
     showMode(mode) { this.model.state.mode = mode; if (mode === 'exam') this.examScores = []; this.model.save(); this.view.show(`view-${mode}`); this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false')); }
     modeIds() { const mode = this.model.state.mode; if (mode === 'review') return this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids; if (mode === 'exam') return this.ids.slice(-15); if (mode === 'training') return this.ids.filter(id => this.questions[id].type !== 'journal'); return this.ids; }
@@ -42,7 +44,26 @@
       this.model.record(question.id, score.correct); this.rpg.reward(question, score); this.view.updateRpg(this.rpg); this.view.result(question, score); this.view.show('view-result');
     }
     next() { const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
-    formatAmount(input) { const before = input.value; const caret = input.selectionStart ?? before.length; const digitsBefore = before.slice(0, caret).replace(/\D/g, '').length; const digits = before.replace(/\D/g, ''); input.value = digits ? Number(digits).toLocaleString('ja-JP') : ''; let position = 0; let seen = 0; while (position < input.value.length && seen < digitsBefore) { if (/\d/.test(input.value[position])) seen++; position++; } input.setSelectionRange?.(position, position); }
+    formatAmount(input) {
+      const before = input.value;
+      const selectionStart = input.selectionStart ?? before.length;
+      const selectionEnd = input.selectionEnd ?? selectionStart;
+      const selectionDirection = input.selectionDirection || 'none';
+      const digitOffset = position => before.slice(0, position).replace(/\D/g, '').length;
+      const digits = before.replace(/\D/g, '');
+      const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const caretAt = offset => {
+        if (offset === 0) return 0;
+        let seen = 0;
+        for (let position = 0; position < formatted.length; position += 1) {
+          if (/\d/.test(formatted[position])) seen += 1;
+          if (seen === offset) return position + 1;
+        }
+        return formatted.length;
+      };
+      input.value = formatted;
+      input.setSelectionRange?.(caretAt(digitOffset(selectionStart)), caretAt(digitOffset(selectionEnd)), selectionDirection);
+    }
     calcKey(key) { if (key === 'AC') this.expression = ''; else if (key === 'C') this.expression = this.expression.slice(0, -1); else if (key === '＝') { try { this.expression = String(root.SafeCalculator.evaluate(this.expression)); } catch (_) { this.expression = 'エラー'; } } else { if (this.expression === 'エラー') this.expression = ''; this.expression += key; } this.document.getElementById('calculator-display').value = this.expression || '0'; }
   }
   root.AppController = Controller;

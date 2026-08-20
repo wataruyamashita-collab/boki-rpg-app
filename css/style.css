@@ -166,6 +166,7 @@ button.secondary-button:hover { color: #fff; }
   min-width: 0;
 }
 .journal-side select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.journal-side select:focus { text-overflow: clip; outline: 3px solid rgba(52, 152, 219, .25); outline-offset: 1px; }
 
 .divider {
   font-weight: bold;
