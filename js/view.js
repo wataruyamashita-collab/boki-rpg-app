@@ -28,15 +28,15 @@
       for (let index = 0; index < count; index += 1) {
         const row = this.document.createElement('div'); row.className = 'journal-row';
         ['debit', 'credit'].forEach(side => {
-          const answer = question.answer[side][index]; const wrap = this.document.createElement('div'); wrap.className = 'journal-side';
+          const answer = question.answer[side][index];
           const select = this.document.createElement('select'); select.className = `${side}-account`; select.disabled = !answer;
           select.innerHTML = `<option value="">${answer ? '--勘定科目--' : '--入力なし--'}</option>`;
           if (answer) root.AppController.accountChoices(question, answer.account).forEach(name => select.append(new Option(name, name)));
           const saved = draft[side] && draft[side][index]; if (saved) select.value = saved.account;
           this.updateSelectTitle(select);
-          wrap.append(select, this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : ''));
-          if (!answer) wrap.lastChild.disabled = true;
-          row.append(wrap);
+          const amount = this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : '');
+          if (!answer) amount.disabled = true;
+          row.append(select, amount);
         }); container.append(row);
       }
     }

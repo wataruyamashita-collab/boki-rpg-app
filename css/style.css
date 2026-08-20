@@ -175,12 +175,9 @@ button.secondary-button:hover { color: #fff; }
   max-width: 100%;
 }
 
-.journal-side {
-  display: contents;
-}
-.journal-row > .journal-side:nth-child(2) select { border-left-width: 2px; border-left-color: #7f8c8d; }
-.journal-side select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.journal-side select:focus { text-overflow: clip; outline: 3px solid rgba(52, 152, 219, .25); outline-offset: 1px; }
+.journal-row > .credit-account { border-left-width: 2px; border-left-color: #7f8c8d; }
+.journal-row select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.journal-row select:focus { text-overflow: clip; outline: 3px solid rgba(52, 152, 219, .25); outline-offset: 1px; }
 
 select, .amount-input {
   min-width: 0;
