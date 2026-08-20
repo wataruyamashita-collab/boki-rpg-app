@@ -29,7 +29,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form">[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-7'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-8'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -88,8 +88,8 @@ assert(!/\.journal-header,\s*\.journal-row\s*{[^}]*min-width:\s*520px/s.test(css
 assert(/\.journal-entry-area\s*{[^}]*max-width:\s*100%[^}]*overflow-x:\s*clip/s.test(cssSource), '仕訳票自体を画面幅内に収めて横スクロールを発生させない');
 assert(/\.answer-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '表を画面幅に収める');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
-assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s.test(cssSource), '狭い画面では借方と貸方を縦に並べて長い金額を表示する');
-assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-side\s*{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s.test(cssSource), '狭い画面では勘定科目と金額も縦に並べて文字切れを防ぐ');
-assert(/\.journal-side::before\s*{[^}]*content:\s*attr\(data-side-label\)/s.test(cssSource), '縦並びでも借方・貸方の見出しを表示する');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 8px minmax\(0, 1fr\)/s.test(cssSource), '狭い画面でも借方と貸方を必ず横並びにする');
+assert(/@media \(max-width: 480px\)[\s\S]*?select,\s*\.amount-input\s*{[^}]*font-size:\s*clamp\(11px, 3vw, 16px\)/s.test(cssSource), '横並びのまま長い勘定科目と金額が収まるよう文字サイズを調整する');
+assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦並び用ラベルを追加しない');
 assert(!fs.readFileSync('js/app.js', 'utf8').includes('Function('), 'Functionによる式評価を禁止する');
 console.log('app tests: ok');

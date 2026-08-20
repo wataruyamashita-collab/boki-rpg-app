@@ -221,16 +221,8 @@ select, .amount-input {
   .journal-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
 
   .journal-side {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 4px;
-  }
-
-  .journal-side::before {
-    content: attr(data-side-label);
-    grid-column: 1 / -1;
-    color: #566573;
-    font-size: .75rem;
-    font-weight: bold;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 2px;
   }
 
   .divider {
@@ -240,7 +232,7 @@ select, .amount-input {
   select,
   .amount-input {
     padding: 8px 2px;
-    font-size: 16px;
+    font-size: clamp(11px, 3vw, 16px);
   }
 
   .amount-input::placeholder {
