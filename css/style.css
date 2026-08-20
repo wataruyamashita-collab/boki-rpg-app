@@ -221,7 +221,7 @@ select, .amount-input {
   .journal-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
 
   .journal-side {
-    grid-template-columns: minmax(0, 3fr) minmax(8.5rem, 2fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 4px;
   }
 
