@@ -23,12 +23,12 @@
     }
     renderJournal(question, draft = {}) {
       const container = this.byId('journal-container'); container.replaceChildren();
-      const header = this.document.createElement('div'); header.className = 'journal-header'; header.innerHTML = '<span>借方科目・金額</span><span></span><span>貸方科目・金額</span>'; container.append(header);
+      const header = this.document.createElement('div'); header.className = 'journal-header'; header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'; container.append(header);
       const count = Math.max(question.answer.debit.length, question.answer.credit.length);
       for (let index = 0; index < count; index += 1) {
         const row = this.document.createElement('div'); row.className = 'journal-row';
-        ['debit', 'credit'].forEach((side, sideIndex) => {
-          const answer = question.answer[side][index]; const wrap = this.document.createElement('div'); wrap.className = 'journal-side'; wrap.dataset.sideLabel = side === 'debit' ? '借方' : '貸方';
+        ['debit', 'credit'].forEach(side => {
+          const answer = question.answer[side][index]; const wrap = this.document.createElement('div'); wrap.className = 'journal-side';
           const select = this.document.createElement('select'); select.className = `${side}-account`; select.disabled = !answer;
           select.innerHTML = `<option value="">${answer ? '--勘定科目--' : '--入力なし--'}</option>`;
           if (answer) root.AppController.accountChoices(question, answer.account).forEach(name => select.append(new Option(name, name)));
@@ -36,7 +36,7 @@
           this.updateSelectTitle(select);
           wrap.append(select, this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : ''));
           if (!answer) wrap.lastChild.disabled = true;
-          row.append(wrap); if (sideIndex === 0) { const divider = this.document.createElement('span'); divider.className = 'divider'; divider.textContent = '｜'; row.append(divider); }
+          row.append(wrap);
         }); container.append(row);
       }
     }
