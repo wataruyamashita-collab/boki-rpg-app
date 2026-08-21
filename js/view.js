@@ -5,7 +5,9 @@
     constructor(document) { this.document = document; }
     byId(id) { return this.document.getElementById(id); }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
-    updateRpg(rpg) { this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}`; }
+    updateRpg(rpg) {
+      this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜経営HP ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円`;
+    }
     renderQuestion(question, draft) {
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;
       this.byId('q-text').textContent = question.question;

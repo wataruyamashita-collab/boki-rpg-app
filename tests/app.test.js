@@ -23,20 +23,25 @@ const rpg = new RPGModel(storage); const question = { id: 'J1', difficulty: 2, c
 assert.strictEqual(rpg.reward(question, { ratio: 0.5, earned: 1, possible: 2 }), true);
 assert.strictEqual(rpg.reward(question, { ratio: 1, earned: 2, possible: 2 }), false, '経験値は二重付与しない');
 assert.strictEqual(rpg.state.xp, 20);
+assert.strictEqual(rpg.state.companyHP, 100);
+rpg.applyAnswer(false, 'bold');
+assert.strictEqual(rpg.state.companyHP, 70, '勝負回答の誤答は経営HPを30減らす');
+rpg.applyAnswer(true, 'careful');
+assert.strictEqual(rpg.state.companyHP, 75, '正解は経営HPを5回復する');
 
 const html = fs.readFileSync('index.html', 'utf8');
 assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置かない');
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260820-10'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260821-1'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
 assert(controllerSource.includes('this.document.activeElement?.blur()'), '回答確定前にソフトウェアキーボードを閉じる');
 assert(html.includes('data-action="calc-insert"'), '電卓の表示金額を入力するボタンを表示する');
-assert(controllerSource.includes("'calc-insert': () => this.insertCalculatorResult(true)"), '電卓の入力ボタンを転記処理へ接続する');
-assert(controllerSource.includes("if (key === '＝') { this.insertCalculatorResult(true); return; }"), 'イコールキーで計算結果を選択中の金額欄へ転記する');
+assert(controllerSource.includes("'calc-insert': () => this.insertCalculatorResult(false)"), '電卓の入力ボタンを転記処理へ接続する');
+assert(controllerSource.includes("else if (key === '＝') this.calculateEquals()"), 'イコールキーで計算結果を表示する');
 assert(controllerSource.includes("addEventListener('focusin'"), '選択した金額欄を電卓の転記先にする');
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
@@ -57,6 +62,20 @@ assert.strictEqual(calculatorTarget.value, '1,500', '電卓の計算結果を選
 assert.strictEqual(calculatorElements['calculator-display'].value, '1,500', '電卓の計算結果にも3桁区切りのカンマを表示する');
 assert.strictEqual(calculatorController.saved, true, '電卓から転記した金額を下書きへ保存する');
 assert.strictEqual(browserSandbox.window.AppController.prototype.formatCalculatorExpression('1234567＋8900.5'), '1,234,567＋8,900.5', '計算途中の各数値にもカンマを表示する');
+const deskCalculator = {
+  expression: '0',
+  calculator: { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null },
+  document: { getElementById: () => ({ value: '' }) }
+};
+['clearCalculator', 'inputCalculatorDigit', 'operate', 'setOperator', 'calculateEquals', 'updateCalculatorDisplay', 'formatCalculatorExpression', 'calcKey'].forEach(method => { deskCalculator[method] = browserSandbox.window.AppController.prototype[method]; });
+['1', '2', '＋', '3', '×', '4', '＝'].forEach(key => deskCalculator.calcKey(key));
+assert.strictEqual(deskCalculator.expression, '60', '演算子入力のたびに左から順に計算する卓上電卓方式にする');
+deskCalculator.calcKey('＝');
+assert.strictEqual(deskCalculator.expression, '240', 'イコールの連続入力で直前の演算を繰り返す');
+deskCalculator.calcKey('C');
+assert.strictEqual(deskCalculator.expression, '0', 'Cは表示値だけを0に戻す');
+deskCalculator.calcKey('AC');
+assert.deepStrictEqual([deskCalculator.expression, deskCalculator.calculator.accumulator, deskCalculator.calculator.operator], ['0', null, null], 'ACは計算状態をすべて消去する');
 const questionDataSource = fs.readFileSync('data/questions.js', 'utf8');
 vm.runInNewContext(`${questionDataSource}\nwindow.QuestionDataAudit = validateQuestionData();`, browserSandbox);
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
@@ -97,7 +116,7 @@ assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦�
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
 assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの入力要素を仕訳行の直下に配置する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260820-10') && html.includes('js/view.js?v=20260820-10'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260821-1') && html.includes('js/view.js?v=20260821-1'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(/min-height:\s*100svh/.test(cssSource), 'iPhoneの可変ブラウザーバーを考慮した画面高を使う');
 assert(/env\(safe-area-inset-top\)/.test(cssSource), 'iPhoneの上側セーフエリアを確保する');
