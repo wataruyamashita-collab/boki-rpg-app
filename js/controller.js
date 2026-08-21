@@ -90,8 +90,10 @@
     }
     updateCalculatorDisplay() { this.document.getElementById('calculator-display').value = this.formatCalculatorExpression(this.expression) || '0'; }
     insertCalculatorResult(shouldCalculate) {
-      const target = this.calculatorTarget;
-      if (!target || !this.document.body.contains(target)) { this.document.getElementById('calculator-target').textContent = '先に金額欄を選んでください'; return; }
+      const selectedTarget = this.document.querySelector?.('.amount-input.calculator-selected');
+      const target = this.document.body.contains(this.calculatorTarget) ? this.calculatorTarget : selectedTarget;
+      if (!target || target.disabled || !this.document.body.contains(target)) { this.document.getElementById('calculator-target').textContent = '先に金額欄を選んでください'; return; }
+      this.calculatorTarget = target;
       if (shouldCalculate) { try { this.expression = String(root.SafeCalculator.evaluate(this.expression)); } catch (_) { this.expression = 'エラー'; } }
       const amount = Number(this.expression);
       if (!Number.isFinite(amount) || amount < 0) { this.document.getElementById('calculator-target').textContent = '0以上の計算結果を確認してください'; this.updateCalculatorDisplay(); return; }
@@ -143,7 +145,11 @@
     }
     restartAfterGameOver(review) {
       const dialog = this.document.getElementById('game-over-dialog'); dialog.close?.(); dialog.removeAttribute('open');
-      this.rpg.resetCompanyHP(); this.view.updateRpg(this.rpg); this.showMode(review ? 'review' : this.model.state.mode);
+      this.rpg.resetCompanyHP(); this.view.updateRpg(this.rpg); this.renderModes();
+      if (review) { this.showMode('review'); return; }
+      if (this.model.state.mode === 'exam') this.examScores = [];
+      const first = this.modeIds()[0];
+      if (first) this.start(first); else this.showMode(this.model.state.mode);
     }
   }
   root.AppController = Controller;

@@ -17,7 +17,7 @@
     }
     makeAmount(className, label, value = '') {
       const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'numeric');
-      input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.setAttribute('pattern', '[0-9,]*');
+      input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.setAttribute('pattern', '[0-9]*');
       input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocorrect', 'off'); input.setAttribute('spellcheck', 'false'); input.value = value;
       return input;
     }
