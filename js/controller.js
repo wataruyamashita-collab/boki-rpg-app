@@ -4,7 +4,8 @@
   class Controller {
     constructor(document, questions) {
       this.document = document; this.questions = questions; this.ids = Object.keys(questions); this.view = new root.AppView(document);
-      this.model = new root.ProgressModel(questions, root.localStorage); this.rpg = new root.RPGModel(root.localStorage); this.currentId = null; this.expression = ''; this.calculatorTarget = null; this.examScores = [];
+      this.model = new root.ProgressModel(questions, root.localStorage); this.rpg = new root.RPGModel(root.localStorage); this.currentId = null; this.expression = '0'; this.calculatorTarget = null; this.examScores = [];
+      this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
     }
     static accountChoices(question, correct) {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
@@ -16,7 +17,7 @@
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(true) };
+        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) { this.formatAmount(event.target); this.saveDraft(false); } });
@@ -38,15 +39,22 @@
     saveDraft(message) { if (!this.currentId) return; this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) this.document.getElementById('save-status').textContent = '入力内容を保存しました。'; }
     submit() {
       const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question); const score = root.GradingEngine.grade(question, answer);
+      const confidence = this.document.querySelector('input[name="confidence"]:checked')?.value || 'careful';
+      this.model.record(question.id, score.correct);
+      if (score.correct) this.rpg.reward(question, score, confidence === 'bold' ? 3 : 1);
+      this.rpg.applyAnswer(score.correct, confidence);
       if (this.model.state.mode === 'exam') {
         this.examScores.push({ id: question.id, score });
+        if (this.rpg.state.companyHP === 0) { this.view.updateRpg(this.rpg); this.showGameOver(); return; }
         const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1];
         if (next) return this.start(next);
         const earned = this.examScores.reduce((sum, item) => sum + item.score.earned, 0); const possible = this.examScores.reduce((sum, item) => sum + item.score.possible, 0);
+        this.view.updateRpg(this.rpg);
         this.view.result({ explanation: '模擬試験を終了しました。復習モードで誤答した論点を確認しましょう。' }, { correct: earned === possible, earned, possible });
         this.view.show('view-result'); return;
       }
-      this.model.record(question.id, score.correct); this.rpg.reward(question, score); this.view.updateRpg(this.rpg); this.view.result(question, score); this.view.show('view-result');
+      this.view.updateRpg(this.rpg); this.view.result(question, score); this.view.show('view-result');
+      if (this.rpg.state.companyHP === 0) this.showGameOver();
     }
     next() { const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
     formatAmount(input) {
@@ -92,8 +100,50 @@
       this.document.getElementById('calculator-target').textContent = `${target.getAttribute('aria-label')}へ${target.value}円を入力しました`;
     }
     calcKey(key) {
-      if (key === 'AC') this.expression = ''; else if (key === 'C') this.expression = this.expression.slice(0, -1); else if (key === '＝') { this.insertCalculatorResult(true); return; } else { if (this.expression === 'エラー') this.expression = ''; this.expression += key; }
+      if (key === 'AC') this.clearCalculator();
+      else if (key === 'C') { this.expression = '0'; this.calculator.waitingForOperand = false; }
+      else if (key === '＝') this.calculateEquals();
+      else if (['＋', '−', '×', '÷'].includes(key)) this.setOperator(key);
+      else this.inputCalculatorDigit(key);
       this.updateCalculatorDisplay();
+    }
+    clearCalculator() {
+      this.expression = '0'; this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
+    }
+    inputCalculatorDigit(key) {
+      if (this.expression === 'エラー' || this.calculator.waitingForOperand) { this.expression = '0'; this.calculator.waitingForOperand = false; }
+      if (key === '.') { if (!this.expression.includes('.')) this.expression += '.'; return; }
+      const next = this.expression === '0' ? key.replace(/^0+(?=\d)/, '') : this.expression + key;
+      if (next.replace(/[-.]/g, '').length <= 12) this.expression = next || '0';
+    }
+    operate(left, operator, right) {
+      return root.SafeCalculator.evaluate(`${left}${operator}${right}`);
+    }
+    setOperator(operator) {
+      const value = Number(this.expression);
+      if (!Number.isFinite(value)) return this.clearCalculator();
+      if (this.calculator.operator && !this.calculator.waitingForOperand) this.calculator.accumulator = this.operate(this.calculator.accumulator, this.calculator.operator, value);
+      else if (this.calculator.accumulator === null) this.calculator.accumulator = value;
+      this.expression = String(this.calculator.accumulator); this.calculator.operator = operator; this.calculator.waitingForOperand = true;
+      this.calculator.lastOperator = null; this.calculator.lastOperand = null;
+    }
+    calculateEquals() {
+      let operator = this.calculator.operator; let operand = Number(this.expression); const repeating = !operator && this.calculator.lastOperator;
+      if (repeating) { operator = this.calculator.lastOperator; operand = this.calculator.lastOperand; }
+      if (!operator || this.calculator.accumulator === null) return;
+      if (this.calculator.waitingForOperand && !repeating) operand = this.calculator.accumulator;
+      try {
+        const result = this.operate(this.calculator.accumulator, operator, operand);
+        this.expression = String(result); this.calculator.accumulator = result; this.calculator.lastOperator = operator; this.calculator.lastOperand = operand; this.calculator.operator = null; this.calculator.waitingForOperand = true;
+      } catch (_) { this.expression = 'エラー'; this.calculator.accumulator = null; this.calculator.operator = null; }
+    }
+    showGameOver() {
+      const dialog = this.document.getElementById('game-over-dialog');
+      if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+    }
+    restartAfterGameOver(review) {
+      const dialog = this.document.getElementById('game-over-dialog'); dialog.close?.(); dialog.removeAttribute('open');
+      this.rpg.resetCompanyHP(); this.view.updateRpg(this.rpg); this.showMode(review ? 'review' : this.model.state.mode);
     }
   }
   root.AppController = Controller;

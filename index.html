@@ -6,7 +6,7 @@
   <meta name="format-detection" content="telephone=no">
   <meta name="theme-color" content="#2c3e50">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260820-10">
+  <link rel="stylesheet" href="css/style.css?v=20260821-1">
 </head>
 <body>
 <div class="container">
@@ -42,12 +42,14 @@
             <button type="button" data-action="calc" data-calc="0">0</button><button type="button" data-action="calc" data-calc="00">00</button><button type="button" data-action="calc" data-calc=".">.</button>
           </div></div></details>
         <p id="save-status" class="save-status" aria-live="polite"></p>
+        <fieldset class="confidence-selector"><legend>回答の確信度</legend><label><input type="radio" name="confidence" value="careful" checked>慎重に回答 <small>通常XP／ミス時 HP -10</small></label><label><input type="radio" name="confidence" value="bold">勝負回答 <small>正解時 XP 3倍／ミス時 HP -30</small></label></fieldset>
         <div class="question-actions"><button class="confirm-button" type="submit">回答を確定する</button><button class="secondary-button save-button" type="button" data-action="save">ここまで保存する</button></div>
       </form>
     </section>
     <section id="view-result" class="view"><div id="result-status" class="result-box"></div><div id="correct-journal" class="correct-journal"></div><div id="explanation" class="explanation-box"></div><button type="button" data-action="next">次へ進む</button></section>
   </main>
+  <dialog id="game-over-dialog" class="game-over-dialog"><h2>資金ショート</h2><p>経営HPが0になりました。最初から立て直すか、間違えた問題を復習しましょう。</p><div><button type="button" data-action="retry-mode">このモードを最初から</button><button type="button" class="secondary-button" data-action="review-game-over">復習する</button></div></dialog>
 </div>
-<script src="data/questions.js?v=20260820-10"></script><script src="js/calculator.js?v=20260820-10"></script><script src="js/model.js?v=20260820-10"></script><script src="js/rpg.js?v=20260820-10"></script><script src="js/engine.js?v=20260820-10"></script><script src="js/view.js?v=20260820-10"></script><script src="js/controller.js?v=20260820-10"></script><script src="js/app.js?v=20260820-10"></script>
+<script src="data/questions.js?v=20260821-1"></script><script src="js/calculator.js?v=20260821-1"></script><script src="js/model.js?v=20260821-1"></script><script src="js/rpg.js?v=20260821-1"></script><script src="js/engine.js?v=20260821-1"></script><script src="js/view.js?v=20260821-1"></script><script src="js/controller.js?v=20260821-1"></script><script src="js/app.js?v=20260821-1"></script>
 </body>
 </html>
