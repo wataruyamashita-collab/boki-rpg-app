@@ -74,6 +74,16 @@ input { -webkit-tap-highlight-color: rgba(52, 152, 219, .2); }
 .question-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
 .question-list button { margin: 0; text-align: left; font-size: .9rem; }
 
+.question-filters { margin: 0 0 24px; padding: 14px; border: 1px solid #d5dce0; border-radius: 10px; background: #f8fafb; }
+.question-filters[hidden] { display: none; }
+.filter-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.filter-heading h2 { margin: 0; font-size: 1rem; }
+button.filter-reset { width: auto; min-height: 44px; margin: 0; padding: 8px 12px; color: var(--accent-color); font-size: .8rem; background: #fff; border: 1px solid var(--accent-color); }
+.filter-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px; }
+.filter-grid label { color: #566573; font-size: .78rem; font-weight: 700; }
+.filter-grid input, .filter-grid select { width: 100%; margin-top: 3px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 6px; background: #fff; }
+.filter-status { min-height: 1.4em; margin: 8px 0 0; color: #566573; font-size: .8rem; }
+
 .app-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid #dfe6e9; }
 .app-header h1 { margin: 0; font-size: clamp(1.25rem, 4vw, 1.65rem); line-height: 1.25; }
 .app-kicker, .section-label { margin: 0 0 2px; color: var(--accent-color); font-size: 0.72rem; font-weight: bold; letter-spacing: .08em; }
@@ -272,6 +282,7 @@ select, .amount-input {
   .calculator-transfer span { overflow-wrap: anywhere; }
 
   .mode-nav button { line-height: 1.25; overflow-wrap: anywhere; }
+  .filter-grid { grid-template-columns: 1fr; gap: 6px; }
 }
 
 button {
