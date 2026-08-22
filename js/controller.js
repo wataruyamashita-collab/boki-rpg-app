@@ -6,6 +6,7 @@
       this.document = document; this.questions = questions; this.ids = Object.keys(questions); this.view = new root.AppView(document);
       this.model = new root.ProgressModel(questions, root.localStorage); this.rpg = new root.RPGModel(root.localStorage); this.currentId = null; this.expression = '0'; this.calculatorTarget = null; this.examScores = [];
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
+      this.filters = { query: '', account: '', mistakes: 'all' };
     }
     static accountChoices(question, correct) {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
@@ -13,29 +14,56 @@
       return [...new Set([correct, ...related, ...all])].slice(0, 5).sort(() => 0.5 - Controller.hash(`${question.id}-${correct}`));
     }
     static hash(text) { return ([...text].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 10) / 10; }
-    init() { this.bindEvents(); this.renderModes(); this.view.updateRpg(this.rpg); this.showMode('story'); }
+    init() { this.bindEvents(); this.populateAccountFilter(); this.renderModes(); this.view.updateRpg(this.rpg); this.showMode('story'); }
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true) };
+        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) { this.formatAmount(event.target); this.saveDraft(false); } });
       this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
       this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
+      this.document.getElementById('filter-query').addEventListener('input', event => { this.filters.query = event.target.value; this.renderModes(); });
+      ['filter-account', 'filter-mistakes'].forEach(id => this.document.getElementById(id).addEventListener('change', event => { this.filters[id === 'filter-account' ? 'account' : 'mistakes'] = event.target.value; this.renderModes(); }));
       this.document.getElementById('question-form').addEventListener('submit', event => {
         event.preventDefault();
         this.document.activeElement?.blur();
         this.submit();
       });
     }
-    showMode(mode) { this.model.state.mode = mode; if (mode === 'exam') this.examScores = []; this.model.save(); this.view.show(`view-${mode}`); this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false')); }
+    showMode(mode) { this.model.state.mode = mode; if (mode === 'exam') this.examScores = []; this.model.save(); this.view.show(`view-${mode}`); this.document.getElementById('question-filters').hidden = false; this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false')); }
     modeIds() { const mode = this.model.state.mode; if (mode === 'review') return this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids; if (mode === 'exam') return this.ids.slice(-15); if (mode === 'training') return this.ids.filter(id => this.questions[id].type !== 'journal'); return this.ids; }
-    renderModes() {
-      const render = (id, ids) => { const list = this.document.getElementById(id); list.replaceChildren(...ids.slice(0, 30).map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; button.textContent = `${qid}｜${this.questions[qid].category}`; return button; })); };
-      render('story-list', this.ids.filter(id => this.questions[id].type === 'journal')); render('training-list', this.ids.filter(id => this.questions[id].type !== 'journal')); render('review-list', this.modeIds()); render('exam-list', this.ids.slice(-15));
+    questionAccounts(question) { return question.type === 'journal' ? [...question.answer.debit, ...question.answer.credit].map(item => item.account) : []; }
+    populateAccountFilter() {
+      const select = this.document.getElementById('filter-account');
+      [...new Set(this.ids.flatMap(id => this.questionAccounts(this.questions[id])))].sort((a, b) => a.localeCompare(b, 'ja')).forEach(account => select.append(new Option(account, account)));
     }
-    start(id) { this.currentId = id; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id]); this.view.show('view-question'); const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
+    filteredIds(ids) {
+      const normalized = this.filters.query.trim().toLocaleLowerCase('ja');
+      const matches = ids.filter(id => {
+        const question = this.questions[id]; const accounts = this.questionAccounts(question);
+        const searchable = [id, question.category, question.question, question.scene, question.story, ...accounts].filter(Boolean).join(' ').toLocaleLowerCase('ja');
+        if (normalized && !searchable.includes(normalized)) return false;
+        if (this.filters.account && !accounts.includes(this.filters.account)) return false;
+        const count = this.model.state.mistakeCounts[id] || 0;
+        if (this.filters.mistakes === 'incorrect' && !this.model.state.incorrectIds.includes(id)) return false;
+        if ((this.filters.mistakes === 'attempted' || this.filters.mistakes === 'frequent') && count === 0) return false;
+        return true;
+      });
+      if (this.filters.mistakes === 'frequent') matches.sort((a, b) => (this.model.state.mistakeCounts[b] || 0) - (this.model.state.mistakeCounts[a] || 0));
+      return matches;
+    }
+    resetFilters() {
+      this.filters = { query: '', account: '', mistakes: 'all' };
+      this.document.getElementById('filter-query').value = ''; this.document.getElementById('filter-account').value = ''; this.document.getElementById('filter-mistakes').value = 'all'; this.renderModes();
+    }
+    renderModes() {
+      const render = (id, ids) => { const filtered = this.filteredIds(ids); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; const mistakes = this.model.state.mistakeCounts[qid] || 0; button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}`; return button; })); return filtered.length; };
+      const counts = [render('story-list', this.ids.filter(id => this.questions[id].type === 'journal')), render('training-list', this.ids.filter(id => this.questions[id].type !== 'journal')), render('review-list', this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids), render('exam-list', this.ids.slice(-15))];
+      const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode); const count = counts[Math.max(modeIndex, 0)]; this.document.getElementById('filter-status').textContent = `${count}問を表示しています。`;
+    }
+    start(id) { this.currentId = id; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id]); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
     saveDraft(message) { if (!this.currentId) return; this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) this.document.getElementById('save-status').textContent = '入力内容を保存しました。'; }
     submit() {
       const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question); const score = root.GradingEngine.grade(question, answer);

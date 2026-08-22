@@ -1,0 +1,14 @@
+{
+  "name": "日商簿記3級 経理シミュレーションRPG",
+  "short_name": "簿記RPG",
+  "description": "全300問を物語で学べる日商簿記3級学習アプリ",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f7",
+  "theme_color": "#2c3e50",
+  "icons": [
+    { "src": "icons/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
