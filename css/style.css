@@ -25,6 +25,9 @@ body {
 
 html { background-color: var(--primary-color); }
 
+/* iOSの回転時にもWebKitの文字自動拡大でレイアウトを崩させない。 */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
 /* 指先でも確実に操作できる44px以上のタップ領域を全フォーム部品に確保する */
 button,
 select,
@@ -56,6 +59,7 @@ input { -webkit-tap-highlight-color: rgba(52, 152, 219, .2); }
   background: #fff;
   min-height: 100vh;
   min-height: 100svh;
+  min-height: 100dvh;
   box-shadow: 0 0 10px rgba(0,0,0,0.05);
   box-sizing: border-box;
 }
@@ -240,11 +244,17 @@ select, .amount-input {
 
   .journal-header { display: grid; font-size: 0.7rem; }
 
-  select,
-  .amount-input {
+  .journal-row select,
+  .journal-row .amount-input {
     padding: 8px 2px;
-    /* iOS WebKitは16px未満のフォーム部品へフォーカスするとページを自動拡大する。 */
-    font-size: 16px;
+    /* 4列と44pxの高さは変えず、長い科目名と桁区切り金額を実表示幅へ収める。 */
+    font-size: clamp(11px, 3.2vw, 14px);
+    letter-spacing: -.035em;
+  }
+
+  .journal-row .amount-input {
+    font-family: "Arial Narrow", "Helvetica Neue", sans-serif;
+    font-variant-numeric: tabular-nums;
   }
 
   .amount-input::placeholder {
@@ -256,6 +266,12 @@ select, .amount-input {
 
   .toc-questions { grid-template-columns: 1fr; }
   .toc-chapter-title { font-size: .88rem; }
+
+  .player-status,
+  .question-text,
+  .calculator-transfer span { overflow-wrap: anywhere; }
+
+  .mode-nav button { line-height: 1.25; overflow-wrap: anywhere; }
 }
 
 button {
@@ -274,6 +290,10 @@ button {
 }
 button:hover { background-color: #2980b9; }
 button:active { transform: translateY(1px); filter: brightness(.92); }
+button:focus-visible,
+summary:focus-visible,
+select:focus-visible,
+input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset: 2px; }
 
 /* タッチ端末ではhover状態がタップ後に残るため、hover装飾は対応端末だけに限定する。 */
 @media (hover: none) {
@@ -311,3 +331,16 @@ button:active { transform: translateY(1px); filter: brightness(.92); }
 .journal-amount { text-align: right; white-space: nowrap; }
 .explanation-text { white-space: pre-wrap; }
 .account-types { margin: 0; padding-left: 1.4em; }
+
+/* Chrome on iOSではダイアログがブラウザーバーやノッチへ潜らないようにする。 */
+.game-over-dialog {
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .container { padding-top: max(8px, env(safe-area-inset-top)); }
+  .app-header { margin-bottom: 12px; }
+  .mode-nav { margin-bottom: 14px; }
+}
