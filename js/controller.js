@@ -81,7 +81,7 @@
         this.view.result({ explanation: '模擬試験を終了しました。復習モードで誤答した論点を確認しましょう。' }, { correct: earned === possible, earned, possible });
         this.view.show('view-result'); return;
       }
-      this.view.updateRpg(this.rpg); this.view.result(question, score); this.view.show('view-result');
+      this.view.updateRpg(this.rpg); this.view.result(question, score, answer); this.view.show('view-result');
       if (this.rpg.state.companyHP === 0) this.showGameOver();
     }
     next() { const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
