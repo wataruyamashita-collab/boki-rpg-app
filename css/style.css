@@ -335,6 +335,7 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 
 .answer-comparison, .correct-journal { margin-top: 20px; }
 .answer-comparison { padding: 14px; border: 2px solid #e6b0aa; border-radius: 8px; background: #fff8f7; }
+.answer-comparison[hidden],
 .answer-comparison:empty { display: none; }
 .answer-comparison p { margin: 0 0 10px; color: #633; }
 .answer-comparison h3, .correct-journal h3, .explanation-box h3 { margin: 0 0 8px; font-size: 1rem; }

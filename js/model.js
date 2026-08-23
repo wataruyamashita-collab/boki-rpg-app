@@ -2,13 +2,13 @@
   'use strict';
   class ProgressModel {
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
-      this.questions = questions; this.storage = storage; this.key = key;
+      this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
       this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, drafts: {}, completed: false };
       this.load();
     }
     load() {
       try {
-        const saved = JSON.parse(this.storage.getItem(this.key));
+        const saved = JSON.parse(this.storage?.getItem?.(this.key));
         if (saved && typeof saved === 'object' && !Array.isArray(saved)) this.state = Object.assign(this.state, saved, {
           mode: ['story', 'training', 'review', 'exam'].includes(saved.mode) ? saved.mode : 'story',
           currentQuestionId: this.questions[saved.currentQuestionId] ? saved.currentQuestionId : null,
@@ -22,13 +22,14 @@
         });
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
     }
-    save() { try { this.storage.setItem(this.key, JSON.stringify(this.state)); } catch (_) { /* learning remains usable */ } }
-    setDraft(id, answer) { this.state.drafts[id] = answer; this.state.currentQuestionId = id; this.save(); }
+    save() { try { this.storage?.setItem?.(this.key, JSON.stringify(this.state)); } catch (_) { /* learning remains usable */ } }
+    setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; this.save(); return true; }
     record(id, correct) {
+      if (!this.questions[id]) return false;
       if (!this.state.answeredIds.includes(id)) this.state.answeredIds.push(id);
       this.state.incorrectIds = this.state.incorrectIds.filter(value => value !== id);
       if (!correct) { this.state.incorrectIds.push(id); this.state.mistakeCounts[id] = (this.state.mistakeCounts[id] || 0) + 1; }
-      delete this.state.drafts[id]; this.save();
+      delete this.state.drafts[id]; this.save(); return true;
     }
   }
   root.ProgressModel = ProgressModel;
