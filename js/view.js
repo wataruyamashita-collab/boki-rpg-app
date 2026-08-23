@@ -1,5 +1,6 @@
 (function (root) {
   'use strict';
+  const normalizeNumber = str => String(str || '').replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0));
   const yen = value => Number(value).toLocaleString('ja-JP');
   class AppView {
     constructor(document) { this.document = document; }
@@ -61,7 +62,7 @@
     }
     readAnswer(question) {
       if (question.type !== 'journal') { const cells = {}; this.document.querySelectorAll('.table-input').forEach(input => { cells[input.dataset.cellId] = input.value; }); return { cells }; }
-      const side = name => [...this.document.querySelectorAll(`.${name}-account`)].map((account, index) => ({ account: account.value, amount: Number(this.document.querySelectorAll(`.${name}-amount`)[index].value.replace(/,/g, '')) })).filter(item => item.account || item.amount);
+      const side = name => [...this.document.querySelectorAll(`.${name}-account`)].map((account, index) => ({ account: account.value, amount: Number(normalizeNumber(this.document.querySelectorAll(`.${name}-amount`)[index].value).replace(/,/g, '')) })).filter(item => item.account || item.amount);
       return { debit: side('debit'), credit: side('credit') };
     }
     result(question, score, userAnswer) {
@@ -88,7 +89,9 @@
     }
     renderAnswerComparison(question, score, userAnswer) {
       const container = this.byId('answer-comparison'); container.replaceChildren();
+      container.hidden = true;
       if (score.correct || question.type !== 'journal' || !userAnswer) return;
+      container.hidden = false;
       const heading = this.document.createElement('h3'); heading.textContent = 'あなたの仕訳（誤答）';
       const note = this.document.createElement('p'); note.textContent = '下の「正しい仕訳」と、科目・貸借・金額を一つずつ見比べましょう。';
       container.append(heading, note, this.journalTable(userAnswer));
