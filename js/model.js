@@ -3,7 +3,7 @@
   class ProgressModel {
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, drafts: {}, completed: false };
+      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, drafts: {}, completed: false, examAttempt: 0 };
       this.load();
     }
     load() {
@@ -18,7 +18,8 @@
             ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object')) : {},
           mistakeCounts: saved.mistakeCounts && typeof saved.mistakeCounts === 'object'
             ? Object.fromEntries(Object.entries(saved.mistakeCounts).filter(([id, count]) => this.questions[id] && Number.isSafeInteger(count) && count > 0)) : {},
-          completed: saved.completed === true
+          completed: saved.completed === true,
+          examAttempt: Number.isSafeInteger(saved.examAttempt) && saved.examAttempt >= 0 ? saved.examAttempt : 0
         });
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
     }

@@ -21,6 +21,8 @@
     }
     renderQuestion(question, draft, mode = 'story') {
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;
+      const story = this.byId('q-story'); story.hidden = mode !== 'story';
+      if (!story.hidden) { this.byId('q-scene').textContent = question.scene; this.byId('q-context').textContent = question.story; this.byId('q-task').textContent = `今回の仕事：${question.category}`; }
       this.byId('q-text').textContent = question.question;
       this.byId('journal-container').hidden = question.type !== 'journal';
       this.byId('table-container').hidden = question.type === 'journal';
@@ -31,6 +33,10 @@
       input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.setAttribute('pattern', '[0-9,]*');
       input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocorrect', 'off'); input.setAttribute('spellcheck', 'false'); input.value = value;
       return input;
+    }
+    makeText(className, label, value = '') {
+      const input = this.document.createElement('input'); input.type = 'text'; input.className = `${className} table-text-input`;
+      input.setAttribute('aria-label', label); input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocomplete', 'off'); input.value = value; return input;
     }
     updateSelectTitle(select) {
       select.title = select.selectedOptions[0]?.textContent || '';
@@ -71,7 +77,11 @@
       question.table.rows.forEach(rowData => {
         const row = body.insertRow(); Object.values(rowData).forEach(value => {
           const cell = row.insertCell();
-          if (value === '入力') { const id = question.table.inputCells[inputIndex++]; const input = this.makeAmount('table-input', `${id}の回答`, draft.cells?.[id] || ''); input.dataset.cellId = id; cell.append(input); }
+          if (value === '入力') {
+            const id = question.table.inputCells[inputIndex++]; const inputType = question.table.inputTypes?.[id] || 'amount';
+            const input = inputType === 'amount' ? this.makeAmount('table-input', `${id}の回答（金額）`, draft.cells?.[id] ?? '') : this.makeText('table-input', `${id}の回答（勘定科目）`, draft.cells?.[id] ?? '');
+            input.dataset.cellId = id; input.dataset.inputType = inputType; cell.append(input);
+          }
           else cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : value;
         });
       }); wrap.append(table);
