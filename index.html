@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <meta name="format-detection" content="telephone=no">
   <meta name="theme-color" content="#2c3e50">
+  <meta name="description" content="仕訳から財務諸表まで、全300問を物語で学べる日商簿記3級学習アプリ">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
   <link rel="stylesheet" href="css/style.css?v=20260822-2">
 </head>
@@ -20,6 +23,16 @@
     <button type="button" data-action="mode" data-mode="exam">模擬試験</button>
   </nav>
 
+  <aside id="question-filters" class="question-filters" aria-labelledby="filter-heading">
+    <div class="filter-heading"><h2 id="filter-heading">問題を絞り込む</h2><button type="button" class="filter-reset" data-action="filter-reset">条件をクリア</button></div>
+    <div class="filter-grid">
+      <label>キーワード<input id="filter-query" type="search" placeholder="問題文・カテゴリ・勘定科目" autocomplete="off"></label>
+      <label>勘定科目<select id="filter-account"><option value="">すべての勘定科目</option></select></label>
+      <label>復習状況<select id="filter-mistakes"><option value="all">すべて</option><option value="incorrect">現在の復習対象</option><option value="attempted">間違えたことがある</option><option value="frequent">間違いが多い順</option></select></label>
+    </div>
+    <p id="filter-status" class="filter-status" aria-live="polite"></p>
+  </aside>
+
   <main>
     <section id="view-story" class="view"><h2>ストーリーモード</h2><p>取引を処理して、会社の数字を見えるようにしましょう。</p><div id="story-list" class="question-list"></div></section>
     <section id="view-training" class="view"><h2>トレーニングモード</h2><p>試算表・元帳・精算表などを形式別に練習します。</p><div id="training-list" class="question-list"></div></section>
@@ -32,7 +45,7 @@
         <div id="journal-container" class="journal-entry-area"></div>
         <div id="table-container" class="table-question-wrap"></div>
         <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
-          <input id="calculator-display" class="calculator-display" value="0" readonly inputmode="numeric" pattern="[0-9]*" aria-label="計算機の表示">
+          <input id="calculator-display" class="calculator-display" value="0" readonly inputmode="numeric" aria-label="計算機の表示">
           <div class="calculator-transfer"><span id="calculator-target" aria-live="polite">金額欄を選んでください</span><button type="button" data-action="calc-insert">表示中の金額を入力</button></div>
           <div class="calculator-keys" aria-label="計算機">
             <button type="button" data-action="calc" data-calc="AC">AC</button><button type="button" data-action="calc" data-calc="C">C</button><button type="button" data-action="calc" data-calc="÷">÷</button><button type="button" data-action="calc" data-calc="×">×</button>
@@ -46,7 +59,7 @@
         <div class="question-actions"><button class="confirm-button" type="submit">回答を確定する</button><button class="secondary-button save-button" type="button" data-action="save">ここまで保存する</button></div>
       </form>
     </section>
-    <section id="view-result" class="view"><div id="result-status" class="result-box"></div><div id="correct-journal" class="correct-journal"></div><div id="explanation" class="explanation-box"></div><button type="button" data-action="next">次へ進む</button></section>
+    <section id="view-result" class="view"><div id="result-status" class="result-box"></div><div id="answer-comparison" class="answer-comparison"></div><div id="correct-journal" class="correct-journal"></div><div id="explanation" class="explanation-box"></div><button type="button" data-action="next">次へ進む</button></section>
   </main>
   <dialog id="game-over-dialog" class="game-over-dialog"><h2>資金ショート</h2><p>経営HPが0になりました。最初から立て直すか、間違えた問題を復習しましょう。</p><div><button type="button" data-action="retry-mode">このモードを最初から</button><button type="button" class="secondary-button" data-action="review-game-over">復習する</button></div></dialog>
 </div>
