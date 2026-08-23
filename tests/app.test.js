@@ -14,6 +14,9 @@ assert.throws(() => Calculator.evaluate('1÷0'), /invalid/);
 const table = Engine.gradeTable({ cells: { cash: '1,000', sales: '500' } }, { cells: { cash: 1000, sales: 700 } });
 assert.deepStrictEqual([table.correct, table.earned, table.possible, table.ratio], [false, 1, 2, 0.5]);
 assert.strictEqual(Engine.gradeTable({ cells: { cash: '１,０００' } }, { cells: { cash: 1000 } }).correct, true, '表形式の全角数字を正しく採点する');
+assert.strictEqual(Engine.gradeTable({ cells: { cash: '１，0００' } }, { cells: { cash: 1000 } }).correct, true, '全角・半角数字と全角カンマの混在を正規化する');
+assert.strictEqual(Engine.gradeTable({ cells: { cash: '0' } }, { cells: { cash: 0 } }).correct, true, '明示的に入力した0は正答として扱う');
+assert.strictEqual(Engine.gradeTable({ cells: { cash: '-1' } }, { cells: { cash: 0 } }).correct, false, '負数を0へ暗黙変換しない');
 assert.strictEqual(Engine.gradeTable({ cells: { cash: '' } }, { cells: { cash: 0 } }).correct, false, '空欄を数値0の正答として扱わない');
 assert.strictEqual(Engine.gradeJournalEntry({ debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }, { debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }), true);
 assert.strictEqual(Engine.gradeJournalEntry({ debit: [{ account: '現金', amount: NaN }], credit: [{ account: '売上', amount: NaN }] }, { debit: [{ account: '現金', amount: NaN }], credit: [{ account: '売上', amount: NaN }] }), false, '非有限金額を仕訳として受理しない');
@@ -45,13 +48,19 @@ const recoveredProgress = new ProgressModel({ J1: {} }, corruptStorage);
 assert.deepStrictEqual([recoveredProgress.state.mode, recoveredProgress.state.answeredIds.length, recoveredProgress.state.completed], ['story', 0, false], '破損した進捗の各フィールドを安全な初期値へ戻す');
 const recoveredRpg = new RPGModel(corruptStorage);
 assert.deepStrictEqual([recoveredRpg.state.xp, recoveredRpg.state.rewardedIds.length, recoveredRpg.state.companyHP, recoveredRpg.state.totalTransactionAmount], [0, 0, 0, 0], '破損したRPG状態を型検証し範囲内へ補正する');
+const brokenJsonStorage = { getItem() { return '{broken'; }, setItem() { throw new Error('quota'); } };
+const memoryProgress = new ProgressModel({ J1: {} }, brokenJsonStorage);
+const memoryRpg = new RPGModel(brokenJsonStorage);
+assert.doesNotThrow(() => { memoryProgress.record('J1', false); memoryRpg.applyAnswer(false); }, '壊れたJSONと書込不能なstorageでもメモリ上で動作を続ける');
+assert.deepStrictEqual([memoryProgress.state.incorrectIds[0], memoryRpg.state.companyHP], ['J1', 90], 'storage障害時も現在セッションの状態を保持する');
+assert.strictEqual(memoryProgress.record('unknown', false), false, '未定義の問題IDを進捗へ混入させない');
 
 const html = fs.readFileSync('index.html', 'utf8');
 assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置かない');
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260823-1'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260823-2'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -64,6 +73,17 @@ assert(controllerSource.includes("addEventListener('focusin'"), '選択した金
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
 browserSandbox.window.SafeCalculator = Calculator;
+browserSandbox.window.GradingEngine = { grade: () => ({ correct: false, earned: 0, possible: 1, ratio: 0 }) };
+const submitAudit = {
+  submitting: false, currentId: 'J1', questions: { J1: { id: 'J1' } },
+  view: { readAnswer: () => ({}), updateRpg() {}, result() {}, show() {} },
+  model: { state: { mode: 'story' }, record() { this.calls = (this.calls || 0) + 1; } },
+  rpg: { state: { companyHP: 100 }, applyAnswer() { this.calls = (this.calls || 0) + 1; } },
+  document: { querySelector: () => null }
+};
+browserSandbox.window.AppController.prototype.submit.call(submitAudit);
+browserSandbox.window.AppController.prototype.submit.call(submitAudit);
+assert.deepStrictEqual([submitAudit.model.calls, submitAudit.rpg.calls], [1, 1], '連続submitでも進捗とHPを一度だけ更新する');
 const calculatorTarget = { value: '', getAttribute() { return '借方 1行目の金額'; }, setSelectionRange() {} };
 const calculatorElements = { 'calculator-target': { textContent: '' }, 'calculator-display': { value: '' } };
 const calculatorController = {
@@ -113,6 +133,9 @@ assert.deepStrictEqual([...amountInput.range], [3, 4, 'forward'], '整形後も�
 const fullWidthAmountInput = { value: '１２３４', selectionStart: 4, selectionEnd: 4, setSelectionRange(...range) { this.range = range; } };
 browserSandbox.window.AppController.prototype.formatAmount(fullWidthAmountInput);
 assert.strictEqual(fullWidthAmountInput.value, '1,234', 'iOS IMEの全角数字を半角へ正規化して整形する');
+const mixedAmountInput = { value: '１，2３４', selectionStart: 5, selectionEnd: 5, setSelectionRange(...range) { this.range = range; } };
+browserSandbox.window.AppController.prototype.formatAmount(mixedAmountInput);
+assert.strictEqual(mixedAmountInput.value, '1,234', '全角カンマを含む混在入力も整形する');
 const viewSource = fs.readFileSync('js/view.js', 'utf8');
 vm.runInNewContext(viewSource, browserSandbox);
 const answerFields = {
@@ -142,6 +165,7 @@ assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不
 assert(viewSource.includes("heading.textContent = '正しい仕訳'"), '正しい仕訳の見出しを表示する');
 assert(html.includes('id="answer-comparison"'), '誤答した仕訳を正答と比較する表示領域を設ける');
 assert(/\.answer-comparison:empty\s*{[^}]*display:\s*none/s.test(cssSource), '空の誤答比較欄は赤枠ごと非表示にする');
+assert(/\.answer-comparison\[hidden\][\s\S]*?display:\s*none/s.test(cssSource), 'hidden属性でも誤答比較欄を確実に非表示にする');
 assert(viewSource.includes('container.hidden = true') && viewSource.includes('container.hidden = false'), '誤答比較欄は誤答時だけ表示する');
 assert(controllerSource.includes('this.view.result(question, score, answer)'), '採点結果画面へ回答者の仕訳を渡す');
 assert(viewSource.includes("heading.textContent = 'あなたの仕訳（誤答）'"), '回答者が入力した誤答を表示する');
@@ -158,7 +182,7 @@ assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦�
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
 assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの入力要素を仕訳行の直下に配置する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260823-1') && html.includes('js/view.js?v=20260823-1'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260823-2') && html.includes('js/view.js?v=20260823-2'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(html.includes('maximum-scale=1'), 'iPhoneで小さい仕訳文字へフォーカスした際の自動拡大を防ぐ');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
@@ -171,6 +195,15 @@ assert(/min-height:\s*100svh/.test(cssSource), 'iPhoneの可変ブラウザー�
 assert(/min-height:\s*100dvh/.test(cssSource), 'iPhone Chromeの可変ビューポート高へ追従する');
 assert(/env\(safe-area-inset-top\)/.test(cssSource), 'iPhoneの上側セーフエリアを確保する');
 assert(!fs.readFileSync('js/app.js', 'utf8').includes('Function('), 'Functionによる式評価を禁止する');
+const appSource = fs.readFileSync('js/app.js', 'utf8');
+const appSandbox = {
+  window: { location: { search: '' }, SafeCalculator: Calculator },
+  document: { addEventListener() {} }, navigator: {}, location: { protocol: 'file:' }, URLSearchParams
+};
+vm.runInNewContext(appSource, appSandbox);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(appSandbox.window.App.initialRoute('?mode=review&question=J001'))), { mode: 'review', questionId: 'J001' }, '有効なURLパラメータを初期表示候補として読み取る');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(appSandbox.window.App.initialRoute('%E0%A4%A'))), { mode: null, questionId: null }, '不正なURLパラメータでも初期化を停止しない');
+assert(controllerSource.includes("this.questions[route.questionId]) this.start(route.questionId)"), '未定義の問題IDは開始せず安全なモード一覧に留まる');
 assert(html.includes('rel="manifest" href="manifest.webmanifest"'), 'PWAマニフェストを読み込む');
 assert(fs.readFileSync('js/app.js', 'utf8').includes("navigator.serviceWorker.register('./service-worker.js')"), 'Service Workerを登録する');
 const serviceWorker = fs.readFileSync('service-worker.js', 'utf8');

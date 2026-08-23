@@ -1,11 +1,17 @@
 (function (root) {
   'use strict';
-  const normalizeNumber = str => String(str || '').replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0));
+  const normalizeNumber = value => String(value ?? '')
+    .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
+    .replace(/，/g, ',');
+  const getStorage = () => {
+    try { return root.localStorage; } catch (_) { return null; }
+  };
   const JOURNAL_GROUPS = [['現金','普通預金','当座預金','売掛金','買掛金'], ['仕入','売上','繰越商品','発送費','消耗品費'], ['備品','減価償却費','減価償却累計額','固定資産売却損'], ['資本金','繰越利益剰余金','損益','借入金']];
   class Controller {
     constructor(document, questions) {
       this.document = document; this.questions = questions; this.ids = Object.keys(questions); this.view = new root.AppView(document);
-      this.model = new root.ProgressModel(questions, root.localStorage); this.rpg = new root.RPGModel(root.localStorage); this.currentId = null; this.expression = '0'; this.calculatorTarget = null; this.examScores = [];
+      const storage = getStorage();
+      this.model = new root.ProgressModel(questions, storage); this.rpg = new root.RPGModel(storage); this.currentId = null; this.expression = '0'; this.calculatorTarget = null; this.examScores = [];
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
       this.filters = { query: '', account: '', mistakes: 'all' };
       this.submitting = false;
@@ -16,7 +22,12 @@
       return [...new Set([correct, ...related, ...all])].slice(0, 5).sort(() => 0.5 - Controller.hash(`${question.id}-${correct}`));
     }
     static hash(text) { return ([...text].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 10) / 10; }
-    init() { this.bindEvents(); this.populateAccountFilter(); this.renderModes(); this.view.updateRpg(this.rpg); this.showMode('story'); }
+    init(route = {}) {
+      this.bindEvents(); this.populateAccountFilter(); this.renderModes(); this.view.updateRpg(this.rpg);
+      const mode = ['story', 'training', 'review', 'exam'].includes(route.mode) ? route.mode : 'story';
+      this.showMode(mode);
+      if (typeof route.questionId === 'string' && this.questions[route.questionId]) this.start(route.questionId);
+    }
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;

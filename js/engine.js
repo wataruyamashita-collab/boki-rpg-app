@@ -1,7 +1,9 @@
 // =========================================
 // 採点エンジン基盤 (仕様書37)
 // =========================================
-const normalizeNumber = str => String(str || '').replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0));
+const normalizeNumber = value => String(value ?? '')
+  .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
+  .replace(/，/g, ',');
 
 const GradingEngine = {
   /**

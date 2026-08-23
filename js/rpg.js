@@ -9,7 +9,7 @@
     }
     load() {
       try {
-        const saved = JSON.parse(this.storage.getItem(this.key));
+        const saved = JSON.parse(this.storage?.getItem?.(this.key));
         if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return;
         this.state = {
           xp: Number.isSafeInteger(saved.xp) && saved.xp >= 0 ? saved.xp : 0,
@@ -22,12 +22,12 @@
         };
       } catch (_) { /* An unavailable/corrupt store starts a clean character. */ }
     }
-    save() { try { this.storage.setItem(this.key, JSON.stringify(this.state)); } catch (_) {} }
+    save() { try { this.storage?.setItem?.(this.key, JSON.stringify(this.state)); } catch (_) {} }
     get level() { return Math.min(30, Math.floor(Math.sqrt(this.state.xp / 20)) + 1); }
     get role() { return ROLES.find(([level]) => this.level >= level)[1]; }
     reward(question, score, multiplier = 1) {
-      if (this.state.rewardedIds.includes(question.id)) return false;
-      if (!score || !Number.isFinite(score.ratio) || score.ratio < 0 || score.ratio > 1 || !Number.isFinite(multiplier) || multiplier < 0) return false;
+      if (!question || typeof question.id !== 'string' || !Number.isFinite(question.difficulty) || question.difficulty < 0 || this.state.rewardedIds.includes(question.id)) return false;
+      if (!score || !Number.isFinite(score.ratio) || score.ratio < 0 || score.ratio > 1 || !Number.isFinite(score.earned) || !Number.isFinite(score.possible) || score.earned < 0 || score.possible < score.earned || !Number.isFinite(multiplier) || multiplier < 0) return false;
       this.state.rewardedIds.push(question.id);
       this.state.xp += Math.round(20 * question.difficulty * score.ratio * multiplier);
       this.state.totalTransactionAmount += this.questionAmount(question);

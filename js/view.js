@@ -1,6 +1,8 @@
 (function (root) {
   'use strict';
-  const normalizeNumber = str => String(str || '').replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0));
+  const normalizeNumber = value => String(value ?? '')
+    .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
+    .replace(/，/g, ',');
   const yen = value => Number(value).toLocaleString('ja-JP');
   class AppView {
     constructor(document) { this.document = document; }
@@ -59,7 +61,10 @@
     }
     readAnswer(question) {
       if (question.type !== 'journal') { const cells = {}; this.document.querySelectorAll('.table-input').forEach(input => { cells[input.dataset.cellId] = input.value; }); return { cells }; }
-      const side = name => [...this.document.querySelectorAll(`.${name}-account`)].map((account, index) => ({ account: account.value, amount: Number(normalizeNumber(this.document.querySelectorAll(`.${name}-amount`)[index].value).replace(/,/g, '')) })).filter(item => item.account || item.amount);
+      const side = name => [...this.document.querySelectorAll(`.${name}-account`)].map((account, index) => {
+        const source = normalizeNumber(this.document.querySelectorAll(`.${name}-amount`)[index].value).replace(/,/g, '').trim();
+        return { account: account.value, amount: source === '' ? Number.NaN : Number(source) };
+      }).filter(item => item.account || Number.isFinite(item.amount));
       return { debit: side('debit'), credit: side('credit') };
     }
     result(question, score, userAnswer) {
