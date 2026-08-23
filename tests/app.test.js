@@ -13,6 +13,7 @@ assert.throws(() => Calculator.evaluate('1÷0'), /invalid/);
 
 const table = Engine.gradeTable({ cells: { cash: '1,000', sales: '500' } }, { cells: { cash: 1000, sales: 700 } });
 assert.deepStrictEqual([table.correct, table.earned, table.possible, table.ratio], [false, 1, 2, 0.5]);
+assert.strictEqual(Engine.gradeTable({ cells: { cash: '１,０００' } }, { cells: { cash: 1000 } }).correct, true, '表形式の全角数字を正しく採点する');
 assert.strictEqual(Engine.gradeJournalEntry({ debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }, { debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }), true);
 
 const values = {};
@@ -95,7 +96,25 @@ const amountInput = { value: '1234', selectionStart: 2, selectionEnd: 3, selecti
 browserSandbox.window.AppController.prototype.formatAmount(amountInput);
 assert.strictEqual(amountInput.value, '1,234', '金額を3桁区切りにする');
 assert.deepStrictEqual([...amountInput.range], [3, 4, 'forward'], '整形後も選択範囲を同じ桁位置に保つ');
+const fullWidthAmountInput = { value: '１２３４', selectionStart: 4, selectionEnd: 4, setSelectionRange(...range) { this.range = range; } };
+browserSandbox.window.AppController.prototype.formatAmount(fullWidthAmountInput);
+assert.strictEqual(fullWidthAmountInput.value, '1,234', 'iOS IMEの全角数字を半角へ正規化して整形する');
 const viewSource = fs.readFileSync('js/view.js', 'utf8');
+vm.runInNewContext(viewSource, browserSandbox);
+const answerFields = {
+  '.debit-account': [{ value: '現金' }], '.debit-amount': [{ value: '１,０００' }],
+  '.credit-account': [{ value: '売上' }], '.credit-amount': [{ value: '１,０００' }]
+};
+const answerView = new browserSandbox.window.AppView({ querySelectorAll: selector => answerFields[selector] || [] });
+assert.deepStrictEqual(JSON.parse(JSON.stringify(answerView.readAnswer({ type: 'journal' }))), { debit: [{ account: '現金', amount: 1000 }], credit: [{ account: '売上', amount: 1000 }] }, '仕訳入力の全角数字を数値として読み取る');
+const comparison = { hidden: false, children: [], replaceChildren(...children) { this.children = children; }, append(...children) { this.children.push(...children); } };
+const comparisonDocument = { getElementById: () => comparison, createElement: tagName => ({ tagName, textContent: '' }) };
+const comparisonView = new browserSandbox.window.AppView(comparisonDocument);
+comparisonView.journalTable = () => ({ tagName: 'table' });
+comparisonView.renderAnswerComparison({ type: 'journal' }, { correct: true }, { debit: [], credit: [] });
+assert.strictEqual(comparison.hidden, true, '正解時は空の誤答比較欄をhiddenにする');
+comparisonView.renderAnswerComparison({ type: 'journal' }, { correct: false }, { debit: [], credit: [] });
+assert.strictEqual(comparison.hidden, false, '仕訳の誤答時だけ比較欄を表示する');
 assert(viewSource.includes("score.correct ? '正解です！' : 'もう一歩です'"), '採点結果は従来どおり正解またはもう一歩と表示する');
 assert(!viewSource.includes('部分点'), 'ユーザー向けの採点結果に部分点を表示しない');
 assert(viewSource.includes("input.type = 'text'; input.setAttribute('inputmode', 'numeric')"), '金額欄ではモバイル端末の数字キーパッドを呼び出す');
@@ -108,6 +127,8 @@ assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の
 assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');
 assert(viewSource.includes("heading.textContent = '正しい仕訳'"), '正しい仕訳の見出しを表示する');
 assert(html.includes('id="answer-comparison"'), '誤答した仕訳を正答と比較する表示領域を設ける');
+assert(/\.answer-comparison:empty\s*{[^}]*display:\s*none/s.test(cssSource), '空の誤答比較欄は赤枠ごと非表示にする');
+assert(viewSource.includes('container.hidden = true') && viewSource.includes('container.hidden = false'), '誤答比較欄は誤答時だけ表示する');
 assert(controllerSource.includes('this.view.result(question, score, answer)'), '採点結果画面へ回答者の仕訳を渡す');
 assert(viewSource.includes("heading.textContent = 'あなたの仕訳（誤答）'"), '回答者が入力した誤答を表示する');
 assert(viewSource.includes("heading.textContent = 'なぜ間違えたのか'"), '誤答理由の講師解説を表示する');

@@ -1,6 +1,8 @@
 // =========================================
 // 採点エンジン基盤 (仕様書37)
 // =========================================
+const normalizeNumber = str => String(str || '').replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0));
+
 const GradingEngine = {
   /**
    * 仕訳の採点を行う (複合仕訳・順不同対応)
@@ -38,7 +40,7 @@ const GradingEngine = {
     const expected = correctAnswer.cells || {};
     const details = Object.keys(expected).map(cellId => {
       const raw = userAnswer.cells ? userAnswer.cells[cellId] : undefined;
-      const normalized = typeof expected[cellId] === 'number' ? Number(String(raw ?? '').replace(/,/g, '')) : String(raw ?? '').trim();
+      const normalized = typeof expected[cellId] === 'number' ? Number(normalizeNumber(raw).replace(/,/g, '')) : String(raw ?? '').trim();
       return { cellId, correct: normalized === expected[cellId], expected: expected[cellId], actual: normalized };
     });
     const earned = details.filter(item => item.correct).length;
