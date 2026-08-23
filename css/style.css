@@ -345,6 +345,22 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .journal-table th { background: #eef2f5; }
 .journal-amount { text-align: right; white-space: nowrap; }
 .explanation-text { white-space: pre-wrap; }
+.account-with-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.account-badge { display: inline-block; padding: 2px 6px; border-radius: 999px; color: #fff; font-size: .68rem; font-weight: 700; line-height: 1.35; white-space: nowrap; }
+.account-badge-asset { background: #2471a3; }
+.account-badge-liability { background: #b03a2e; }
+.account-badge-equity { background: #7d3c98; }
+.account-badge-expense { background: #b9770e; }
+.account-badge-revenue { background: #148f77; }
+.account-badge-unknown { background: #626567; }
+.explanation-accounts { display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 0 0 12px; }
+.explanation-card { margin: 10px 0 0; padding: 12px 14px; border-radius: 8px; background: #fff; border-left: 4px solid #7f8c8d; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
+.explanation-card h4 { margin: 0 0 6px; font-size: .9rem; }
+.explanation-card p { margin: 0; }
+.explanation-card-point { border-left-color: #d68910; background: #fffaf0; }
+.explanation-card-point h4 { color: #9c640c; }
+.explanation-card-memo { border-left-color: #2874a6; background: #f7fbff; }
+.explanation-card-memo h4 { color: #1b4f72; }
 .mistake-reasons { margin: 0 0 18px; padding-left: 1.4em; }
 .mistake-reasons li + li { margin-top: 8px; }
 .account-types { margin: 0; padding-left: 1.4em; }

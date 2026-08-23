@@ -60,7 +60,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260823-2'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260823-3'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -126,6 +126,10 @@ Object.values(browserSandbox.window.QuestionData).filter(question => question.ty
     assert(choices.includes(item.account), `${question.id}の勘定科目に正答を含める`);
   });
 });
+const allJournalAccounts = [...new Set(Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal').flatMap(question => [...question.answer.debit, ...question.answer.credit].map(item => item.account)))];
+const examQuestion = browserSandbox.window.QuestionData.J001;
+assert.deepStrictEqual([...browserSandbox.window.AppController.accountChoices(examQuestion, '現金', 'exam')], [...allJournalAccounts].sort((a, b) => a.localeCompare(b, 'ja')), '模擬試験では全仕訳科目を五十音順で選択できる');
+['story', 'training', 'review'].forEach(mode => assert.strictEqual(browserSandbox.window.AppController.accountChoices(examQuestion, '現金', mode).length, 5, `${mode}では既存の5択を維持する`));
 const amountInput = { value: '1234', selectionStart: 2, selectionEnd: 3, selectionDirection: 'forward', setSelectionRange(...range) { this.range = range; } };
 browserSandbox.window.AppController.prototype.formatAmount(amountInput);
 assert.strictEqual(amountInput.value, '1,234', '金額を3桁区切りにする');
@@ -152,6 +156,11 @@ comparisonView.renderAnswerComparison({ type: 'journal' }, { correct: true }, { 
 assert.strictEqual(comparison.hidden, true, '正解時は空の誤答比較欄をhiddenにする');
 comparisonView.renderAnswerComparison({ type: 'journal' }, { correct: false }, { debit: [], credit: [] });
 assert.strictEqual(comparison.hidden, false, '仕訳の誤答時だけ比較欄を表示する');
+allJournalAccounts.forEach(account => assert.notStrictEqual(comparisonView.accountType(account), 'unknown', `${account}を簿記の5要素へ分類する`));
+assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSections('【処理の根拠】\n資産が増えます。\n【試験のポイント】ここに注意。'))), [
+  { label: '実務MEMO', kind: 'memo', text: '資産が増えます。' },
+  { label: '試験POINT', kind: 'point', text: 'ここに注意。' }
+], '解説見出しを実務MEMO・試験POINTのカード構造へ正規化する');
 assert(viewSource.includes("score.correct ? '正解です！' : 'もう一歩です'"), '採点結果は従来どおり正解またはもう一歩と表示する');
 assert(!viewSource.includes('部分点'), 'ユーザー向けの採点結果に部分点を表示しない');
 assert(viewSource.includes("input.type = 'text'; input.setAttribute('inputmode', 'numeric')"), '金額欄ではモバイル端末の数字キーパッドを呼び出す');
@@ -182,7 +191,7 @@ assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦�
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
 assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの入力要素を仕訳行の直下に配置する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260823-2') && html.includes('js/view.js?v=20260823-2'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260823-3') && html.includes('js/view.js?v=20260823-3'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(html.includes('maximum-scale=1'), 'iPhoneで小さい仕訳文字へフォーカスした際の自動拡大を防ぐ');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
