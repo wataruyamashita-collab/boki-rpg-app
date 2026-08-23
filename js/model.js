@@ -9,12 +9,16 @@
     load() {
       try {
         const saved = JSON.parse(this.storage.getItem(this.key));
-        if (saved && typeof saved === 'object') this.state = Object.assign(this.state, saved, {
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) this.state = Object.assign(this.state, saved, {
+          mode: ['story', 'training', 'review', 'exam'].includes(saved.mode) ? saved.mode : 'story',
+          currentQuestionId: this.questions[saved.currentQuestionId] ? saved.currentQuestionId : null,
           answeredIds: Array.isArray(saved.answeredIds) ? saved.answeredIds.filter(id => this.questions[id]) : [],
           incorrectIds: Array.isArray(saved.incorrectIds) ? saved.incorrectIds.filter(id => this.questions[id]) : [],
-          drafts: saved.drafts && typeof saved.drafts === 'object' ? saved.drafts : {},
+          drafts: saved.drafts && typeof saved.drafts === 'object' && !Array.isArray(saved.drafts)
+            ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object')) : {},
           mistakeCounts: saved.mistakeCounts && typeof saved.mistakeCounts === 'object'
-            ? Object.fromEntries(Object.entries(saved.mistakeCounts).filter(([id, count]) => this.questions[id] && Number.isInteger(count) && count > 0)) : {}
+            ? Object.fromEntries(Object.entries(saved.mistakeCounts).filter(([id, count]) => this.questions[id] && Number.isSafeInteger(count) && count > 0)) : {},
+          completed: saved.completed === true
         });
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
     }

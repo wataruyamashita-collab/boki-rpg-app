@@ -8,6 +8,7 @@
       this.model = new root.ProgressModel(questions, root.localStorage); this.rpg = new root.RPGModel(root.localStorage); this.currentId = null; this.expression = '0'; this.calculatorTarget = null; this.examScores = [];
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
       this.filters = { query: '', account: '', mistakes: 'all' };
+      this.submitting = false;
     }
     static accountChoices(question, correct) {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
@@ -64,9 +65,11 @@
       const counts = [render('story-list', this.ids.filter(id => this.questions[id].type === 'journal')), render('training-list', this.ids.filter(id => this.questions[id].type !== 'journal')), render('review-list', this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids), render('exam-list', this.ids.slice(-15))];
       const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode); const count = counts[Math.max(modeIndex, 0)]; this.document.getElementById('filter-status').textContent = `${count}問を表示しています。`;
     }
-    start(id) { this.currentId = id; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id]); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
+    start(id) { if (!this.questions[id]) return; this.submitting = false; this.currentId = id; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id]); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
     saveDraft(message) { if (!this.currentId) return; this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) this.document.getElementById('save-status').textContent = '入力内容を保存しました。'; }
     submit() {
+      if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
+      this.submitting = true;
       const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question); const score = root.GradingEngine.grade(question, answer);
       const confidence = this.document.querySelector('input[name="confidence"]:checked')?.value || 'careful';
       this.model.record(question.id, score.correct);

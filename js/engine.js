@@ -11,6 +11,11 @@ const GradingEngine = {
    * @returns {boolean} 正誤
    */
   gradeJournalEntry(userAnswer, correctAnswer) {
+    if (!Array.isArray(userAnswer?.debit) || !Array.isArray(userAnswer?.credit) ||
+        !Array.isArray(correctAnswer?.debit) || !Array.isArray(correctAnswer?.credit)) return false;
+    const validLine = item => item && typeof item.account === 'string' && item.account.trim() &&
+      typeof item.amount === 'number' && Number.isFinite(item.amount) && item.amount > 0;
+    if (![...userAnswer.debit, ...userAnswer.credit].every(validLine)) return false;
     // 貸借の合計一致チェック (仕様書40: 不変条件)
     const userDebitTotal = userAnswer.debit.reduce((sum, item) => sum + item.amount, 0);
     const userCreditTotal = userAnswer.credit.reduce((sum, item) => sum + item.amount, 0);
@@ -37,10 +42,13 @@ const GradingEngine = {
   },
 
   gradeTable(userAnswer, correctAnswer) {
-    const expected = correctAnswer.cells || {};
+    const expected = correctAnswer?.cells && typeof correctAnswer.cells === 'object' ? correctAnswer.cells : {};
     const details = Object.keys(expected).map(cellId => {
-      const raw = userAnswer.cells ? userAnswer.cells[cellId] : undefined;
-      const normalized = typeof expected[cellId] === 'number' ? Number(normalizeNumber(raw).replace(/,/g, '')) : String(raw ?? '').trim();
+      const raw = userAnswer?.cells ? userAnswer.cells[cellId] : undefined;
+      const source = normalizeNumber(raw).replace(/,/g, '').trim();
+      const normalized = typeof expected[cellId] === 'number'
+        ? (source === '' ? Number.NaN : Number(source))
+        : String(raw ?? '').trim();
       return { cellId, correct: normalized === expected[cellId], expected: expected[cellId], actual: normalized };
     });
     const earned = details.filter(item => item.correct).length;
@@ -48,6 +56,7 @@ const GradingEngine = {
   },
 
   grade(question, userAnswer) {
+    if (!question || typeof question !== 'object') return { correct: false, earned: 0, possible: 0, ratio: 0, details: [] };
     if (question.type === 'journal') {
       const correct = this.gradeJournalEntry(userAnswer, question.answer);
       return { correct, earned: correct ? 1 : 0, possible: 1, ratio: correct ? 1 : 0, details: [] };

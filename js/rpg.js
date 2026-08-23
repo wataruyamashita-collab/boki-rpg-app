@@ -7,12 +7,27 @@
       this.state = { xp: 0, rewardedIds: [], mastery: {}, companyHP: 100, totalTransactionAmount: 0 };
       this.load();
     }
-    load() { try { this.state = Object.assign(this.state, JSON.parse(this.storage.getItem(this.key)) || {}); } catch (_) {} }
+    load() {
+      try {
+        const saved = JSON.parse(this.storage.getItem(this.key));
+        if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return;
+        this.state = {
+          xp: Number.isSafeInteger(saved.xp) && saved.xp >= 0 ? saved.xp : 0,
+          rewardedIds: Array.isArray(saved.rewardedIds) ? [...new Set(saved.rewardedIds.filter(id => typeof id === 'string'))] : [],
+          mastery: saved.mastery && typeof saved.mastery === 'object' && !Array.isArray(saved.mastery)
+            ? Object.fromEntries(Object.entries(saved.mastery).filter(([, value]) => value &&
+              Number.isFinite(value.earned) && value.earned >= 0 && Number.isFinite(value.possible) && value.possible >= value.earned)) : {},
+          companyHP: Number.isFinite(saved.companyHP) ? Math.max(0, Math.min(100, saved.companyHP)) : 100,
+          totalTransactionAmount: Number.isFinite(saved.totalTransactionAmount) && saved.totalTransactionAmount >= 0 ? saved.totalTransactionAmount : 0
+        };
+      } catch (_) { /* An unavailable/corrupt store starts a clean character. */ }
+    }
     save() { try { this.storage.setItem(this.key, JSON.stringify(this.state)); } catch (_) {} }
     get level() { return Math.min(30, Math.floor(Math.sqrt(this.state.xp / 20)) + 1); }
     get role() { return ROLES.find(([level]) => this.level >= level)[1]; }
     reward(question, score, multiplier = 1) {
       if (this.state.rewardedIds.includes(question.id)) return false;
+      if (!score || !Number.isFinite(score.ratio) || score.ratio < 0 || score.ratio > 1 || !Number.isFinite(multiplier) || multiplier < 0) return false;
       this.state.rewardedIds.push(question.id);
       this.state.xp += Math.round(20 * question.difficulty * score.ratio * multiplier);
       this.state.totalTransactionAmount += this.questionAmount(question);
