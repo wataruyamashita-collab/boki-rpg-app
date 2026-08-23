@@ -14,7 +14,11 @@ assert.throws(() => Calculator.evaluate('1÷0'), /invalid/);
 const table = Engine.gradeTable({ cells: { cash: '1,000', sales: '500' } }, { cells: { cash: 1000, sales: 700 } });
 assert.deepStrictEqual([table.correct, table.earned, table.possible, table.ratio], [false, 1, 2, 0.5]);
 assert.strictEqual(Engine.gradeTable({ cells: { cash: '１,０００' } }, { cells: { cash: 1000 } }).correct, true, '表形式の全角数字を正しく採点する');
+assert.strictEqual(Engine.gradeTable({ cells: { cash: '' } }, { cells: { cash: 0 } }).correct, false, '空欄を数値0の正答として扱わない');
 assert.strictEqual(Engine.gradeJournalEntry({ debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }, { debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }), true);
+assert.strictEqual(Engine.gradeJournalEntry({ debit: [{ account: '現金', amount: NaN }], credit: [{ account: '売上', amount: NaN }] }, { debit: [{ account: '現金', amount: NaN }], credit: [{ account: '売上', amount: NaN }] }), false, '非有限金額を仕訳として受理しない');
+assert.strictEqual(Engine.gradeJournalEntry({}, { debit: [], credit: [] }), false, '壊れた回答データでも採点を例外終了しない');
+assert.deepStrictEqual(Engine.grade(undefined, undefined), { correct: false, earned: 0, possible: 0, ratio: 0, details: [] }, '問題データが欠けても採点を例外終了しない');
 
 const values = {};
 const storage = { getItem(key) { return values[key] || null; }, setItem(key, value) { values[key] = value; } };
@@ -32,17 +36,27 @@ rpg.applyAnswer(false, 'bold');
 assert.strictEqual(rpg.state.companyHP, 70, '勝負回答の誤答は経営HPを30減らす');
 rpg.applyAnswer(true, 'careful');
 assert.strictEqual(rpg.state.companyHP, 75, '正解は経営HPを5回復する');
+const corruptValues = {
+  'boki-rpg-progress-v2': JSON.stringify({ mode: 'invalid', answeredIds: 'J1', incorrectIds: ['unknown'], drafts: [], mistakeCounts: { J1: -2 }, completed: 'yes' }),
+  'boki-rpg-character-v1': JSON.stringify({ xp: '999', rewardedIds: null, mastery: { 現金: { earned: 'bad', possible: 1 } }, companyHP: -80, totalTransactionAmount: -1 })
+};
+const corruptStorage = { getItem(key) { return corruptValues[key] || null; }, setItem() {} };
+const recoveredProgress = new ProgressModel({ J1: {} }, corruptStorage);
+assert.deepStrictEqual([recoveredProgress.state.mode, recoveredProgress.state.answeredIds.length, recoveredProgress.state.completed], ['story', 0, false], '破損した進捗の各フィールドを安全な初期値へ戻す');
+const recoveredRpg = new RPGModel(corruptStorage);
+assert.deepStrictEqual([recoveredRpg.state.xp, recoveredRpg.state.rewardedIds.length, recoveredRpg.state.companyHP, recoveredRpg.state.totalTransactionAmount], [0, 0, 0, 0], '破損したRPG状態を型検証し範囲内へ補正する');
 
 const html = fs.readFileSync('index.html', 'utf8');
 assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置かない');
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260822-2'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260823-1'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
 assert(controllerSource.includes('this.document.activeElement?.blur()'), '回答確定前にソフトウェアキーボードを閉じる');
+assert(controllerSource.includes('if (this.submitting || !this.currentId') && controllerSource.includes('this.submitting = true'), '連続submitによるHP・進捗の二重更新を防ぐ');
 assert(html.includes('data-action="calc-insert"'), '電卓の表示金額を入力するボタンを表示する');
 assert(controllerSource.includes("'calc-insert': () => this.insertCalculatorResult(false)"), '電卓の入力ボタンを転記処理へ接続する');
 assert(controllerSource.includes("else if (key === '＝') this.calculateEquals()"), 'イコールキーで計算結果を表示する');
@@ -144,10 +158,12 @@ assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦�
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
 assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの入力要素を仕訳行の直下に配置する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260822-2') && html.includes('js/view.js?v=20260822-2'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260823-1') && html.includes('js/view.js?v=20260823-1'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(html.includes('maximum-scale=1'), 'iPhoneで小さい仕訳文字へフォーカスした際の自動拡大を防ぐ');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
+assert(html.includes('id="result-status" class="result-box" role="status" aria-live="polite"'), '動的な採点結果をスクリーンリーダーへ通知する');
+assert(html.includes('aria-labelledby="game-over-title" aria-describedby="game-over-description"'), '資金ショートダイアログの名前と説明を関連付ける');
 assert(!html.includes('pattern="[0-9]*"'), 'カンマや演算子を表示する入力欄へ不整合なpattern制約を付けない');
 assert(controllerSource.includes("querySelector?.('.amount-input.calculator-selected')"), '電卓は選択クラスの付いた金額欄も転記先として復元する');
 assert(controllerSource.includes("if (first) this.start(first)"), '資金ショート後のリトライは該当モードの最初の問題から開始する');
