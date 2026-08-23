@@ -1,4 +1,4 @@
-const CACHE_NAME = 'boki-rpg-v5';
+const CACHE_NAME = 'boki-rpg-v6';
 const APP_SHELL = [
   './', './index.html', './manifest.webmanifest', './icons/app-icon.svg', './css/style.css',
   './data/questions.js', './js/calculator.js', './js/model.js', './js/rpg.js', './js/engine.js',

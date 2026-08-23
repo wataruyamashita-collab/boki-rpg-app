@@ -4,6 +4,14 @@
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
   const yen = value => Number(value).toLocaleString('ja-JP');
+  const ACCOUNT_TYPES = {
+    asset: new Set(['現金','普通預金','当座預金','売掛金','繰越商品','備品','電子記録債権','クレジット売掛金','前払金','現金過不足','小口現金','仮払金','立替金','貸倒引当金','仮払消費税','前払保険料','受取商品券','差入保証金','未収利息','貯蔵品','貸付金']),
+    liability: new Set(['買掛金','借入金','電子記録債務','未払金','前受金','所得税預り金','社会保険料預り金','減価償却累計額','仮受消費税','仮受金','前受家賃','未払利息','未払法人税等','未払消費税']),
+    equity: new Set(['資本金','繰越利益剰余金','損益']),
+    revenue: new Set(['売上','受取利息','受取家賃','雑益']),
+    expense: new Set(['仕入','発送費','消耗品費','減価償却費','固定資産売却損','支払手数料','通信費','旅費交通費','支払利息','給料','法定福利費','租税公課','貸倒引当金繰入','保険料','法人税、住民税及び事業税','雑損'])
+  };
+  const TYPE_LABELS = { asset: '資産', liability: '負債', equity: '純資産', expense: '費用', revenue: '収益' };
   class AppView {
     constructor(document) { this.document = document; }
     byId(id) { return this.document.getElementById(id); }
@@ -11,12 +19,12 @@
     updateRpg(rpg) {
       this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜経営HP ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円`;
     }
-    renderQuestion(question, draft) {
+    renderQuestion(question, draft, mode = 'story') {
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;
       this.byId('q-text').textContent = question.question;
       this.byId('journal-container').hidden = question.type !== 'journal';
       this.byId('table-container').hidden = question.type === 'journal';
-      if (question.type === 'journal') this.renderJournal(question, draft); else this.renderTable(question, draft);
+      if (question.type === 'journal') this.renderJournal(question, draft, mode); else this.renderTable(question, draft);
     }
     makeAmount(className, label, value = '') {
       const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'numeric');
@@ -27,7 +35,7 @@
     updateSelectTitle(select) {
       select.title = select.selectedOptions[0]?.textContent || '';
     }
-    renderJournal(question, draft = {}) {
+    renderJournal(question, draft = {}, mode = 'story') {
       const container = this.byId('journal-container'); container.replaceChildren();
       const header = this.document.createElement('div'); header.className = 'journal-header'; header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'; container.append(header);
       const count = Math.max(question.answer.debit.length, question.answer.credit.length);
@@ -37,7 +45,7 @@
           const answer = question.answer[side][index];
           const select = this.document.createElement('select'); select.className = `${side}-account`; select.disabled = !answer;
           select.innerHTML = `<option value="">${answer ? '--勘定科目--' : '--入力なし--'}</option>`;
-          if (answer) root.AppController.accountChoices(question, answer.account).forEach(name => select.append(new Option(name, name)));
+          if (answer) root.AppController.accountChoices(question, answer.account, mode).forEach(name => select.append(new Option(name, name)));
           const saved = draft[side] && draft[side][index]; if (saved) select.value = saved.account;
           this.updateSelectTitle(select);
           const amount = this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : '');
@@ -45,6 +53,15 @@
           row.append(select, amount);
         }); container.append(row);
       }
+    }
+    accountType(account) {
+      return Object.keys(ACCOUNT_TYPES).find(type => ACCOUNT_TYPES[type].has(account)) || 'unknown';
+    }
+    accountLabel(account) {
+      const wrap = this.document.createElement('span'); wrap.className = 'account-with-badge';
+      const name = this.document.createElement('span'); name.textContent = account || '（未入力）'; wrap.append(name);
+      if (account) { const type = this.accountType(account); const badge = this.document.createElement('span'); badge.className = `account-badge account-badge-${type}`; badge.textContent = TYPE_LABELS[type] || '科目'; wrap.append(badge); }
+      return wrap;
     }
     renderTable(question, draft = {}) {
       const wrap = this.byId('table-container'); wrap.replaceChildren();
@@ -83,7 +100,7 @@
       for (let index = 0; index < rows; index += 1) {
         const row = body.insertRow();
         ['debit', 'credit'].forEach(side => {
-          const item = answer[side][index]; const account = row.insertCell(); account.textContent = item?.account || '（未入力）';
+          const item = answer[side][index]; const account = row.insertCell(); account.append(this.accountLabel(item?.account));
           const amount = row.insertCell(); amount.className = 'journal-amount'; amount.textContent = item?.amount ? `${yen(item.amount)}円` : '—';
         });
       }
@@ -128,9 +145,27 @@
         this.diagnoseJournal(userAnswer, question.answer).forEach(message => { const item = this.document.createElement('li'); item.textContent = message; list.append(item); });
         container.append(heading, list);
       }
-      const heading = this.document.createElement('h3'); heading.textContent = 'TAC講師の解説';
-      const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = question.explanation;
-      container.append(heading, text);
+      const heading = this.document.createElement('h3'); heading.textContent = 'TAC講師の解説'; container.append(heading);
+      if (question.type === 'journal' && question.answer) {
+        const badges = this.document.createElement('div'); badges.className = 'explanation-accounts';
+        [...question.answer.debit, ...question.answer.credit].forEach(item => badges.append(this.accountLabel(item.account)));
+        container.append(badges);
+      }
+      this.explanationSections(question.explanation).forEach(section => {
+        const card = this.document.createElement('section'); card.className = `explanation-card explanation-card-${section.kind}`;
+        const title = this.document.createElement('h4'); title.textContent = section.label;
+        const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = section.text;
+        card.append(title, text); container.append(card);
+      });
+    }
+    explanationSections(explanation = '') {
+      const parts = String(explanation).split(/【([^】]+)】/); const sections = [];
+      if (parts[0].trim()) sections.push({ label: '解説', kind: 'memo', text: parts[0].trim() });
+      for (let index = 1; index < parts.length; index += 2) {
+        const raw = parts[index]; const label = /試験|ポイント/.test(raw) ? '試験POINT' : /根拠/.test(raw) ? '実務MEMO' : raw;
+        sections.push({ label, kind: label === '試験POINT' ? 'point' : 'memo', text: (parts[index + 1] || '').trim() });
+      }
+      return sections.length ? sections : [{ label: '解説', kind: 'memo', text: '' }];
     }
     renderCorrectJournal(question) {
       let container = this.byId('correct-journal');
