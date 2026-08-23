@@ -17,10 +17,7 @@
     }
     makeAmount(className, label, value = '') {
       const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'numeric');
-      // Values are formatted with thousands separators while the user types. Do not
-      // add a pattern constraint here: a value such as "1,000" would otherwise be
-      // rejected by the browser before the application's grading logic can run.
-      input.className = `${className} amount-input`; input.setAttribute('aria-label', label);
+      input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.setAttribute('pattern', '[0-9,]*');
       input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocorrect', 'off'); input.setAttribute('spellcheck', 'false'); input.value = value;
       return input;
     }
