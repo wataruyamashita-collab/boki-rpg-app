@@ -14365,6 +14365,23 @@ const QuestionData = {
   }
 };
 
+// 記帳訂正は金額と勘定科目が同じ表に並ぶため、UIがセル名や正答値から推測しないよう
+// 問題形式の契約として入力種別を明示する（全E001〜E020で共通）。
+const correctionInputTypes = Object.freeze({ debitAccount: 'account', debitAmount: 'amount', creditAccount: 'account', creditAmount: 'amount' });
+for (let n = 1; n <= 20; n += 1) {
+  const question = QuestionData[`E${String(n).padStart(3, '0')}`];
+  if (question?.table) question.table.inputTypes = correctionInputTypes;
+}
+// 財務諸表問題では資産合計と負債・純資産合計を別々に回答できる行を用意する。
+for (let n = 1; n <= 10; n += 1) {
+  const question = QuestionData[`F${String(n).padStart(3, '0')}`];
+  const totalRow = question?.table?.rows?.find(row => row.amount === '入力' && String(row.account).includes('資産合計／'));
+  if (totalRow) {
+    totalRow.account = '資産合計';
+    question.table.rows.push({ section: '合計', account: '負債・純資産合計', amount: '入力' });
+  }
+}
+
 const QuestionDataMeta = Object.freeze({
   "datasetId": "boki3-accounting-rpg-300",
   "dataVersion": "2026.08.20-r2",
@@ -14451,10 +14468,16 @@ function validateQuestionData(questionData = QuestionData) {
     } else {
       const inputCells = Array.isArray(item.table?.inputCells) ? item.table.inputCells : [];
       const answerCells = item.answer?.cells && typeof item.answer.cells === 'object' ? item.answer.cells : {};
+      const renderedInputs = (item.table?.rows || []).flatMap(row => Object.values(row)).filter(value => value === '入力').length;
+      if (!item.table || !Array.isArray(item.table.columns) || !Array.isArray(item.table.rows) || renderedInputs !== inputCells.length) errors.push(`${key}: table構造または入力セル数が不正です`);
+      if (new Set(inputCells).size !== inputCells.length || Object.keys(answerCells).length !== inputCells.length) errors.push(`${key}: inputCellsとanswer.cellsのキーが一致しません`);
       for (const cell of inputCells) {
         if (!(cell in answerCells)) {
           errors.push(`${key}: 入力セル ${cell} の正答がありません`);
         }
+        const inputType = item.table.inputTypes?.[cell] || 'amount';
+        if (!['amount', 'text', 'account'].includes(inputType)) errors.push(`${key}: 入力セル ${cell} の型が不正です`);
+        if ((inputType === 'amount') !== (typeof answerCells[cell] === 'number')) errors.push(`${key}: 入力セル ${cell} の型と正答型が一致しません`);
       }
     }
   }

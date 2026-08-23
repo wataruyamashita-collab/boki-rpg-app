@@ -60,7 +60,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260823-3'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260823-4'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -119,6 +119,17 @@ vm.runInNewContext(`${questionDataSource}\nwindow.QuestionDataAudit = validateQu
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
 assert.strictEqual(browserSandbox.window.QuestionDataAudit.ok, true, `全問題の品質検証を通過する: ${browserSandbox.window.QuestionDataAudit.errors.join(', ')}`);
 assert.deepStrictEqual([...browserSandbox.window.QuestionDataAudit.warnings], [], '全問題に品質上の警告がない');
+for (let number = 1; number <= 20; number += 1) {
+  const question = browserSandbox.window.QuestionData[`E${String(number).padStart(3, '0')}`];
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(question.table.inputTypes)), { debitAccount: 'account', debitAmount: 'amount', creditAccount: 'account', creditAmount: 'amount' }, `${question.id}は勘定科目と金額の入力型を明示する`);
+  Object.entries(question.answer.cells).forEach(([cellId, value]) => assert.strictEqual(question.table.inputTypes[cellId] === 'amount', typeof value === 'number', `${question.id}/${cellId}の入力型と正答型を一致させる`));
+}
+const correction = browserSandbox.window.QuestionData.E001;
+assert.strictEqual(Engine.grade(correction, { cells: { debitAccount: '広告宣伝費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } }).correct, true, 'E001の科目・金額を入力して正解にできる');
+assert.strictEqual(Engine.grade(correction, { cells: { debitAccount: '消耗品費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } }).correct, false, 'E001の誤った科目は不正解にする');
+const correctionProgress = new ProgressModel({ E001: correction }, storage);
+correctionProgress.setDraft('E001', { cells: { debitAccount: '広告宣伝費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } });
+assert.deepStrictEqual(new ProgressModel({ E001: correction }, storage).state.drafts.E001.cells, correctionProgress.state.drafts.E001.cells, '記帳訂正の文字列と金額の下書きを再表示用に復元する');
 Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal').forEach(question => {
   [...question.answer.debit, ...question.answer.credit].forEach(item => {
     const choices = browserSandbox.window.AppController.accountChoices(question, item.account);
@@ -182,7 +193,8 @@ assert(viewSource.includes("heading.textContent = 'なぜ間違えたのか'"), 
 assert(viewSource.includes("this.byId('explanation').before(container)"), '古いHTMLがキャッシュされていても正しい仕訳の表示領域を補完する');
 assert(!/\.journal-header,\s*\.journal-row\s*{[^}]*min-width:\s*520px/s.test(cssSource), 'モバイルの仕訳欄を画面幅より広くしない');
 assert(/\.journal-entry-area\s*{[^}]*max-width:\s*100%[^}]*overflow-x:\s*clip/s.test(cssSource), '仕訳票自体を画面幅内に収めて横スクロールを発生させない');
-assert(/\.answer-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '表を画面幅に収める');
+assert(/\.table-question-wrap\s*{[^}]*overflow-x:\s*auto/s.test(cssSource), '大きな表は小型画面で横スクロールできる');
+assert(/\.answer-table th:first-child, \.answer-table td:first-child\s*{[^}]*position:\s*sticky[^}]*left:\s*0/s.test(cssSource), '横スクロール中も表の先頭列を固定する');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
 assert(/\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(0, 3fr\) minmax\(0, 2fr\) minmax\(0, 3fr\) minmax\(0, 2fr\)/s.test(cssSource), '仕訳は借方科目・借方金額・貸方科目・貸方金額の4列にする');
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(0, 3fr\) minmax\(0, 2fr\) minmax\(0, 3fr\) minmax\(0, 2fr\)/s.test(cssSource), '狭い画面でも仕訳の4列を必ず横並びにする');
@@ -190,8 +202,10 @@ assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-row select,\s*\.journal-row
 assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦並び用ラベルを追加しない');
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
 assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの入力要素を仕訳行の直下に配置する');
+assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
+assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260823-3') && html.includes('js/view.js?v=20260823-3'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260823-4') && html.includes('js/view.js?v=20260823-4'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(html.includes('maximum-scale=1'), 'iPhoneで小さい仕訳文字へフォーカスした際の自動拡大を防ぐ');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');

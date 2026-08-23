@@ -3,8 +3,9 @@ export type Confidence = 'careful' | 'bold';
 
 export interface JournalItem { account: string; amount: number; }
 export interface JournalAnswer { debit: JournalItem[]; credit: JournalItem[]; }
-export interface TableAnswer { cells: Record<string, number>; }
-export interface QuestionTable { columns: string[]; rows: Array<Record<string, string | number | null>>; inputCells: string[]; }
+export type TableInputType = 'amount' | 'text' | 'account';
+export interface TableAnswer { cells: Record<string, number | string>; }
+export interface QuestionTable { columns: string[]; rows: Array<Record<string, string | number | null>>; inputCells: string[]; inputTypes?: Record<string, TableInputType>; }
 export interface Question {
   id: string;
   type: QuestionType;
@@ -27,4 +28,5 @@ export interface ProgressState {
   mistakeCounts: Record<string, number>;
   drafts: Record<string, JournalAnswer | TableAnswer>;
   completed: boolean;
+  examAttempt?: number;
 }
