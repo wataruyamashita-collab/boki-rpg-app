@@ -26,6 +26,8 @@
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
       this.filters = { query: '', account: '', mistakes: 'all' };
       this.submitting = false;
+      // 問題データは起動中不変なので、300問の監査は初期化時に一度だけ行う。
+      this.semanticAudit = root.validateSemanticQuestionData(this.questions);
     }
     static accountChoices(question, correct, mode = 'story') {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
@@ -91,7 +93,7 @@
     buildExamIds() {
       const quota = { journal: 5, ledger: 2, trial_balance: 2, correction: 2, worksheet: 2, financial_statement: 1, comprehensive: 1 };
       const attempt = Number(this.model.state.examAttempt || 0);
-      const semanticAudit = root.validateSemanticQuestionData(this.questions);
+      const semanticAudit = this.semanticAudit || root.validateSemanticQuestionData(this.questions);
       const eligible = new Set(semanticAudit.eligibleIds);
       return Object.entries(quota).flatMap(([type, count]) => { const pool = this.ids.filter(id => this.questions[id].type === type && eligible.has(id)); if (pool.length < count) throw new Error(`独立Semantic監査済みの${type}問題が不足しています`); const start = (attempt * count) % pool.length; return Array.from({ length: count }, (_, index) => pool[(start + index) % pool.length]); });
     }

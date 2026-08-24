@@ -65,7 +65,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-8'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-9'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -145,6 +145,20 @@ const tamperedQuestions = { ...browserSandbox.window.QuestionData, J081: { ...br
 const tamperedAudit = browserSandbox.window.validateSemanticQuestionData(tamperedQuestions);
 assert.strictEqual(tamperedAudit.findings.J081.status, 'INVALID', '表示48,000円に対する正答58,000円を自己申告にかかわらず検出する');
 assert(!tamperedAudit.eligibleIds.includes('J081'), 'Semantic不成立問題を模試対象から除外する');
+for (const [label, answer] of [
+  ['誤勘定', { debit:[{account:'資本金',amount:48000}], credit:[{account:'現金',amount:48000}] }],
+  ['重複加算', { debit:[{account:'租税公課',amount:96000}], credit:[{account:'現金',amount:96000}] }],
+  ['自己除算', { debit:[{account:'租税公課',amount:1}], credit:[{account:'現金',amount:1}] }],
+  ['無関係な乗算', { debit:[{account:'租税公課',amount:2304000000}], credit:[{account:'現金',amount:2304000000}] }]
+]) {
+  const attacked = { ...browserSandbox.window.QuestionData, J081:{ ...browserSandbox.window.QuestionData.J081, answer } };
+  assert.strictEqual(browserSandbox.window.validateSemanticQuestionData(attacked).findings.J081.status, 'INVALID', `SEMANTIC-REDTEAM: ${label}をVALIDにしない`);
+}
+const fixedAssetSale = browserSandbox.window.QuestionData.J137;
+assert(fixedAssetSale.question.includes('取得原価300,000円') && fixedAssetSale.question.includes('減価償却累計額120,000円'), 'J137は間接法の仕訳に必要な取得原価と累計額を表示する');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(fixedAssetSale.answer.debit)), [{account:'未収入金',amount:220000},{account:'減価償却累計額',amount:120000}], 'J137は未収入金と減価償却累計額を借方計上する');
+const adjustedTrialBalance = browserSandbox.window.QuestionData.D019;
+assert.strictEqual(adjustedTrialBalance.answer.cells.debitTotal, adjustedTrialBalance.answer.cells.creditTotal, 'D019は貸借一致する完全な決算整理後残高試算表にする');
 [['L044',50000,18000],['L045',300000,85000],['L046',4800,7200]].forEach(([id, first, second]) => { const visible = JSON.stringify(browserSandbox.window.QuestionData[id].materials); assert(visible.includes(String(first)) && visible.includes(String(second)), `SEMANTIC-${id}: 根拠金額をvisible materialsに持つ`); });
 assert.deepStrictEqual([...browserSandbox.window.QuestionDataAudit.warnings], [], '全問題に品質上の警告がない');
 for (let number = 1; number <= 20; number += 1) {
@@ -311,7 +325,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260824-8') && html.includes('js/view.js?v=20260824-8'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-9') && html.includes('js/view.js?v=20260824-9'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
