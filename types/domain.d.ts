@@ -29,4 +29,10 @@ export interface ProgressState {
   drafts: Record<string, JournalAnswer | TableAnswer>;
   completed: boolean;
   examAttempt?: number;
+  examSession: null | {
+    ids: string[];
+    startedAt: number;
+    endAt: number;
+    scores: Record<string, { correct: boolean; earned: number; possible: number; ratio: number }>;
+  };
 }

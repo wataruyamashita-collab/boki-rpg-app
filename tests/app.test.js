@@ -30,6 +30,11 @@ assert.deepStrictEqual(progress.state.incorrectIds, ['J1']);
 assert.strictEqual(progress.state.mistakeCounts.J1, 1, '問題ごとの累積誤答回数を記録する');
 progress.record('J1', false);
 assert.strictEqual(progress.state.mistakeCounts.J1, 2, '同じ問題の再誤答も頻度へ加算する');
+const masteryRpg = new RPGModel({ getItem() { return null; }, setItem() {} });
+const masteryQuestion = { id: 'M1', difficulty: 1, category: '売掛金' };
+masteryRpg.recordMastery(masteryQuestion, { earned: 0, possible: 1 });
+masteryRpg.recordMastery(masteryQuestion, { earned: 1, possible: 1 });
+assert.deepStrictEqual(masteryRpg.state.mastery['売掛金'], { earned: 1, possible: 2 }, '不正解後の正解を1/2としてmasteryへ記録する');
 const rpg = new RPGModel(storage); const question = { id: 'J1', difficulty: 2, category: '現金' };
 assert.strictEqual(rpg.reward(question, { ratio: 0.5, earned: 1, possible: 2 }), true);
 assert.strictEqual(rpg.reward(question, { ratio: 1, earned: 2, possible: 2 }), false, '経験値は二重付与しない');
@@ -60,7 +65,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-1'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-2'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -195,6 +200,32 @@ const storyOrder = browserSandbox.window.AppController.prototype.storyIds.call({
 assert.strictEqual(storyOrder.length, 300, 'ストーリーは全300問で簿記フローを体験できる');
 assert(storyOrder.every((id, index) => index === 0 || browserSandbox.window.QuestionData[storyOrder[index - 1]].chapter <= browserSandbox.window.QuestionData[id].chapter), 'ストーリーのChapterが逆行しない');
 const examAudit = { ids: Object.keys(browserSandbox.window.QuestionData), questions: browserSandbox.window.QuestionData, model: { state: { examAttempt: 0 } } };
+const examPrototype = browserSandbox.window.AppController.prototype;
+const fifteenIds = Array.from({ length: 15 }, (_, index) => `Q${index + 1}`);
+const examState = { ids: fifteenIds, startedAt: 1, endAt: 3600001, scores: {} };
+assert.strictEqual(examPrototype.unansweredExamIds.call({ model: { state: { examSession: examState } } }).length, 15, 'CASE 1: 15問目だけ回答する前は15問が未回答である');
+examState.scores.Q15 = { correct: true, earned: 1, possible: 1, ratio: 1 };
+assert.strictEqual(examPrototype.unansweredExamIds.call({ model: { state: { examSession: examState } } }).length, 14, 'CASE 1: 15問目だけ正解しても未回答14問を認識する');
+examState.scores.Q8 = { correct: true, earned: 1, possible: 1, ratio: 1 };
+assert.strictEqual(examPrototype.unansweredExamIds.call({ model: { state: { examSession: examState } } }).length, 13, 'CASE 2: 途中問題を直接回答しても完了扱いにしない');
+let warned = ''; let redirected = '';
+const incompleteExam = {
+  model: { state: { examSession: examState } }, unansweredExamIds: examPrototype.unansweredExamIds,
+  start(id) { redirected = id; }, startExamTimer() {}, questions: {}, rpg: {}, view: {}
+};
+browserSandbox.window.alert = message => { warned = message; };
+assert.strictEqual(examPrototype.finishExam.call(incompleteExam, false), false, 'CASE 3: 1問でも未回答なら終了を拒否する');
+assert(warned.includes('未回答が13問') && redirected === 'Q1', 'CASE 3: 未回答数を警告し最初の未回答へ移動する');
+const completeScores = Object.fromEntries(fifteenIds.map(id => [id, { correct: true, earned: 1, possible: 1, ratio: 1 }]));
+const completedSession = { ids: fifteenIds, startedAt: 1, endAt: 3600001, scores: completeScores };
+let resultScore; const completeExam = {
+  model: { state: { examSession: completedSession, examAttempt: 0 }, record() {}, save() {} },
+  unansweredExamIds: examPrototype.unansweredExamIds, questions: Object.fromEntries(fifteenIds.map(id => [id, { category: id }])),
+  rpg: { recordMastery() {} }, stopExamTimer() {}, view: { result(_, score) { resultScore = score; }, show() {} }
+};
+browserSandbox.window.confirm = () => true;
+assert.strictEqual(examPrototype.finishExam.call(completeExam, false), true, 'CASE 4: 全15問回答後に初めて正式採点する');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(resultScore)), { correct: true, earned: 100, possible: 100 }, '明示配点の合計を100点として採点する');
 const examIds = browserSandbox.window.AppController.prototype.buildExamIds.call(examAudit);
 assert.strictEqual(examIds.length, 15, '模試は設計通り15問を選出する');
 examIds.forEach(id => { const question = browserSandbox.window.QuestionData[id]; assert(question.type === 'journal' || (question.table && question.table.inputCells.every(cell => cell in question.answer.cells)), `${id}は必要な入力欄と正答を持つ`); if (question.materials?.length) assert(viewSource.includes('this.renderMaterials(question)'), `${id}の資料を問題表示で描画する`); });
@@ -235,7 +266,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260824-1') && html.includes('js/view.js?v=20260824-1'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-2') && html.includes('js/view.js?v=20260824-2'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
@@ -256,7 +287,7 @@ const appSandbox = {
 vm.runInNewContext(appSource, appSandbox);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(appSandbox.window.App.initialRoute('?mode=review&question=J001'))), { mode: 'review', questionId: 'J001' }, '有効なURLパラメータを初期表示候補として読み取る');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(appSandbox.window.App.initialRoute('%E0%A4%A'))), { mode: null, questionId: null }, '不正なURLパラメータでも初期化を停止しない');
-assert(controllerSource.includes("this.questions[route.questionId]) this.start(route.questionId)"), '未定義の問題IDは開始せず安全なモード一覧に留まる');
+assert(controllerSource.includes("this.questions[route.questionId] && (mode !== 'exam' || this.modeIds().includes(route.questionId))"), '未定義IDと模試選出外IDは開始せず安全なモード一覧に留まる');
 assert(html.includes('rel="manifest" href="manifest.webmanifest"'), 'PWAマニフェストを読み込む');
 assert(fs.readFileSync('js/app.js', 'utf8').includes("navigator.serviceWorker.register('./service-worker.js')"), 'Service Workerを登録する');
 const serviceWorker = fs.readFileSync('service-worker.js', 'utf8');

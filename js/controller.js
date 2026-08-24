@@ -7,11 +7,13 @@
     try { return root.localStorage; } catch (_) { return null; }
   };
   const JOURNAL_GROUPS = [['現金','普通預金','当座預金','売掛金','買掛金'], ['仕入','売上','繰越商品','発送費','消耗品費'], ['備品','減価償却費','減価償却累計額','固定資産売却損'], ['資本金','繰越利益剰余金','損益','借入金']];
+  const EXAM_DURATION_MS = 60 * 60 * 1000;
+  const EXAM_POINTS = Object.freeze([9, 9, 9, 9, 9, 5, 5, 5, 5, 6, 6, 6, 6, 6, 5]);
   class Controller {
     constructor(document, questions) {
       this.document = document; this.questions = questions; this.ids = Object.keys(questions); this.view = new root.AppView(document);
       const storage = getStorage();
-      this.model = new root.ProgressModel(questions, storage); this.rpg = new root.RPGModel(storage); this.currentId = null; this.expression = '0'; this.calculatorTarget = null; this.examScores = [];
+      this.model = new root.ProgressModel(questions, storage); this.rpg = new root.RPGModel(storage); this.currentId = null; this.expression = '0'; this.calculatorTarget = null; this.examTimerId = null;
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
       this.filters = { query: '', account: '', mistakes: 'all' };
       this.submitting = false;
@@ -41,12 +43,12 @@
       this.bindEvents(); this.populateAccountFilter(); this.renderModes(); this.view.updateRpg(this.rpg);
       const mode = ['story', 'training', 'review', 'exam'].includes(route.mode) ? route.mode : 'story';
       this.showMode(mode);
-      if (typeof route.questionId === 'string' && this.questions[route.questionId]) this.start(route.questionId);
+      if (typeof route.questionId === 'string' && this.questions[route.questionId] && (mode !== 'exam' || this.modeIds().includes(route.questionId))) this.start(route.questionId);
     }
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true) };
+        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'finish-exam': () => this.finishExam(false), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
@@ -60,7 +62,15 @@
         this.submit();
       });
     }
-    showMode(mode) { this.model.state.mode = mode; if (mode === 'exam') this.examScores = []; this.model.save(); this.view.show(`view-${mode}`); this.document.getElementById('question-filters').hidden = false; this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false')); }
+    showMode(mode) {
+      this.model.state.mode = mode;
+      if (mode === 'exam') this.ensureExamSession();
+      else this.stopExamTimer();
+      this.model.save(); this.view.show(`view-${mode}`); this.document.getElementById('question-filters').hidden = mode === 'exam';
+      this.document.body?.classList?.toggle('exam-active', mode === 'exam');
+      this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false'));
+      if (mode === 'exam') { this.updateExamStatus(); this.startExamTimer(); }
+    }
     buildExamIds() {
       const quota = { journal: 5, ledger: 2, trial_balance: 2, correction: 2, worksheet: 2, financial_statement: 1, comprehensive: 1 };
       const attempt = Number(this.model.state.examAttempt || 0);
@@ -73,7 +83,39 @@
         return a.chapter - b.chapter || flow[a.type] - flow[b.type] || left.index - right.index;
       }).map(item => item.id);
     }
-    modeIds() { const mode = this.model.state.mode; if (mode === 'review') return this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids; if (mode === 'exam') return this.examIds || (this.examIds = this.buildExamIds()); if (mode === 'training') return this.ids.filter(id => this.questions[id].type !== 'journal'); return this.storyIds(); }
+    modeIds() { const mode = this.model.state.mode; if (mode === 'review') return this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids; if (mode === 'exam') return this.model.state.examSession?.ids || this.buildExamIds(); if (mode === 'training') return this.ids.filter(id => this.questions[id].type !== 'journal'); return this.storyIds(); }
+    ensureExamSession(now = Date.now()) {
+      if (this.model.validExamSession(this.model.state.examSession)) return this.model.state.examSession;
+      this.model.state.examSession = { ids: this.buildExamIds(), startedAt: now, endAt: now + EXAM_DURATION_MS, scores: {} };
+      this.model.save(); return this.model.state.examSession;
+    }
+    unansweredExamIds() {
+      const session = this.model.state.examSession;
+      return session ? session.ids.filter(id => !Object.prototype.hasOwnProperty.call(session.scores, id)) : [];
+    }
+    updateExamStatus(now = Date.now()) {
+      const session = this.model.state.examSession; if (!session) return;
+      const remaining = Math.max(0, session.endAt - now); const seconds = Math.ceil(remaining / 1000);
+      const timer = this.document.getElementById('exam-timer'); const progress = this.document.getElementById('exam-progress');
+      if (timer) timer.textContent = `残り ${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+      if (progress) progress.textContent = `回答済み ${session.ids.length - this.unansweredExamIds().length} / ${session.ids.length}問`;
+      if (remaining === 0) this.finishExam(true);
+    }
+    startExamTimer() { this.stopExamTimer(); this.updateExamStatus(); this.examTimerId = root.setInterval?.(() => this.updateExamStatus(), 1000) || null; }
+    stopExamTimer() { if (this.examTimerId !== null) root.clearInterval?.(this.examTimerId); this.examTimerId = null; }
+    finishExam(force) {
+      const session = this.model.state.examSession; if (!session) return false;
+      const unanswered = this.unansweredExamIds();
+      if (!force && unanswered.length) { root.alert?.(`未回答が${unanswered.length}問あります。全問回答後に採点してください。`); this.start(unanswered[0]); return false; }
+      if (!force && root.confirm && !root.confirm('全15問の回答を終了し、採点しますか？')) return false;
+      const earned = session.ids.reduce((sum, id, index) => sum + (session.scores[id]?.ratio || 0) * EXAM_POINTS[index], 0);
+      const points = Math.round(earned); const correct = points >= 70;
+      session.ids.forEach(id => { const result = session.scores[id]; if (result) { this.model.record(id, result.correct); this.rpg.recordMastery(this.questions[id], result); } });
+      this.model.state.examAttempt += 1; this.model.state.examSession = null; this.model.save(); this.stopExamTimer();
+      this.document?.body?.classList?.remove('exam-active');
+      this.view.result({ explanation: `総合演習模試を終了しました。${points}点 / 100点（${correct ? '合格圏' : '要復習'}）。未回答は0点です。` }, { correct, earned: points, possible: 100 });
+      this.view.show('view-result'); return true;
+    }
     questionAccounts(question) { return question.type === 'journal' ? [...question.answer.debit, ...question.answer.credit].map(item => item.account) : []; }
     populateAccountFilter() {
       const select = this.document.getElementById('filter-account');
@@ -110,7 +152,7 @@
       this.document.getElementById('resume-progress').textContent = `Chapter進捗 ${chapterIds.filter(id => this.model.state.answeredIds.includes(id)).length} / ${chapterIds.length}｜役職 ${this.rpg.role}`;
       this.document.getElementById('resume-button').dataset.questionId = nextId;
     }
-    start(id) { if (!this.questions[id]) return; this.submitting = false; this.currentId = id; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
+    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.submitting = false; this.currentId = id; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
     saveDraft(message) { if (!this.currentId) return; this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) this.document.getElementById('save-status').textContent = '入力内容を保存しました。'; }
     submit() {
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
@@ -118,16 +160,15 @@
       const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question); const score = root.GradingEngine.grade(question, answer);
       const confidence = this.document.querySelector('input[name="confidence"]:checked')?.value || 'careful';
       if (this.model.state.mode === 'exam') {
-        this.model.record(question.id, score.correct);
-        this.examScores.push({ id: question.id, score });
-        const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1];
-        if (next) return this.start(next);
-        const earned = this.examScores.reduce((sum, item) => sum + item.score.earned, 0); const possible = this.examScores.reduce((sum, item) => sum + item.score.possible, 0);
-        const percent = possible ? Math.round(earned / possible * 100) : 0; this.model.state.examAttempt = (this.model.state.examAttempt || 0) + 1; this.model.save(); this.examIds = null;
-        this.view.result({ explanation: `模擬試験を終了しました。得点率${percent}%（${percent >= 70 ? '合格圏' : '要復習'}）。復習モードで誤答した論点を確認しましょう。` }, { correct: percent >= 70, earned, possible });
-        this.view.show('view-result'); return;
+        const session = this.ensureExamSession(); session.scores[question.id] = { correct: score.correct, earned: score.earned, possible: score.possible, ratio: score.ratio };
+        this.model.setDraft(question.id, answer); this.model.save(); this.updateExamStatus();
+        const unanswered = this.unansweredExamIds(); const ids = this.modeIds(); const following = ids.slice(ids.indexOf(this.currentId) + 1).find(id => unanswered.includes(id));
+        if (following) return this.start(following);
+        if (unanswered.length) return this.start(unanswered[0]);
+        this.renderModes(); this.showMode('exam'); return;
       }
       this.model.record(question.id, score.correct);
+      this.rpg.recordMastery?.(question, score);
       if (score.correct) this.rpg.reward(question, score, confidence === 'bold' ? 3 : 1);
       this.rpg.applyAnswer(score.correct, confidence);
       this.view.updateRpg(this.rpg); this.view.result(question, score, answer); this.view.show('view-result');
