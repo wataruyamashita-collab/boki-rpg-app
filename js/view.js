@@ -143,36 +143,18 @@
       const note = this.document.createElement('p'); note.textContent = '下の「正しい仕訳」と、科目・貸借・金額を一つずつ見比べましょう。';
       container.append(heading, note, this.journalTable(userAnswer));
     }
-    diagnoseJournal(userAnswer, correctAnswer) {
-      const key = item => `${item.account}\u0000${item.amount}`;
-      const has = (items, target) => items.some(item => key(item) === key(target));
-      const debitTotal = userAnswer.debit.reduce((sum, item) => sum + item.amount, 0);
-      const creditTotal = userAnswer.credit.reduce((sum, item) => sum + item.amount, 0);
-      const messages = [];
-      if (debitTotal !== creditTotal) messages.push(`借方合計${yen(debitTotal)}円と貸方合計${yen(creditTotal)}円が一致していません。仕訳は必ず貸借同額になります。`);
-      const reversed = [...correctAnswer.debit.filter(item => has(userAnswer.credit, item)), ...correctAnswer.credit.filter(item => has(userAnswer.debit, item))];
-      if (reversed.length) messages.push(`${[...new Set(reversed.map(item => item.account))].join('・')}を借方と貸方の反対側に記入しています。資産・費用の増加は借方、負債・純資産・収益の増加は貸方、減少はその逆と整理しましょう。`);
-      const correctAccounts = [...correctAnswer.debit, ...correctAnswer.credit].map(item => item.account);
-      const wrongAccounts = [...userAnswer.debit, ...userAnswer.credit].filter(item => !correctAccounts.includes(item.account)).map(item => item.account).filter(Boolean);
-      if (wrongAccounts.length) messages.push(`${[...new Set(wrongAccounts)].join('・')}を選んでいます。取引文から「何が増減したか」を先に特定してから、勘定科目へ置き換えましょう。`);
-      const amountErrors = [...correctAnswer.debit, ...correctAnswer.credit].filter(correct => {
-        const entered = [...userAnswer.debit, ...userAnswer.credit].find(item => item.account === correct.account);
-        return entered && entered.amount !== correct.amount;
-      });
-      if (amountErrors.length) messages.push(`${[...new Set(amountErrors.map(item => item.account))].join('・')}は勘定科目を捉えていますが、金額が違います。取引総額、支払額、残額のどれを記入するかを問題文に戻って確認しましょう。`);
-      const missing = [...correctAnswer.debit, ...correctAnswer.credit].filter(item => ![...userAnswer.debit, ...userAnswer.credit].some(entered => entered.account === item.account));
-      if (missing.length) messages.push(`${[...new Set(missing.map(item => item.account))].join('・')}が未記入です。複合仕訳では、取引を構成する増減を漏れなく分解しましょう。`);
-      if (!messages.length) messages.push('科目と金額の組合せ、または記入する側にずれがあります。正しい仕訳と1行ずつ照合し、取引の増減を確認しましょう。');
-      return messages;
+    renderDiagnostics(question, answer, score) {
+      const diagnostics = root.WrongAnswerFeedback.diagnoseWrongAnswer(question, answer, score);
+      if (!diagnostics.length) return null;
+      const section = this.document.createElement('section'); section.className = 'wrong-answer-feedback'; section.setAttribute('aria-labelledby', `feedback-${question.id}`);
+      const heading = this.document.createElement('h3'); heading.id = `feedback-${question.id}`; heading.textContent = 'なぜ間違えた？'; section.append(heading);
+      diagnostics.forEach(diagnostic => { const card = this.document.createElement('article'); card.className = `diagnostic-card diagnostic-${diagnostic.kind}`; const title = this.document.createElement('h4'); title.textContent = diagnostic.title; const reason = this.document.createElement('p'); reason.textContent = diagnostic.reason; const thinkingTitle = this.document.createElement('strong'); thinkingTitle.textContent = '正しい考え方'; const thinking = this.document.createElement('p'); thinking.textContent = diagnostic.thinking; const nextTitle = this.document.createElement('strong'); nextTitle.textContent = '次回の判別ポイント'; const next = this.document.createElement('p'); next.textContent = diagnostic.nextRule; card.append(title, reason, thinkingTitle, thinking, nextTitle, next); section.append(card); });
+      return section;
     }
     renderExplanation(question, score, userAnswer) {
       const container = this.byId('explanation'); container.replaceChildren();
-      if (!score.correct && question.type === 'journal' && userAnswer) {
-        const heading = this.document.createElement('h3'); heading.textContent = 'なぜ間違えたのか';
-        const list = this.document.createElement('ul'); list.className = 'mistake-reasons';
-        this.diagnoseJournal(userAnswer, question.answer).forEach(message => { const item = this.document.createElement('li'); item.textContent = message; list.append(item); });
-        container.append(heading, list);
-      }
+      const diagnostics = this.renderDiagnostics(question, userAnswer, score);
+      if (diagnostics) container.append(diagnostics);
       const heading = this.document.createElement('h3'); heading.textContent = '詳しい解説'; container.append(heading);
       if (question.type === 'journal' && question.answer) {
         const badges = this.document.createElement('div'); badges.className = 'explanation-accounts';
@@ -219,7 +201,7 @@
       this.byId('answer-comparison').hidden = true; this.byId('correct-journal').replaceChildren();
       const container = this.byId('explanation'); container.replaceChildren();
       const heading = this.document.createElement('h3'); heading.textContent = '問題別レビュー'; container.append(heading);
-      review.items.forEach((item, index) => { const question = questions[item.id]; const details = this.document.createElement('details'); const summary = this.document.createElement('summary'); summary.textContent = `第${index + 1}問｜${item.earned}/${item.points}点｜${item.correct ? '正解' : item.answer ? '不正解' : '未回答'}｜${item.topic}`; details.append(summary, this.answerReviewBlock('自分の回答', question, item.answer), this.answerReviewBlock('正解', question, question.answer)); const explanation = this.document.createElement('p'); explanation.className = 'exam-review-explanation'; explanation.textContent = question.explanation; details.append(explanation); container.append(details); });
+      review.items.forEach((item, index) => { const question = questions[item.id]; const details = this.document.createElement('details'); const summary = this.document.createElement('summary'); summary.textContent = `第${index + 1}問｜${item.earned}/${item.points}点｜${item.correct ? '正解' : item.answer ? '不正解' : '未回答'}｜${item.topic}`; details.append(summary, this.answerReviewBlock('自分の回答', question, item.answer), this.answerReviewBlock('正解', question, question.answer)); const diagnostics = this.renderDiagnostics(question, item.answer, { correct: item.correct }); if (diagnostics) details.append(diagnostics); const explanation = this.document.createElement('p'); explanation.className = 'exam-review-explanation'; explanation.textContent = question.explanation; details.append(explanation); container.append(details); });
       const historyHeading = this.document.createElement('h3'); historyHeading.textContent = '直近の成績'; container.append(historyHeading);
       const list = this.document.createElement('ol'); history.slice(-5).reverse().forEach(item => { const row = this.document.createElement('li'); row.textContent = `${new Date(item.finishedAt).toLocaleString('ja-JP')}｜${item.points}点｜${item.passed ? '合格圏' : '要復習'}｜所要${Math.ceil(item.durationMs / 60000)}分｜未回答${item.unansweredCount}問`; list.append(row); }); container.append(list);
     }
