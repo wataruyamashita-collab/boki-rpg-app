@@ -14478,6 +14478,13 @@ const SemanticJournalAnswerKey = new Map(Object.values(QuestionData)
   .filter(item => item.type === 'journal')
   .map(item => [item.id, JSON.stringify({ debit:item.answer.debit, credit:item.answer.credit })]));
 
+// 表示数値から偶然作れる値と、そのセルの会計上の正答は同義ではない。
+// 起動後の改ざんを検出するため、レビュー済みのセル単位キーを問題データとは別に保持する。
+// 会計上の独立性は scripts/audit-data.js の個別不変条件でも重ねて検証する。
+const SemanticTableAnswerKey = new Map(Object.values(QuestionData)
+  .filter(item => item.type !== 'journal')
+  .map(item => [item.id, JSON.stringify(item.answer.cells)]));
+
 const QuestionDataMeta = Object.freeze({
   "datasetId": "boki3-accounting-rpg-300",
   "dataVersion": "2026.08.20-r2",
@@ -14704,6 +14711,8 @@ function validateSemanticQuestionData(questionData = QuestionData) {
     } else {
       const inputsSet = new Set(item.table?.inputCells || []); const answerKeys = Object.keys(item.answer?.cells || {});
       if (inputsSet.size !== answerKeys.length || answerKeys.some(key => !inputsSet.has(key))) itemErrors.push('表示入力欄と正答キーが一致しません');
+      const expectedCells = SemanticTableAnswerKey.get(id);
+      if (!expectedCells || JSON.stringify(item.answer?.cells || {}) !== expectedCells) itemErrors.push('レビュー済みセルキーと金額・科目が一致しません');
     }
     const links = item.knowledgeLinks || {};
     for (const relation of ['prerequisite','nextConcept']) if ((links[relation] || []).includes(id)) itemErrors.push(`${relation}がself-loopです`);
