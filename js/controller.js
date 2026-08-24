@@ -20,9 +20,23 @@
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
       if (mode === 'exam') return all.sort((a, b) => a.localeCompare(b, 'ja'));
       const related = JOURNAL_GROUPS.find(group => group.includes(correct)) || [];
-      return [...new Set([correct, ...related, ...all])].slice(0, 5).sort(() => 0.5 - Controller.hash(`${question.id}-${correct}`));
+      const seed = `${question.id}:${correct}`;
+      const choices = Controller.seededShuffle([...new Set([correct, ...related, ...all])].slice(0, 5), seed);
+      const current = choices.indexOf(correct); const target = Controller.hash(seed) % choices.length;
+      [choices[current], choices[target]] = [choices[target], choices[current]];
+      return choices;
     }
-    static hash(text) { return ([...text].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 10) / 10; }
+    static hash(text) {
+      let hash = 2166136261;
+      for (const char of String(text)) { hash ^= char.codePointAt(0); hash = Math.imul(hash, 16777619); }
+      return hash >>> 0;
+    }
+    static seededShuffle(values, seed) {
+      const shuffled = [...values]; let state = Controller.hash(seed) || 0x9e3779b9;
+      const random = () => { state += 0x6d2b79f5; let value = state; value = Math.imul(value ^ value >>> 15, value | 1); value ^= value + Math.imul(value ^ value >>> 7, value | 61); return ((value ^ value >>> 14) >>> 0) / 4294967296; };
+      for (let index = shuffled.length - 1; index > 0; index -= 1) { const target = Math.floor(random() * (index + 1)); [shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]]; }
+      return shuffled;
+    }
     init(route = {}) {
       this.bindEvents(); this.populateAccountFilter(); this.renderModes(); this.view.updateRpg(this.rpg);
       const mode = ['story', 'training', 'review', 'exam'].includes(route.mode) ? route.mode : 'story';
@@ -52,7 +66,14 @@
       const attempt = Number(this.model.state.examAttempt || 0);
       return Object.entries(quota).flatMap(([type, count]) => { const pool = this.ids.filter(id => this.questions[id].type === type); const start = (attempt * count) % pool.length; return Array.from({ length: count }, (_, index) => pool[(start + index) % pool.length]); });
     }
-    modeIds() { const mode = this.model.state.mode; if (mode === 'review') return this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids; if (mode === 'exam') return this.examIds || (this.examIds = this.buildExamIds()); if (mode === 'training') return this.ids.filter(id => this.questions[id].type !== 'journal'); return this.ids; }
+    storyIds() {
+      const flow = { journal: 0, ledger: 1, trial_balance: 2, correction: 3, worksheet: 4, financial_statement: 5, comprehensive: 6 };
+      return this.ids.map((id, index) => ({ id, index })).sort((left, right) => {
+        const a = this.questions[left.id]; const b = this.questions[right.id];
+        return a.chapter - b.chapter || flow[a.type] - flow[b.type] || left.index - right.index;
+      }).map(item => item.id);
+    }
+    modeIds() { const mode = this.model.state.mode; if (mode === 'review') return this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids; if (mode === 'exam') return this.examIds || (this.examIds = this.buildExamIds()); if (mode === 'training') return this.ids.filter(id => this.questions[id].type !== 'journal'); return this.storyIds(); }
     questionAccounts(question) { return question.type === 'journal' ? [...question.answer.debit, ...question.answer.credit].map(item => item.account) : []; }
     populateAccountFilter() {
       const select = this.document.getElementById('filter-account');
@@ -79,9 +100,9 @@
     }
     renderModes() {
       const render = (id, ids) => { const filtered = this.filteredIds(ids); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; const mistakes = this.model.state.mistakeCounts[qid] || 0; button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}`; return button; })); return filtered.length; };
-      const counts = [render('story-list', this.ids.filter(id => this.questions[id].type === 'journal')), render('training-list', this.ids.filter(id => this.questions[id].type !== 'journal')), render('review-list', this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids), render('exam-list', this.buildExamIds())];
+      const counts = [render('story-list', this.storyIds()), render('training-list', this.ids.filter(id => this.questions[id].type !== 'journal')), render('review-list', this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids), render('exam-list', this.buildExamIds())];
       const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode); const count = counts[Math.max(modeIndex, 0)]; this.document.getElementById('filter-status').textContent = `${count}問を表示しています。`;
-      const storyIds = this.ids.filter(id => this.questions[id].type === 'journal');
+      const storyIds = this.storyIds();
       const nextId = storyIds.find(id => !this.model.state.answeredIds.includes(id)) || this.model.state.currentQuestionId || storyIds[0];
       const next = this.questions[nextId]; const chapterIds = storyIds.filter(id => this.questions[id].chapter === next.chapter);
       this.document.getElementById('resume-scene').textContent = `第${next.chapter}章｜${next.scene}`;
