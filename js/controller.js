@@ -6,7 +6,16 @@
   const getStorage = () => {
     try { return root.localStorage; } catch (_) { return null; }
   };
-  const JOURNAL_GROUPS = [['現金','普通預金','当座預金','売掛金','買掛金'], ['仕入','売上','繰越商品','発送費','消耗品費'], ['備品','減価償却費','減価償却累計額','固定資産売却損'], ['資本金','繰越利益剰余金','損益','借入金']];
+  // 同じ会計的性質の科目を先に提示し、単なる見た目の5択ではなく識別学習にする。
+  const JOURNAL_GROUPS = [
+    ['現金','普通預金','当座預金','小口現金','現金過不足'],
+    ['売掛金','受取手形','電子記録債権','未収入金','未収収益','クレジット売掛金'],
+    ['買掛金','支払手形','電子記録債務','未払金','未払費用','借入金'],
+    ['仕入','売上','繰越商品','仕入返品','売上返品'],
+    ['旅費交通費','通信費','水道光熱費','消耗品費','支払家賃','租税公課'],
+    ['備品','減価償却費','減価償却累計額','固定資産売却損','固定資産売却益'],
+    ['資本金','繰越利益剰余金','損益','受取利息','償却債権取立益']
+  ];
   const EXAM_DURATION_MS = 60 * 60 * 1000;
   const EXAM_POINTS = Object.freeze([9, 9, 9, 9, 9, 5, 5, 5, 5, 6, 6, 6, 6, 6, 5]);
   class Controller {
@@ -82,7 +91,9 @@
     buildExamIds() {
       const quota = { journal: 5, ledger: 2, trial_balance: 2, correction: 2, worksheet: 2, financial_statement: 1, comprehensive: 1 };
       const attempt = Number(this.model.state.examAttempt || 0);
-      return Object.entries(quota).flatMap(([type, count]) => { const pool = this.ids.filter(id => this.questions[id].type === type && this.questions[id].semantic?.examEligible === true); if (pool.length < count) throw new Error(`模試対象の${type}問題が不足しています`); const start = (attempt * count) % pool.length; return Array.from({ length: count }, (_, index) => pool[(start + index) % pool.length]); });
+      const semanticAudit = root.validateSemanticQuestionData(this.questions);
+      const eligible = new Set(semanticAudit.eligibleIds);
+      return Object.entries(quota).flatMap(([type, count]) => { const pool = this.ids.filter(id => this.questions[id].type === type && eligible.has(id)); if (pool.length < count) throw new Error(`独立Semantic監査済みの${type}問題が不足しています`); const start = (attempt * count) % pool.length; return Array.from({ length: count }, (_, index) => pool[(start + index) % pool.length]); });
     }
     storyIds() {
       const flow = { journal: 0, ledger: 1, trial_balance: 2, correction: 3, worksheet: 4, financial_statement: 5, comprehensive: 6 };

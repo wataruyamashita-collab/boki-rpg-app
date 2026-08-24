@@ -19,7 +19,7 @@ export interface Question {
   table?: QuestionTable;
   explanation: string;
   materials?: Array<Record<string, string | number>>;
-  semantic?: { questionId: string; visibleInputs: string[]; requiredFacts: string[]; factSources: Record<string, 'question' | 'story' | 'materials' | 'fixedCell' | 'previousResultExplicitlyShown'>; dependencies: string[]; semanticStatus: 'VALID' | 'QUESTIONABLE' | 'INVALID'; examEligible: boolean; gradingValidated: boolean; };
+  semantic?: { questionId: string; visibleInputs: Array<'question' | 'story' | 'materials' | 'fixedCell'>; dependencies: string[]; };
 }
 export type QuestionMap = Record<string, Question>;
 export interface ProgressState {
