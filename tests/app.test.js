@@ -65,7 +65,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-7'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-8'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -140,6 +140,11 @@ assert.strictEqual(browserSandbox.window.QuestionDataAudit.ok, true, `全問題�
 const semanticAudit = browserSandbox.window.validateSemanticQuestionData();
 assert.strictEqual(semanticAudit.ok, true, `SEMANTIC: ${semanticAudit.errors.join(', ')}`);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(semanticAudit.counts)), { VALID:300, QUESTIONABLE:0, INVALID:0 }, '全300問のSemantic Auditを分類する');
+assert.strictEqual(semanticAudit.eligibleIds.length, 300, '模試対象は自己申告ではなく独立Semantic監査結果から生成する');
+const tamperedQuestions = { ...browserSandbox.window.QuestionData, J081: { ...browserSandbox.window.QuestionData.J081, answer: { debit:[{account:'租税公課',amount:58000}], credit:[{account:'現金',amount:58000}] } } };
+const tamperedAudit = browserSandbox.window.validateSemanticQuestionData(tamperedQuestions);
+assert.strictEqual(tamperedAudit.findings.J081.status, 'INVALID', '表示48,000円に対する正答58,000円を自己申告にかかわらず検出する');
+assert(!tamperedAudit.eligibleIds.includes('J081'), 'Semantic不成立問題を模試対象から除外する');
 [['L044',50000,18000],['L045',300000,85000],['L046',4800,7200]].forEach(([id, first, second]) => { const visible = JSON.stringify(browserSandbox.window.QuestionData[id].materials); assert(visible.includes(String(first)) && visible.includes(String(second)), `SEMANTIC-${id}: 根拠金額をvisible materialsに持つ`); });
 assert.deepStrictEqual([...browserSandbox.window.QuestionDataAudit.warnings], [], '全問題に品質上の警告がない');
 for (let number = 1; number <= 20; number += 1) {
@@ -268,7 +273,7 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(resultScore)), { correct: true,
 const examIds = browserSandbox.window.AppController.prototype.buildExamIds.call(examAudit);
 assert.strictEqual(examIds.length, 15, '模試は設計通り15問を選出する');
 examIds.forEach(id => { const question = browserSandbox.window.QuestionData[id]; assert(question.type === 'journal' || (question.table && question.table.inputCells.every(cell => cell in question.answer.cells)), `${id}は必要な入力欄と正答を持つ`); if (question.materials?.length) assert(viewSource.includes('this.renderMaterials(question)'), `${id}の資料を問題表示で描画する`); });
-examIds.forEach(id => assert.strictEqual(browserSandbox.window.QuestionData[id].semantic.examEligible, true, `EXAM-VALIDITY: ${id}はSemantic VALIDである`));
+examIds.forEach(id => assert.strictEqual(semanticAudit.findings[id].status, 'VALID', `EXAM-VALIDITY: ${id}は独立Semantic監査でVALIDである`));
 assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSections('【処理の根拠】\n資産が増えます。\n【試験のポイント】ここに注意。'))), [
   { label: '実務MEMO', kind: 'memo', text: '資産が増えます。' },
   { label: '試験POINT', kind: 'point', text: 'ここに注意。' }
@@ -306,7 +311,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260824-7') && html.includes('js/view.js?v=20260824-7'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-8') && html.includes('js/view.js?v=20260824-8'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');

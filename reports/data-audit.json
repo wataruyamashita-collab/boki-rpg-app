@@ -2,13 +2,13 @@
   "total": 300,
   "uniqueTemplates": {
     "question": 148,
-    "explanation": 105,
-    "story": 50
+    "explanation": 109,
+    "story": 53
   },
   "questionsInRepeatedGroups": {
     "question": 211,
-    "explanation": 252,
-    "story": 289
+    "explanation": 247,
+    "story": 286
   },
   "chapters": {
     "1": 9,

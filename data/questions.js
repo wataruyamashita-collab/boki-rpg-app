@@ -14450,28 +14450,25 @@ Object.assign(QuestionData.L046, { materials: [{ '日付':'6/7', '証ひょう':
 Object.assign(QuestionData.D019, { category:'決算整理後残高試算表', format:'adjusted-trial-balance', scene:'決算・整理後残高の確認', story:'決算整理仕訳を転記し、財務諸表作成前の残高を確定する。', question:'下記の決算整理前残高と整理事項を反映し、決算整理後残高試算表を完成しなさい。', materials:[{勘定科目:'保険料',整理前借方:200000,整理前貸方:'—',整理事項:'前払分40,000円を振替'},{勘定科目:'前払保険料',整理前借方:'—',整理前貸方:'—',整理事項:'借方40,000円'},{勘定科目:'備品',整理前借方:600000,整理前貸方:'—',整理事項:'間接法のため取得原価を維持'},{勘定科目:'減価償却費',整理前借方:'—',整理前貸方:'—',整理事項:'借方60,000円'},{勘定科目:'減価償却累計額',整理前借方:'—',整理前貸方:'—',整理事項:'貸方60,000円'}], table:{columns:['勘定科目','整理後借方','整理後貸方'],rows:[{account:'保険料',debit:'入力',credit:'—'},{account:'前払保険料',debit:'入力',credit:'—'},{account:'備品',debit:'入力',credit:'—'},{account:'減価償却費',debit:'入力',credit:'—'},{account:'減価償却累計額',debit:'—',credit:'入力'}],inputCells:['insurance','prepaid','equipment','depreciation','accumulated']}, answer:{cells:{insurance:160000,prepaid:40000,equipment:600000,depreciation:60000,accumulated:60000}}, explanation:'整理仕訳を各勘定へ転記した後の残高です。備品は間接法なので備品勘定そのものを減額しません。' });
 Object.assign(QuestionData.D020, { category:'帳簿締切', format:'closing-entries', scene:'決算・収益費用勘定の締切', story:'損益勘定を経由して収益・費用を締め切る。', question:'売上800,000円、仕入400,000円、保険料160,000円、減価償却費60,000円だけがある。各収益・費用を損益勘定へ振り替えた後、当期純利益を繰越利益剰余金へ振り替える締切金額を完成しなさい。', table:{columns:['締切手続','金額'],rows:[{item:'売上から損益への振替',amount:'入力'},{item:'仕入から損益への振替',amount:'入力'},{item:'保険料から損益への振替',amount:'入力'},{item:'減価償却費から損益への振替',amount:'入力'},{item:'損益から繰越利益剰余金への振替',amount:'入力'}],inputCells:['sales','purchases','insurance','depreciation','profit']}, answer:{cells:{sales:800000,purchases:400000,insurance:160000,depreciation:60000,profit:180000}}, explanation:'収益800,000円と費用620,000円を損益へ振り替え、差額180,000円を繰越利益剰余金へ振り替えます。間接法では備品勘定そのものを減額しません。' });
 
-Object.assign(QuestionData.J148, { category:'受取手形', scene:'応用・手形の受入', story:'約束手形で代金を受け取る独立ケース。', question:'商品80,000円を売り上げ、得意先振出の約束手形を受け取った。', answer:{ debit:[{account:'受取手形',amount:80000}], credit:[{account:'売上',amount:80000}] }, explanation:'将来代金を受け取る手形債権は受取手形（資産）です。' });
-Object.assign(QuestionData.J149, { category:'支払手形', scene:'応用・手形の振出', story:'自店の約束手形を振り出す独立ケース。', question:'商品60,000円を仕入れ、代金として約束手形を振り出した。', answer:{ debit:[{account:'仕入',amount:60000}], credit:[{account:'支払手形',amount:60000}] }, explanation:'将来代金を支払う手形債務は支払手形（負債）です。' });
-Object.assign(QuestionData.J150, { category:'手形の取立と支払', scene:'応用・手形の決済', story:'受取手形と支払手形が満期になった独立ケース。', question:'受取手形80,000円が満期となり当座預金に取り立てられた。また、支払手形60,000円が満期となり当座預金から支払われた。', answer:{ debit:[{account:'当座預金',amount:80000},{account:'支払手形',amount:60000}], credit:[{account:'受取手形',amount:80000},{account:'当座預金',amount:60000}] }, explanation:'取立てで受取手形が減って当座預金が増え、支払で支払手形と当座預金が減ります。' });
+Object.assign(QuestionData.J148, { category:'受取手形', variantGroup:'受取手形', scene:'応用・手形の受入', story:'約束手形で代金を受け取る独立ケース。', question:'商品80,000円を売り上げ、得意先振出の約束手形を受け取った。', answer:{ debit:[{account:'受取手形',amount:80000}], credit:[{account:'売上',amount:80000}] }, explanation:'将来代金を受け取る手形債権は受取手形（資産）です。' });
+Object.assign(QuestionData.J149, { category:'支払手形', variantGroup:'支払手形', scene:'応用・手形の振出', story:'自店の約束手形を振り出す独立ケース。', question:'商品60,000円を仕入れ、代金として約束手形を振り出した。', answer:{ debit:[{account:'仕入',amount:60000}], credit:[{account:'支払手形',amount:60000}] }, explanation:'将来代金を支払う手形債務は支払手形（負債）です。' });
+Object.assign(QuestionData.J150, { category:'手形の取立と支払', variantGroup:'手形の取立と支払', scene:'応用・手形の決済', story:'受取手形と支払手形が満期になった独立ケース。', question:'受取手形80,000円が満期となり当座預金に取り立てられた。また、支払手形60,000円が満期となり当座預金から支払われた。', answer:{ debit:[{account:'当座預金',amount:80000},{account:'支払手形',amount:60000}], credit:[{account:'受取手形',amount:80000},{account:'当座預金',amount:60000}] }, explanation:'取立てで受取手形が減って当座預金が増え、支払で支払手形と当座預金が減ります。' });
 
-// Structural validationとは独立した、画面上の根拠と模試投入可否の契約。
-// requiredFactsは「正答そのもの」ではなく、受験者が計算前に必要とする入力事実を表す。
-const semanticOverrides = {
-  D001: { requiredFacts: ['元試算表9科目の借貸残高', '保険料前払40000', '備品減価償却60000'], factSources: { '元試算表9科目の借貸残高':'materials', '保険料前払40000':'question', '備品減価償却60000':'question' } },
-  F001: { requiredFacts: ['売上800000', '売上原価400000', '保険料160000', '減価償却費60000'], factSources: { '売上800000':'materials', '売上原価400000':'materials', '保険料160000':'materials', '減価償却費60000':'materials' } },
-  L044: { requiredFacts: ['入金50000', '支払18000'], factSources: { '入金50000':'materials', '支払18000':'materials' } },
-  L045: { requiredFacts: ['預入300000', '引出85000'], factSources: { '預入300000':'materials', '引出85000':'materials' } },
-  L046: { requiredFacts: ['通信費4800', '旅費交通費7200', '定額資金前渡法は支払同額を補給'], factSources: { '通信費4800':'materials', '旅費交通費7200':'materials', '定額資金前渡法は支払同額を補給':'question' } }
-};
+// J081には問題文48,000円に対して旧正答58,000円という不整合があった。
+Object.assign(QuestionData.J081, { answer:{ debit:[{account:'租税公課',amount:48000}], credit:[{account:'現金',amount:48000}] }, explanation:'事業に係る固定資産税は租税公課として費用計上し、現金を減らします。借方・貸方はいずれも48,000円です。' });
+
+// 反復問題を公式範囲で不足していた債権・費用・貸倒債権回収の独立ケースへ置換する。
+Object.assign(QuestionData.J131, { category:'水道光熱費', variantGroup:'水道光熱費', scene:'応用・店舗経費', story:'店舗運営に必要な公共料金を、請求内容と決済手段から仕訳する。', question:'店舗の電気料金68,000円が普通預金口座から引き落とされた。', answer:{debit:[{account:'水道光熱費',amount:68000}],credit:[{account:'普通預金',amount:68000}]}, explanation:'店舗の電気・ガス・水道料金は水道光熱費として費用計上し、口座引落しで普通預金が減少します。' });
+Object.assign(QuestionData.J134, { category:'償却債権取立益', variantGroup:'償却債権取立益', scene:'応用・貸倒債権の回収', story:'前期に貸倒処理した債権から予期しなかった入金があり、当期の収益を認識する。', question:'前期に全額を貸倒処理した売掛金のうち29,000円を現金で回収した。', answer:{debit:[{account:'現金',amount:29000}],credit:[{account:'償却債権取立益',amount:29000}]}, explanation:'前期に貸倒処理済みの債権を当期に回収したため、償却債権取立益として収益計上します。' });
+Object.assign(QuestionData.J137, { category:'未収入金', variantGroup:'固定資産売却・未収入金', scene:'応用・固定資産の後日決済', story:'商品売買以外から生じる未回収額を売掛金と区別して管理する。', question:'帳簿価額180,000円の備品を220,000円で売却し、代金は翌月受け取ることとした。', answer:{debit:[{account:'未収入金',amount:220000}],credit:[{account:'備品',amount:180000},{account:'固定資産売却益',amount:40000}]}, explanation:'商品以外の備品売却代金の未回収額は未収入金です。売却価額220,000円と帳簿価額180,000円の差額40,000円を固定資産売却益とします。' });
+
+// semanticには入力面の所在だけを記録する。VALIDや模試可否をデータ自身に宣言させず、
+// validateSemanticQuestionDataが表示情報と正答を独立に照合して毎回算出する。
 Object.values(QuestionData).forEach(item => {
-  const override = semanticOverrides[item.id];
-  const requiredFacts = override?.requiredFacts || [`${item.category}の問題文に明示された取引条件`];
   item.semantic = {
     questionId: item.id,
     visibleInputs: ['question', ...(item.story ? ['story'] : []), ...(item.materials?.length ? ['materials'] : []), ...(item.table ? ['fixedCell'] : [])],
-    requiredFacts,
-    factSources: override?.factSources || Object.fromEntries(requiredFacts.map(fact => [fact, 'question'])),
-    dependencies: [...(item.knowledgeLinks?.prerequisite || [])], semanticStatus: 'VALID', examEligible: true, gradingValidated: true
+    dependencies: [...(item.knowledgeLinks?.prerequisite || [])]
   };
 });
 
@@ -14638,21 +14635,76 @@ function validateQuestionData(questionData = QuestionData) {
 }
 
 function validateSemanticQuestionData(questionData = QuestionData) {
-  const errors = []; const entries = Object.entries(questionData || {}); const order = new Map();
+  const errors = []; const findings = {}; const eligibleIds = []; const entries = Object.entries(questionData || {}); const order = new Map();
   const flow = { journal:0, ledger:1, trial_balance:2, correction:3, worksheet:4, financial_statement:5, comprehensive:6 };
   entries.map(([id, item], index) => ({ id, item, index })).sort((a, b) => a.item.chapter - b.item.chapter || flow[a.item.type] - flow[b.item.type] || a.index - b.index).forEach(({ id }, index) => order.set(id, index));
+
+  const visibleText = item => JSON.stringify({ question:item.question, story:item.story, materials:item.materials, fixedCells:item.table?.rows });
+  const visibleNumbers = item => [...visibleText(item).matchAll(/\d[\d,]*(?:\.\d+)?/g)]
+    .map(match => Number(match[0].replace(/,/g, ''))).filter(number => Number.isFinite(number) && number > 0);
+  const answerNumbers = item => item.type === 'journal'
+    ? [...(item.answer?.debit || []), ...(item.answer?.credit || [])].map(row => row.amount)
+    : Object.values(item.answer?.cells || {}).filter(value => typeof value === 'number');
+  const canDerive = (target, inputs, text) => {
+    if (inputs.includes(target)) return true;
+    const limit = Math.max(target * 4, 10000000);
+    // まず、表示された各数値を一度ずつ使う合計・差額を検証する（同額2件も保持）。
+    let reachable = new Set([0]);
+    for (const number of inputs) {
+      const next = new Set(reachable);
+      for (const total of reachable) {
+        if (Math.abs(total + number) <= limit) next.add(total + number);
+        if (Math.abs(total - number) <= limit) next.add(total - number);
+      }
+      reachable = next;
+      if (reachable.has(target)) return true;
+      if (reachable.size > 20000) reachable = new Set([...reachable].sort((a,b) => Math.abs(a-target) - Math.abs(b-target)).slice(0,10000));
+    }
+    // 次に定額法や百分率など、2段階までの四則演算を検証する。
+    let values = new Set(inputs);
+    for (let round = 0; round < 2; round += 1) {
+      const current = [...values].slice(0, 160);
+      for (const left of current) for (const right of current) {
+        for (const result of [left + right, Math.abs(left - right), left * right, right ? left / right : NaN, (text.includes('%') || text.includes('％')) ? left * right / 100 : NaN]) {
+          if (Number.isInteger(result) && result >= 0 && result <= limit) values.add(result);
+        }
+      }
+      if (values.has(target)) return true;
+    }
+    return false;
+  };
+
   for (const [id, item] of entries) {
+    const itemErrors = [];
     const semantic = item.semantic;
-    if (!semantic || semantic.questionId !== id) { errors.push(`${id}: semantic metadataがありません`); continue; }
-    if (!['VALID','QUESTIONABLE','INVALID'].includes(semantic.semanticStatus)) errors.push(`${id}: semanticStatusが不正です`);
-    for (const fact of semantic.requiredFacts || []) if (!semantic.factSources?.[fact]) errors.push(`${id}: requiredFact「${fact}」に画面上のsourceがありません`);
-    if (semantic.examEligible && (semantic.semanticStatus !== 'VALID' || !semantic.gradingValidated)) errors.push(`${id}: 未検証問題が模試対象です`);
+    if (!semantic || semantic.questionId !== id) itemErrors.push('semantic入力契約がありません');
+    const allowedSources = new Set(['question','story','materials','fixedCell']);
+    for (const source of semantic?.visibleInputs || []) if (!allowedSources.has(source)) itemErrors.push(`非表示source ${source} に依存しています`);
+    if (!String(item.question || '').trim()) itemErrors.push('表示する問題文がありません');
+    const inputs = visibleNumbers(item); const text = visibleText(item);
+    for (const answer of new Set(answerNumbers(item))) {
+      if (!Number.isFinite(answer) || answer < 0) itemErrors.push(`正答金額 ${answer} が不正です`);
+      else if (answer > 0 && !canDerive(answer, inputs, text)) itemErrors.push(`正答金額 ${answer} を表示数値から導出できません`);
+    }
+    if (item.type === 'journal') {
+      const debit = (item.answer?.debit || []).reduce((sum,row) => sum + Number(row.amount || 0), 0);
+      const credit = (item.answer?.credit || []).reduce((sum,row) => sum + Number(row.amount || 0), 0);
+      if (!debit || debit !== credit) itemErrors.push(`仕訳の貸借が一致しません (${debit}/${credit})`);
+    } else {
+      const inputsSet = new Set(item.table?.inputCells || []); const answerKeys = Object.keys(item.answer?.cells || {});
+      if (inputsSet.size !== answerKeys.length || answerKeys.some(key => !inputsSet.has(key))) itemErrors.push('表示入力欄と正答キーが一致しません');
+    }
     const links = item.knowledgeLinks || {};
-    for (const relation of ['prerequisite','nextConcept']) if ((links[relation] || []).includes(id)) errors.push(`${id}: ${relation}がself-loopです`);
-    if (new Set(links.related || []).size !== (links.related || []).length) errors.push(`${id}: relatedが重複しています`);
-    for (const prerequisite of links.prerequisite || []) if (!order.has(prerequisite) || order.get(prerequisite) >= order.get(id)) errors.push(`${id}: prerequisite ${prerequisite}が学習順を逆転しています`);
+    for (const relation of ['prerequisite','nextConcept']) if ((links[relation] || []).includes(id)) itemErrors.push(`${relation}がself-loopです`);
+    if (new Set(links.related || []).size !== (links.related || []).length) itemErrors.push('relatedが重複しています');
+    for (const prerequisite of links.prerequisite || []) if (!order.has(prerequisite) || order.get(prerequisite) >= order.get(id)) itemErrors.push(`prerequisite ${prerequisite}が学習順を逆転しています`);
+    const status = itemErrors.length ? 'INVALID' : 'VALID';
+    findings[id] = Object.freeze({ status, errors:Object.freeze(itemErrors), visibleNumbers:Object.freeze(inputs) });
+    if (status === 'VALID') eligibleIds.push(id);
+    itemErrors.forEach(error => errors.push(`${id}: ${error}`));
   }
-  return Object.freeze({ ok: errors.length === 0, errors: Object.freeze(errors), counts: Object.freeze({ VALID: entries.filter(([,q]) => q.semantic?.semanticStatus === 'VALID').length, QUESTIONABLE: entries.filter(([,q]) => q.semantic?.semanticStatus === 'QUESTIONABLE').length, INVALID: entries.filter(([,q]) => q.semantic?.semanticStatus === 'INVALID').length }) });
+  const validCount = eligibleIds.length;
+  return Object.freeze({ ok: errors.length === 0, errors:Object.freeze(errors), findings:Object.freeze(findings), eligibleIds:Object.freeze(eligibleIds), counts:Object.freeze({ VALID:validCount, QUESTIONABLE:0, INVALID:entries.length-validCount }) });
 }
 
 // Top-level `const` declarations are not added to `window` in classic scripts.
