@@ -14447,7 +14447,7 @@ Object.assign(QuestionData.L044, { materials: [{ '日付':'4/3', '証ひょう':
 Object.assign(QuestionData.L045, { materials: [{ '日付':'5/1', '証ひょう':'預入票', '摘要':'当座預金へ預入', '預入':300000, '引出':'—' }, { '日付':'5/8', '証ひょう':'振込受付書', '摘要':'買掛金の振込支払', '預入':'—', '引出':85000 }] });
 Object.assign(QuestionData.L046, { materials: [{ '日付':'6/7', '証ひょう':'領収証', '摘要':'郵便・通信費', '金額':4800 }, { '日付':'6/14', '証ひょう':'交通費精算書', '摘要':'得意先訪問', '金額':7200 }], question:'定額資金前渡法で、下記支払報告を通信費と旅費交通費に分類し、当日に支払額と同額を補給する場合の補給額も記入しなさい。' });
 
-Object.assign(QuestionData.D019, { category:'決算整理後残高試算表', format:'adjusted-trial-balance', scene:'決算・整理後残高の確認', story:'決算整理仕訳を転記し、財務諸表作成前の残高を確定する。', question:'下記の決算整理前残高と整理事項を反映し、決算整理後残高試算表を完成しなさい。', materials:[{勘定科目:'保険料',整理前借方:200000,整理前貸方:'—',整理事項:'前払分40,000円を振替'},{勘定科目:'前払保険料',整理前借方:'—',整理前貸方:'—',整理事項:'借方40,000円'},{勘定科目:'備品',整理前借方:600000,整理前貸方:'—',整理事項:'間接法のため取得原価を維持'},{勘定科目:'減価償却費',整理前借方:'—',整理前貸方:'—',整理事項:'借方60,000円'},{勘定科目:'減価償却累計額',整理前借方:'—',整理前貸方:'—',整理事項:'貸方60,000円'}], table:{columns:['勘定科目','整理後借方','整理後貸方'],rows:[{account:'保険料',debit:'入力',credit:'—'},{account:'前払保険料',debit:'入力',credit:'—'},{account:'備品',debit:'入力',credit:'—'},{account:'減価償却費',debit:'入力',credit:'—'},{account:'減価償却累計額',debit:'—',credit:'入力'}],inputCells:['insurance','prepaid','equipment','depreciation','accumulated']}, answer:{cells:{insurance:160000,prepaid:40000,equipment:600000,depreciation:60000,accumulated:60000}}, explanation:'整理仕訳を各勘定へ転記した後の残高です。備品は間接法なので備品勘定そのものを減額しません。' });
+Object.assign(QuestionData.D019, { category:'決算整理後残高試算表', format:'adjusted-trial-balance', scene:'決算・整理後残高の確認', story:'決算整理仕訳を転記し、財務諸表作成前の残高を貸借一致まで確かめる。', question:'下記の全勘定の決算整理前残高と整理事項を反映し、貸借が一致する決算整理後残高試算表を完成しなさい。', materials:[{勘定科目:'現金',整理前借方:240000,整理前貸方:'—',整理事項:'なし'},{勘定科目:'売掛金',整理前借方:200000,整理前貸方:'—',整理事項:'なし'},{勘定科目:'保険料',整理前借方:200000,整理前貸方:'—',整理事項:'前払分40,000円を振替'},{勘定科目:'備品',整理前借方:600000,整理前貸方:'—',整理事項:'間接法のため取得原価を維持'},{勘定科目:'買掛金',整理前借方:'—',整理前貸方:100000,整理事項:'なし'},{勘定科目:'資本金',整理前借方:'—',整理前貸方:300000,整理事項:'なし'},{勘定科目:'繰越利益剰余金',整理前借方:'—',整理前貸方:40000,整理事項:'なし'},{勘定科目:'売上',整理前借方:'—',整理前貸方:800000,整理事項:'なし'},{勘定科目:'前払保険料',整理前借方:'—',整理前貸方:'—',整理事項:'借方40,000円'},{勘定科目:'減価償却費',整理前借方:'—',整理前貸方:'—',整理事項:'借方60,000円'},{勘定科目:'減価償却累計額',整理前借方:'—',整理前貸方:'—',整理事項:'貸方60,000円'}], table:{columns:['勘定科目','整理後借方','整理後貸方'],rows:[{account:'現金',debit:'入力',credit:'—'},{account:'売掛金',debit:'入力',credit:'—'},{account:'保険料',debit:'入力',credit:'—'},{account:'前払保険料',debit:'入力',credit:'—'},{account:'備品',debit:'入力',credit:'—'},{account:'減価償却費',debit:'入力',credit:'—'},{account:'買掛金',debit:'—',credit:'入力'},{account:'減価償却累計額',debit:'—',credit:'入力'},{account:'資本金',debit:'—',credit:'入力'},{account:'繰越利益剰余金',debit:'—',credit:'入力'},{account:'売上',debit:'—',credit:'入力'},{account:'合計',debit:'入力',credit:'入力'}],inputCells:['cash','receivables','insurance','prepaid','equipment','depreciation','payables','accumulated','capital','retained','sales','debitTotal','creditTotal']}, answer:{cells:{cash:240000,receivables:200000,insurance:160000,prepaid:40000,equipment:600000,depreciation:60000,payables:100000,accumulated:60000,capital:300000,retained:40000,sales:800000,debitTotal:1300000,creditTotal:1300000}}, explanation:'前払分40,000円と減価償却費60,000円を転記すると、整理後の借方・貸方合計はいずれも1,300,000円です。備品は間接法なので備品勘定そのものを減額しません。' });
 Object.assign(QuestionData.D020, { category:'帳簿締切', format:'closing-entries', scene:'決算・収益費用勘定の締切', story:'損益勘定を経由して収益・費用を締め切る。', question:'売上800,000円、仕入400,000円、保険料160,000円、減価償却費60,000円だけがある。各収益・費用を損益勘定へ振り替えた後、当期純利益を繰越利益剰余金へ振り替える締切金額を完成しなさい。', table:{columns:['締切手続','金額'],rows:[{item:'売上から損益への振替',amount:'入力'},{item:'仕入から損益への振替',amount:'入力'},{item:'保険料から損益への振替',amount:'入力'},{item:'減価償却費から損益への振替',amount:'入力'},{item:'損益から繰越利益剰余金への振替',amount:'入力'}],inputCells:['sales','purchases','insurance','depreciation','profit']}, answer:{cells:{sales:800000,purchases:400000,insurance:160000,depreciation:60000,profit:180000}}, explanation:'収益800,000円と費用620,000円を損益へ振り替え、差額180,000円を繰越利益剰余金へ振り替えます。間接法では備品勘定そのものを減額しません。' });
 
 Object.assign(QuestionData.J148, { category:'受取手形', variantGroup:'受取手形', scene:'応用・手形の受入', story:'約束手形で代金を受け取る独立ケース。', question:'商品80,000円を売り上げ、得意先振出の約束手形を受け取った。', answer:{ debit:[{account:'受取手形',amount:80000}], credit:[{account:'売上',amount:80000}] }, explanation:'将来代金を受け取る手形債権は受取手形（資産）です。' });
@@ -14460,7 +14460,7 @@ Object.assign(QuestionData.J081, { answer:{ debit:[{account:'租税公課',amoun
 // 反復問題を公式範囲で不足していた債権・費用・貸倒債権回収の独立ケースへ置換する。
 Object.assign(QuestionData.J131, { category:'水道光熱費', variantGroup:'水道光熱費', scene:'応用・店舗経費', story:'店舗運営に必要な公共料金を、請求内容と決済手段から仕訳する。', question:'店舗の電気料金68,000円が普通預金口座から引き落とされた。', answer:{debit:[{account:'水道光熱費',amount:68000}],credit:[{account:'普通預金',amount:68000}]}, explanation:'店舗の電気・ガス・水道料金は水道光熱費として費用計上し、口座引落しで普通預金が減少します。' });
 Object.assign(QuestionData.J134, { category:'償却債権取立益', variantGroup:'償却債権取立益', scene:'応用・貸倒債権の回収', story:'前期に貸倒処理した債権から予期しなかった入金があり、当期の収益を認識する。', question:'前期に全額を貸倒処理した売掛金のうち29,000円を現金で回収した。', answer:{debit:[{account:'現金',amount:29000}],credit:[{account:'償却債権取立益',amount:29000}]}, explanation:'前期に貸倒処理済みの債権を当期に回収したため、償却債権取立益として収益計上します。' });
-Object.assign(QuestionData.J137, { category:'未収入金', variantGroup:'固定資産売却・未収入金', scene:'応用・固定資産の後日決済', story:'商品売買以外から生じる未回収額を売掛金と区別して管理する。', question:'帳簿価額180,000円の備品を220,000円で売却し、代金は翌月受け取ることとした。', answer:{debit:[{account:'未収入金',amount:220000}],credit:[{account:'備品',amount:180000},{account:'固定資産売却益',amount:40000}]}, explanation:'商品以外の備品売却代金の未回収額は未収入金です。売却価額220,000円と帳簿価額180,000円の差額40,000円を固定資産売却益とします。' });
+Object.assign(QuestionData.J137, { category:'未収入金', variantGroup:'固定資産売却・未収入金', scene:'応用・固定資産の後日決済', story:'商品売買以外から生じる未回収額を売掛金と区別して管理する。', question:'取得原価300,000円、減価償却累計額120,000円の備品を220,000円で売却し、代金は翌月受け取ることとした。', answer:{debit:[{account:'未収入金',amount:220000},{account:'減価償却累計額',amount:120000}],credit:[{account:'備品',amount:300000},{account:'固定資産売却益',amount:40000}]}, explanation:'未回収の売却代金は未収入金です。間接法では取得原価300,000円と減価償却累計額120,000円を取り崩し、売却価額との差額40,000円を固定資産売却益にします。' });
 
 // semanticには入力面の所在だけを記録する。VALIDや模試可否をデータ自身に宣言させず、
 // validateSemanticQuestionDataが表示情報と正答を独立に照合して毎回算出する。
@@ -14471,6 +14471,12 @@ Object.values(QuestionData).forEach(item => {
     dependencies: [...(item.knowledgeLinks?.prerequisite || [])]
   };
 });
+
+// 正答とは別に、レビュー済み仕訳の改ざん検知用キーを閉じ込める。
+// validateSemanticQuestionDataへ渡されたコピーのanswerを書き換えても、この基準値は変化しない。
+const SemanticJournalAnswerKey = new Map(Object.values(QuestionData)
+  .filter(item => item.type === 'journal')
+  .map(item => [item.id, JSON.stringify({ debit:item.answer.debit, credit:item.answer.credit })]));
 
 const QuestionDataMeta = Object.freeze({
   "datasetId": "boki3-accounting-rpg-300",
@@ -14645,7 +14651,7 @@ function validateSemanticQuestionData(questionData = QuestionData) {
   const answerNumbers = item => item.type === 'journal'
     ? [...(item.answer?.debit || []), ...(item.answer?.credit || [])].map(row => row.amount)
     : Object.values(item.answer?.cells || {}).filter(value => typeof value === 'number');
-  const canDerive = (target, inputs, text) => {
+  const canDerive = (target, inputs, text, allowRates = true) => {
     if (inputs.includes(target)) return true;
     const limit = Math.max(target * 4, 10000000);
     // まず、表示された各数値を一度ずつ使う合計・差額を検証する（同額2件も保持）。
@@ -14660,7 +14666,9 @@ function validateSemanticQuestionData(questionData = QuestionData) {
       if (reachable.has(target)) return true;
       if (reachable.size > 20000) reachable = new Set([...reachable].sort((a,b) => Math.abs(a-target) - Math.abs(b-target)).slice(0,10000));
     }
-    // 次に定額法や百分率など、2段階までの四則演算を検証する。
+    // 掛け算・割り算は率、数量、単価を扱う表形式問題だけに限定する。
+    // 仕訳では同じ表示額の再利用による 48,000×48,000 等を許可しない。
+    if (!allowRates) return false;
     let values = new Set(inputs);
     for (let round = 0; round < 2; round += 1) {
       const current = [...values].slice(0, 160);
@@ -14684,9 +14692,12 @@ function validateSemanticQuestionData(questionData = QuestionData) {
     const inputs = visibleNumbers(item); const text = visibleText(item);
     for (const answer of new Set(answerNumbers(item))) {
       if (!Number.isFinite(answer) || answer < 0) itemErrors.push(`正答金額 ${answer} が不正です`);
-      else if (answer > 0 && !canDerive(answer, inputs, text)) itemErrors.push(`正答金額 ${answer} を表示数値から導出できません`);
+      else if (answer > 0 && !canDerive(answer, inputs, text, item.type !== 'journal' || /[%％]|耐用年数|定額法|率/.test(text))) itemErrors.push(`正答金額 ${answer} を表示数値から導出できません`);
     }
     if (item.type === 'journal') {
+      const expectedJournal = SemanticJournalAnswerKey.get(id);
+      const actualJournal = JSON.stringify({ debit:item.answer?.debit || [], credit:item.answer?.credit || [] });
+      if (!expectedJournal || actualJournal !== expectedJournal) itemErrors.push('レビュー済み仕訳キーと勘定科目・金額が一致しません');
       const debit = (item.answer?.debit || []).reduce((sum,row) => sum + Number(row.amount || 0), 0);
       const credit = (item.answer?.credit || []).reduce((sum,row) => sum + Number(row.amount || 0), 0);
       if (!debit || debit !== credit) itemErrors.push(`仕訳の貸借が一致しません (${debit}/${credit})`);
