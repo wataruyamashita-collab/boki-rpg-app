@@ -60,7 +60,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260823-4'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-1'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -137,6 +137,13 @@ Object.values(browserSandbox.window.QuestionData).filter(question => question.ty
     assert(choices.includes(item.account), `${question.id}の勘定科目に正答を含める`);
   });
 });
+const correctPositions = [0, 0, 0, 0, 0];
+Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal').forEach(question => {
+  [...question.answer.debit, ...question.answer.credit].forEach(item => correctPositions[browserSandbox.window.AppController.accountChoices(question, item.account).indexOf(item.account)] += 1);
+});
+assert(correctPositions.every(count => count > 0), `仕訳の正解が5位置すべてに現れる: ${correctPositions.join(',')}`);
+assert(Math.max(...correctPositions) / Math.min(...correctPositions) < 1.5, `正解位置分布に異常な偏りがない: ${correctPositions.join(',')}`);
+assert.deepStrictEqual([...browserSandbox.window.AppController.accountChoices(browserSandbox.window.QuestionData.J001, '現金')], [...browserSandbox.window.AppController.accountChoices(browserSandbox.window.QuestionData.J001, '現金')], '同一問題とseedの選択肢順は常に同じ');
 const allJournalAccounts = [...new Set(Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal').flatMap(question => [...question.answer.debit, ...question.answer.credit].map(item => item.account)))];
 const examQuestion = browserSandbox.window.QuestionData.J001;
 assert.deepStrictEqual([...browserSandbox.window.AppController.accountChoices(examQuestion, '現金', 'exam')], [...allJournalAccounts].sort((a, b) => a.localeCompare(b, 'ja')), '模擬試験では全仕訳科目を五十音順で選択できる');
@@ -153,6 +160,20 @@ browserSandbox.window.AppController.prototype.formatAmount(mixedAmountInput);
 assert.strictEqual(mixedAmountInput.value, '1,234', '全角カンマを含む混在入力も整形する');
 const viewSource = fs.readFileSync('js/view.js', 'utf8');
 vm.runInNewContext(viewSource, browserSandbox);
+class FakeElement {
+  constructor(tagName = 'div') { this.tagName = tagName; this.children = []; this.hidden = false; }
+  append(...children) { this.children.push(...children); }
+  replaceChildren(...children) { this.children = children; }
+  createTHead() { const section = new FakeElement('thead'); section.insertRow = () => { const row = new FakeElement('tr'); section.append(row); return row; }; this.append(section); return section; }
+  createTBody() { const section = new FakeElement('tbody'); section.insertRow = () => { const row = new FakeElement('tr'); row.insertCell = () => { const cell = new FakeElement('td'); row.append(cell); return cell; }; section.append(row); return row; }; this.append(section); return section; }
+}
+const materialElements = { 'question-materials': new FakeElement('section') };
+const materialView = new browserSandbox.window.AppView({ getElementById: id => materialElements[id], createElement: tag => new FakeElement(tag) });
+materialView.renderMaterials(browserSandbox.window.QuestionData.E001);
+assert.strictEqual(materialElements['question-materials'].hidden, false, 'materialsを持つ訂正問題で資料DOMを表示する');
+assert.strictEqual(materialElements['question-materials'].children[1].children[0].children[1].children.length, 1, 'materialsの全行をDOMに描画する');
+materialView.renderMaterials(browserSandbox.window.QuestionData.J001);
+assert.strictEqual(materialElements['question-materials'].hidden, true, 'materialsがない問題で古い資料を残さない');
 const answerFields = {
   '.debit-account': [{ value: '現金' }], '.debit-amount': [{ value: '１,０００' }],
   '.credit-account': [{ value: '売上' }], '.credit-amount': [{ value: '１,０００' }]
@@ -168,6 +189,15 @@ assert.strictEqual(comparison.hidden, true, '正解時は空の誤答比較欄�
 comparisonView.renderAnswerComparison({ type: 'journal' }, { correct: false }, { debit: [], credit: [] });
 assert.strictEqual(comparison.hidden, false, '仕訳の誤答時だけ比較欄を表示する');
 allJournalAccounts.forEach(account => assert.notStrictEqual(comparisonView.accountType(account), 'unknown', `${account}を簿記の5要素へ分類する`));
+assert.strictEqual(comparisonView.accountType('減価償却累計額'), 'contraAsset', '減価償却累計額は負債ではなく資産の控除項目とする');
+assert.strictEqual(comparisonView.accountType('貸倒引当金'), 'contraAsset', '貸倒引当金は資産の控除項目とする');
+const storyOrder = browserSandbox.window.AppController.prototype.storyIds.call({ ids: Object.keys(browserSandbox.window.QuestionData), questions: browserSandbox.window.QuestionData });
+assert.strictEqual(storyOrder.length, 300, 'ストーリーは全300問で簿記フローを体験できる');
+assert(storyOrder.every((id, index) => index === 0 || browserSandbox.window.QuestionData[storyOrder[index - 1]].chapter <= browserSandbox.window.QuestionData[id].chapter), 'ストーリーのChapterが逆行しない');
+const examAudit = { ids: Object.keys(browserSandbox.window.QuestionData), questions: browserSandbox.window.QuestionData, model: { state: { examAttempt: 0 } } };
+const examIds = browserSandbox.window.AppController.prototype.buildExamIds.call(examAudit);
+assert.strictEqual(examIds.length, 15, '模試は設計通り15問を選出する');
+examIds.forEach(id => { const question = browserSandbox.window.QuestionData[id]; assert(question.type === 'journal' || (question.table && question.table.inputCells.every(cell => cell in question.answer.cells)), `${id}は必要な入力欄と正答を持つ`); if (question.materials?.length) assert(viewSource.includes('this.renderMaterials(question)'), `${id}の資料を問題表示で描画する`); });
 assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSections('【処理の根拠】\n資産が増えます。\n【試験のポイント】ここに注意。'))), [
   { label: '実務MEMO', kind: 'memo', text: '資産が増えます。' },
   { label: '試験POINT', kind: 'point', text: 'ここに注意。' }
@@ -205,9 +235,9 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260823-4') && html.includes('js/view.js?v=20260823-4'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-1') && html.includes('js/view.js?v=20260824-1'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
-assert(html.includes('maximum-scale=1'), 'iPhoneで小さい仕訳文字へフォーカスした際の自動拡大を防ぐ');
+assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
 assert(html.includes('id="result-status" class="result-box" role="status" aria-live="polite"'), '動的な採点結果をスクリーンリーダーへ通知する');
 assert(html.includes('aria-labelledby="game-over-title" aria-describedby="game-over-description"'), '資金ショートダイアログの名前と説明を関連付ける');

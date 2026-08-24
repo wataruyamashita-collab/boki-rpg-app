@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="format-detection" content="telephone=no">
   <meta name="theme-color" content="#2c3e50">
   <meta name="description" content="仕訳から財務諸表まで、全300問を物語で学べる日商簿記3級学習アプリ">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260823-4">
+  <link rel="stylesheet" href="css/style.css?v=20260824-1">
 </head>
 <body>
 <div class="container">
@@ -41,7 +41,7 @@
 
     <section id="view-question" class="view">
       <form id="question-form" autocomplete="off">
-        <p id="q-category" class="question-category"></p><section id="q-story" class="story-box" aria-labelledby="q-scene"><h2 id="q-scene"></h2><p id="q-context"></p><p id="q-task" class="story-task"></p></section><div id="q-text" class="question-text"></div>
+        <p id="q-category" class="question-category"></p><section id="q-story" class="story-box" aria-labelledby="q-scene"><h2 id="q-scene"></h2><p id="q-context"></p><p id="q-task" class="story-task"></p></section><div id="q-text" class="question-text"></div><section id="question-materials" class="question-materials" hidden></section>
         <div id="journal-container" class="journal-entry-area"></div>
         <div id="table-container" class="table-question-wrap"></div>
         <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
@@ -63,6 +63,6 @@
   </main>
   <dialog id="game-over-dialog" class="game-over-dialog" aria-labelledby="game-over-title" aria-describedby="game-over-description"><h2 id="game-over-title">資金ショート</h2><p id="game-over-description">経営HPが0になりました。最初から立て直すか、間違えた問題を復習しましょう。</p><div><button type="button" data-action="retry-mode">このモードを最初から</button><button type="button" class="secondary-button" data-action="review-game-over">復習する</button></div></dialog>
 </div>
-<script src="data/questions.js?v=20260823-4"></script><script src="js/calculator.js?v=20260823-4"></script><script src="js/model.js?v=20260823-4"></script><script src="js/rpg.js?v=20260823-4"></script><script src="js/engine.js?v=20260823-4"></script><script src="js/view.js?v=20260823-4"></script><script src="js/controller.js?v=20260823-4"></script><script src="js/app.js?v=20260823-4"></script>
+<script src="data/questions.js?v=20260824-1"></script><script src="js/calculator.js?v=20260824-1"></script><script src="js/model.js?v=20260824-1"></script><script src="js/rpg.js?v=20260824-1"></script><script src="js/engine.js?v=20260824-1"></script><script src="js/view.js?v=20260824-1"></script><script src="js/controller.js?v=20260824-1"></script><script src="js/app.js?v=20260824-1"></script>
 </body>
 </html>
