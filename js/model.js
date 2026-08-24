@@ -3,7 +3,7 @@
   class ProgressModel {
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, drafts: {}, completed: false, examAttempt: 0, examSession: null };
+      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, drafts: {}, completed: false, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
@@ -20,7 +20,9 @@
             ? Object.fromEntries(Object.entries(saved.mistakeCounts).filter(([id, count]) => this.questions[id] && Number.isSafeInteger(count) && count > 0)) : {},
           completed: saved.completed === true,
           examAttempt: Number.isSafeInteger(saved.examAttempt) && saved.examAttempt >= 0 ? saved.examAttempt : 0,
-          examSession: this.validExamSession(saved.examSession) ? saved.examSession : null
+          examSession: this.validExamSession(saved.examSession) ? saved.examSession : null,
+          examHistory: Array.isArray(saved.examHistory) ? saved.examHistory.filter(item => item && Number.isFinite(item.finishedAt) && Number.isFinite(item.points)).slice(-10) : [],
+          lastExamReview: saved.lastExamReview && typeof saved.lastExamReview === 'object' ? saved.lastExamReview : null
         });
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
     }
@@ -28,6 +30,7 @@
       if (!(session && typeof session === 'object' && Array.isArray(session.ids) && session.ids.length === 15 &&
         session.ids.every(id => this.questions[id]) && new Set(session.ids).size === session.ids.length &&
         Number.isFinite(session.startedAt) && Number.isFinite(session.endAt) && session.endAt > session.startedAt &&
+        ['RUNNING', 'EXPIRED', 'FINISHING'].includes(session.status || 'RUNNING') &&
         session.scores && typeof session.scores === 'object' && !Array.isArray(session.scores))) return false;
       return Object.entries(session.scores).every(([id, score]) => session.ids.includes(id) && score &&
         typeof score.correct === 'boolean' && Number.isFinite(score.earned) && Number.isFinite(score.possible) &&

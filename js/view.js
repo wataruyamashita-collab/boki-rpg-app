@@ -170,7 +170,7 @@
         this.diagnoseJournal(userAnswer, question.answer).forEach(message => { const item = this.document.createElement('li'); item.textContent = message; list.append(item); });
         container.append(heading, list);
       }
-      const heading = this.document.createElement('h3'); heading.textContent = 'TAC講師の解説'; container.append(heading);
+      const heading = this.document.createElement('h3'); heading.textContent = '詳しい解説'; container.append(heading);
       if (question.type === 'journal' && question.answer) {
         const badges = this.document.createElement('div'); badges.className = 'explanation-accounts';
         [...question.answer.debit, ...question.answer.credit].forEach(item => badges.append(this.accountLabel(item.account)));
@@ -182,6 +182,16 @@
         const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = section.text;
         card.append(title, text); container.append(card);
       });
+    }
+    examResult(review, questions, history) {
+      const box = this.byId('result-status'); box.className = `result-box ${review.passed ? 'result-correct' : 'result-incorrect'}`;
+      box.textContent = `${review.points}点 / 100点（${review.passed ? '合格圏' : '要復習'}）｜未回答 ${review.unansweredCount}問`;
+      this.byId('answer-comparison').hidden = true; this.byId('correct-journal').replaceChildren();
+      const container = this.byId('explanation'); container.replaceChildren();
+      const heading = this.document.createElement('h3'); heading.textContent = '問題別レビュー'; container.append(heading);
+      review.items.forEach((item, index) => { const details = this.document.createElement('details'); const summary = this.document.createElement('summary'); summary.textContent = `第${index + 1}問｜${item.earned}/${item.points}点｜${item.correct ? '正解' : item.answer ? '不正解' : '未回答'}｜${item.topic}`; details.append(summary); const answer = this.document.createElement('pre'); answer.textContent = `自分の回答: ${item.answer ? JSON.stringify(item.answer, null, 2) : '未回答'}\n正解: ${JSON.stringify(questions[item.id].answer, null, 2)}\n解説: ${questions[item.id].explanation}`; details.append(answer); container.append(details); });
+      const historyHeading = this.document.createElement('h3'); historyHeading.textContent = '直近の成績'; container.append(historyHeading);
+      const list = this.document.createElement('ol'); history.slice(-5).reverse().forEach(item => { const row = this.document.createElement('li'); row.textContent = `${new Date(item.finishedAt).toLocaleString('ja-JP')}｜${item.points}点｜${item.passed ? '合格圏' : '要復習'}｜所要${Math.ceil(item.durationMs / 60000)}分｜未回答${item.unansweredCount}問`; list.append(row); }); container.append(list);
     }
     explanationSections(explanation = '') {
       const parts = String(explanation).split(/【([^】]+)】/); const sections = [];
