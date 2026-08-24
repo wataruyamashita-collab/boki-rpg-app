@@ -22,6 +22,18 @@ export interface Question {
   semantic?: { questionId: string; visibleInputs: Array<'question' | 'story' | 'materials' | 'fixedCell'>; dependencies: string[]; };
 }
 export type QuestionMap = Record<string, Question>;
+export type DiagnosticKind = 'account' | 'side' | 'amount' | 'missing' | 'cell' | 'general';
+export interface WrongAnswerDiagnostic {
+  kind: DiagnosticKind;
+  title: string;
+  reason: string;
+  thinking: string;
+  nextRule: string;
+}
+export interface WrongAnswerFeedbackEngine {
+  diagnoseWrongAnswer(question: Question, answer: JournalAnswer | TableAnswer | null | undefined, score: { correct: boolean }): WrongAnswerDiagnostic[];
+  MISCONCEPTIONS: Readonly<Record<string, readonly [string, string]>>;
+}
 export interface ProgressState {
   mode: 'story' | 'training' | 'review' | 'exam';
   currentQuestionId: string | null;
