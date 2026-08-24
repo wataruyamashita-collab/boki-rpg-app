@@ -65,7 +65,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-6'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-7'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -126,15 +126,21 @@ const eightColumn = browserSandbox.window.QuestionData.D001;
 assert.strictEqual(eightColumn.format, 'eight-column-worksheet', 'WORKSHEET-01: D001を本物の8桁精算表として識別する');
 assert.strictEqual(eightColumn.table.columns.length, 9, 'WORKSHEET-01: 科目列と8つの借貸列を持つ');
 const perfectWorksheet = Engine.grade(eightColumn, eightColumn.answer);
-assert.deepStrictEqual([perfectWorksheet.correct, perfectWorksheet.earned, perfectWorksheet.possible], [true, 104, 104], 'WORKSHEET-02: 8桁精算表をセル単位で採点する');
-const worksheetTotals = Array.from({ length: 8 }, (_, column) => Object.values(eightColumn.answer.cells).filter((_, index) => index % 8 === column).reduce((sum, value) => sum + value, 0));
-assert.deepStrictEqual(worksheetTotals, [2000000,2000000,100000,100000,800000,800000,1440000,1440000], 'WORKSHEET-03: 各区分で借貸が一致する');
+assert.deepStrictEqual([perfectWorksheet.correct, perfectWorksheet.earned, perfectWorksheet.possible], [true, 18, 18], 'WORKSHEET-02: 元試算表とゼロ欄を固定し、意味のある18セルだけ採点する');
+const zeroWorksheet = Engine.grade(eightColumn, { cells: Object.fromEntries(eightColumn.table.inputCells.map(id => [id, 0])) });
+assert(zeroWorksheet.ratio < 0.7 && zeroWorksheet.earned === 0, 'WORKSHEET-ZERO: 全セル0で合格相当または部分点にならない');
+assert(eightColumn.materials.some(row => row['勘定科目'] === '現金' && row['借方'] === 300000), 'SEMANTIC-D001: 元試算表をvisible materialsに持つ');
 const incomeStatement = browserSandbox.window.QuestionData.F001;
+assert.deepStrictEqual(JSON.parse(JSON.stringify(incomeStatement.materials.map(row => row['金額']))), [800000,400000,160000,60000], 'SEMANTIC-F001: 直接開始で必要な決算整理後データを再掲する');
 assert.strictEqual(incomeStatement.answer.cells.sales - incomeStatement.answer.cells.costOfSales - incomeStatement.answer.cells.expenses, incomeStatement.answer.cells.netIncome, 'PL-01: 収益－売上原価－費用が当期純利益に一致する');
 assert(JSON.stringify(browserSandbox.window.QuestionData).includes('商品有高帳を先入先出法で完成'), 'INVENTORY-01: 既存の先入先出法問題を維持する');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.L049.answer.cells)), { value1:1100, value2:13200, value3:8800 }, 'INVENTORY-02: 移動平均単価・払出額・残高額を学習する');
 ['現金出納帳','当座預金出納帳','小口現金出納帳','仕入帳','売上帳','入金伝票','出金伝票','振替伝票'].forEach(topic => assert(JSON.stringify(browserSandbox.window.QuestionData).includes(topic), `COVERAGE-01: ${topic}を実問題へ対応付ける`));
 assert.strictEqual(browserSandbox.window.QuestionDataAudit.ok, true, `全問題の品質検証を通過する: ${browserSandbox.window.QuestionDataAudit.errors.join(', ')}`);
+const semanticAudit = browserSandbox.window.validateSemanticQuestionData();
+assert.strictEqual(semanticAudit.ok, true, `SEMANTIC: ${semanticAudit.errors.join(', ')}`);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(semanticAudit.counts)), { VALID:300, QUESTIONABLE:0, INVALID:0 }, '全300問のSemantic Auditを分類する');
+[['L044',50000,18000],['L045',300000,85000],['L046',4800,7200]].forEach(([id, first, second]) => { const visible = JSON.stringify(browserSandbox.window.QuestionData[id].materials); assert(visible.includes(String(first)) && visible.includes(String(second)), `SEMANTIC-${id}: 根拠金額をvisible materialsに持つ`); });
 assert.deepStrictEqual([...browserSandbox.window.QuestionDataAudit.warnings], [], '全問題に品質上の警告がない');
 for (let number = 1; number <= 20; number += 1) {
   const question = browserSandbox.window.QuestionData[`E${String(number).padStart(3, '0')}`];
@@ -262,6 +268,7 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(resultScore)), { correct: true,
 const examIds = browserSandbox.window.AppController.prototype.buildExamIds.call(examAudit);
 assert.strictEqual(examIds.length, 15, '模試は設計通り15問を選出する');
 examIds.forEach(id => { const question = browserSandbox.window.QuestionData[id]; assert(question.type === 'journal' || (question.table && question.table.inputCells.every(cell => cell in question.answer.cells)), `${id}は必要な入力欄と正答を持つ`); if (question.materials?.length) assert(viewSource.includes('this.renderMaterials(question)'), `${id}の資料を問題表示で描画する`); });
+examIds.forEach(id => assert.strictEqual(browserSandbox.window.QuestionData[id].semantic.examEligible, true, `EXAM-VALIDITY: ${id}はSemantic VALIDである`));
 assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSections('【処理の根拠】\n資産が増えます。\n【試験のポイント】ここに注意。'))), [
   { label: '実務MEMO', kind: 'memo', text: '資産が増えます。' },
   { label: '試験POINT', kind: 'point', text: 'ここに注意。' }
@@ -299,7 +306,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260824-6') && html.includes('js/view.js?v=20260824-6'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-7') && html.includes('js/view.js?v=20260824-7'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');

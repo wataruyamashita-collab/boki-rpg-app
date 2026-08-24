@@ -18,6 +18,8 @@ export interface Question {
   answer: JournalAnswer | TableAnswer;
   table?: QuestionTable;
   explanation: string;
+  materials?: Array<Record<string, string | number>>;
+  semantic?: { questionId: string; visibleInputs: string[]; requiredFacts: string[]; factSources: Record<string, 'question' | 'story' | 'materials' | 'fixedCell' | 'previousResultExplicitlyShown'>; dependencies: string[]; semanticStatus: 'VALID' | 'QUESTIONABLE' | 'INVALID'; examEligible: boolean; gradingValidated: boolean; };
 }
 export type QuestionMap = Record<string, Question>;
 export interface ProgressState {

@@ -1,14 +1,14 @@
 {
   "total": 300,
   "uniqueTemplates": {
-    "question": 145,
-    "explanation": 100,
-    "story": 47
+    "question": 148,
+    "explanation": 105,
+    "story": 50
   },
   "questionsInRepeatedGroups": {
-    "question": 214,
-    "explanation": 257,
-    "story": 292
+    "question": 211,
+    "explanation": 252,
+    "story": 289
   },
   "chapters": {
     "1": 9,
@@ -25,7 +25,7 @@
     "12": 22
   },
   "topicMentions": {
-    "手形": 0,
+    "手形": 3,
     "入金伝票": 1,
     "出金伝票": 1,
     "振替伝票": 1,
