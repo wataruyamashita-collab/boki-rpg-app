@@ -3,7 +3,7 @@
   class ProgressModel {
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, drafts: {}, completed: false, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, attempts: [], drafts: {}, completed: false, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
@@ -21,6 +21,7 @@
           reviewSchedule: saved.reviewSchedule && typeof saved.reviewSchedule === 'object' && !Array.isArray(saved.reviewSchedule)
             ? Object.fromEntries(Object.entries(saved.reviewSchedule).filter(([id, item]) => this.questions[id] && item &&
               Number.isSafeInteger(item.stage) && item.stage >= 0 && item.stage <= 4 && Number.isFinite(item.dueAt) && item.dueAt >= 0)) : {},
+          attempts: Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [],
           completed: saved.completed === true,
           examAttempt: Number.isSafeInteger(saved.examAttempt) && saved.examAttempt >= 0 ? saved.examAttempt : 0,
           examSession: this.validExamSession(saved.examSession) ? saved.examSession : null,
@@ -62,6 +63,27 @@
     dueReviewIds(now = Date.now()) {
       return this.state.incorrectIds.filter(id => !this.state.reviewSchedule[id] || this.state.reviewSchedule[id].dueAt <= now)
         .sort((a, b) => (this.state.reviewSchedule[a]?.dueAt || 0) - (this.state.reviewSchedule[b]?.dueAt || 0));
+    }
+    recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now()) {
+      if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0) return false;
+      this.state.attempts.push({ id, concept:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, responseMs, wrongType:String(wrongType || ''), delayedSuccess:delayedSuccess === true, at:now });
+      this.state.attempts = this.state.attempts.slice(-200); this.save(); return true;
+    }
+    adaptiveDifficulty(concept, fallback = 2) {
+      const recent = this.state.attempts.filter(item => item.concept === concept).slice(-6);
+      if (!recent.length) return Math.max(1, Math.min(4, fallback));
+      const accuracy = recent.filter(item => item.correct).length / recent.length;
+      const fast = recent.filter(item => item.correct && item.responseMs <= 60000).length / recent.length;
+      const delayed = recent.some(item => item.delayedSuccess);
+      const current = recent[recent.length - 1].difficulty;
+      if (recent.slice(-2).every(item => !item.correct)) return Math.max(1, current - 1);
+      if (recent.length >= 3 && accuracy >= .8 && fast >= .6 && delayed) return Math.min(4, current + 1);
+      return current;
+    }
+    recommendedIds(concept) {
+      const candidates = Object.values(this.questions).filter(item => item.category === concept);
+      const target = this.adaptiveDifficulty(concept, candidates[0]?.difficulty || 2);
+      return candidates.sort((a,b) => Math.abs(a.difficulty-target)-Math.abs(b.difficulty-target)).map(item => item.id);
     }
   }
   root.ProgressModel = ProgressModel;

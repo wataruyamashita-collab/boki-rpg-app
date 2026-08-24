@@ -14503,23 +14503,23 @@ const integratedClosing = (id, category, question, materials, adjustments, cells
   learningRole:'transfer', timelineRole:'review', variantGroup:category
 });
 QuestionData.C001 = integratedClosing('C001','統合決算A（棚卸・貸倒・月割）','決算整理前残高試算表と9項目の整理事項から、主要なP/L・B/S項目を完成しなさい。',
-  [{資料区分:'整理前残高',内容:'現金400,000、売掛金520,000、繰越商品300,000、仕入1,400,000、備品1,200,000、減価償却累計額300,000、貸倒引当金6,000、買掛金280,000、資本金1,000,000、繰越利益剰余金254,000、売上2,400,000、保険料120,000'}],
+  [{資料区分:'会計期間',内容:'4月1日から翌年3月31日まで'},{資料区分:'整理前残高試算表',借方:'現金400,000、売掛金520,000、繰越商品300,000、仕入1,400,000、備品1,200,000、保険料120,000',貸方:'減価償却累計額300,000、貸倒引当金6,000、買掛金280,000、資本金700,000、繰越利益剰余金254,000、売上2,400,000',借方合計:3940000,貸方合計:3940000}],
   ['未処理の掛売上120,000円','未処理の掛仕入80,000円','期末商品360,000円','売掛金期末残高の2%を差額補充法で貸倒設定','備品の減価償却120,000円','10月1日に1年分を払った保険料の前払分を月割','未払給料45,000円','法人税等150,000円を未払計上','売上原価は仕入勘定で算定'],
-  {sales:2520000,cost:1420000,allowanceExpense:6800,depreciation:120000,insurance:60000,accruedWages:45000,tax:150000,netIncome:718200,totalAssets:2527200,totalEquityLiabilities:2527200},
+  {sales:2520000,cost:1420000,allowanceExpense:6800,depreciation:120000,insurance:60000,accruedWages:45000,tax:150000,netIncome:718200,totalAssets:2227200,totalEquityLiabilities:2227200},
   ['売上高','売上原価','貸倒引当金繰入','減価償却費','保険料（当期分）','未払給料','法人税等','当期純利益','資産合計','負債・純資産合計'],
-  '未処理取引を先に反映し、期末売掛金640,000円×2%＝12,800円、既存引当金6,000円との差6,800円を繰り入れます。売上原価は300,000＋1,480,000－360,000＝1,420,000円。税引後利益718,200円、貸借は2,527,200円で一致します。');
+  '整理前は借方・貸方各3,940,000円です。未処理取引を先に反映し、期末売掛金640,000円×2%＝12,800円、既存引当金6,000円との差6,800円を繰り入れます。売上原価は300,000＋1,480,000－360,000＝1,420,000円。税引後利益718,200円、決算後は資産と負債・純資産が各2,227,200円で一致します。');
 QuestionData.C002 = integratedClosing('C002','統合決算B（訂正・消費税・現金過不足）','誤記と未処理を含む10項目を訂正して、決算後の主要額を完成しなさい。消費税は税抜方式とする。',
-  [{資料区分:'整理前残高',内容:'現金実査前帳簿210,000、仮払消費税96,000、仮受消費税144,000、売上1,800,000、期首商品980,000、仕入980,000、給料300,000、受取手数料40,000、備品500,000、減価償却累計額100,000'}],
+  [{資料区分:'会計期間・決算日',内容:'4月1日から翌年3月31日まで（決算日3月31日）'},{資料区分:'整理前残高',内容:'現金実査前帳簿210,000、仮払消費税96,000、仮受消費税144,000、売上1,800,000、期首商品980,000、仕入980,000、給料300,000、受取手数料40,000、備品500,000、減価償却累計額100,000'}],
   ['現金実査額255,000円、原因不明差額は雑損','広告費30,000円を備品に誤記したため訂正','売上50,000円の記帳漏れ（現金受領済み、実査額には反映済み）','仕入70,000円の未処理（掛け）','消費税を未払計上','期末商品240,000円','備品（訂正後470,000円）を年10%償却','受取手数料10,000円を未収計上','給料25,000円を未払計上','法人税等80,000円を未払計上'],
   {cashAfter:255000,sales:1850000,purchases:1050000,cost:1790000,advertising:30000,depreciation:47000,vatPayable:48000,accruedIncome:10000,accruedWages:25000,tax:80000},
   ['決算後現金','売上高','仕入勘定（未処理反映後）','売上原価','広告宣伝費','減価償却費','未払消費税','未収手数料','未払給料','法人税等'],
   '現金は帳簿210,000円に未記帳売上50,000円を加え、実査差額5,000円を雑損として255,000円に合わせます。消費税は144,000－96,000＝48,000円、売上原価は期首980,000＋未処理仕入70,000＋期首商品980,000－期末商品240,000＝1,790,000円です。');
 QuestionData.C003 = integratedClosing('C003','統合決算C（経過勘定・固定資産・貸倒）','年利・月割と固定資産売却を含む8項目を処理し、決算後の主要額を完成しなさい。',
-  [{資料区分:'整理前残高',内容:'売掛金400,000、貸倒引当金3,000、借入金600,000、支払利息9,000、受取家賃120,000、備品900,000、減価償却累計額270,000'}],
-  ['売掛金の2%を差額補充法で貸倒設定','借入金は10月1日借入、年利3%、利払日は毎年9月30日（6か月分を未払計上）','受取家賃は12月1日に6か月分を受領（3か月分を前受）','7月1日取得の備品300,000円を耐用年数5年・残存0で月割償却','従来備品600,000円を年額120,000円償却','10月1日に従来備品（原価200,000円、期首累計120,000円）を60,000円で売却、当期6か月分20,000円を売却時まで償却','未収利息12,000円','法人税等60,000円を未払計上'],
-  {allowanceExpense:5000,interestExpense:9000,interestPayable:9000,rentRevenue:60000,rentUnearned:60000,newAssetDepreciation:45000,oldAssetDepreciation:80000,saleLoss:0,interestReceivable:12000,tax:60000},
+  [{資料区分:'会計期間・決算日',内容:'4月1日から翌年3月31日まで（決算日3月31日）'},{資料区分:'整理前残高',内容:'売掛金400,000、貸倒引当金3,000、借入金600,000、支払利息9,000、受取家賃120,000、備品900,000、減価償却累計額270,000'}],
+  ['売掛金の2%を差額補充法で貸倒設定','借入金は10月1日借入、年利3%、利払日は毎年9月30日（10月1日から3月31日までの6か月分を未払計上）','受取家賃は12月1日に12月1日から翌年5月31日までの6か月分を受領（決算日までの12月・1月・2月・3月を当期収益、4月・5月を前受）','7月1日取得の備品300,000円を耐用年数5年・残存0で月割償却','従来備品600,000円を年額120,000円償却','10月1日に従来備品（原価200,000円、期首累計120,000円）を60,000円で売却、当期6か月分20,000円を売却時まで償却','未収利息12,000円','法人税等60,000円を未払計上'],
+  {allowanceExpense:5000,interestExpense:9000,interestPayable:9000,rentRevenue:80000,rentUnearned:40000,newAssetDepreciation:45000,oldAssetDepreciation:80000,saleLoss:0,interestReceivable:12000,tax:60000},
   ['貸倒引当金繰入','当期支払利息（追加計上額）','未払利息','受取家賃（当期収益）','前受家賃','新備品の月割減価償却','従来備品の期末減価償却（売却分を除く）','固定資産売却損益（損は正、益は負）','未収利息','法人税等'],
-  '貸倒は8,000－3,000＝5,000円。借入利息は600,000×3%×6/12＝9,000円です。家賃は6か月分120,000円のうち当期3か月60,000円。新備品は300,000÷5年×9/12＝45,000円。売却資産は売却時帳簿価額60,000円と売価が等しく損益0円です。');
+  '貸倒は8,000－3,000＝5,000円。借入利息は600,000×3%×6/12＝9,000円です。家賃は120,000×4/6＝80,000円が当期収益、120,000×2/6＝40,000円が前受です。新備品は300,000÷5年×9/12＝45,000円。売却資産は売却時帳簿価額60,000円と売価が等しく損益0円です。');
 
 // semanticには入力面の所在だけを記録する。VALIDや模試可否をデータ自身に宣言させず、
 // validateSemanticQuestionDataが表示情報と正答を独立に照合して毎回算出する。
@@ -14543,6 +14543,35 @@ const SemanticJournalAnswerKey = new Map(Object.values(QuestionData)
 const SemanticTableAnswerKey = new Map(Object.values(QuestionData)
   .filter(item => item.type !== 'journal')
   .map(item => [item.id, JSON.stringify(item.answer.cells)]));
+
+// 第3問はanswerをoracleにせず、表示資料から会計規則で再計算する。
+function validateExamQuestion3(item) {
+  if (item?.format !== 'exam-question-3') return { valid:false, errors:['第3問形式ではありません'], derivedCells:null };
+  const text = JSON.stringify({question:item.question, materials:item.materials}); const errors=[]; let derivedCells=null; let trialBalance=null; let statements=null;
+  if (/統合決算A/.test(item.category)) {
+    const debit=400000+520000+300000+1400000+1200000+120000, credit=300000+6000+280000+700000+254000+2400000; trialBalance={debit,credit};
+    const sales=2400000+120000, receivables=520000+120000, purchases=1400000+80000, cost=300000+purchases-360000;
+    const allowance=receivables*.02, allowanceExpense=allowance-6000, insurance=120000*6/12;
+    const netIncome=sales-cost-allowanceExpense-120000-insurance-45000-150000;
+    const totalAssets=400000+(receivables-allowance)+360000+(1200000-300000-120000)+(120000-insurance);
+    const totalEquityLiabilities=280000+80000+45000+150000+700000+254000+netIncome;
+    derivedCells={sales,cost,allowanceExpense,depreciation:120000,insurance,accruedWages:45000,tax:150000,netIncome,totalAssets,totalEquityLiabilities};
+    statements={plDebit:cost+allowanceExpense+120000+insurance+45000+150000+netIncome,plCredit:sales,bsDebit:totalAssets,bsCredit:totalEquityLiabilities};
+  } else if (/統合決算B/.test(item.category)) {
+    const cashAfter=255000, sales=1800000+50000, purchases=980000+70000, cost=980000+purchases-240000;
+    derivedCells={cashAfter,sales,purchases,cost,advertising:30000,depreciation:470000*.10,vatPayable:144000-96000,accruedIncome:10000,accruedWages:25000,tax:80000};
+  } else if (/統合決算C/.test(item.category)) {
+    const allowanceExpense=400000*.02-3000, interest=600000*.03*6/12, rentRevenue=120000*4/6;
+    derivedCells={allowanceExpense,interestExpense:interest,interestPayable:interest,rentRevenue,rentUnearned:120000-rentRevenue,newAssetDepreciation:300000/5*9/12,oldAssetDepreciation:80000,saleLoss:0,interestReceivable:12000,tax:60000};
+  }
+  if (!/決算日|会計期間/.test(text)) errors.push('会計期間または決算日が表示されていません');
+  if (trialBalance && trialBalance.debit!==trialBalance.credit) errors.push(`整理前貸借不一致 ${trialBalance.debit}/${trialBalance.credit}`);
+  if (statements && statements.plDebit!==statements.plCredit) errors.push(`P/L不一致 ${statements.plDebit}/${statements.plCredit}`);
+  if (statements && statements.bsDebit!==statements.bsCredit) errors.push(`B/S不一致 ${statements.bsDebit}/${statements.bsCredit}`);
+  if (derivedCells) { for (const [cell,expected] of Object.entries(derivedCells)) if (item.answer?.cells?.[cell]!==expected) errors.push(`${cell}を表示資料から再計算した値と正答が不一致`); }
+  else errors.push('表示資料から独立再計算する会計規則が未実装です');
+  return Object.freeze({valid:errors.length===0,errors:Object.freeze(errors),derivedCells:derivedCells&&Object.freeze(derivedCells),trialBalance,statements});
+}
 
 const QuestionDataMeta = Object.freeze({
   "datasetId": "boki3-accounting-rpg-300",
@@ -14760,6 +14789,7 @@ function validateSemanticQuestionData(questionData = QuestionData) {
       if (!Number.isFinite(answer) || answer < 0) itemErrors.push(`正答金額 ${answer} が不正です`);
       else if (answer > 0 && item.format !== 'exam-question-3' && !canDerive(answer, inputs, text, item.type !== 'journal' || /[%％]|耐用年数|定額法|率/.test(text))) itemErrors.push(`正答金額 ${answer} を表示数値から導出できません`);
     }
+    if (item.format === 'exam-question-3') itemErrors.push(...validateExamQuestion3(item).errors);
     if (item.type === 'journal') {
       const expectedJournal = SemanticJournalAnswerKey.get(id);
       const actualJournal = JSON.stringify({ debit:item.answer?.debit || [], credit:item.answer?.credit || [] });
@@ -14792,4 +14822,5 @@ if (typeof window !== 'undefined') {
   window.QuestionData = QuestionData;
   window.validateQuestionData = validateQuestionData;
   window.validateSemanticQuestionData = validateSemanticQuestionData;
+  window.validateExamQuestion3 = validateExamQuestion3;
 }

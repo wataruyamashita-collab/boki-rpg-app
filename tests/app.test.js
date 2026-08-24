@@ -71,7 +71,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-12'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-13'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -368,7 +368,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260824-12') && html.includes('js/view.js?v=20260824-12'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-13') && html.includes('js/view.js?v=20260824-13'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
@@ -402,4 +402,24 @@ assert(controllerSource.includes("if (this.model.state.mode === 'exam' && !this.
 assert(html.includes('id="filter-query"') && html.includes('id="filter-account"') && html.includes('id="filter-mistakes"'), '問題検索・勘定科目・誤答頻度の絞り込みUIを表示する');
 assert(controllerSource.includes('filteredIds(ids)') && controllerSource.includes("this.filters.mistakes === 'frequent'"), '問題一覧を検索し誤答頻度順に並べる');
 assert(fs.existsSync('types/domain.d.ts') && fs.existsSync('tsconfig.json'), '段階的TypeScript導入用のドメイン型と設定を提供する');
+// 第3問は表示資料から独立再計算し、answer改ざんを検出する。
+const c001Proof = browserSandbox.window.validateExamQuestion3(browserSandbox.window.QuestionData.C001);
+assert.strictEqual(c001Proof.trialBalance.debit, c001Proof.trialBalance.credit, 'C001整理前試算表の貸借が一致する');
+assert.strictEqual(c001Proof.statements.bsDebit, c001Proof.statements.bsCredit, 'C001決算後B/Sが一致する');
+assert.strictEqual(c001Proof.valid, true, 'C001全answerを独立再計算できる');
+assert.strictEqual(browserSandbox.window.validateExamQuestion3(browserSandbox.window.QuestionData.C003).derivedCells.rentRevenue, 80000, 'C003は12月から3月まで4か月を当期収益にする');
+for (const id of ['C001','C002','C003']) {
+  const original=browserSandbox.window.QuestionData[id]; const first=Object.keys(original.answer.cells)[0];
+  const attacked={...original,answer:{cells:{...original.answer.cells,[first]:Number(original.answer.cells[first])+1}}};
+  assert.strictEqual(browserSandbox.window.validateExamQuestion3(attacked).valid,false, `${id}の不正answerを第3問validatorが検出する`);
+}
+const adaptive = new ProgressModel({J001:browserSandbox.window.QuestionData.J001}, storage, 'adaptive-test');
+for (let i=0;i<3;i+=1) adaptive.recordAttempt('J001',true,30000,'',i===2);
+assert.strictEqual(adaptive.adaptiveDifficulty(browserSandbox.window.QuestionData.J001.category),Math.min(4,browserSandbox.window.QuestionData.J001.difficulty+1),'高速・高正答・遅延成功で難化する');
+adaptive.recordAttempt('J001',false,90000,'account'); adaptive.recordAttempt('J001',false,90000,'account');
+assert.strictEqual(adaptive.adaptiveDifficulty(browserSandbox.window.QuestionData.J001.category),Math.max(1,browserSandbox.window.QuestionData.J001.difficulty-1),'同concept連続誤答で易化する');
+const {evaluateRows,demonstratesTransfer}=require('../scripts/audit-exam-readiness.js');
+assert.strictEqual(evaluateRows([{type:'journal',category:'x',answer:{},difficulty:1}])[0].pass,false,'learnability Cは問題数だけでPASSしない');
+const transferPair=[{type:'ledger',question:'金額を記入',table:{columns:['金額'],inputCells:['a']},materials:[{金額:1}]},{type:'ledger',question:'台帳を完成',table:{columns:['日付','摘要'],inputCells:['a','b']},materials:[{日付:'4/1'}]}];
+assert.strictEqual(demonstratesTransfer(transferPair),true,'transfer metadataなしでも構造差から転移を評価する');
 console.log('app tests: ok');
