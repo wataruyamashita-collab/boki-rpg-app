@@ -86,7 +86,8 @@
     }
     renderTable(question, draft = {}) {
       const wrap = this.byId('table-container'); wrap.replaceChildren();
-      const table = this.document.createElement('table'); table.className = 'answer-table';
+      wrap.classList.toggle('worksheet-scroll', question.format === 'eight-column-worksheet');
+      const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
       const thead = table.createTHead(); const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = column; head.append(th); });
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
@@ -184,6 +185,31 @@
         const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = section.text;
         card.append(title, text); container.append(card);
       });
+      this.renderKnowledgeLinks(question, container);
+    }
+    renderKnowledgeLinks(question, container) {
+      const links = question.knowledgeLinks;
+      if (!links) return;
+      const card = this.document.createElement('section'); card.className = 'knowledge-links';
+      const heading = this.document.createElement('h4'); heading.textContent = '理解をつなぐ次の一歩'; card.append(heading);
+      const list = this.document.createElement('ul');
+      [['prerequisite', '先に確認'], ['related', '関連'], ['nextConcept', '次の疑問'], ['reviewOf', '復習元']].forEach(([key, label]) => {
+        const ids = Array.isArray(links[key]) ? links[key] : links[key] ? [links[key]] : [];
+        ids.forEach(id => { const item = this.document.createElement('li'); const button = this.document.createElement('button'); button.type = 'button'; button.className = 'knowledge-link'; button.dataset.action = 'open-related'; button.dataset.questionId = id; button.textContent = `${label}：${id}`; item.append(button); list.append(item); });
+      });
+      if (list.children.length) { card.append(list); container.append(card); }
+    }
+    answerReviewBlock(label, question, answer) {
+      const section = this.document.createElement('section'); section.className = 'exam-answer-review';
+      const heading = this.document.createElement('h4'); heading.textContent = label; section.append(heading);
+      if (!answer) { const empty = this.document.createElement('p'); empty.textContent = '未回答'; section.append(empty); return section; }
+      if (question.type === 'journal') section.append(this.journalTable(answer));
+      else {
+        const list = this.document.createElement('dl'); list.className = 'exam-cell-review';
+        question.table.inputCells.forEach(cellId => { const term = this.document.createElement('dt'); term.textContent = cellId; const value = this.document.createElement('dd'); value.textContent = answer.cells?.[cellId] === '' || answer.cells?.[cellId] == null ? '未入力' : String(answer.cells[cellId]); list.append(term, value); });
+        section.append(list);
+      }
+      return section;
     }
     examResult(review, questions, history) {
       const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
@@ -193,7 +219,7 @@
       this.byId('answer-comparison').hidden = true; this.byId('correct-journal').replaceChildren();
       const container = this.byId('explanation'); container.replaceChildren();
       const heading = this.document.createElement('h3'); heading.textContent = '問題別レビュー'; container.append(heading);
-      review.items.forEach((item, index) => { const details = this.document.createElement('details'); const summary = this.document.createElement('summary'); summary.textContent = `第${index + 1}問｜${item.earned}/${item.points}点｜${item.correct ? '正解' : item.answer ? '不正解' : '未回答'}｜${item.topic}`; details.append(summary); const answer = this.document.createElement('pre'); answer.textContent = `自分の回答: ${item.answer ? JSON.stringify(item.answer, null, 2) : '未回答'}\n正解: ${JSON.stringify(questions[item.id].answer, null, 2)}\n解説: ${questions[item.id].explanation}`; details.append(answer); container.append(details); });
+      review.items.forEach((item, index) => { const question = questions[item.id]; const details = this.document.createElement('details'); const summary = this.document.createElement('summary'); summary.textContent = `第${index + 1}問｜${item.earned}/${item.points}点｜${item.correct ? '正解' : item.answer ? '不正解' : '未回答'}｜${item.topic}`; details.append(summary, this.answerReviewBlock('自分の回答', question, item.answer), this.answerReviewBlock('正解', question, question.answer)); const explanation = this.document.createElement('p'); explanation.className = 'exam-review-explanation'; explanation.textContent = question.explanation; details.append(explanation); container.append(details); });
       const historyHeading = this.document.createElement('h3'); historyHeading.textContent = '直近の成績'; container.append(historyHeading);
       const list = this.document.createElement('ol'); history.slice(-5).reverse().forEach(item => { const row = this.document.createElement('li'); row.textContent = `${new Date(item.finishedAt).toLocaleString('ja-JP')}｜${item.points}点｜${item.passed ? '合格圏' : '要復習'}｜所要${Math.ceil(item.durationMs / 60000)}分｜未回答${item.unansweredCount}問`; list.append(row); }); container.append(list);
     }
