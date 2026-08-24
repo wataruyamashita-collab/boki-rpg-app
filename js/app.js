@@ -9,7 +9,7 @@
     },
     init() {
       this.controller = new root.AppController(document, root.QuestionData); this.controller.init(this.initialRoute());
-      if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./service-worker.js');
+      if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' });
     },
     calculateExpression(expression) { return root.SafeCalculator.evaluate(expression); }
   };

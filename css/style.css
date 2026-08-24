@@ -271,8 +271,8 @@ select, .amount-input {
   .journal-row select,
   .journal-row .amount-input {
     padding: 8px 2px;
-    /* 4列と44pxの高さは変えず、長い科目名と桁区切り金額を実表示幅へ収める。 */
-    font-size: clamp(11px, 3.2vw, 14px);
+    /* WebKitのフォーカス自動ズームを避け、列幅と字間でコンパクトさを保つ。 */
+    font-size: 16px;
     letter-spacing: -.035em;
   }
 
@@ -298,6 +298,10 @@ select, .amount-input {
   .mode-nav button { line-height: 1.25; overflow-wrap: anywhere; }
   .filter-grid { grid-template-columns: 1fr; gap: 6px; }
 }
+
+.result-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.result-actions[hidden] { display: none; }
+@media (max-width: 480px) { .result-actions { grid-template-columns: 1fr; } }
 
 button {
   display: block;
