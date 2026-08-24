@@ -66,7 +66,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-10'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-11'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -165,17 +165,28 @@ const j137Feedback = Feedback.diagnoseWrongAnswer(fixedAssetSale, { debit:[{acco
 assert(j137Feedback.some(item => /営業取引/.test(item.reason) && /固定資産/.test(item.reason) && /未収入金/.test(item.reason)), 'WAF-J137: 売掛金と固定資産売却の未収入金を区別する');
 const reverseFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.J001, { debit:[{account:'資本金',amount:3000000}], credit:[{account:'現金',amount:3000000}] }, { correct:false });
 assert(reverseFeedback.some(item => item.kind === 'side' && /資産/.test(item.reason) && /借方/.test(item.reason)), 'WAF-SIDE: 貸借逆転を勘定分類と増減ルールまで説明する');
+const cashFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.J017, { debit:[{account:'現金',amount:5000}], credit:[{account:'現金過不足',amount:5000}] }, { correct:false });
+assert(cashFeedback.some(item => /帳簿上の現金/.test(item.reason) && /実際有高/.test(item.reason) && /一時的/.test(item.reason)), 'WAF-CASH: 現金過不足を一般的な資産増減ではなく帳簿と実際有高の差で説明する');
 const amountFeedback = Feedback.diagnoseWrongAnswer(fixedAssetSale, { debit:[{account:'未収入金',amount:210000},{account:'減価償却累計額',amount:120000}], credit:fixedAssetSale.answer.credit }, { correct:false });
 assert(amountFeedback.some(item => item.kind === 'amount' && /210,000円/.test(item.reason) && /220,000円/.test(item.reason) && /帳簿価額/.test(item.thinking)), 'WAF-AMOUNT: 誤入力・正しい値・計算過程を示す');
 const adjustedTrialBalance = browserSandbox.window.QuestionData.D019;
 assert.strictEqual(adjustedTrialBalance.answer.cells.debitTotal, adjustedTrialBalance.answer.cells.creditTotal, 'D019は貸借一致する完全な決算整理後残高試算表にする');
 const tableFeedback = Feedback.diagnoseWrongAnswer(adjustedTrialBalance, { cells:{ ...adjustedTrialBalance.answer.cells, insurance:200000, prepaid:0 } }, { correct:false });
-assert(tableFeedback.some(item => item.kind === 'cell' && /160,000円/.test(item.reason) && /整理前借方 200,000円/.test(item.thinking) && /前払分40,000円/.test(item.thinking) && /insurance/.test(item.nextRule)), 'WAF-TABLE: 誤セルごとに正しい値・理由・計算根拠を示す');
+assert(tableFeedback.some(item => item.kind === 'cell' && /160,000円/.test(item.reason) && /200,000/.test(item.thinking) && /翌期分40,000円/.test(item.thinking) && !/insurance/.test(item.title + item.reason + item.nextRule)), 'WAF-TABLE: 人間向けラベルで正しい値・理由・計算根拠を示す');
+const closingFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.D020, { cells:{ ...browserSandbox.window.QuestionData.D020.answer.cells, profit:160000 } }, { correct:false });
+assert(closingFeedback.some(item => /800,000/.test(item.thinking) && /400,000/.test(item.thinking) && /180,000/.test(item.thinking)), 'WAF-CLOSING: 損益振替の利益計算式を示す');
+const correctionFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.E001, { cells:{ ...browserSandbox.window.QuestionData.E001.answer.cells, debitAccount:'消耗品費' } }, { correct:false });
+assert(correctionFeedback.some(item => /誤仕訳を逆仕訳で取り消し/.test(item.reason) && !/debitAccount/.test(JSON.stringify(item))), 'WAF-CORRECTION: 訂正仕訳固有の手順を内部IDなしで説明する');
 assert.deepStrictEqual(Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.J004, browserSandbox.window.QuestionData.J004.answer, { correct:true }), [], 'WAF-CORRECT: 正答時は誤答診断を生成しない');
 for (const question of Object.values(browserSandbox.window.QuestionData)) {
   const blank = question.type === 'journal' ? { debit:[], credit:[] } : { cells:{} };
   const diagnostics = Feedback.diagnoseWrongAnswer(question, blank, { correct:false });
   assert(diagnostics.length > 0 && diagnostics.every(item => item.reason && item.thinking && item.nextRule), `WAF-COVERAGE: ${question.id}に理由・考え方・次回ルールがある`);
+}
+for (const id of ['D019','F001','L044','D020','T001','E001']) {
+  const original = browserSandbox.window.QuestionData[id]; const first = Object.keys(original.answer.cells)[0];
+  const attacked = { ...browserSandbox.window.QuestionData, [id]:{ ...original, answer:{ cells:{ ...original.answer.cells, [first]:Number(original.answer.cells[first]) + 1 } } } };
+  assert.strictEqual(browserSandbox.window.validateSemanticQuestionData(attacked).findings[id].status, 'INVALID', `SEMANTIC-TABLE-REDTEAM: ${id}のセル改ざんをVALIDにしない`);
 }
 [['L044',50000,18000],['L045',300000,85000],['L046',4800,7200]].forEach(([id, first, second]) => { const visible = JSON.stringify(browserSandbox.window.QuestionData[id].materials); assert(visible.includes(String(first)) && visible.includes(String(second)), `SEMANTIC-${id}: 根拠金額をvisible materialsに持つ`); });
 assert.deepStrictEqual([...browserSandbox.window.QuestionDataAudit.warnings], [], '全問題に品質上の警告がない');
@@ -343,7 +354,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260824-10') && html.includes('js/view.js?v=20260824-10'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-11') && html.includes('js/view.js?v=20260824-11'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
