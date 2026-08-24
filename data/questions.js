@@ -14382,6 +14382,61 @@ for (let n = 1; n <= 10; n += 1) {
   }
 }
 
+// 第6次教材監査: 数字差替え型の既存問題を、公式区分の不足していた記帳行動へ置換する。
+// IDとtype別件数を維持し、学習履歴との互換性を保つ。
+const worksheetRows = [
+  ['現金', [300000,0,0,0,0,0,300000,0]], ['売掛金', [300000,0,0,0,0,0,300000,0]],
+  ['繰越商品', [200000,0,0,0,0,0,200000,0]], ['備品', [600000,0,0,0,0,0,600000,0]],
+  ['買掛金', [0,200000,0,0,0,0,0,200000]], ['資本金', [0,1000000,0,0,0,0,0,1000000]],
+  ['売上', [0,800000,0,0,0,800000,0,0]], ['仕入', [400000,0,0,0,400000,0,0,0]],
+  ['保険料', [200000,0,0,40000,160000,0,0,0]], ['前払保険料', [0,0,40000,0,0,0,40000,0]],
+  ['減価償却費', [0,0,60000,0,60000,0,0,0]], ['減価償却累計額', [0,0,0,60000,0,0,0,60000]],
+  ['当期純利益', [0,0,0,0,180000,0,0,180000]]
+];
+const worksheetCells = {}; const worksheetInputCells = [];
+const worksheetTableRows = worksheetRows.map(([account, values], rowIndex) => {
+  const row = { account };
+  ['tbDebit','tbCredit','adjDebit','adjCredit','plDebit','plCredit','bsDebit','bsCredit'].forEach((column, columnIndex) => {
+    const id = `${column}_${rowIndex + 1}`; row[column] = '入力'; worksheetInputCells.push(id); worksheetCells[id] = values[columnIndex];
+  });
+  return row;
+});
+QuestionData.D001 = {
+  id: 'D001', type: 'worksheet', format: 'eight-column-worksheet', category: '8桁精算表', difficulty: 3, chapter: 10,
+  scene: '決算・財務諸表へつなぐ', story: '同じ会社の決算整理から損益計算書と貸借対照表までを一枚で完成させる。',
+  question: '決算整理事項（保険料40,000円の前払い、備品の減価償却60,000円）を反映し、当期純利益を含む8桁精算表を完成しなさい。0となるセルにも0を入力すること。',
+  table: { columns: ['勘定科目','試算表 借方','試算表 貸方','修正記入 借方','修正記入 貸方','損益計算書 借方','損益計算書 貸方','貸借対照表 借方','貸借対照表 貸方'], rows: worksheetTableRows, inputCells: worksheetInputCells },
+  answer: { cells: worksheetCells }, explanation: '試算表、修正記入、損益計算書、貸借対照表の各組で借方と貸方が一致します。間接法では備品勘定そのものを減額しません。損益計算書欄の差額180,000円を当期純利益として借方へ、貸借対照表欄の貸方へ振り分けます。',
+  learningRole: 'transfer', timelineRole: 'main', variantGroup: 'eight-column-worksheet', knowledgeLinks: { prerequisite: ['D002'], nextConcept: ['F001'], related: ['F002'] }
+};
+
+QuestionData.F001 = {
+  id: 'F001', type: 'financial_statement', format: 'income-statement', category: '損益計算書', difficulty: 3, chapter: 10,
+  scene: '決算・損益計算書', story: 'D001と同じ会社の精算表から経営成績を報告する。',
+  question: '表に示した項目以外の収益・費用はないものとし、D001の損益計算書欄に基づき、売上高、売上原価、費用合計、当期純利益を完成しなさい。',
+  table: { columns: ['区分','金額'], rows: [{ item:'売上高', amount:'入力' },{ item:'売上原価', amount:'入力' },{ item:'費用合計（売上原価を除く）', amount:'入力' },{ item:'当期純利益', amount:'入力' }], inputCells: ['sales','costOfSales','expenses','netIncome'] },
+  answer: { cells: { sales:800000, costOfSales:400000, expenses:220000, netIncome:180000 } },
+  explanation: '売上高800,000円－売上原価400,000円－保険料160,000円－減価償却費60,000円＝当期純利益180,000円です。',
+  learningRole: 'transfer', timelineRole: 'main', variantGroup: 'income-statement', knowledgeLinks: { prerequisite: ['D001'], related: ['F002'], reviewOf: ['D001'] }
+};
+
+const replacementLedgers = {
+  L044: ['現金出納帳', '領収証と入金票から現金出納帳の受入・支払・残高を完成しなさい。', ['受入額','支払額','残高'], [50000,18000,32000]],
+  L045: ['当座預金出納帳', '当座預金への預入と振込支払を記帳し、残高を完成しなさい。', ['預入額','引出額','残高'], [300000,85000,215000]],
+  L046: ['小口現金出納帳', '定額資金前渡法で補給前の通信費・旅費交通費と補給額を記入しなさい。', ['通信費','旅費交通費','補給額'], [4800,7200,12000]],
+  L047: ['仕入帳', '掛仕入120,000円と返品20,000円を仕入帳へ記帳し、純仕入高を求めなさい。', ['総仕入高','仕入返品','純仕入高'], [120000,20000,100000]],
+  L048: ['売上帳', '掛売上180,000円と返品30,000円を売上帳へ記帳し、純売上高を求めなさい。', ['総売上高','売上返品','純売上高'], [180000,30000,150000]],
+  L049: ['商品有高帳・移動平均法', '期首10個@1,000円、仕入10個@1,200円の直後に12個を払い出した。移動平均法による平均単価、払出額、残高額を求めなさい。', ['移動平均単価','払出額','残高額'], [1100,13200,8800]],
+  L050: ['伝票（3伝票制）', '現金売上50,000円、備品の現金購入20,000円、商品30,000円の掛仕入について、入金伝票・出金伝票・振替伝票へ記入する金額を判断しなさい。', ['入金伝票','出金伝票','振替伝票'], [50000,20000,30000]]
+};
+Object.entries(replacementLedgers).forEach(([id, [category, question, labels, values]], offset) => {
+  const inputCells = labels.map((_, index) => `value${index + 1}`);
+  QuestionData[id] = { id, type:'ledger', category, difficulty: offset < 2 ? 2 : 3, chapter: offset < 5 ? 7 : 10, scene:'帳簿と伝票・実地記帳', story:'証憑から帳簿または伝票へ転記し、残高まで検算する。', question,
+    table:{ columns:['記入欄','金額'], rows:labels.map(label => ({ item:label, amount:'入力' })), inputCells }, answer:{ cells:Object.fromEntries(inputCells.map((cell,index) => [cell,values[index]])) },
+    explanation:`${labels.map((label,index) => `${label}${values[index].toLocaleString('ja-JP')}円`).join('、')}。名称の暗記ではなく取引または数量・単価から記帳します。`, learningRole:'transfer', timelineRole:'review', variantGroup:category,
+    knowledgeLinks: { prerequisite: offset === 5 ? ['L043'] : ['J002'], related: offset === 5 ? ['L042'] : ['L049'], nextConcept: offset === 5 ? ['D001'] : ['L050'] } };
+});
+
 const QuestionDataMeta = Object.freeze({
   "datasetId": "boki3-accounting-rpg-300",
   "dataVersion": "2026.08.20-r2",

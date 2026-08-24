@@ -65,7 +65,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-5'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-6'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -122,6 +122,18 @@ assert.deepStrictEqual([deskCalculator.expression, deskCalculator.calculator.acc
 const questionDataSource = fs.readFileSync('data/questions.js', 'utf8');
 vm.runInNewContext(`${questionDataSource}\nwindow.QuestionDataAudit = validateQuestionData();`, browserSandbox);
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
+const eightColumn = browserSandbox.window.QuestionData.D001;
+assert.strictEqual(eightColumn.format, 'eight-column-worksheet', 'WORKSHEET-01: D001を本物の8桁精算表として識別する');
+assert.strictEqual(eightColumn.table.columns.length, 9, 'WORKSHEET-01: 科目列と8つの借貸列を持つ');
+const perfectWorksheet = Engine.grade(eightColumn, eightColumn.answer);
+assert.deepStrictEqual([perfectWorksheet.correct, perfectWorksheet.earned, perfectWorksheet.possible], [true, 104, 104], 'WORKSHEET-02: 8桁精算表をセル単位で採点する');
+const worksheetTotals = Array.from({ length: 8 }, (_, column) => Object.values(eightColumn.answer.cells).filter((_, index) => index % 8 === column).reduce((sum, value) => sum + value, 0));
+assert.deepStrictEqual(worksheetTotals, [2000000,2000000,100000,100000,800000,800000,1440000,1440000], 'WORKSHEET-03: 各区分で借貸が一致する');
+const incomeStatement = browserSandbox.window.QuestionData.F001;
+assert.strictEqual(incomeStatement.answer.cells.sales - incomeStatement.answer.cells.costOfSales - incomeStatement.answer.cells.expenses, incomeStatement.answer.cells.netIncome, 'PL-01: 収益－売上原価－費用が当期純利益に一致する');
+assert(JSON.stringify(browserSandbox.window.QuestionData).includes('商品有高帳を先入先出法で完成'), 'INVENTORY-01: 既存の先入先出法問題を維持する');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.L049.answer.cells)), { value1:1100, value2:13200, value3:8800 }, 'INVENTORY-02: 移動平均単価・払出額・残高額を学習する');
+['現金出納帳','当座預金出納帳','小口現金出納帳','仕入帳','売上帳','入金伝票','出金伝票','振替伝票'].forEach(topic => assert(JSON.stringify(browserSandbox.window.QuestionData).includes(topic), `COVERAGE-01: ${topic}を実問題へ対応付ける`));
 assert.strictEqual(browserSandbox.window.QuestionDataAudit.ok, true, `全問題の品質検証を通過する: ${browserSandbox.window.QuestionDataAudit.errors.join(', ')}`);
 assert.deepStrictEqual([...browserSandbox.window.QuestionDataAudit.warnings], [], '全問題に品質上の警告がない');
 for (let number = 1; number <= 20; number += 1) {
@@ -164,6 +176,8 @@ const mixedAmountInput = { value: '１，2３４', selectionStart: 5, selectionE
 browserSandbox.window.AppController.prototype.formatAmount(mixedAmountInput);
 assert.strictEqual(mixedAmountInput.value, '1,234', '全角カンマを含む混在入力も整形する');
 const viewSource = fs.readFileSync('js/view.js', 'utf8');
+assert(!viewSource.includes("createElement('pre')"), 'IOS-REVIEW-03: 模試レビューへ内部JSON用preを生成しない');
+assert(viewSource.includes("answerReviewBlock('自分の回答'") && viewSource.includes('this.journalTable(answer)'), 'IOS-REVIEW-02: 長い仕訳回答を意味のある仕訳表で表示する');
 vm.runInNewContext(viewSource, browserSandbox);
 class FakeElement {
   constructor(tagName = 'div') { this.tagName = tagName; this.children = []; this.hidden = false; }
@@ -285,7 +299,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260824-5') && html.includes('js/view.js?v=20260824-5'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-6') && html.includes('js/view.js?v=20260824-6'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
