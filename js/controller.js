@@ -48,7 +48,7 @@
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'finish-exam': () => this.finishExam(false), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true) };
+        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
@@ -70,6 +70,14 @@
       this.document.body?.classList?.toggle('exam-active', mode === 'exam');
       this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false'));
       if (mode === 'exam') { this.updateExamStatus(); this.startExamTimer(); }
+    }
+    leaveExamResult(mode) { this.currentId = null; this.showMode(mode); this.renderModes(); }
+    retryExam(now = Date.now()) {
+      this.model.state.examSession = null; this.currentId = null;
+      const session = this.ensureExamSession(now);
+      this.showMode('exam'); this.renderModes();
+      if (session.ids[0]) this.start(session.ids[0]);
+      return session;
     }
     buildExamIds() {
       const quota = { journal: 5, ledger: 2, trial_balance: 2, correction: 2, worksheet: 2, financial_statement: 1, comprehensive: 1 };
@@ -189,7 +197,7 @@
       this.view.updateRpg(this.rpg); this.view.result(question, score, answer); this.view.show('view-result');
       if (this.rpg.state.companyHP === 0) this.showGameOver();
     }
-    next() { const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
+    next() { if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story'); const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
     formatAmount(input) {
       const before = normalizeNumber(input.value);
       const selectionStart = input.selectionStart ?? before.length;

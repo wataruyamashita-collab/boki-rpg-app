@@ -110,6 +110,8 @@
       return { debit: side('debit'), credit: side('credit') };
     }
     result(question, score, userAnswer) {
+      const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
+      if (standardActions) standardActions.hidden = false; if (examActions) examActions.hidden = true;
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
       box.textContent = score.correct ? '正解です！' : 'もう一歩です';
       this.renderAnswerComparison(question, score, userAnswer);
@@ -184,6 +186,8 @@
       });
     }
     examResult(review, questions, history) {
+      const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
+      if (standardActions) standardActions.hidden = true; if (examActions) examActions.hidden = false;
       const box = this.byId('result-status'); box.className = `result-box ${review.passed ? 'result-correct' : 'result-incorrect'}`;
       box.textContent = `${review.points}点 / 100点（${review.passed ? '合格圏' : '要復習'}）｜未回答 ${review.unansweredCount}問`;
       this.byId('answer-comparison').hidden = true; this.byId('correct-journal').replaceChildren();
