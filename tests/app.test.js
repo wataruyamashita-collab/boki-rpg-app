@@ -31,6 +31,11 @@ assert.deepStrictEqual(progress.state.incorrectIds, ['J1']);
 assert.strictEqual(progress.state.mistakeCounts.J1, 1, '問題ごとの累積誤答回数を記録する');
 progress.record('J1', false);
 assert.strictEqual(progress.state.mistakeCounts.J1, 2, '同じ問題の再誤答も頻度へ加算する');
+const dueAt = progress.state.reviewSchedule.J1.dueAt;
+progress.record('J1', true, dueAt - 1);
+assert(progress.state.incorrectIds.includes('J1'), '直後の正解だけでは克服扱いにしない');
+for (let stage = 0; stage < 4; stage += 1) progress.record('J1', true, progress.state.reviewSchedule.J1.dueAt);
+assert(!progress.state.incorrectIds.includes('J1') && !progress.state.reviewSchedule.J1, '20分・1日・3日・7日の遅延再生後に克服扱いにする');
 const masteryRpg = new RPGModel({ getItem() { return null; }, setItem() {} });
 const masteryQuestion = { id: 'M1', difficulty: 1, category: '売掛金' };
 masteryRpg.recordMastery(masteryQuestion, { earned: 0, possible: 1 });
@@ -66,7 +71,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-11'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-12'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -138,6 +143,15 @@ assert.strictEqual(incomeStatement.answer.cells.sales - incomeStatement.answer.c
 assert(JSON.stringify(browserSandbox.window.QuestionData).includes('商品有高帳を先入先出法で完成'), 'INVENTORY-01: 既存の先入先出法問題を維持する');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.L049.answer.cells)), { value1:1100, value2:13200, value3:8800 }, 'INVENTORY-02: 移動平均単価・払出額・残高額を学習する');
 ['現金出納帳','当座預金出納帳','小口現金出納帳','仕入帳','売上帳','入金伝票','出金伝票','振替伝票'].forEach(topic => assert(JSON.stringify(browserSandbox.window.QuestionData).includes(topic), `COVERAGE-01: ${topic}を実問題へ対応付ける`));
+['仕訳帳','受取手形記入帳','支払手形記入帳'].forEach(topic => assert(Object.values(browserSandbox.window.QuestionData).some(q => q.category === topic && q.materials?.length), `COVERAGE-02: ${topic}を資料から実際に完成する問題がある`));
+assert.strictEqual(browserSandbox.window.QuestionData.L040.answer.cells.lossA, 120000, '固定資産台帳で取得・月割償却・途中売却・売却損まで追跡する');
+for (const id of ['C001','C002','C003']) {
+  const question = browserSandbox.window.QuestionData[id];
+  assert.strictEqual(question.format, 'exam-question-3', `${id}を本試験第3問型として識別する`);
+  assert(question.materials.at(-1).内容.split('／').length >= 8, `${id}は8項目以上の決算整理を同時処理する`);
+  assert(Object.keys(question.answer.cells).length >= 10, `${id}はP/L・B/S等の主要10項目以上を採点する`);
+}
+assert.strictEqual(new Set(['C001','C002','C003'].map(id => browserSandbox.window.QuestionData[id].variantGroup)).size, 3, '第3問級総合問題は数字変更でない3系統にする');
 assert.strictEqual(browserSandbox.window.QuestionDataAudit.ok, true, `全問題の品質検証を通過する: ${browserSandbox.window.QuestionDataAudit.errors.join(', ')}`);
 const semanticAudit = browserSandbox.window.validateSemanticQuestionData();
 assert.strictEqual(semanticAudit.ok, true, `SEMANTIC: ${semanticAudit.errors.join(', ')}`);
@@ -354,7 +368,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260824-11') && html.includes('js/view.js?v=20260824-11'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-12') && html.includes('js/view.js?v=20260824-12'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');

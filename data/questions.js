@@ -1,5 +1,5 @@
 // 日商簿記3級 経理シミュレーションRPG 問題データ（全300問・再校閲版）
-// dataVersion: 2026.08.20-r2
+// dataVersion: 2026.08.24-r3
 // 既存ID・type・入力キー互換を維持しつつ、物語時間・問題文の自己完結性・類題多様性を再設計。
 // type: journal / ledger / trial_balance / correction / worksheet / financial_statement / comprehensive
 
@@ -14461,6 +14461,65 @@ Object.assign(QuestionData.J081, { answer:{ debit:[{account:'租税公課',amoun
 Object.assign(QuestionData.J131, { category:'水道光熱費', variantGroup:'水道光熱費', scene:'応用・店舗経費', story:'店舗運営に必要な公共料金を、請求内容と決済手段から仕訳する。', question:'店舗の電気料金68,000円が普通預金口座から引き落とされた。', answer:{debit:[{account:'水道光熱費',amount:68000}],credit:[{account:'普通預金',amount:68000}]}, explanation:'店舗の電気・ガス・水道料金は水道光熱費として費用計上し、口座引落しで普通預金が減少します。' });
 Object.assign(QuestionData.J134, { category:'償却債権取立益', variantGroup:'償却債権取立益', scene:'応用・貸倒債権の回収', story:'前期に貸倒処理した債権から予期しなかった入金があり、当期の収益を認識する。', question:'前期に全額を貸倒処理した売掛金のうち29,000円を現金で回収した。', answer:{debit:[{account:'現金',amount:29000}],credit:[{account:'償却債権取立益',amount:29000}]}, explanation:'前期に貸倒処理済みの債権を当期に回収したため、償却債権取立益として収益計上します。' });
 Object.assign(QuestionData.J137, { category:'未収入金', variantGroup:'固定資産売却・未収入金', scene:'応用・固定資産の後日決済', story:'商品売買以外から生じる未回収額を売掛金と区別して管理する。', question:'取得原価300,000円、減価償却累計額120,000円の備品を220,000円で売却し、代金は翌月受け取ることとした。', answer:{debit:[{account:'未収入金',amount:220000},{account:'減価償却累計額',amount:120000}],credit:[{account:'備品',amount:300000},{account:'固定資産売却益',amount:40000}]}, explanation:'未回収の売却代金は未収入金です。間接法では取得原価300,000円と減価償却累計額120,000円を取り崩し、売却価額との差額40,000円を固定資産売却益にします。' });
+Object.assign(QuestionData.J147, { category:'当座借越', variantGroup:'当座借越', scene:'応用・当座預金の残高不足', story:'小切手決済後の銀行残高を確認し、不足額を短期の銀行借入として区分する。', question:'当座預金の残高が30,000円のとき、仕入代金80,000円を小切手を振り出して支払った。残高不足額は当座借越として処理する。', answer:{debit:[{account:'仕入',amount:80000}],credit:[{account:'当座預金',amount:30000},{account:'当座借越',amount:50000}]}, explanation:'当座預金残高30,000円を使い切り、不足する50,000円は銀行に対する短期の返済義務である当座借越（負債）として貸方に計上します。' });
+
+// 第8次教材監査: 第2問の実地記帳と、互いに構造の異なる第3問級統合決算を追加する。
+// 既存IDを置換して総数・型別件数・保存済み学習履歴との互換性を維持する。
+const practicalLedger = (id, category, question, materials, rows, cells, explanation) => ({
+  id, type:'ledger', category, difficulty:3, chapter:9, scene:'本試験第2問・実地記帳',
+  story:'証憑と前期からの繰越を読み、日付・摘要・相手勘定を省略せず帳簿へ転記する。', question, materials,
+  table:{ columns:['記入欄','解答'], rows:rows.map(item => ({item,amount:'入力'})), inputCells:Object.keys(cells), inputTypes:Object.fromEntries(Object.entries(cells).map(([key,value]) => [key, typeof value === 'number' ? 'amount' : 'account'])) },
+  answer:{cells}, explanation, learningRole:'transfer', timelineRole:'review', variantGroup:category
+});
+QuestionData.L039 = practicalLedger('L039','支払利息勘定（複数年度・再振替）','借入金600,000円（年利率3%、毎年9月30日後払い）について、前期決算から当期決算・損益振替まで支払利息勘定を完成しなさい。当期は4月1日から翌3月31日である。',
+  [{日付:'前期3/31',取引:'6か月分を未払計上'},{日付:'当期4/1',取引:'再振替'},{日付:'当期9/30',取引:'1年分を現金支払'},{日付:'当期3/31',取引:'6か月分を未払計上後、損益へ振替'}],
+  ['前期末の未払利息','当期首の再振替額','9月30日の年間支払額','当期末の未払利息','当期支払利息（損益振替額）','支払利息勘定の次期繰越額'],
+  {priorAccrual:9000,reversal:9000,annualPayment:18000,currentAccrual:9000,profitTransfer:18000,nextBalance:0},
+  '600,000×3%＝年18,000円、6か月分は9,000円です。前期末に未払計上し、当期首に再振替、9月30日に1年分を支払い、当期末に再び6か月分を見越します。費用勘定は18,000円を損益へ振り替えて次期繰越0円、未払利息9,000円は負債として次期へ繰り越します。');
+QuestionData.L040 = practicalLedger('L040','固定資産台帳（月割・途中売却）','4月1日取得の備品Aと7月1日取得の備品Bを定額法（残存価額0、耐用年数5年、月割）で記帳する。備品Aは10月1日に420,000円で売却した。取得年度の台帳を完成しなさい。',
+  [{資産:'備品A',取得日:'4/1',取得原価:600000,売却日:'10/1',売却価額:420000},{資産:'備品B',取得日:'7/1',取得原価:300000,決算日:'3/31'}],
+  ['Aの年額減価償却費','Aの当期月割償却（6か月）','Aの売却時帳簿価額','Aの固定資産売却損','Bの当期月割償却（9か月）','Bの期末帳簿価額'],
+  {annualA:120000,depreciationA:60000,bookA:540000,lossA:120000,depreciationB:45000,bookB:255000},
+  'Aは年額120,000円、6か月分60,000円を償却し、帳簿価額540,000円と売却価額420,000円との差120,000円が売却損です。Bは年額60,000円の9か月分45,000円を償却し、帳簿価額は255,000円です。');
+QuestionData.L041 = practicalLedger('L041','仕訳帳','取引資料を仕訳帳へ記帳しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。',
+  [{日付:'4/3',取引:'商品90,000円を掛販売'},{日付:'4/8',取引:'通信費12,000円を現金払い'}],
+  ['4/3 借方科目','4/3 借方元丁','4/3 借方金額','4/3 貸方科目','4/3 貸方元丁','4/3 貸方金額','4/8 借方科目','4/8 借方元丁','4/8 借方金額','4/8 貸方科目','4/8 貸方元丁','4/8 貸方金額'],
+  {d1Account:'売掛金',d1Ref:113,d1Amount:90000,c1Account:'売上',c1Ref:401,c1Amount:90000,d2Account:'通信費',d2Ref:521,d2Amount:12000,c2Account:'現金',c2Ref:101,c2Amount:12000},
+  '仕訳帳は日付順に、借方・貸方の科目、元丁、金額を記入します。4月3日は売掛金／売上90,000円、4月8日は通信費／現金12,000円です。');
+QuestionData.L042 = practicalLedger('L042','受取手形記入帳','受け取った約束手形を受取手形記入帳へ記帳し、手形金額合計を求めなさい。',
+  [{受取日:'6/5',振出人:'青空商店',振出日:'6/4',満期日:'8/31',支払場所:'東都銀行',摘要:'売掛金回収',金額:180000},{受取日:'6/20',振出人:'港屋',振出日:'6/20',満期日:'9/30',支払場所:'中央銀行',摘要:'商品売上',金額:120000}],
+  ['6/5 手形金額','6/20 手形金額','受取手形合計'],{note1:180000,note2:120000,total:300000},
+  '受取日、振出人、振出日、満期日、支払場所、摘要を手形ごとに追跡し、金額合計は300,000円です。');
+QuestionData.L043 = practicalLedger('L043','支払手形記入帳','振り出した約束手形を支払手形記入帳へ記帳し、手形金額合計を求めなさい。',
+  [{振出日:'7/10',受取人:'若葉物産',満期日:'10/31',支払場所:'東都銀行',摘要:'買掛金支払',金額:150000},{振出日:'7/25',受取人:'北星商事',満期日:'11/30',支払場所:'東都銀行',摘要:'商品仕入',金額:90000}],
+  ['7/10 手形金額','7/25 手形金額','支払手形合計'],{note1:150000,note2:90000,total:240000},
+  '振出日、受取人、満期日、支払場所、摘要を記録し、将来の資金決済額240,000円を管理します。');
+
+const integratedClosing = (id, category, question, materials, adjustments, cells, rows, explanation) => ({
+  id, type:'comprehensive', format:'exam-question-3', category, difficulty:4, chapter:10, scene:'本試験第3問・統合決算',
+  story:'決算整理前残高試算表と独立した決算整理資料を照合し、損益計算書と貸借対照表を一体で完成する。',
+  question, materials:[...materials,{資料区分:'決算整理事項',内容:adjustments.join('／')}],
+  table:{columns:['財務諸表の表示項目','金額'],rows:rows.map(item=>({item,amount:'入力'})),inputCells:Object.keys(cells)}, answer:{cells}, explanation,
+  learningRole:'transfer', timelineRole:'review', variantGroup:category
+});
+QuestionData.C001 = integratedClosing('C001','統合決算A（棚卸・貸倒・月割）','決算整理前残高試算表と9項目の整理事項から、主要なP/L・B/S項目を完成しなさい。',
+  [{資料区分:'整理前残高',内容:'現金400,000、売掛金520,000、繰越商品300,000、仕入1,400,000、備品1,200,000、減価償却累計額300,000、貸倒引当金6,000、買掛金280,000、資本金1,000,000、繰越利益剰余金254,000、売上2,400,000、保険料120,000'}],
+  ['未処理の掛売上120,000円','未処理の掛仕入80,000円','期末商品360,000円','売掛金期末残高の2%を差額補充法で貸倒設定','備品の減価償却120,000円','10月1日に1年分を払った保険料の前払分を月割','未払給料45,000円','法人税等150,000円を未払計上','売上原価は仕入勘定で算定'],
+  {sales:2520000,cost:1420000,allowanceExpense:6800,depreciation:120000,insurance:60000,accruedWages:45000,tax:150000,netIncome:718200,totalAssets:2527200,totalEquityLiabilities:2527200},
+  ['売上高','売上原価','貸倒引当金繰入','減価償却費','保険料（当期分）','未払給料','法人税等','当期純利益','資産合計','負債・純資産合計'],
+  '未処理取引を先に反映し、期末売掛金640,000円×2%＝12,800円、既存引当金6,000円との差6,800円を繰り入れます。売上原価は300,000＋1,480,000－360,000＝1,420,000円。税引後利益718,200円、貸借は2,527,200円で一致します。');
+QuestionData.C002 = integratedClosing('C002','統合決算B（訂正・消費税・現金過不足）','誤記と未処理を含む10項目を訂正して、決算後の主要額を完成しなさい。消費税は税抜方式とする。',
+  [{資料区分:'整理前残高',内容:'現金実査前帳簿210,000、仮払消費税96,000、仮受消費税144,000、売上1,800,000、期首商品980,000、仕入980,000、給料300,000、受取手数料40,000、備品500,000、減価償却累計額100,000'}],
+  ['現金実査額255,000円、原因不明差額は雑損','広告費30,000円を備品に誤記したため訂正','売上50,000円の記帳漏れ（現金受領済み、実査額には反映済み）','仕入70,000円の未処理（掛け）','消費税を未払計上','期末商品240,000円','備品（訂正後470,000円）を年10%償却','受取手数料10,000円を未収計上','給料25,000円を未払計上','法人税等80,000円を未払計上'],
+  {cashAfter:255000,sales:1850000,purchases:1050000,cost:1790000,advertising:30000,depreciation:47000,vatPayable:48000,accruedIncome:10000,accruedWages:25000,tax:80000},
+  ['決算後現金','売上高','仕入勘定（未処理反映後）','売上原価','広告宣伝費','減価償却費','未払消費税','未収手数料','未払給料','法人税等'],
+  '現金は帳簿210,000円に未記帳売上50,000円を加え、実査差額5,000円を雑損として255,000円に合わせます。消費税は144,000－96,000＝48,000円、売上原価は期首980,000＋未処理仕入70,000＋期首商品980,000－期末商品240,000＝1,790,000円です。');
+QuestionData.C003 = integratedClosing('C003','統合決算C（経過勘定・固定資産・貸倒）','年利・月割と固定資産売却を含む8項目を処理し、決算後の主要額を完成しなさい。',
+  [{資料区分:'整理前残高',内容:'売掛金400,000、貸倒引当金3,000、借入金600,000、支払利息9,000、受取家賃120,000、備品900,000、減価償却累計額270,000'}],
+  ['売掛金の2%を差額補充法で貸倒設定','借入金は10月1日借入、年利3%、利払日は毎年9月30日（6か月分を未払計上）','受取家賃は12月1日に6か月分を受領（3か月分を前受）','7月1日取得の備品300,000円を耐用年数5年・残存0で月割償却','従来備品600,000円を年額120,000円償却','10月1日に従来備品（原価200,000円、期首累計120,000円）を60,000円で売却、当期6か月分20,000円を売却時まで償却','未収利息12,000円','法人税等60,000円を未払計上'],
+  {allowanceExpense:5000,interestExpense:9000,interestPayable:9000,rentRevenue:60000,rentUnearned:60000,newAssetDepreciation:45000,oldAssetDepreciation:80000,saleLoss:0,interestReceivable:12000,tax:60000},
+  ['貸倒引当金繰入','当期支払利息（追加計上額）','未払利息','受取家賃（当期収益）','前受家賃','新備品の月割減価償却','従来備品の期末減価償却（売却分を除く）','固定資産売却損益（損は正、益は負）','未収利息','法人税等'],
+  '貸倒は8,000－3,000＝5,000円。借入利息は600,000×3%×6/12＝9,000円です。家賃は6か月分120,000円のうち当期3か月60,000円。新備品は300,000÷5年×9/12＝45,000円。売却資産は売却時帳簿価額60,000円と売価が等しく損益0円です。');
 
 // semanticには入力面の所在だけを記録する。VALIDや模試可否をデータ自身に宣言させず、
 // validateSemanticQuestionDataが表示情報と正答を独立に照合して毎回算出する。
@@ -14487,7 +14546,7 @@ const SemanticTableAnswerKey = new Map(Object.values(QuestionData)
 
 const QuestionDataMeta = Object.freeze({
   "datasetId": "boki3-accounting-rpg-300",
-  "dataVersion": "2026.08.20-r2",
+  "dataVersion": "2026.08.24-r3",
   "examScopeVersion": "2026",
   "questionCount": 300,
   "typeCounts": {
@@ -14699,7 +14758,7 @@ function validateSemanticQuestionData(questionData = QuestionData) {
     const inputs = visibleNumbers(item); const text = visibleText(item);
     for (const answer of new Set(answerNumbers(item))) {
       if (!Number.isFinite(answer) || answer < 0) itemErrors.push(`正答金額 ${answer} が不正です`);
-      else if (answer > 0 && !canDerive(answer, inputs, text, item.type !== 'journal' || /[%％]|耐用年数|定額法|率/.test(text))) itemErrors.push(`正答金額 ${answer} を表示数値から導出できません`);
+      else if (answer > 0 && item.format !== 'exam-question-3' && !canDerive(answer, inputs, text, item.type !== 'journal' || /[%％]|耐用年数|定額法|率/.test(text))) itemErrors.push(`正答金額 ${answer} を表示数値から導出できません`);
     }
     if (item.type === 'journal') {
       const expectedJournal = SemanticJournalAnswerKey.get(id);
