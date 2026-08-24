@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260824-1">
+  <link rel="stylesheet" href="css/style.css?v=20260824-2">
 </head>
 <body>
 <div class="container">
@@ -20,8 +20,9 @@
     <button type="button" data-action="mode" data-mode="story">ストーリー</button>
     <button type="button" data-action="mode" data-mode="training">トレーニング</button>
     <button type="button" data-action="mode" data-mode="review">復習</button>
-    <button type="button" data-action="mode" data-mode="exam">模擬試験</button>
+    <button type="button" data-action="mode" data-mode="exam">総合演習模試</button>
   </nav>
+  <aside id="exam-hud" class="exam-hud" aria-label="総合演習模試の進行状況"><p id="exam-timer" class="exam-timer" aria-live="polite">残り 60:00</p><p id="exam-progress" aria-live="polite"></p><button type="button" data-action="finish-exam">試験を終了して採点</button></aside>
 
   <aside id="question-filters" class="question-filters" aria-labelledby="filter-heading">
     <div class="filter-heading"><h2 id="filter-heading">問題を絞り込む</h2><button type="button" class="filter-reset" data-action="filter-reset">条件をクリア</button></div>
@@ -37,7 +38,7 @@
     <section id="view-story" class="view"><h2>ストーリーモード</h2><p>取引を処理して、会社の数字を見えるようにしましょう。</p><article id="story-resume" class="resume-card"><p id="resume-scene"></p><strong id="resume-task"></strong><p id="resume-progress"></p><button type="button" data-action="start" id="resume-button">続きから</button></article><details><summary>問題を選んで学ぶ</summary><div id="story-list" class="question-list"></div></details></section>
     <section id="view-training" class="view"><h2>トレーニングモード</h2><p>試算表・元帳・精算表などを形式別に練習します。</p><div id="training-list" class="question-list"></div></section>
     <section id="view-review" class="view"><h2>復習モード</h2><p>間違えた問題を優先して解き直します。</p><div id="review-list" class="question-list"></div></section>
-    <section id="view-exam" class="view"><h2>模擬試験モード</h2><p>試験中は正誤や経験値を表示せず、終了後に採点します。</p><div id="exam-list" class="question-list"></div></section>
+    <section id="view-exam" class="view"><h2>総合演習模試</h2><p>本試験そのものではない独自15問演習です。制限時間60分・100点満点・70点以上を合格圏とし、全問回答後に採点します。</p><div id="exam-list" class="question-list"></div></section>
 
     <section id="view-question" class="view">
       <form id="question-form" autocomplete="off">
@@ -63,6 +64,6 @@
   </main>
   <dialog id="game-over-dialog" class="game-over-dialog" aria-labelledby="game-over-title" aria-describedby="game-over-description"><h2 id="game-over-title">資金ショート</h2><p id="game-over-description">経営HPが0になりました。最初から立て直すか、間違えた問題を復習しましょう。</p><div><button type="button" data-action="retry-mode">このモードを最初から</button><button type="button" class="secondary-button" data-action="review-game-over">復習する</button></div></dialog>
 </div>
-<script src="data/questions.js?v=20260824-1"></script><script src="js/calculator.js?v=20260824-1"></script><script src="js/model.js?v=20260824-1"></script><script src="js/rpg.js?v=20260824-1"></script><script src="js/engine.js?v=20260824-1"></script><script src="js/view.js?v=20260824-1"></script><script src="js/controller.js?v=20260824-1"></script><script src="js/app.js?v=20260824-1"></script>
+<script src="data/questions.js?v=20260824-2"></script><script src="js/calculator.js?v=20260824-2"></script><script src="js/model.js?v=20260824-2"></script><script src="js/rpg.js?v=20260824-2"></script><script src="js/engine.js?v=20260824-2"></script><script src="js/view.js?v=20260824-2"></script><script src="js/controller.js?v=20260824-2"></script><script src="js/app.js?v=20260824-2"></script>
 </body>
 </html>

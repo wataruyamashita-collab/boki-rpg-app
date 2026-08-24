@@ -31,6 +31,10 @@
       this.state.rewardedIds.push(question.id);
       this.state.xp += Math.round(20 * question.difficulty * score.ratio * multiplier);
       this.state.totalTransactionAmount += this.questionAmount(question);
+      this.save(); return true;
+    }
+    recordMastery(question, score) {
+      if (!question || typeof question.category !== 'string' || !score || !Number.isFinite(score.earned) || !Number.isFinite(score.possible) || score.earned < 0 || score.possible <= 0 || score.possible < score.earned) return false;
       const mastery = this.state.mastery[question.category] || { earned: 0, possible: 0 };
       mastery.earned += score.earned; mastery.possible += score.possible;
       this.state.mastery[question.category] = mastery; this.save(); return true;
