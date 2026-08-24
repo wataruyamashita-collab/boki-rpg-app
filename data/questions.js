@@ -14397,23 +14397,29 @@ const worksheetCells = {}; const worksheetInputCells = [];
 const worksheetTableRows = worksheetRows.map(([account, values], rowIndex) => {
   const row = { account };
   ['tbDebit','tbCredit','adjDebit','adjCredit','plDebit','plCredit','bsDebit','bsCredit'].forEach((column, columnIndex) => {
-    const id = `${column}_${rowIndex + 1}`; row[column] = '入力'; worksheetInputCells.push(id); worksheetCells[id] = values[columnIndex];
+    const id = `${column}_${rowIndex + 1}`;
+    // 元試算表と意味のないゼロ欄は資料として固定表示し、転記・調整が必要な欄だけを解答させる。
+    const assessable = columnIndex >= 2 && values[columnIndex] !== 0;
+    row[column] = assessable ? '入力' : (columnIndex < 2 && values[columnIndex] !== 0 ? values[columnIndex] : '—');
+    if (assessable) { worksheetInputCells.push(id); worksheetCells[id] = values[columnIndex]; }
   });
   return row;
 });
 QuestionData.D001 = {
   id: 'D001', type: 'worksheet', format: 'eight-column-worksheet', category: '8桁精算表', difficulty: 3, chapter: 10,
   scene: '決算・財務諸表へつなぐ', story: '同じ会社の決算整理から損益計算書と貸借対照表までを一枚で完成させる。',
-  question: '決算整理事項（保険料40,000円の前払い、備品の減価償却60,000円）を反映し、当期純利益を含む8桁精算表を完成しなさい。0となるセルにも0を入力すること。',
+  question: '下記の元試算表と決算整理事項（保険料のうち40,000円を前払保険料へ振り替える、備品を間接法で60,000円減価償却する）を反映し、入力欄のみを完成しなさい。「—」は記入不要です。',
+  materials: worksheetRows.filter(([, values]) => values[0] || values[1]).map(([account, values]) => ({ '勘定科目': account, '借方': values[0] || '—', '貸方': values[1] || '—' })),
   table: { columns: ['勘定科目','試算表 借方','試算表 貸方','修正記入 借方','修正記入 貸方','損益計算書 借方','損益計算書 貸方','貸借対照表 借方','貸借対照表 貸方'], rows: worksheetTableRows, inputCells: worksheetInputCells },
   answer: { cells: worksheetCells }, explanation: '試算表、修正記入、損益計算書、貸借対照表の各組で借方と貸方が一致します。間接法では備品勘定そのものを減額しません。損益計算書欄の差額180,000円を当期純利益として借方へ、貸借対照表欄の貸方へ振り分けます。',
-  learningRole: 'transfer', timelineRole: 'main', variantGroup: 'eight-column-worksheet', knowledgeLinks: { prerequisite: ['D002'], nextConcept: ['F001'], related: ['F002'] }
+  learningRole: 'transfer', timelineRole: 'main', variantGroup: 'eight-column-worksheet', knowledgeLinks: { prerequisite: [], nextConcept: ['F001'], related: ['F002'] }
 };
 
 QuestionData.F001 = {
   id: 'F001', type: 'financial_statement', format: 'income-statement', category: '損益計算書', difficulty: 3, chapter: 10,
   scene: '決算・損益計算書', story: 'D001と同じ会社の精算表から経営成績を報告する。',
-  question: '表に示した項目以外の収益・費用はないものとし、D001の損益計算書欄に基づき、売上高、売上原価、費用合計、当期純利益を完成しなさい。',
+  question: '表に示した項目以外の収益・費用はないものとし、下記の決算整理後データから売上高、売上原価、費用合計、当期純利益を完成しなさい。',
+  materials: [{ '区分':'収益', '勘定科目':'売上', '金額':800000 }, { '区分':'売上原価', '勘定科目':'仕入', '金額':400000 }, { '区分':'費用', '勘定科目':'保険料', '金額':160000 }, { '区分':'費用', '勘定科目':'減価償却費', '金額':60000 }],
   table: { columns: ['区分','金額'], rows: [{ item:'売上高', amount:'入力' },{ item:'売上原価', amount:'入力' },{ item:'費用合計（売上原価を除く）', amount:'入力' },{ item:'当期純利益', amount:'入力' }], inputCells: ['sales','costOfSales','expenses','netIncome'] },
   answer: { cells: { sales:800000, costOfSales:400000, expenses:220000, netIncome:180000 } },
   explanation: '売上高800,000円－売上原価400,000円－保険料160,000円－減価償却費60,000円＝当期純利益180,000円です。',
@@ -14434,7 +14440,39 @@ Object.entries(replacementLedgers).forEach(([id, [category, question, labels, va
   QuestionData[id] = { id, type:'ledger', category, difficulty: offset < 2 ? 2 : 3, chapter: offset < 5 ? 7 : 10, scene:'帳簿と伝票・実地記帳', story:'証憑から帳簿または伝票へ転記し、残高まで検算する。', question,
     table:{ columns:['記入欄','金額'], rows:labels.map(label => ({ item:label, amount:'入力' })), inputCells }, answer:{ cells:Object.fromEntries(inputCells.map((cell,index) => [cell,values[index]])) },
     explanation:`${labels.map((label,index) => `${label}${values[index].toLocaleString('ja-JP')}円`).join('、')}。名称の暗記ではなく取引または数量・単価から記帳します。`, learningRole:'transfer', timelineRole:'review', variantGroup:category,
-    knowledgeLinks: { prerequisite: offset === 5 ? ['L043'] : ['J002'], related: offset === 5 ? ['L042'] : ['L049'], nextConcept: offset === 5 ? ['D001'] : ['L050'] } };
+    knowledgeLinks: { prerequisite: offset === 5 ? ['L043'] : ['J002'], related: offset === 5 ? ['L042'] : ['L049'], nextConcept: offset === 5 ? ['D001'] : (id === 'L050' ? ['D001'] : ['L050']) } };
+});
+
+Object.assign(QuestionData.L044, { materials: [{ '日付':'4/3', '証ひょう':'入金票', '摘要':'売掛金の回収', '収入':50000, '支出':'—' }, { '日付':'4/5', '証ひょう':'領収証', '摘要':'通信費の支払', '収入':'—', '支出':18000 }] });
+Object.assign(QuestionData.L045, { materials: [{ '日付':'5/1', '証ひょう':'預入票', '摘要':'当座預金へ預入', '預入':300000, '引出':'—' }, { '日付':'5/8', '証ひょう':'振込受付書', '摘要':'買掛金の振込支払', '預入':'—', '引出':85000 }] });
+Object.assign(QuestionData.L046, { materials: [{ '日付':'6/7', '証ひょう':'領収証', '摘要':'郵便・通信費', '金額':4800 }, { '日付':'6/14', '証ひょう':'交通費精算書', '摘要':'得意先訪問', '金額':7200 }], question:'定額資金前渡法で、下記支払報告を通信費と旅費交通費に分類し、当日に支払額と同額を補給する場合の補給額も記入しなさい。' });
+
+Object.assign(QuestionData.D019, { category:'決算整理後残高試算表', format:'adjusted-trial-balance', scene:'決算・整理後残高の確認', story:'決算整理仕訳を転記し、財務諸表作成前の残高を確定する。', question:'下記の決算整理前残高と整理事項を反映し、決算整理後残高試算表を完成しなさい。', materials:[{勘定科目:'保険料',整理前借方:200000,整理前貸方:'—',整理事項:'前払分40,000円を振替'},{勘定科目:'前払保険料',整理前借方:'—',整理前貸方:'—',整理事項:'借方40,000円'},{勘定科目:'備品',整理前借方:600000,整理前貸方:'—',整理事項:'間接法のため取得原価を維持'},{勘定科目:'減価償却費',整理前借方:'—',整理前貸方:'—',整理事項:'借方60,000円'},{勘定科目:'減価償却累計額',整理前借方:'—',整理前貸方:'—',整理事項:'貸方60,000円'}], table:{columns:['勘定科目','整理後借方','整理後貸方'],rows:[{account:'保険料',debit:'入力',credit:'—'},{account:'前払保険料',debit:'入力',credit:'—'},{account:'備品',debit:'入力',credit:'—'},{account:'減価償却費',debit:'入力',credit:'—'},{account:'減価償却累計額',debit:'—',credit:'入力'}],inputCells:['insurance','prepaid','equipment','depreciation','accumulated']}, answer:{cells:{insurance:160000,prepaid:40000,equipment:600000,depreciation:60000,accumulated:60000}}, explanation:'整理仕訳を各勘定へ転記した後の残高です。備品は間接法なので備品勘定そのものを減額しません。' });
+Object.assign(QuestionData.D020, { category:'帳簿締切', format:'closing-entries', scene:'決算・収益費用勘定の締切', story:'損益勘定を経由して収益・費用を締め切る。', question:'売上800,000円、仕入400,000円、保険料160,000円、減価償却費60,000円だけがある。各収益・費用を損益勘定へ振り替えた後、当期純利益を繰越利益剰余金へ振り替える締切金額を完成しなさい。', table:{columns:['締切手続','金額'],rows:[{item:'売上から損益への振替',amount:'入力'},{item:'仕入から損益への振替',amount:'入力'},{item:'保険料から損益への振替',amount:'入力'},{item:'減価償却費から損益への振替',amount:'入力'},{item:'損益から繰越利益剰余金への振替',amount:'入力'}],inputCells:['sales','purchases','insurance','depreciation','profit']}, answer:{cells:{sales:800000,purchases:400000,insurance:160000,depreciation:60000,profit:180000}}, explanation:'収益800,000円と費用620,000円を損益へ振り替え、差額180,000円を繰越利益剰余金へ振り替えます。間接法では備品勘定そのものを減額しません。' });
+
+Object.assign(QuestionData.J148, { category:'受取手形', scene:'応用・手形の受入', story:'約束手形で代金を受け取る独立ケース。', question:'商品80,000円を売り上げ、得意先振出の約束手形を受け取った。', answer:{ debit:[{account:'受取手形',amount:80000}], credit:[{account:'売上',amount:80000}] }, explanation:'将来代金を受け取る手形債権は受取手形（資産）です。' });
+Object.assign(QuestionData.J149, { category:'支払手形', scene:'応用・手形の振出', story:'自店の約束手形を振り出す独立ケース。', question:'商品60,000円を仕入れ、代金として約束手形を振り出した。', answer:{ debit:[{account:'仕入',amount:60000}], credit:[{account:'支払手形',amount:60000}] }, explanation:'将来代金を支払う手形債務は支払手形（負債）です。' });
+Object.assign(QuestionData.J150, { category:'手形の取立と支払', scene:'応用・手形の決済', story:'受取手形と支払手形が満期になった独立ケース。', question:'受取手形80,000円が満期となり当座預金に取り立てられた。また、支払手形60,000円が満期となり当座預金から支払われた。', answer:{ debit:[{account:'当座預金',amount:80000},{account:'支払手形',amount:60000}], credit:[{account:'受取手形',amount:80000},{account:'当座預金',amount:60000}] }, explanation:'取立てで受取手形が減って当座預金が増え、支払で支払手形と当座預金が減ります。' });
+
+// Structural validationとは独立した、画面上の根拠と模試投入可否の契約。
+// requiredFactsは「正答そのもの」ではなく、受験者が計算前に必要とする入力事実を表す。
+const semanticOverrides = {
+  D001: { requiredFacts: ['元試算表9科目の借貸残高', '保険料前払40000', '備品減価償却60000'], factSources: { '元試算表9科目の借貸残高':'materials', '保険料前払40000':'question', '備品減価償却60000':'question' } },
+  F001: { requiredFacts: ['売上800000', '売上原価400000', '保険料160000', '減価償却費60000'], factSources: { '売上800000':'materials', '売上原価400000':'materials', '保険料160000':'materials', '減価償却費60000':'materials' } },
+  L044: { requiredFacts: ['入金50000', '支払18000'], factSources: { '入金50000':'materials', '支払18000':'materials' } },
+  L045: { requiredFacts: ['預入300000', '引出85000'], factSources: { '預入300000':'materials', '引出85000':'materials' } },
+  L046: { requiredFacts: ['通信費4800', '旅費交通費7200', '定額資金前渡法は支払同額を補給'], factSources: { '通信費4800':'materials', '旅費交通費7200':'materials', '定額資金前渡法は支払同額を補給':'question' } }
+};
+Object.values(QuestionData).forEach(item => {
+  const override = semanticOverrides[item.id];
+  const requiredFacts = override?.requiredFacts || [`${item.category}の問題文に明示された取引条件`];
+  item.semantic = {
+    questionId: item.id,
+    visibleInputs: ['question', ...(item.story ? ['story'] : []), ...(item.materials?.length ? ['materials'] : []), ...(item.table ? ['fixedCell'] : [])],
+    requiredFacts,
+    factSources: override?.factSources || Object.fromEntries(requiredFacts.map(fact => [fact, 'question'])),
+    dependencies: [...(item.knowledgeLinks?.prerequisite || [])], semanticStatus: 'VALID', examEligible: true, gradingValidated: true
+  };
 });
 
 const QuestionDataMeta = Object.freeze({
@@ -14599,8 +14637,28 @@ function validateQuestionData(questionData = QuestionData) {
   });
 }
 
+function validateSemanticQuestionData(questionData = QuestionData) {
+  const errors = []; const entries = Object.entries(questionData || {}); const order = new Map();
+  const flow = { journal:0, ledger:1, trial_balance:2, correction:3, worksheet:4, financial_statement:5, comprehensive:6 };
+  entries.map(([id, item], index) => ({ id, item, index })).sort((a, b) => a.item.chapter - b.item.chapter || flow[a.item.type] - flow[b.item.type] || a.index - b.index).forEach(({ id }, index) => order.set(id, index));
+  for (const [id, item] of entries) {
+    const semantic = item.semantic;
+    if (!semantic || semantic.questionId !== id) { errors.push(`${id}: semantic metadataがありません`); continue; }
+    if (!['VALID','QUESTIONABLE','INVALID'].includes(semantic.semanticStatus)) errors.push(`${id}: semanticStatusが不正です`);
+    for (const fact of semantic.requiredFacts || []) if (!semantic.factSources?.[fact]) errors.push(`${id}: requiredFact「${fact}」に画面上のsourceがありません`);
+    if (semantic.examEligible && (semantic.semanticStatus !== 'VALID' || !semantic.gradingValidated)) errors.push(`${id}: 未検証問題が模試対象です`);
+    const links = item.knowledgeLinks || {};
+    for (const relation of ['prerequisite','nextConcept']) if ((links[relation] || []).includes(id)) errors.push(`${id}: ${relation}がself-loopです`);
+    if (new Set(links.related || []).size !== (links.related || []).length) errors.push(`${id}: relatedが重複しています`);
+    for (const prerequisite of links.prerequisite || []) if (!order.has(prerequisite) || order.get(prerequisite) >= order.get(id)) errors.push(`${id}: prerequisite ${prerequisite}が学習順を逆転しています`);
+  }
+  return Object.freeze({ ok: errors.length === 0, errors: Object.freeze(errors), counts: Object.freeze({ VALID: entries.filter(([,q]) => q.semantic?.semanticStatus === 'VALID').length, QUESTIONABLE: entries.filter(([,q]) => q.semantic?.semanticStatus === 'QUESTIONABLE').length, INVALID: entries.filter(([,q]) => q.semantic?.semanticStatus === 'INVALID').length }) });
+}
+
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {
   window.QuestionData = QuestionData;
+  window.validateQuestionData = validateQuestionData;
+  window.validateSemanticQuestionData = validateSemanticQuestionData;
 }
