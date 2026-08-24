@@ -86,8 +86,11 @@
     modeIds() { const mode = this.model.state.mode; if (mode === 'review') return this.model.state.incorrectIds.length ? this.model.state.incorrectIds : this.ids; if (mode === 'exam') return this.model.state.examSession?.ids || this.buildExamIds(); if (mode === 'training') return this.ids.filter(id => this.questions[id].type !== 'journal'); return this.storyIds(); }
     ensureExamSession(now = Date.now()) {
       if (this.model.validExamSession(this.model.state.examSession)) return this.model.state.examSession;
-      this.model.state.examSession = { ids: this.buildExamIds(), startedAt: now, endAt: now + EXAM_DURATION_MS, scores: {} };
+      this.model.state.examSession = { ids: this.buildExamIds(), startedAt: now, endAt: now + EXAM_DURATION_MS, status: 'RUNNING', scores: {} };
       this.model.save(); return this.model.state.examSession;
+    }
+    isExamExpired(now = Date.now(), session = this.model.state.examSession) {
+      return !session || (session.status || 'RUNNING') !== 'RUNNING' || now >= session.endAt;
     }
     unansweredExamIds() {
       const session = this.model.state.examSession;
@@ -98,22 +101,29 @@
       const remaining = Math.max(0, session.endAt - now); const seconds = Math.ceil(remaining / 1000);
       const timer = this.document.getElementById('exam-timer'); const progress = this.document.getElementById('exam-progress');
       if (timer) timer.textContent = `残り ${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-      if (progress) progress.textContent = `回答済み ${session.ids.length - this.unansweredExamIds().length} / ${session.ids.length}問`;
-      if (remaining === 0) this.finishExam(true);
+      const position = Math.max(0, session.ids.indexOf(this.currentId)) + 1;
+      if (progress) progress.textContent = `第${position}問 / ${session.ids.length}問｜回答済み ${session.ids.length - this.unansweredExamIds().length}問`;
+      if (remaining === 0) { session.status = 'EXPIRED'; this.finishExam(true, now); }
     }
     startExamTimer() { this.stopExamTimer(); this.updateExamStatus(); this.examTimerId = root.setInterval?.(() => this.updateExamStatus(), 1000) || null; }
     stopExamTimer() { if (this.examTimerId !== null) root.clearInterval?.(this.examTimerId); this.examTimerId = null; }
-    finishExam(force) {
+    finishExam(force, now = Date.now()) {
       const session = this.model.state.examSession; if (!session) return false;
+      if (session.status === 'FINISHING' || session.status === 'FINISHED') return false;
+      const timedOut = force || now >= session.endAt || session.status === 'EXPIRED';
       const unanswered = this.unansweredExamIds();
-      if (!force && unanswered.length) { root.alert?.(`未回答が${unanswered.length}問あります。全問回答後に採点してください。`); this.start(unanswered[0]); return false; }
-      if (!force && root.confirm && !root.confirm('全15問の回答を終了し、採点しますか？')) return false;
+      if (!timedOut && unanswered.length) { root.alert?.(`未回答が${unanswered.length}問あります。全問回答後に採点してください。`); this.start(unanswered[0]); return false; }
+      if (!timedOut && root.confirm && !root.confirm('全15問の回答を終了し、採点しますか？')) return false;
+      session.status = 'FINISHING';
       const earned = session.ids.reduce((sum, id, index) => sum + (session.scores[id]?.ratio || 0) * EXAM_POINTS[index], 0);
       const points = Math.round(earned); const correct = points >= 70;
       session.ids.forEach(id => { const result = session.scores[id]; if (result) { this.model.record(id, result.correct); this.rpg.recordMastery(this.questions[id], result); } });
+      const review = { finishedAt: now, startedAt: session.startedAt, points, passed: correct, durationMs: Math.max(0, Math.min(now, session.endAt) - session.startedAt), unansweredCount: unanswered.length, items: session.ids.map((id, index) => ({ id, topic: this.questions[id].category, points: EXAM_POINTS[index], earned: Math.round((session.scores[id]?.ratio || 0) * EXAM_POINTS[index]), correct: session.scores[id]?.correct === true, answer: session.scores[id]?.answer ?? null })) };
+      review.topicScores = review.items.reduce((out, item) => { const row = out[item.topic] || { earned: 0, possible: 0 }; row.earned += item.earned; row.possible += item.points; out[item.topic] = row; return out; }, {});
+      session.status = 'FINISHED'; this.model.state.lastExamReview = review; this.model.state.examHistory = [...(this.model.state.examHistory || []), { finishedAt: review.finishedAt, points, passed: correct, durationMs: review.durationMs, topicScores: review.topicScores, unansweredCount: review.unansweredCount }].slice(-10);
       this.model.state.examAttempt += 1; this.model.state.examSession = null; this.model.save(); this.stopExamTimer();
       this.document?.body?.classList?.remove('exam-active');
-      this.view.result({ explanation: `総合演習模試を終了しました。${points}点 / 100点（${correct ? '合格圏' : '要復習'}）。未回答は0点です。` }, { correct, earned: points, possible: 100 });
+      this.view.examResult(review, this.questions, this.model.state.examHistory);
       this.view.show('view-result'); return true;
     }
     questionAccounts(question) { return question.type === 'journal' ? [...question.answer.debit, ...question.answer.credit].map(item => item.account) : []; }
@@ -156,11 +166,16 @@
     saveDraft(message) { if (!this.currentId) return; this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) this.document.getElementById('save-status').textContent = '入力内容を保存しました。'; }
     submit() {
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
+      if (this.model.state.mode === 'exam' && this.isExamExpired()) { const session = this.model.state.examSession; if (session) session.status = 'EXPIRED'; this.finishExam(true); return; }
       this.submitting = true;
-      const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question); const score = root.GradingEngine.grade(question, answer);
+      const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question);
+      if (this.model.state.mode === 'exam' && this.isExamExpired()) { this.model.state.examSession.status = 'EXPIRED'; this.finishExam(true); return; }
+      const score = root.GradingEngine.grade(question, answer);
       const confidence = this.document.querySelector('input[name="confidence"]:checked')?.value || 'careful';
       if (this.model.state.mode === 'exam') {
-        const session = this.ensureExamSession(); session.scores[question.id] = { correct: score.correct, earned: score.earned, possible: score.possible, ratio: score.ratio };
+        const session = this.model.state.examSession;
+        if (this.isExamExpired(Date.now(), session)) { session.status = 'EXPIRED'; this.finishExam(true); return; }
+        session.scores[question.id] = { correct: score.correct, earned: score.earned, possible: score.possible, ratio: score.ratio, answer };
         this.model.setDraft(question.id, answer); this.model.save(); this.updateExamStatus();
         const unanswered = this.unansweredExamIds(); const ids = this.modeIds(); const following = ids.slice(ids.indexOf(this.currentId) + 1).find(id => unanswered.includes(id));
         if (following) return this.start(following);

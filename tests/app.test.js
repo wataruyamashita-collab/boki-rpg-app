@@ -65,7 +65,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-2'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260824-3'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -201,6 +201,25 @@ assert.strictEqual(storyOrder.length, 300, 'ストーリーは全300問で簿記
 assert(storyOrder.every((id, index) => index === 0 || browserSandbox.window.QuestionData[storyOrder[index - 1]].chapter <= browserSandbox.window.QuestionData[id].chapter), 'ストーリーのChapterが逆行しない');
 const examAudit = { ids: Object.keys(browserSandbox.window.QuestionData), questions: browserSandbox.window.QuestionData, model: { state: { examAttempt: 0 } } };
 const examPrototype = browserSandbox.window.AppController.prototype;
+const expirySession = { ids: [], startedAt: 1000, endAt: 2000, status: 'RUNNING', scores: {} };
+const expiryContext = { model: { state: { examSession: expirySession } } };
+assert.strictEqual(examPrototype.isExamExpired.call(expiryContext, 1999), false, 'CASE A: 終了1ms前は採点可能');
+assert.strictEqual(examPrototype.isExamExpired.call(expiryContext, 2000), true, 'CASE B: 終了時刻ちょうどは採点不可');
+assert.strictEqual(examPrototype.isExamExpired.call(expiryContext, 2001), true, 'CASE C: 終了1ms後は採点不可');
+assert.strictEqual(examPrototype.isExamExpired.call(expiryContext, 3000), true, 'CASE D: 終了1秒後は採点不可');
+['EXPIRED', 'FINISHING', 'FINISHED'].forEach(status => assert.strictEqual(examPrototype.isExamExpired.call({ model: { state: { examSession: { ...expirySession, status } } } }, 1500), true, `${status}からSCORE_UPDATEへ遷移できない`));
+let forcedFinishes = 0; let grades = 0;
+const lateSubmit = {
+  submitting: false, currentId: 'Q1', questions: { Q1: { id: 'Q1' } },
+  model: { state: { mode: 'exam', examSession: { ids: ['Q1'], startedAt: 1, endAt: 2, status: 'RUNNING', scores: {} } } },
+  isExamExpired: () => true, finishExam(force) { assert.strictEqual(force, true); forcedFinishes += 1; }, document: { querySelector: () => null }
+};
+browserSandbox.window.GradingEngine.grade = () => { grades += 1; return { correct: true, earned: 1, possible: 1, ratio: 1 }; };
+for (let attack = 0; attack < 3; attack += 1) { lateSubmit.submitting = false; examPrototype.submit.call(lateSubmit); }
+assert.deepStrictEqual([grades, Object.keys(lateSubmit.model.state.examSession.scores).length, forcedFinishes], [0, 0, 3], 'CASE E/F: callback遅延後の復帰とsubmit連打でも回答取得・採点・score更新をしない');
+lateSubmit.currentId = 'Q2'; lateSubmit.questions.Q2 = { id: 'Q2' }; lateSubmit.model.state.examSession.ids.push('Q2'); lateSubmit.submitting = false;
+examPrototype.submit.call(lateSubmit);
+assert.strictEqual(Object.keys(lateSubmit.model.state.examSession.scores).length, 0, 'CASE G: 時間切れ後に別問題へ移動しても採点不可');
 const fifteenIds = Array.from({ length: 15 }, (_, index) => `Q${index + 1}`);
 const examState = { ids: fifteenIds, startedAt: 1, endAt: 3600001, scores: {} };
 assert.strictEqual(examPrototype.unansweredExamIds.call({ model: { state: { examSession: examState } } }).length, 15, 'CASE 1: 15問目だけ回答する前は15問が未回答である');
@@ -214,17 +233,17 @@ const incompleteExam = {
   start(id) { redirected = id; }, startExamTimer() {}, questions: {}, rpg: {}, view: {}
 };
 browserSandbox.window.alert = message => { warned = message; };
-assert.strictEqual(examPrototype.finishExam.call(incompleteExam, false), false, 'CASE 3: 1問でも未回答なら終了を拒否する');
+assert.strictEqual(examPrototype.finishExam.call(incompleteExam, false, 2), false, 'CASE 3: 1問でも未回答なら終了を拒否する');
 assert(warned.includes('未回答が13問') && redirected === 'Q1', 'CASE 3: 未回答数を警告し最初の未回答へ移動する');
 const completeScores = Object.fromEntries(fifteenIds.map(id => [id, { correct: true, earned: 1, possible: 1, ratio: 1 }]));
 const completedSession = { ids: fifteenIds, startedAt: 1, endAt: 3600001, scores: completeScores };
 let resultScore; const completeExam = {
   model: { state: { examSession: completedSession, examAttempt: 0 }, record() {}, save() {} },
   unansweredExamIds: examPrototype.unansweredExamIds, questions: Object.fromEntries(fifteenIds.map(id => [id, { category: id }])),
-  rpg: { recordMastery() {} }, stopExamTimer() {}, view: { result(_, score) { resultScore = score; }, show() {} }
+  rpg: { recordMastery() {} }, stopExamTimer() {}, view: { examResult(review) { resultScore = { correct: review.passed, earned: review.points, possible: 100 }; }, show() {} }, document: { body: { classList: { remove() {} } } }
 };
 browserSandbox.window.confirm = () => true;
-assert.strictEqual(examPrototype.finishExam.call(completeExam, false), true, 'CASE 4: 全15問回答後に初めて正式採点する');
+assert.strictEqual(examPrototype.finishExam.call(completeExam, false, 2), true, 'CASE 4: 全15問回答後に初めて正式採点する');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(resultScore)), { correct: true, earned: 100, possible: 100 }, '明示配点の合計を100点として採点する');
 const examIds = browserSandbox.window.AppController.prototype.buildExamIds.call(examAudit);
 assert.strictEqual(examIds.length, 15, '模試は設計通り15問を選出する');
@@ -266,7 +285,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260824-2') && html.includes('js/view.js?v=20260824-2'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260824-3') && html.includes('js/view.js?v=20260824-3'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
