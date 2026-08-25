@@ -14508,12 +14508,12 @@ QuestionData.C001 = integratedClosing('C001','統合決算A（棚卸・貸倒・
   {sales:2520000,cost:1420000,allowanceExpense:6800,depreciation:120000,insurance:60000,accruedWages:45000,tax:150000,netIncome:718200,totalAssets:2227200,totalEquityLiabilities:2227200},
   ['売上高','売上原価','貸倒引当金繰入','減価償却費','保険料（当期分）','未払給料','法人税等','当期純利益','資産合計','負債・純資産合計'],
   '整理前は借方・貸方各3,940,000円です。未処理取引を先に反映し、期末売掛金640,000円×2%＝12,800円、既存引当金6,000円との差6,800円を繰り入れます。売上原価は300,000＋1,480,000－360,000＝1,420,000円。税引後利益718,200円、決算後は資産と負債・純資産が各2,227,200円で一致します。');
-QuestionData.C002 = integratedClosing('C002','統合決算B（訂正・消費税・現金過不足）','誤記と未処理を含む10項目を訂正して、決算後の主要額を完成しなさい。消費税は税抜方式とする。',
+QuestionData.C002 = integratedClosing('C002','統合決算B（訂正・消費税・現金過不足）','誤記と未処理を含む10項目を訂正して、決算後の主要額を完成しなさい。本問の商品は標準税率10%の課税取引であり、消費税は税抜方式とする。',
   [{資料区分:'会計期間・決算日',内容:'4月1日から翌年3月31日まで（決算日3月31日）'},{資料区分:'整理前残高',内容:'現金実査前帳簿210,000、仮払消費税96,000、仮受消費税144,000、売上1,800,000、期首商品980,000、仕入980,000、給料300,000、受取手数料40,000、備品500,000、減価償却累計額100,000'}],
   ['現金実査額255,000円、原因不明差額は雑損','広告費30,000円を備品に誤記したため訂正','売上50,000円の記帳漏れ（現金受領済み、実査額には反映済み）','仕入70,000円の未処理（掛け）','消費税を未払計上','期末商品240,000円','備品（訂正後470,000円）を年10%償却','受取手数料10,000円を未収計上','給料25,000円を未払計上','法人税等80,000円を未払計上'],
-  {cashAfter:255000,sales:1850000,purchases:1050000,cost:1790000,advertising:30000,depreciation:47000,vatPayable:48000,accruedIncome:10000,accruedWages:25000,tax:80000},
+  {cashAfter:255000,sales:1850000,purchases:1050000,cost:1790000,advertising:30000,depreciation:47000,vatPayable:46000,accruedIncome:10000,accruedWages:25000,tax:80000},
   ['決算後現金','売上高','仕入勘定（未処理反映後）','売上原価','広告宣伝費','減価償却費','未払消費税','未収手数料','未払給料','法人税等'],
-  '現金は帳簿210,000円に未記帳売上50,000円を加え、実査差額5,000円を雑損として255,000円に合わせます。消費税は144,000－96,000＝48,000円、売上原価は期首980,000＋未処理仕入70,000＋期首商品980,000－期末商品240,000＝1,790,000円です。');
+  '現金は帳簿210,000円に未記帳売上50,000円を加え、実査差額5,000円を雑損として255,000円に合わせます。未処理売上の仮受消費税は50,000×10%＝5,000円、未処理仕入の仮払消費税は70,000×10%＝7,000円です。したがって未払消費税は（144,000＋5,000）－（96,000＋7,000）＝46,000円です。売上原価は期首商品980,000＋仕入1,050,000－期末商品240,000＝1,790,000円です。');
 QuestionData.C003 = integratedClosing('C003','統合決算C（経過勘定・固定資産・貸倒）','年利・月割と固定資産売却を含む8項目を処理し、決算後の主要額を完成しなさい。',
   [{資料区分:'会計期間・決算日',内容:'4月1日から翌年3月31日まで（決算日3月31日）'},{資料区分:'整理前残高',内容:'売掛金400,000、貸倒引当金3,000、借入金600,000、支払利息9,000、受取家賃120,000、備品900,000、減価償却累計額270,000'}],
   ['売掛金の2%を差額補充法で貸倒設定','借入金は10月1日借入、年利3%、利払日は毎年9月30日（10月1日から3月31日までの6か月分を未払計上）','受取家賃は12月1日に12月1日から翌年5月31日までの6か月分を受領（決算日までの12月・1月・2月・3月を当期収益、4月・5月を前受）','7月1日取得の備品300,000円を耐用年数5年・残存0で月割償却','従来備品600,000円を年額120,000円償却','10月1日に従来備品（原価200,000円、期首累計120,000円）を60,000円で売却、当期6か月分20,000円を売却時まで償却','未収利息12,000円','法人税等60,000円を未払計上'],
@@ -14548,6 +14548,11 @@ const SemanticTableAnswerKey = new Map(Object.values(QuestionData)
 function validateExamQuestion3(item) {
   if (item?.format !== 'exam-question-3') return { valid:false, errors:['第3問形式ではありません'], derivedCells:null };
   const text = JSON.stringify({question:item.question, materials:item.materials}); const errors=[]; let derivedCells=null; let trialBalance=null; let statements=null;
+  const material = type => item.materials?.find(row => row.資料区分 === type);
+  const numberAfter = (source, label) => {
+    const match = String(source || '').match(new RegExp(`${label}[^0-9]*([0-9,]+)`));
+    return match ? Number(match[1].replace(/,/g,'')) : Number.NaN;
+  };
   if (/統合決算A/.test(item.category)) {
     const balanceRow=item.materials?.find(row => row.資料区分==='整理前残高試算表');
     const adjustments=String(item.materials?.find(row => row.資料区分==='決算整理事項')?.内容 || '');
@@ -14566,11 +14571,32 @@ function validateExamQuestion3(item) {
     derivedCells={sales,cost,allowanceExpense,depreciation,insurance,accruedWages,tax,netIncome,totalAssets,totalEquityLiabilities};
     statements={plDebit:cost+allowanceExpense+depreciation+insurance+accruedWages+tax+netIncome,plCredit:sales,bsDebit:totalAssets,bsCredit:totalEquityLiabilities};
   } else if (/統合決算B/.test(item.category)) {
-    const cashAfter=255000, sales=1800000+50000, purchases=980000+70000, cost=980000+purchases-240000;
-    derivedCells={cashAfter,sales,purchases,cost,advertising:30000,depreciation:470000*.10,vatPayable:144000-96000,accruedIncome:10000,accruedWages:25000,tax:80000};
+    const balances=String(material('整理前残高')?.内容 || ''), adjustments=String(material('決算整理事項')?.内容 || '');
+    const taxRateMatch=String(item.question || '').match(/標準税率\s*([0-9.]+)%/); const taxRate=taxRateMatch ? Number(taxRateMatch[1])/100 : Number.NaN;
+    if (!Number.isFinite(taxRate)) errors.push('標準税率が回答開始前の問題文に明示されていません');
+    const cashBook=numberAfter(balances,'現金実査前帳簿'), inputVat=numberAfter(balances,'仮払消費税'), outputVat=numberAfter(balances,'仮受消費税');
+    const baseSales=numberAfter(balances,'売上'), openingInventory=numberAfter(balances,'期首商品'), basePurchases=numberAfter(balances,'仕入');
+    const cashAfter=numberAfter(adjustments,'現金実査額'), unrecordedSales=numberAfter(adjustments,'売上'), unrecordedPurchases=numberAfter(adjustments,'仕入');
+    const endingInventory=numberAfter(adjustments,'期末商品'), correctedEquipment=numberAfter(adjustments,'備品（訂正後'), advertising=numberAfter(adjustments,'広告費');
+    const accruedIncome=numberAfter(adjustments,'受取手数料'), accruedWages=numberAfter(adjustments,'給料'), tax=numberAfter(adjustments,'法人税等');
+    const sales=baseSales+unrecordedSales, purchases=basePurchases+unrecordedPurchases, cost=openingInventory+purchases-endingInventory;
+    const vatPayable=(outputVat+unrecordedSales*taxRate)-(inputVat+unrecordedPurchases*taxRate);
+    derivedCells={cashAfter,sales,purchases,cost,advertising,depreciation:correctedEquipment*.10,vatPayable,accruedIncome,accruedWages,tax};
+    if (cashBook+unrecordedSales < cashAfter) errors.push('帳簿現金と未処理売上から実査額へ調整できません');
   } else if (/統合決算C/.test(item.category)) {
-    const allowanceExpense=400000*.02-3000, interest=600000*.03*6/12, rentRevenue=120000*4/6;
-    derivedCells={allowanceExpense,interestExpense:interest,interestPayable:interest,rentRevenue,rentUnearned:120000-rentRevenue,newAssetDepreciation:300000/5*9/12,oldAssetDepreciation:80000,saleLoss:0,interestReceivable:12000,tax:60000};
+    const balances=String(material('整理前残高')?.内容 || ''), adjustments=String(material('決算整理事項')?.内容 || '');
+    const receivables=numberAfter(balances,'売掛金'), priorAllowance=numberAfter(balances,'貸倒引当金'), loan=numberAfter(balances,'借入金'), rent=numberAfter(balances,'受取家賃');
+    const allowanceRate=numberAfter(adjustments,'売掛金の')/100, interestRate=numberAfter(adjustments,'年利')/100;
+    const rentMonthsMatch=adjustments.match(/6か月分を受領.*?決算日までの([^を]+)を当期収益/); const currentMonths=(rentMonthsMatch?.[1].match(/月/g)||[]).length;
+    const newAsset=numberAfter(adjustments,'7月1日取得の備品'), usefulLife=numberAfter(adjustments,'耐用年数'), interestReceivable=numberAfter(adjustments,'未収利息'), tax=numberAfter(adjustments,'法人税等');
+    const oldAsset=numberAfter(adjustments,'従来備品'), oldAnnual=numberAfter(adjustments,'年額'), soldCost=numberAfter(adjustments,'原価'), soldPriorAccum=numberAfter(adjustments,'期首累計');
+    const soldPriceMatch=adjustments.match(/を([0-9,]+)円で売却/), soldPrice=soldPriceMatch ? Number(soldPriceMatch[1].replace(/,/g,'')) : Number.NaN;
+    const soldCurrentDep=numberAfter(adjustments,'当期6か月分');
+    const interestMonthsMatch=adjustments.match(/までの([0-9]+)か月分を未払/), interestMonths=Number(interestMonthsMatch?.[1]);
+    const acquisitionMonthMatch=adjustments.match(/([0-9]+)月1日取得の備品/), acquisitionMonth=Number(acquisitionMonthMatch?.[1]), newAssetMonths=12-acquisitionMonth+4;
+    const allowanceExpense=receivables*allowanceRate-priorAllowance, interest=loan*interestRate*interestMonths/12, rentRevenue=rent*currentMonths/6;
+    const oldAssetDepreciation=oldAnnual*(oldAsset-soldCost)/oldAsset, saleLoss=soldCost-soldPriorAccum-soldCurrentDep-soldPrice;
+    derivedCells={allowanceExpense,interestExpense:interest,interestPayable:interest,rentRevenue,rentUnearned:rent-rentRevenue,newAssetDepreciation:newAsset/usefulLife*newAssetMonths/12,oldAssetDepreciation,saleLoss,interestReceivable,tax};
   }
   if (!/決算日|会計期間/.test(text)) errors.push('会計期間または決算日が表示されていません');
   if (trialBalance && trialBalance.debit!==trialBalance.credit) errors.push(`整理前貸借不一致 ${trialBalance.debit}/${trialBalance.credit}`);

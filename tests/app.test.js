@@ -71,7 +71,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260825-14'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260825-15'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -368,7 +368,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260825-14') && html.includes('js/view.js?v=20260825-14'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260825-15') && html.includes('js/view.js?v=20260825-15'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
@@ -408,6 +408,8 @@ assert.strictEqual(c001Proof.trialBalance.debit, c001Proof.trialBalance.credit, 
 assert.strictEqual(c001Proof.statements.bsDebit, c001Proof.statements.bsCredit, 'C001決算後B/Sが一致する');
 assert.strictEqual(c001Proof.valid, true, 'C001全answerを独立再計算できる');
 assert.strictEqual(browserSandbox.window.validateExamQuestion3(browserSandbox.window.QuestionData.C003).derivedCells.rentRevenue, 80000, 'C003は12月から3月まで4か月を当期収益にする');
+const c002Proof = browserSandbox.window.validateExamQuestion3(browserSandbox.window.QuestionData.C002);
+assert.deepStrictEqual(JSON.parse(JSON.stringify({ output:144000 + 50000 * .10, input:96000 + 70000 * .10, payable:c002Proof.derivedCells.vatPayable })), { output:149000, input:103000, payable:46000 }, 'C002は未処理売上・仕入の10%を仮受・仮払へ加えて未払消費税を再計算する');
 for (const id of ['C001','C002','C003']) {
   const original=browserSandbox.window.QuestionData[id]; const first=Object.keys(original.answer.cells)[0];
   const attacked={...original,answer:{cells:{...original.answer.cells,[first]:Number(original.answer.cells[first])+1}}};
@@ -416,6 +418,15 @@ for (const id of ['C001','C002','C003']) {
 const materialAttack=JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.C001));
 materialAttack.materials.find(row => row.資料区分 === '整理前残高試算表').借方 = materialAttack.materials.find(row => row.資料区分 === '整理前残高試算表').借方.replace('現金400,000','現金999,999');
 assert.strictEqual(browserSandbox.window.validateExamQuestion3(materialAttack).valid,false,'C001の表示materialsだけを改ざんすると明細・合計・貸借の再計算で検出する');
+const missingTaxRate=JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.C002));
+missingTaxRate.question=missingTaxRate.question.replace('本問の商品は標準税率10%の課税取引であり、','');
+assert.strictEqual(browserSandbox.window.validateExamQuestion3(missingTaxRate).valid,false,'C002は問題文から税率を削除するとSemantic INVALIDになる');
+const c002MaterialAttack=JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.C002));
+c002MaterialAttack.materials.find(row => row.資料区分 === '整理前残高').内容=c002MaterialAttack.materials.find(row => row.資料区分 === '整理前残高').内容.replace('売上1,800,000','売上9,800,000');
+assert.strictEqual(browserSandbox.window.validateExamQuestion3(c002MaterialAttack).valid,false,'C002の表示materialsだけの売上改ざんを検出する');
+const c003MaterialAttack=JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.C003));
+c003MaterialAttack.materials.find(row => row.資料区分 === '整理前残高').内容=c003MaterialAttack.materials.find(row => row.資料区分 === '整理前残高').内容.replace('売掛金400,000','売掛金900,000');
+assert.strictEqual(browserSandbox.window.validateExamQuestion3(c003MaterialAttack).valid,false,'C003の表示materialsだけの売掛金改ざんを検出する');
 const adaptive = new ProgressModel({J001:browserSandbox.window.QuestionData.J001}, storage, 'adaptive-test');
 for (let i=0;i<3;i+=1) adaptive.recordAttempt('J001',true,30000,'',i===2);
 assert.strictEqual(adaptive.adaptiveDifficulty(browserSandbox.window.QuestionData.J001.category),Math.min(4,browserSandbox.window.QuestionData.J001.difficulty+1),'高速・高正答・遅延成功で難化する');
