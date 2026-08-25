@@ -14562,6 +14562,72 @@ function independentlyDerivedTableCells(item) {
     cells.creditTotal=cells.payables+cells.accumulated+cells.capital+cells.retained+cells.sales;
     return cells;
   }
+  // 決算整理の計算問題は、問題文に示された基礎額・割合・耐用年数から導く。
+  if (item?.id === 'D020') {
+    const text=String(item.question || '');
+    if (/損益勘定/.test(text)) {
+      const value=label=>Number(text.match(new RegExp(`${label}([0-9,]+)円`))?.[1].replace(/,/g,''));
+      const sales=value('売上'), purchases=value('仕入'), insurance=value('保険料'), depreciation=value('減価償却費');
+      return {sales,purchases,insurance,depreciation,profit:sales-purchases-insurance-depreciation};
+    }
+    const insurance=Number(text.match(/保険料([0-9,]+)円/)?.[1].replace(/,/g,''));
+    const fraction=Number(text.match(/([0-9]+)分の1が次期分/)?.[1]);
+    const equipment=Number(text.match(/備品([0-9,]+)円/)?.[1].replace(/,/g,''));
+    const life=Number(text.match(/耐用年数([0-9]+)年/)?.[1]);
+    const insuranceAdjustment=insurance/fraction, depreciation=equipment/life;
+    return {insurance_adjustment:insuranceAdjustment,insurance_expense_after:insurance-insuranceAdjustment,depreciation_expense:depreciation,equipment_book_value_after:equipment-depreciation};
+  }
+  // 帳簿の固定行を取引事実として、FIFO、定額法、残高集計を再実行する。
+  if (item?.category === '商品有高帳' && /先入先出法/.test(item.question || '')) {
+    const rows=item.table?.rows || [], opening=rows[0], purchase=rows[1], issue=rows[2];
+    const issued=Math.min(Number(issue?.quantity), Number(opening?.quantity));
+    const issueAmount=issued*Number(opening?.unitPrice);
+    const balanceAmount=(Number(opening?.quantity)-issued)*Number(opening?.unitPrice)+Number(purchase?.quantity)*Number(purchase?.unitPrice);
+    return {r3_unitPrice:Number(opening?.unitPrice),r3_amount:issueAmount,r4_amount:balanceAmount};
+  }
+  if (String(item?.category || '').startsWith('固定資産台帳') && /定額法/.test(item.question || '')) {
+    if (item.id === 'L040' && item.materials?.length === 2) {
+      const [a,b]=item.materials, life=Number(String(item.question).match(/耐用年数([0-9]+)年/)?.[1]);
+      const annualA=Number(a.取得原価)/life, depreciationA=annualA*6/12, bookA=Number(a.取得原価)-depreciationA;
+      const depreciationB=Number(b.取得原価)/life*9/12;
+      return {annualA,depreciationA,bookA,lossA:bookA-Number(a.売却価額),depreciationB,bookB:Number(b.取得原価)-depreciationB};
+    }
+    const row=item.table?.rows?.[0] || {}, depreciation=Number(row.acquisitionCost)/Number(row.life);
+    return {r1_currentDepreciation:depreciation,r1_closingBookValue:Number(row.acquisitionCost)-Number(row.openingAccumulated)-depreciation};
+  }
+  if (item?.type === 'trial_balance' && item.table?.inputCells?.join(',') === 'total_debit,total_credit') {
+    const rows=(item.table.rows || []).filter(row => row.account !== '合計');
+    return {total_debit:rows.reduce((sum,row)=>sum+Number(row.debit || 0),0),total_credit:rows.reduce((sum,row)=>sum+Number(row.credit || 0),0)};
+  }
+  if (item?.id === 'L039') {
+    const text=String(item.question || ''), principal=Number(text.match(/借入金([0-9,]+)円/)?.[1].replace(/,/g,'')), rate=Number(text.match(/年利率([0-9.]+)%/)?.[1])/100;
+    const annualPayment=principal*rate, accrual=annualPayment/2;
+    return {priorAccrual:accrual,reversal:accrual,annualPayment,currentAccrual:accrual,profitTransfer:annualPayment,nextBalance:0};
+  }
+  if (item?.id === 'L044') {
+    const income=Number(item.materials?.[0]?.収入 || 0), expense=Number(item.materials?.[1]?.支出 || 0);
+    return {value1:income,value2:expense,value3:income-expense};
+  }
+  if (item?.type === 'correction' && item.materials?.length === 1) {
+    const {recorded='',evidence=''}=item.materials[0];
+    const wrongDebit=String(recorded).match(/（借）([^ ]+) ([0-9,]+)/);
+    const evidenceMatch=String(evidence).match(/([^0-9]+?)([0-9,]+)円/);
+    if (wrongDebit && evidenceMatch && /広告掲載料/.test(evidence)) {
+      const amount=Number(evidenceMatch[2].replace(/,/g,''));
+      return {debitAccount:'広告宣伝費',debitAmount:amount,creditAccount:wrongDebit[1],creditAmount:amount};
+    }
+  }
+  return null;
+}
+
+// 仕訳も authored answer ではなく、表示された取引事実と勘定規則から導く。
+function independentlyDerivedJournal(item) {
+  const text=String(item?.question || '');
+  const amountMatch=text.match(/商品([0-9,]+)円を仕入れ、代金は掛け/);
+  if (amountMatch) {
+    const amount=Number(amountMatch[1].replace(/,/g,''));
+    return {debit:[{account:'仕入',amount}],credit:[{account:'買掛金',amount}]};
+  }
   return null;
 }
 
@@ -14873,6 +14939,8 @@ function validateSemanticQuestionData(questionData = QuestionData) {
       const debit = (item.answer?.debit || []).reduce((sum,row) => sum + Number(row.amount || 0), 0);
       const credit = (item.answer?.credit || []).reduce((sum,row) => sum + Number(row.amount || 0), 0);
       if (!debit || debit !== credit) itemErrors.push(`仕訳の貸借が一致しません (${debit}/${credit})`);
+      const independentJournal=independentlyDerivedJournal(item);
+      if (independentJournal && actualJournal !== JSON.stringify(independentJournal)) itemErrors.push('表示取引から独立導出した仕訳と一致しません');
     } else {
       const inputsSet = new Set(item.table?.inputCells || []); const answerKeys = Object.keys(item.answer?.cells || {});
       if (inputsSet.size !== answerKeys.length || answerKeys.some(key => !inputsSet.has(key))) itemErrors.push('表示入力欄と正答キーが一致しません');
@@ -14903,4 +14971,5 @@ if (typeof window !== 'undefined') {
   window.validateExamQuestion3 = validateExamQuestion3;
   window.journalEffectsForEvent = journalEffectsForEvent;
   window.independentlyDerivedTableCells = independentlyDerivedTableCells;
+  window.independentlyDerivedJournal = independentlyDerivedJournal;
 }
