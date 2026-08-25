@@ -3,7 +3,7 @@
   class ProgressModel {
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, attempts: [], drafts: {}, completed: false, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
@@ -21,6 +21,11 @@
           reviewSchedule: saved.reviewSchedule && typeof saved.reviewSchedule === 'object' && !Array.isArray(saved.reviewSchedule)
             ? Object.fromEntries(Object.entries(saved.reviewSchedule).filter(([id, item]) => this.questions[id] && item &&
               Number.isSafeInteger(item.stage) && item.stage >= 0 && item.stage <= 4 && Number.isFinite(item.dueAt) && item.dueAt >= 0)) : {},
+          reviewAssignments: saved.reviewAssignments && typeof saved.reviewAssignments === 'object' && !Array.isArray(saved.reviewAssignments)
+            ? Object.fromEntries(Object.entries(saved.reviewAssignments).filter(([sourceId, item]) => this.questions[sourceId] && item &&
+              item.sourceQuestionId === sourceId && this.questions[item.reviewQuestionId] && typeof item.conceptId === 'string' &&
+              Number.isSafeInteger(item.stage) && item.stage >= 0 && item.stage <= 4 && Number.isFinite(item.dueAt) &&
+              Number.isFinite(item.assignedAt) && ['assigned', 'completed'].includes(item.status))) : {},
           attempts: Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.questionId || item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [],
           completed: saved.completed === true,
           examAttempt: Number.isSafeInteger(saved.examAttempt) && saved.examAttempt >= 0 ? saved.examAttempt : 0,
@@ -63,6 +68,21 @@
     dueReviewIds(now = Date.now()) {
       return this.state.incorrectIds.filter(id => !this.state.reviewSchedule[id] || this.state.reviewSchedule[id].dueAt <= now)
         .sort((a, b) => (this.state.reviewSchedule[a]?.dueAt || 0) - (this.state.reviewSchedule[b]?.dueAt || 0));
+    }
+    assignReview(sourceQuestionId, reviewQuestionId, now = Date.now()) {
+      const schedule = this.state.reviewSchedule[sourceQuestionId];
+      if (!this.questions[sourceQuestionId] || !this.questions[reviewQuestionId] || !schedule) return null;
+      const current = this.state.reviewAssignments[sourceQuestionId];
+      if (current && current.status === 'assigned' && current.stage === schedule.stage && current.dueAt === schedule.dueAt && this.questions[current.reviewQuestionId]) return current;
+      const assignment = { sourceQuestionId, reviewQuestionId, conceptId:this.questions[sourceQuestionId].category || '', stage:schedule.stage, dueAt:schedule.dueAt, assignedAt:now, status:'assigned' };
+      this.state.reviewAssignments[sourceQuestionId] = assignment; this.save(); return assignment;
+    }
+    completeReview(sourceQuestionId, correct, now = Date.now()) {
+      const assignment = this.state.reviewAssignments[sourceQuestionId];
+      if (!assignment || assignment.status !== 'assigned' || now < assignment.dueAt) return false;
+      const recorded = this.record(sourceQuestionId, correct, now);
+      if (recorded) { delete this.state.reviewAssignments[sourceQuestionId]; this.save(); }
+      return recorded;
     }
     recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now(), reviewStage = null) {
       if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0) return false;

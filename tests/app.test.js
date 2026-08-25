@@ -71,7 +71,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260825-16'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260825-17'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -368,7 +368,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260825-16') && html.includes('js/view.js?v=20260825-16'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260825-17') && html.includes('js/view.js?v=20260825-17'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
@@ -446,6 +446,30 @@ assert.strictEqual(new Set(reviewIds).size,3,'同conceptの3件同時dueに衝�
 const reverse=[...reviewIds].reverse();
 reverse.forEach(id=>{ const mapping=reviewController.reviewMappings.get(id); reviewModel.record(mapping.sourceQuestionId,true,mapping.dueAt); });
 assert.deepStrictEqual(['A','B','C'].map(id=>reviewModel.state.reviewSchedule[id].stage),[1,1,1],'B/C/A順でも明示source mappingにより各sourceだけのstageを進める');
+// SPACING_CONSTRAINT > ADAPTIVE_RECOMMENDATION: future-due sources are locked,
+// even when the adaptive engine ranks them above an unscheduled variant.
+const isolationStoreValues={}; const isolationStore={getItem:key=>isolationStoreValues[key]||null,setItem:(key,value)=>{isolationStoreValues[key]=value;}};
+const isolationQuestions=Object.fromEntries(['A','B','C','D','V'].map(id=>[id,{id,category:'shared',difficulty:2,learningRole:id==='V'?'review':'core'}]));
+const isolationModel=new ProgressModel(isolationQuestions,isolationStore,'spacing-isolation');
+const isolationNow=Date.now(); ['A','B','C','D'].forEach(id=>isolationModel.record(id,false,isolationNow));
+isolationModel.state.reviewSchedule={A:{stage:0,dueAt:isolationNow-1},B:{stage:1,dueAt:isolationNow+86400000},C:{stage:2,dueAt:isolationNow+259200000},D:{stage:3,dueAt:isolationNow+604800000}};
+isolationModel.recommendedIds=()=>['B','C','D','V','A'];
+const isolationController={model:isolationModel,questions:isolationQuestions,reviewMappings:new Map(),reviewIds:browserSandbox.window.AppController.prototype.reviewIds};
+const isolatedIds=isolationController.reviewIds.call(isolationController);
+assert.deepStrictEqual(isolatedIds,['V'],'R1/R2: due Aのvariantにfuture-due B/C/Dを使用しない');
+const assignment=isolationModel.state.reviewAssignments.A;
+assert.deepStrictEqual([assignment.sourceQuestionId,assignment.reviewQuestionId,assignment.stage,assignment.status],['A','V',0,'assigned'],'明示review assignmentへsource/variant/stage/statusを保存する');
+isolationModel.completeReview('A',false,isolationNow);
+assert.deepStrictEqual(['B','C','D'].map(id=>isolationModel.state.reviewSchedule[id].stage),[1,2,3],'R3: Aのvariant誤答はfuture-due B/C/Dのstageを変更しない');
+isolationModel.state.reviewSchedule.A={stage:0,dueAt:isolationNow-1}; isolationModel.state.incorrectIds=['A','B','C','D'];
+isolationController.reviewIds.call(isolationController); isolationModel.save();
+const reloadedIsolation=new ProgressModel(isolationQuestions,isolationStore,'spacing-isolation');
+assert.strictEqual(reloadedIsolation.state.reviewAssignments.A.reviewQuestionId,'V','R7: reload後も明示review assignmentを復元する');
+let reviewNextShown='';
+const reviewNextContext={currentId:'V',questions:isolationQuestions,model:isolationModel,modeIds(){return ['D'];},start(id){reviewNextShown=id;},renderModes(){},showMode(){}};
+isolationModel.state.mode='review'; isolationModel.recommendedIds=()=>['B'];
+browserSandbox.window.AppController.prototype.next.call(reviewNextContext);
+assert.strictEqual(reviewNextShown,'D','R4/R5: review modeの次dueをAdaptive推薦より優先する');
 const adaptive = new ProgressModel({J001:browserSandbox.window.QuestionData.J001}, storage, 'adaptive-test');
 for (let i=0;i<3;i+=1) adaptive.recordAttempt('J001',true,30000,'',i===2);
 assert.strictEqual(adaptive.adaptiveDifficulty(browserSandbox.window.QuestionData.J001.category),Math.min(4,browserSandbox.window.QuestionData.J001.difficulty+1),'高速・高正答・遅延成功で難化する');
