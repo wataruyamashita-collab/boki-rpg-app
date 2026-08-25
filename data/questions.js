@@ -14511,9 +14511,9 @@ QuestionData.C001 = integratedClosing('C001','統合決算A（棚卸・貸倒・
 QuestionData.C002 = integratedClosing('C002','統合決算B（訂正・消費税・現金過不足）','誤記と未処理を含む10項目を訂正して、決算後の主要額を完成しなさい。本問の商品は標準税率10%の課税取引であり、消費税は税抜方式とする。',
   [{資料区分:'会計期間・決算日',内容:'4月1日から翌年3月31日まで（決算日3月31日）'},{資料区分:'整理前残高',内容:'現金実査前帳簿210,000、仮払消費税96,000、仮受消費税144,000、売上1,800,000、期首商品980,000、仕入980,000、給料300,000、受取手数料40,000、備品500,000、減価償却累計額100,000'}],
   ['現金実査額255,000円、原因不明差額は雑損','広告費30,000円を備品に誤記したため訂正','売上50,000円の記帳漏れ（現金受領済み、実査額には反映済み）','仕入70,000円の未処理（掛け）','消費税を未払計上','期末商品240,000円','備品（訂正後470,000円）を年10%償却','受取手数料10,000円を未収計上','給料25,000円を未払計上','法人税等80,000円を未払計上'],
-  {cashAfter:255000,sales:1850000,purchases:1050000,cost:1790000,advertising:30000,depreciation:47000,vatPayable:46000,accruedIncome:10000,accruedWages:25000,tax:80000},
-  ['決算後現金','売上高','仕入勘定（未処理反映後）','売上原価','広告宣伝費','減価償却費','未払消費税','未収手数料','未払給料','法人税等'],
-  '現金は帳簿210,000円に未記帳売上50,000円を加え、実査差額5,000円を雑損として255,000円に合わせます。未処理売上の仮受消費税は50,000×10%＝5,000円、未処理仕入の仮払消費税は70,000×10%＝7,000円です。したがって未払消費税は（144,000＋5,000）－（96,000＋7,000）＝46,000円です。売上原価は期首商品980,000＋仕入1,050,000－期末商品240,000＝1,790,000円です。');
+  {cashAfter:255000,cashShortage:10000,sales:1850000,purchases:1050000,cost:1790000,advertising:30000,depreciation:47000,vatPayable:46000,accruedIncome:10000,accruedWages:25000,tax:80000,netIncome:-382000},
+  ['決算後現金','現金不足（雑損）','売上高','仕入勘定（未処理反映後）','売上原価','広告宣伝費','減価償却費','未払消費税','未収手数料','未払給料','法人税等','当期純利益（損失は負）'],
+  '未記帳の税抜現金売上は、現金55,000円／売上50,000円・仮受消費税5,000円という一つの取引イベントです。帳簿現金210,000円＋現金受取額55,000円＝265,000円に対し実査255,000円なので、現金不足10,000円を雑損にします。未処理仕入の仮払消費税は70,000×10%＝7,000円、未払消費税は（144,000＋5,000）－（96,000＋7,000）＝46,000円です。売上原価は980,000＋1,050,000－240,000＝1,790,000円。当期純利益は売上1,850,000＋受取手数料50,000－売上原価1,790,000－広告宣伝費30,000－減価償却費47,000－給料325,000－雑損10,000－法人税等80,000＝△382,000円です。');
 QuestionData.C003 = integratedClosing('C003','統合決算C（経過勘定・固定資産・貸倒）','年利・月割と固定資産売却を含む8項目を処理し、決算後の主要額を完成しなさい。',
   [{資料区分:'会計期間・決算日',内容:'4月1日から翌年3月31日まで（決算日3月31日）'},{資料区分:'整理前残高',内容:'売掛金400,000、貸倒引当金3,000、借入金600,000、支払利息9,000、受取家賃120,000、備品900,000、減価償却累計額270,000'}],
   ['売掛金の2%を差額補充法で貸倒設定','借入金は10月1日借入、年利3%、利払日は毎年9月30日（10月1日から3月31日までの6か月分を未払計上）','受取家賃は12月1日に12月1日から翌年5月31日までの6か月分を受領（決算日までの12月・1月・2月・3月を当期収益、4月・5月を前受）','7月1日取得の備品300,000円を耐用年数5年・残存0で月割償却','従来備品600,000円を年額120,000円償却','10月1日に従来備品（原価200,000円、期首累計120,000円）を60,000円で売却、当期6か月分20,000円を売却時まで償却','未収利息12,000円','法人税等60,000円を未払計上'],
@@ -14545,6 +14545,13 @@ const SemanticTableAnswerKey = new Map(Object.values(QuestionData)
   .map(item => [item.id, JSON.stringify(item.answer.cells)]));
 
 // 第3問はanswerをoracleにせず、表示資料から会計規則で再計算する。
+function journalEffectsForEvent(event) {
+  if (!event || event.type !== 'unrecordedCashSale' || event.taxMethod !== 'exclusive') return null;
+  const netAmount=Number(event.netAmount), taxRate=Number(event.taxRate);
+  if (!Number.isFinite(netAmount) || netAmount < 0 || !Number.isFinite(taxRate) || taxRate < 0) return null;
+  const taxAmount=Math.round(netAmount*taxRate), cashReceipt=netAmount+taxAmount;
+  return Object.freeze({ debit:Object.freeze([{account:'現金',amount:cashReceipt}]), credit:Object.freeze([{account:'売上',amount:netAmount},{account:'仮受消費税',amount:taxAmount}]), netAmount, taxAmount, cashReceipt });
+}
 function validateExamQuestion3(item) {
   if (item?.format !== 'exam-question-3') return { valid:false, errors:['第3問形式ではありません'], derivedCells:null };
   const text = JSON.stringify({question:item.question, materials:item.materials}); const errors=[]; let derivedCells=null; let trialBalance=null; let statements=null;
@@ -14564,7 +14571,11 @@ function validateExamQuestion3(item) {
     const unrecordedSales=adjustmentAmount('未処理の掛売上'), unrecordedPurchases=adjustmentAmount('未処理の掛仕入'), endingInventory=adjustmentAmount('期末商品');
     const depreciation=adjustmentAmount('備品の減価償却'), accruedWages=adjustmentAmount('未払給料'), tax=adjustmentAmount('法人税等');
     const sales=creditBalances.売上+unrecordedSales, receivables=debitBalances.売掛金+unrecordedSales, purchases=debitBalances.仕入+unrecordedPurchases, cost=debitBalances.繰越商品+purchases-endingInventory;
-    const allowance=receivables*.02, allowanceExpense=allowance-creditBalances.貸倒引当金, insurance=debitBalances.保険料*6/12;
+    const allowanceRate=numberAfter(adjustments,'売掛金期末残高の')/100;
+    const insuranceStart=Number(adjustments.match(/([0-9]+)月1日に1年分を払った保険料/)?.[1]);
+    const closingMonth=Number(String(item.materials?.find(row => /会計期間|決算日/.test(row.資料区分))?.内容 || '').match(/([0-9]+)月31日まで/)?.[1]);
+    const elapsedInsuranceMonths=((closingMonth-insuranceStart+12)%12)+1;
+    const allowance=receivables*allowanceRate, allowanceExpense=allowance-creditBalances.貸倒引当金, insurance=debitBalances.保険料*elapsedInsuranceMonths/12;
     const netIncome=sales-cost-allowanceExpense-depreciation-insurance-accruedWages-tax;
     const totalAssets=debitBalances.現金+(receivables-allowance)+endingInventory+(debitBalances.備品-creditBalances.減価償却累計額-depreciation)+(debitBalances.保険料-insurance);
     const totalEquityLiabilities=creditBalances.買掛金+unrecordedPurchases+accruedWages+tax+creditBalances.資本金+creditBalances.繰越利益剰余金+netIncome;
@@ -14580,20 +14591,30 @@ function validateExamQuestion3(item) {
     const endingInventory=numberAfter(adjustments,'期末商品'), correctedEquipment=numberAfter(adjustments,'備品（訂正後'), advertising=numberAfter(adjustments,'広告費');
     const accruedIncome=numberAfter(adjustments,'受取手数料'), accruedWages=numberAfter(adjustments,'給料'), tax=numberAfter(adjustments,'法人税等');
     const sales=baseSales+unrecordedSales, purchases=basePurchases+unrecordedPurchases, cost=openingInventory+purchases-endingInventory;
+    const depreciationRate=numberAfter(adjustments,'年')/100;
+    const saleEvent={type:'unrecordedCashSale',netAmount:unrecordedSales,taxRate,taxMethod:'exclusive'};
+    const saleJournal=journalEffectsForEvent(saleEvent);
+    const cashReceipt=saleJournal?.cashReceipt, cashShortage=cashBook+cashReceipt-cashAfter;
     const vatPayable=(outputVat+unrecordedSales*taxRate)-(inputVat+unrecordedPurchases*taxRate);
-    derivedCells={cashAfter,sales,purchases,cost,advertising,depreciation:correctedEquipment*.10,vatPayable,accruedIncome,accruedWages,tax};
-    if (cashBook+unrecordedSales < cashAfter) errors.push('帳簿現金と未処理売上から実査額へ調整できません');
+    const baseFees=numberAfter(balances,'受取手数料'), baseWages=numberAfter(balances,'給料');
+    const depreciation=correctedEquipment*depreciationRate;
+    const netIncome=sales+baseFees+accruedIncome-cost-advertising-depreciation-baseWages-accruedWages-cashShortage-tax;
+    derivedCells={cashAfter,cashShortage,sales,purchases,cost,advertising,depreciation,vatPayable,accruedIncome,accruedWages,tax,netIncome};
+    if (![cashReceipt,cashShortage,depreciation,netIncome].every(Number.isFinite) || cashShortage < 0) errors.push('取引イベントから現金・消費税・雑損・利益へ一貫して調整できません');
   } else if (/統合決算C/.test(item.category)) {
     const balances=String(material('整理前残高')?.内容 || ''), adjustments=String(material('決算整理事項')?.内容 || '');
     const receivables=numberAfter(balances,'売掛金'), priorAllowance=numberAfter(balances,'貸倒引当金'), loan=numberAfter(balances,'借入金'), rent=numberAfter(balances,'受取家賃');
     const allowanceRate=numberAfter(adjustments,'売掛金の')/100, interestRate=numberAfter(adjustments,'年利')/100;
-    const rentMonthsMatch=adjustments.match(/6か月分を受領.*?決算日までの([^を]+)を当期収益/); const currentMonths=(rentMonthsMatch?.[1].match(/月/g)||[]).length;
+    const closingMonth=Number(String(item.materials?.find(row => /決算日/.test(row.資料区分))?.内容 || '').match(/決算日([0-9]+)月/)?.[1]);
+    const rentStartMonth=Number(adjustments.match(/受取家賃は([0-9]+)月1日/)?.[1]);
+    const currentMonths=((closingMonth-rentStartMonth+12)%12)+1;
     const newAsset=numberAfter(adjustments,'7月1日取得の備品'), usefulLife=numberAfter(adjustments,'耐用年数'), interestReceivable=numberAfter(adjustments,'未収利息'), tax=numberAfter(adjustments,'法人税等');
     const oldAsset=numberAfter(adjustments,'従来備品'), oldAnnual=numberAfter(adjustments,'年額'), soldCost=numberAfter(adjustments,'原価'), soldPriorAccum=numberAfter(adjustments,'期首累計');
     const soldPriceMatch=adjustments.match(/を([0-9,]+)円で売却/), soldPrice=soldPriceMatch ? Number(soldPriceMatch[1].replace(/,/g,'')) : Number.NaN;
     const soldCurrentDep=numberAfter(adjustments,'当期6か月分');
-    const interestMonthsMatch=adjustments.match(/までの([0-9]+)か月分を未払/), interestMonths=Number(interestMonthsMatch?.[1]);
-    const acquisitionMonthMatch=adjustments.match(/([0-9]+)月1日取得の備品/), acquisitionMonth=Number(acquisitionMonthMatch?.[1]), newAssetMonths=12-acquisitionMonth+4;
+    const loanMonth=Number(adjustments.match(/借入金は([0-9]+)月1日借入/)?.[1]);
+    const interestMonths=((closingMonth-loanMonth+12)%12)+1;
+    const acquisitionMonthMatch=adjustments.match(/([0-9]+)月1日取得の備品/), acquisitionMonth=Number(acquisitionMonthMatch?.[1]), newAssetMonths=((closingMonth-acquisitionMonth+12)%12)+1;
     const allowanceExpense=receivables*allowanceRate-priorAllowance, interest=loan*interestRate*interestMonths/12, rentRevenue=rent*currentMonths/6;
     const oldAssetDepreciation=oldAnnual*(oldAsset-soldCost)/oldAsset, saleLoss=soldCost-soldPriorAccum-soldCurrentDep-soldPrice;
     derivedCells={allowanceExpense,interestExpense:interest,interestPayable:interest,rentRevenue,rentUnearned:rent-rentRevenue,newAssetDepreciation:newAsset/usefulLife*newAssetMonths/12,oldAssetDepreciation,saleLoss,interestReceivable,tax};
@@ -14820,7 +14841,7 @@ function validateSemanticQuestionData(questionData = QuestionData) {
     if (!String(item.question || '').trim()) itemErrors.push('表示する問題文がありません');
     const inputs = visibleNumbers(item); const text = visibleText(item);
     for (const answer of new Set(answerNumbers(item))) {
-      if (!Number.isFinite(answer) || answer < 0) itemErrors.push(`正答金額 ${answer} が不正です`);
+      if (!Number.isFinite(answer) || (answer < 0 && item.format !== 'exam-question-3')) itemErrors.push(`正答金額 ${answer} が不正です`);
       else if (answer > 0 && item.format !== 'exam-question-3' && !canDerive(answer, inputs, text, item.type !== 'journal' || /[%％]|耐用年数|定額法|率/.test(text))) itemErrors.push(`正答金額 ${answer} を表示数値から導出できません`);
     }
     if (item.format === 'exam-question-3') itemErrors.push(...validateExamQuestion3(item).errors);
@@ -14857,4 +14878,5 @@ if (typeof window !== 'undefined') {
   window.validateQuestionData = validateQuestionData;
   window.validateSemanticQuestionData = validateSemanticQuestionData;
   window.validateExamQuestion3 = validateExamQuestion3;
+  window.journalEffectsForEvent = journalEffectsForEvent;
 }
