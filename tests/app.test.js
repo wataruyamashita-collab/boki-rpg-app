@@ -71,7 +71,7 @@ assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置�
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
-assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260825-15'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
+assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === '?v=20260825-16'), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
@@ -368,7 +368,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
-assert(html.includes('css/style.css?v=20260825-15') && html.includes('js/view.js?v=20260825-15'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
+assert(html.includes('css/style.css?v=20260825-16') && html.includes('js/view.js?v=20260825-16'), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
@@ -409,7 +409,9 @@ assert.strictEqual(c001Proof.statements.bsDebit, c001Proof.statements.bsCredit, 
 assert.strictEqual(c001Proof.valid, true, 'C001全answerを独立再計算できる');
 assert.strictEqual(browserSandbox.window.validateExamQuestion3(browserSandbox.window.QuestionData.C003).derivedCells.rentRevenue, 80000, 'C003は12月から3月まで4か月を当期収益にする');
 const c002Proof = browserSandbox.window.validateExamQuestion3(browserSandbox.window.QuestionData.C002);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.journalEffectsForEvent({type:'unrecordedCashSale',netAmount:50000,taxRate:.10,taxMethod:'exclusive'}))), {debit:[{account:'現金',amount:55000}],credit:[{account:'売上',amount:50000},{account:'仮受消費税',amount:5000}],netAmount:50000,taxAmount:5000,cashReceipt:55000}, '税抜未記帳現金売上eventから複数勘定の仕訳効果を一度だけ生成する');
 assert.deepStrictEqual(JSON.parse(JSON.stringify({ output:144000 + 50000 * .10, input:96000 + 70000 * .10, payable:c002Proof.derivedCells.vatPayable })), { output:149000, input:103000, payable:46000 }, 'C002は未処理売上・仕入の10%を仮受・仮払へ加えて未払消費税を再計算する');
+assert.deepStrictEqual(JSON.parse(JSON.stringify({cashReceipt:Math.round(50000*(1+.10)),cashShortage:c002Proof.derivedCells.cashShortage,netIncome:c002Proof.derivedCells.netIncome})), {cashReceipt:55000,cashShortage:10000,netIncome:-382000}, 'C002は取引イベントを現金55,000円、雑損10,000円、当期純損失382,000円まで波及させる');
 for (const id of ['C001','C002','C003']) {
   const original=browserSandbox.window.QuestionData[id]; const first=Object.keys(original.answer.cells)[0];
   const attacked={...original,answer:{cells:{...original.answer.cells,[first]:Number(original.answer.cells[first])+1}}};
@@ -427,6 +429,23 @@ assert.strictEqual(browserSandbox.window.validateExamQuestion3(c002MaterialAttac
 const c003MaterialAttack=JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.C003));
 c003MaterialAttack.materials.find(row => row.資料区分 === '整理前残高').内容=c003MaterialAttack.materials.find(row => row.資料区分 === '整理前残高').内容.replace('売掛金400,000','売掛金900,000');
 assert.strictEqual(browserSandbox.window.validateExamQuestion3(c003MaterialAttack).valid,false,'C003の表示materialsだけの売掛金改ざんを検出する');
+const mutate = (id, change) => { const copy=JSON.parse(JSON.stringify(browserSandbox.window.QuestionData[id])); change(copy); return browserSandbox.window.validateExamQuestion3(copy).valid; };
+assert.strictEqual(mutate('C002', q => { q.question=q.question.replace('10%','8%'); }),false,'C002税率変更で必要な現金・VAT・利益が変わるため不整合を検出する');
+assert.strictEqual(mutate('C002', q => { q.materials.at(-1).内容=q.materials.at(-1).内容.replace('年10%','年20%'); }),false,'C002減価償却率変更を検出する');
+assert.strictEqual(mutate('C001', q => { q.materials.at(-1).内容=q.materials.at(-1).内容.replace('2%','3%'); }),false,'C001貸倒率変更を検出する');
+assert.strictEqual(mutate('C001', q => { q.materials.at(-1).内容=q.materials.at(-1).内容.replace('10月1日','11月1日'); }),false,'C001保険開始月変更を検出する');
+assert.strictEqual(mutate('C003', q => { q.materials[0].内容=q.materials[0].内容.replace(/3月31日/g,'2月28日'); }),false,'C003決算日変更を検出する');
+
+const reviewQuestions=Object.fromEntries(['A','B','C','X','Y','Z'].map((id,index)=>[id,{id,category:'same-concept',difficulty:2,learningRole:index<3?'core':'review'}]));
+const reviewModel=new ProgressModel(reviewQuestions,{getItem(){return null;},setItem(){}},'review-source-redteam');
+['A','B','C'].forEach(id=>reviewModel.record(id,false,0));
+const reviewController={model:reviewModel,questions:reviewQuestions,reviewMappings:new Map()};
+reviewController.reviewIds=browserSandbox.window.AppController.prototype.reviewIds;
+const reviewIds=reviewController.reviewIds.call(reviewController);
+assert.strictEqual(new Set(reviewIds).size,3,'同conceptの3件同時dueに衝突しない復習問題を割り当てる');
+const reverse=[...reviewIds].reverse();
+reverse.forEach(id=>{ const mapping=reviewController.reviewMappings.get(id); reviewModel.record(mapping.sourceQuestionId,true,mapping.dueAt); });
+assert.deepStrictEqual(['A','B','C'].map(id=>reviewModel.state.reviewSchedule[id].stage),[1,1,1],'B/C/A順でも明示source mappingにより各sourceだけのstageを進める');
 const adaptive = new ProgressModel({J001:browserSandbox.window.QuestionData.J001}, storage, 'adaptive-test');
 for (let i=0;i<3;i+=1) adaptive.recordAttempt('J001',true,30000,'',i===2);
 assert.strictEqual(adaptive.adaptiveDifficulty(browserSandbox.window.QuestionData.J001.category),Math.min(4,browserSandbox.window.QuestionData.J001.difficulty+1),'高速・高正答・遅延成功で難化する');

@@ -22,7 +22,7 @@
     constructor(document, questions) {
       this.document = document; this.questions = questions; this.ids = Object.keys(questions); this.view = new root.AppView(document);
       const storage = getStorage();
-      this.model = new root.ProgressModel(questions, storage); this.rpg = new root.RPGModel(storage); this.currentId = null; this.questionStartedAt = null; this.reviewSourceId = null; this.expression = '0'; this.calculatorTarget = null; this.examTimerId = null;
+      this.model = new root.ProgressModel(questions, storage); this.rpg = new root.RPGModel(storage); this.currentId = null; this.questionStartedAt = null; this.reviewSourceId = null; this.reviewMappings = new Map(); this.expression = '0'; this.calculatorTarget = null; this.examTimerId = null;
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
       this.filters = { query: '', account: '', mistakes: 'all' };
       this.submitting = false;
@@ -106,11 +106,14 @@
     }
     reviewIds() {
       const due = this.model.dueReviewIds();
+      this.reviewMappings = new Map();
       if (due.length) return due.map(sourceId => {
         const source = this.questions[sourceId];
         const stage = this.model.state.reviewSchedule[sourceId]?.stage || 0;
-        const variants = this.model.recommendedIds(source.category).filter(id => id !== sourceId && !due.includes(id));
-        return variants[stage % Math.max(variants.length, 1)] || sourceId;
+        const variants = this.model.recommendedIds(source.category).filter(id => id !== sourceId && !due.includes(id) && !this.reviewMappings.has(id));
+        const reviewQuestionId = variants[stage % Math.max(variants.length, 1)] || sourceId;
+        this.reviewMappings.set(reviewQuestionId, Object.freeze({ reviewQuestionId, sourceQuestionId:sourceId, conceptId:source.category, dueAt:this.model.state.reviewSchedule[sourceId]?.dueAt || 0, stage }));
+        return reviewQuestionId;
       });
       if (!this.model.state.incorrectIds.length) return this.ids;
       // 復習時刻までは同じ問題を即時反復せず、同一概念の別表現を優先して転移を促す。
@@ -197,7 +200,7 @@
       this.document.getElementById('resume-progress').textContent = `Chapter進捗 ${chapterIds.filter(id => this.model.state.answeredIds.includes(id)).length} / ${chapterIds.length}｜役職 ${this.rpg.role}`;
       this.document.getElementById('resume-button').dataset.questionId = nextId;
     }
-    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? this.model.dueReviewIds().find(sourceId => sourceId === id || (this.questions[sourceId]?.category === this.questions[id].category && sourceId !== id)) || null : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
+    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
     saveDraft(message) { if (!this.currentId) return; this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) this.document.getElementById('save-status').textContent = '入力内容を保存しました。'; }
     submit() {
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
