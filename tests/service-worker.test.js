@@ -1,7 +1,23 @@
 'use strict';
 const assert = require('assert');
 const fs = require('fs');
+const childProcess = require('child_process');
 const vm = require('vm');
+
+const source = fs.readFileSync('service-worker.js', 'utf8');
+const release = source.match(/const RELEASE = '([^']+)'/)[1];
+const versionedAssets = [...source.matchAll(/'\.\/(?:css|data|js)\/[^']+'/g)]
+  .map(match => match[0].slice(3, -1));
+const readRevision = (revision, file) => {
+  try { return childProcess.execFileSync('git', ['show', `${revision}:${file}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); }
+  catch (_) { return null; }
+};
+const previousWorker = readRevision('HEAD^', 'service-worker.js');
+if (previousWorker) {
+  const previousRelease = previousWorker.match(/const RELEASE = '([^']+)'/)[1];
+  const changedAsset = versionedAssets.find(file => readRevision('HEAD^', file) !== fs.readFileSync(file, 'utf8'));
+  if (changedAsset) assert.notStrictEqual(release, previousRelease, `${changedAsset} changed without a release bump`);
+}
 
 class MemoryCache {
   constructor() { this.entries = new Map(); this.added = []; }
@@ -25,7 +41,7 @@ const sandbox = {
     addEventListener(type, listener) { handlers[type] = listener; }
   }
 };
-vm.runInNewContext(fs.readFileSync('service-worker.js', 'utf8'), sandbox);
+vm.runInNewContext(source, sandbox);
 const dispatch = async (type, event = {}) => {
   let pending; let output;
   handlers[type]({ ...event, waitUntil(promise) { pending = promise; }, respondWith(promise) { output = promise; } });
@@ -34,9 +50,9 @@ const dispatch = async (type, event = {}) => {
 (async () => {
   await dispatch('install');
   const currentKey = [...stores.keys()].find(key => key !== 'boki-rpg-v9');
-  assert.strictEqual(currentKey, 'boki-rpg-20260825-18');
+  assert.strictEqual(currentKey, `boki-rpg-${release}`);
   const current = stores.get(currentKey);
-  assert(current.added.includes('./data/questions.js?v=20260825-18') && current.added.includes('./js/feedback.js?v=20260825-18') && current.added.includes('./js/controller.js?v=20260825-18'), 'coherent version assets are installed');
+  assert(current.added.includes(`./data/questions.js?v=${release}`) && current.added.includes(`./js/feedback.js?v=${release}`) && current.added.includes(`./js/controller.js?v=${release}`), 'coherent version assets are installed');
   await dispatch('activate');
   assert.deepStrictEqual(deleted, ['boki-rpg-v9'], 'old cache is removed');
 
@@ -49,6 +65,6 @@ const dispatch = async (type, event = {}) => {
 
   const oldQuery = { url: 'https://example.test/js/controller.js?v=old', method: 'GET', mode: 'same-origin' };
   await assert.rejects(async () => dispatch('fetch', { request: oldQuery }).then(value => value), 'old query cannot alias the current cached script');
-  assert(!fs.readFileSync('service-worker.js', 'utf8').includes('ignoreSearch'), 'query strings remain cache keys');
+  assert(!source.includes('ignoreSearch'), 'query strings remain cache keys');
   console.log('service worker tests: ok');
 })().catch(error => { console.error(error); process.exitCode = 1; });
