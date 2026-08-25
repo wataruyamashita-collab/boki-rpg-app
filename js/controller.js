@@ -110,9 +110,15 @@
       if (due.length) return due.map(sourceId => {
         const source = this.questions[sourceId];
         const stage = this.model.state.reviewSchedule[sourceId]?.stage || 0;
-        const variants = this.model.recommendedIds(source.category).filter(id => id !== sourceId && !due.includes(id) && !this.reviewMappings.has(id));
-        const reviewQuestionId = variants[stage % Math.max(variants.length, 1)] || sourceId;
-        this.reviewMappings.set(reviewQuestionId, Object.freeze({ reviewQuestionId, sourceQuestionId:sourceId, conceptId:source.category, dueAt:this.model.state.reviewSchedule[sourceId]?.dueAt || 0, stage }));
+        const existing = this.model.state.reviewAssignments?.[sourceId];
+        const scheduledIds = new Set(Object.keys(this.model.state.reviewSchedule));
+        const assignedIds = new Set(Object.values(this.model.state.reviewAssignments || {}).filter(item => item?.status === 'assigned' && item.sourceQuestionId !== sourceId).map(item => item.reviewQuestionId));
+        const variants = this.model.recommendedIds(source.category).filter(id => id !== sourceId && !scheduledIds.has(id) && !assignedIds.has(id) && !this.reviewMappings.has(id));
+        const persistedIsSafe = existing && existing.status === 'assigned' && existing.stage === stage && existing.dueAt === this.model.state.reviewSchedule[sourceId]?.dueAt &&
+          (existing.reviewQuestionId === sourceId || variants.includes(existing.reviewQuestionId));
+        const reviewQuestionId = persistedIsSafe ? existing.reviewQuestionId : (variants[stage % Math.max(variants.length, 1)] || sourceId);
+        const assignment = this.model.assignReview(sourceId, reviewQuestionId) || { reviewQuestionId, sourceQuestionId:sourceId, conceptId:source.category, dueAt:this.model.state.reviewSchedule[sourceId]?.dueAt || 0, stage, status:'assigned' };
+        this.reviewMappings.set(reviewQuestionId, Object.freeze({ ...assignment }));
         return reviewQuestionId;
       });
       if (!this.model.state.incorrectIds.length) return this.ids;
@@ -224,15 +230,15 @@
         if (unanswered.length) return this.start(unanswered[0]);
         this.renderModes(); this.showMode('exam'); return;
       }
-      this.model.record(question.id, score.correct, answeredAt);
-      if (this.reviewSourceId && this.reviewSourceId !== question.id) this.model.record(this.reviewSourceId, score.correct, answeredAt);
+      if (this.reviewSourceId) this.model.completeReview(this.reviewSourceId, score.correct, answeredAt);
+      else this.model.record(question.id, score.correct, answeredAt);
       this.rpg.recordMastery?.(question, score);
       if (score.correct) this.rpg.reward(question, score, confidence === 'bold' ? 3 : 1);
       this.rpg.applyAnswer(score.correct, confidence);
       this.view.updateRpg(this.rpg); this.view.result(question, score, answer); this.view.show('view-result');
       if (this.rpg.state.companyHP === 0) this.showGameOver();
     }
-    next() { if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story'); if (this.model.state.mode !== 'exam') { const concept = this.questions[this.currentId]?.category; const adaptive = concept && this.model.recommendedIds(concept).find(id => id !== this.currentId && !this.model.state.answeredIds.includes(id)); if (adaptive) return this.start(adaptive); } const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
+    next() { if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story'); if (this.model.state.mode === 'review') { const due = this.modeIds(); if (due.length) return this.start(due.find(id => id !== this.currentId) || due[0]); this.renderModes(); return this.showMode('review'); } if (this.model.state.mode !== 'exam') { const concept = this.questions[this.currentId]?.category; const adaptive = concept && this.model.recommendedIds(concept).find(id => id !== this.currentId && !this.model.state.answeredIds.includes(id) && !this.model.state.reviewSchedule[id]); if (adaptive) return this.start(adaptive); } const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
     formatAmount(input) {
       const before = normalizeNumber(input.value);
       const selectionStart = input.selectionStart ?? before.length;
