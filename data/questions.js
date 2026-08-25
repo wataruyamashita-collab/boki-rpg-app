@@ -14544,6 +14544,27 @@ const SemanticTableAnswerKey = new Map(Object.values(QuestionData)
   .filter(item => item.type !== 'journal')
   .map(item => [item.id, JSON.stringify(item.answer.cells)]));
 
+// High-risk closing questions use visible accounting facts rather than the authored answer as their oracle.
+function independentlyDerivedTableCells(item) {
+  if (item?.id === 'F001') {
+    const amount = category => (item.materials || []).filter(row => row['区分'] === category).reduce((sum, row) => sum + Number(row['金額'] || 0), 0);
+    const sales=amount('収益'), costOfSales=amount('売上原価'), expenses=amount('費用');
+    return { sales, costOfSales, expenses, netIncome:sales-costOfSales-expenses };
+  }
+  if (item?.id === 'D019') {
+    const rows=Object.fromEntries((item.materials || []).map(row => [row['勘定科目'], row]));
+    const debit = account => Number(rows[account]?.['整理前借方'] || 0);
+    const credit = account => Number(rows[account]?.['整理前貸方'] || 0);
+    const adjustment = account => Number(String(rows[account]?.['整理事項'] || '').match(/[0-9,]+/)?.[0].replace(/,/g, '') || 0);
+    const prepaid=adjustment('前払保険料'), depreciation=adjustment('減価償却費');
+    const cells={cash:debit('現金'),receivables:debit('売掛金'),insurance:debit('保険料')-prepaid,prepaid,equipment:debit('備品'),depreciation,payables:credit('買掛金'),accumulated:adjustment('減価償却累計額'),capital:credit('資本金'),retained:credit('繰越利益剰余金'),sales:credit('売上')};
+    cells.debitTotal=cells.cash+cells.receivables+cells.insurance+cells.prepaid+cells.equipment+cells.depreciation;
+    cells.creditTotal=cells.payables+cells.accumulated+cells.capital+cells.retained+cells.sales;
+    return cells;
+  }
+  return null;
+}
+
 // 第3問はanswerをoracleにせず、表示資料から会計規則で再計算する。
 function journalEffectsForEvent(event) {
   if (!event || event.type !== 'unrecordedCashSale' || event.taxMethod !== 'exclusive') return null;
@@ -14857,6 +14878,8 @@ function validateSemanticQuestionData(questionData = QuestionData) {
       if (inputsSet.size !== answerKeys.length || answerKeys.some(key => !inputsSet.has(key))) itemErrors.push('表示入力欄と正答キーが一致しません');
       const expectedCells = SemanticTableAnswerKey.get(id);
       if (!expectedCells || JSON.stringify(item.answer?.cells || {}) !== expectedCells) itemErrors.push('レビュー済みセルキーと金額・科目が一致しません');
+      const independentCells = independentlyDerivedTableCells(item);
+      if (independentCells && JSON.stringify(item.answer?.cells || {}) !== JSON.stringify(independentCells)) itemErrors.push('表示資料から独立計算した正答と一致しません');
     }
     const links = item.knowledgeLinks || {};
     for (const relation of ['prerequisite','nextConcept']) if ((links[relation] || []).includes(id)) itemErrors.push(`${relation}がself-loopです`);
@@ -14879,4 +14902,5 @@ if (typeof window !== 'undefined') {
   window.validateSemanticQuestionData = validateSemanticQuestionData;
   window.validateExamQuestion3 = validateExamQuestion3;
   window.journalEffectsForEvent = journalEffectsForEvent;
+  window.independentlyDerivedTableCells = independentlyDerivedTableCells;
 }
