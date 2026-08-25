@@ -34,9 +34,9 @@ const dispatch = async (type, event = {}) => {
 (async () => {
   await dispatch('install');
   const currentKey = [...stores.keys()].find(key => key !== 'boki-rpg-v9');
-  assert.strictEqual(currentKey, 'boki-rpg-20260825-14');
+  assert.strictEqual(currentKey, 'boki-rpg-20260825-15');
   const current = stores.get(currentKey);
-  assert(current.added.includes('./data/questions.js?v=20260825-14') && current.added.includes('./js/feedback.js?v=20260825-14') && current.added.includes('./js/controller.js?v=20260825-14'), 'coherent version assets are installed');
+  assert(current.added.includes('./data/questions.js?v=20260825-15') && current.added.includes('./js/feedback.js?v=20260825-15') && current.added.includes('./js/controller.js?v=20260825-15'), 'coherent version assets are installed');
   await dispatch('activate');
   assert.deepStrictEqual(deleted, ['boki-rpg-v9'], 'old cache is removed');
 
