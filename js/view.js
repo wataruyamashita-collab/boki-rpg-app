@@ -18,7 +18,7 @@
     byId(id) { return this.document.getElementById(id); }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
     updateRpg(rpg) {
-      this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜経営HP ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円`;
+      this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜帳簿信頼度 ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円`;
     }
     renderQuestion(question, draft, mode = 'story') {
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;
@@ -110,11 +110,14 @@
       }).filter(item => item.account || Number.isFinite(item.amount));
       return { debit: side('debit'), credit: side('credit') };
     }
-    result(question, score, userAnswer) {
+    result(question, score, userAnswer, confidence = 'unsure') {
       const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
       if (standardActions) standardActions.hidden = false; if (examActions) examActions.hidden = true;
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
-      box.textContent = score.correct ? '正解です！' : 'もう一歩です';
+      const calibration = confidence === 'sure'
+        ? (score.correct ? '自信と理解が一致しています。' : '強い思い込みを発見しました。復習候補に追加します。')
+        : (score.correct ? '正解ですが、まだ不安定な知識です。復習で確かめましょう。' : '土台を作るチャンスです。解説の判断ルールを確認しましょう。');
+      box.textContent = `${score.correct ? '正解です！' : 'もう一歩です'} ${calibration}`;
       this.renderAnswerComparison(question, score, userAnswer);
       this.renderCorrectJournal(question);
       this.renderExplanation(question, score, userAnswer);
