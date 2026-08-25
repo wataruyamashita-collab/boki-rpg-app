@@ -13,9 +13,18 @@
     expense: new Set(['仕入','発送費','消耗品費','減価償却費','固定資産売却損','支払手数料','通信費','水道光熱費','旅費交通費','支払利息','給料','法定福利費','租税公課','貸倒引当金繰入','保険料','法人税、住民税及び事業税','雑損'])
   };
   const TYPE_LABELS = { asset: '資産', contraAsset: '資産の控除', liability: '負債', equity: '純資産', expense: '費用', revenue: '収益' };
+  const TABLE_LABELS = {
+    account: '勘定科目', acquisitionCost: '取得原価', amount: '金額', answer: '解答', asset: '固定資産',
+    balance: '残高', closingBookValue: '期末帳簿価額', credit: '貸方', currentDepreciation: '当期減価償却額',
+    date: '日付', debit: '借方', debitAccount: '借方科目', debitAmount: '借方金額', description: '摘要',
+    evidence: '証憑', item: '項目', life: '耐用年数', openingAccumulated: '期首減価償却累計額', quantity: '数量',
+    recorded: '帳簿の記録', section: '区分', transaction: '取引内容', unitPrice: '単価', value: '内容',
+    creditAccount: '貸方科目', creditAmount: '貸方金額'
+  };
   class AppView {
     constructor(document) { this.document = document; }
     byId(id) { return this.document.getElementById(id); }
+    tableLabel(value) { return TABLE_LABELS[value] || value; }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
     updateRpg(rpg) {
       this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜帳簿信頼度 ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円`;
@@ -39,7 +48,7 @@
       const wrap = this.document.createElement('div'); wrap.className = 'materials-table-wrap';
       const table = this.document.createElement('table'); table.className = 'materials-table';
       const columns = [...new Set(question.materials.flatMap(row => Object.keys(row)))];
-      const head = table.createTHead().insertRow(); columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = column; head.append(th); });
+      const head = table.createTHead().insertRow(); columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); head.append(th); });
       const body = table.createTBody(); question.materials.forEach(material => { const row = body.insertRow(); columns.forEach(column => { const cell = row.insertCell(); const value = material[column]; cell.textContent = value == null ? '—' : typeof value === 'number' ? yen(value) : value; }); });
       wrap.append(table); container.append(heading, wrap);
     }
@@ -88,7 +97,7 @@
       const wrap = this.byId('table-container'); wrap.replaceChildren();
       wrap.classList.toggle('worksheet-scroll', question.format === 'eight-column-worksheet');
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
-      const thead = table.createTHead(); const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = column; head.append(th); });
+      const thead = table.createTHead(); const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); head.append(th); });
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
         const row = body.insertRow(); Object.values(rowData).forEach(value => {
@@ -98,7 +107,7 @@
             const input = inputType === 'amount' ? this.makeAmount('table-input', `${id}の回答（金額）`, draft.cells?.[id] ?? '') : this.makeText('table-input', `${id}の回答（勘定科目）`, draft.cells?.[id] ?? '');
             input.dataset.cellId = id; input.dataset.inputType = inputType; cell.append(input);
           }
-          else cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : value;
+          else cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value);
         });
       }); wrap.append(table);
     }

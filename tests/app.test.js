@@ -393,6 +393,9 @@ assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-row select,\s*\.journal-row \.amount-input\s*{[^}]*font-size:\s*16px/s.test(cssSource), 'iPhoneの仕訳コントロールを16px以上にして自動ズームを防ぐ');
 assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦並び用ラベルを追加しない');
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
+assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('acquisitionCost'), '取得原価', '表の英語見出しを日本語で表示する');
+assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('debitAccount'), '借方科目', '表内の内部用英語IDを日本語で表示する');
+assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('現金'), '現金', '日本語の表示値はそのまま保つ');
 assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの入力要素を仕訳行の直下に配置する');
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
