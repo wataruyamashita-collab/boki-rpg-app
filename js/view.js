@@ -190,10 +190,17 @@
       if (question.type === 'journal') section.append(this.journalTable(answer));
       else {
         const list = this.document.createElement('dl'); list.className = 'exam-cell-review';
-        question.table.inputCells.forEach(cellId => { const term = this.document.createElement('dt'); term.textContent = cellId; const value = this.document.createElement('dd'); value.textContent = answer.cells?.[cellId] === '' || answer.cells?.[cellId] == null ? '未入力' : String(answer.cells[cellId]); list.append(term, value); });
+        question.table.inputCells.forEach(cellId => { const term = this.document.createElement('dt'); term.textContent = this.cellLabel(question, cellId); const value = this.document.createElement('dd'); value.textContent = answer.cells?.[cellId] === '' || answer.cells?.[cellId] == null ? '未入力' : String(answer.cells[cellId]); list.append(term, value); });
         section.append(list);
       }
       return section;
+    }
+    cellLabel(question, cellId) {
+      const index = question.table.inputCells.indexOf(cellId); let seen = -1;
+      for (const row of question.table.rows) {
+        if (Object.values(row).includes('入力')) { seen += 1; if (seen === index) { const fixed = Object.values(row).find(value => value !== '入力' && value != null && value !== ''); if (fixed != null) return String(fixed); } }
+      }
+      return `回答欄${index + 1}`;
     }
     examResult(review, questions, history) {
       const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');

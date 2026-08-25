@@ -14549,14 +14549,22 @@ function validateExamQuestion3(item) {
   if (item?.format !== 'exam-question-3') return { valid:false, errors:['第3問形式ではありません'], derivedCells:null };
   const text = JSON.stringify({question:item.question, materials:item.materials}); const errors=[]; let derivedCells=null; let trialBalance=null; let statements=null;
   if (/統合決算A/.test(item.category)) {
-    const debit=400000+520000+300000+1400000+1200000+120000, credit=300000+6000+280000+700000+254000+2400000; trialBalance={debit,credit};
-    const sales=2400000+120000, receivables=520000+120000, purchases=1400000+80000, cost=300000+purchases-360000;
-    const allowance=receivables*.02, allowanceExpense=allowance-6000, insurance=120000*6/12;
-    const netIncome=sales-cost-allowanceExpense-120000-insurance-45000-150000;
-    const totalAssets=400000+(receivables-allowance)+360000+(1200000-300000-120000)+(120000-insurance);
-    const totalEquityLiabilities=280000+80000+45000+150000+700000+254000+netIncome;
-    derivedCells={sales,cost,allowanceExpense,depreciation:120000,insurance,accruedWages:45000,tax:150000,netIncome,totalAssets,totalEquityLiabilities};
-    statements={plDebit:cost+allowanceExpense+120000+insurance+45000+150000+netIncome,plCredit:sales,bsDebit:totalAssets,bsCredit:totalEquityLiabilities};
+    const balanceRow=item.materials?.find(row => row.資料区分==='整理前残高試算表');
+    const adjustments=String(item.materials?.find(row => row.資料区分==='決算整理事項')?.内容 || '');
+    const amounts = source => Object.fromEntries([...String(source || '').matchAll(/([^、]+?)([0-9,]+)(?=、|$)/g)].map(match => [match[1].trim(),Number(match[2].replace(/,/g,''))]));
+    const debitBalances=amounts(balanceRow?.借方), creditBalances=amounts(balanceRow?.貸方);
+    const adjustmentAmount = label => { const match=adjustments.match(new RegExp(`${label}([0-9,]+)円`)); return match ? Number(match[1].replace(/,/g,'')) : Number.NaN; };
+    const debit=Object.values(debitBalances).reduce((sum,value)=>sum+value,0), credit=Object.values(creditBalances).reduce((sum,value)=>sum+value,0); trialBalance={debit,credit};
+    if (debit!==Number(balanceRow?.借方合計) || credit!==Number(balanceRow?.貸方合計)) errors.push('表示された試算表明細と合計が一致しません');
+    const unrecordedSales=adjustmentAmount('未処理の掛売上'), unrecordedPurchases=adjustmentAmount('未処理の掛仕入'), endingInventory=adjustmentAmount('期末商品');
+    const depreciation=adjustmentAmount('備品の減価償却'), accruedWages=adjustmentAmount('未払給料'), tax=adjustmentAmount('法人税等');
+    const sales=creditBalances.売上+unrecordedSales, receivables=debitBalances.売掛金+unrecordedSales, purchases=debitBalances.仕入+unrecordedPurchases, cost=debitBalances.繰越商品+purchases-endingInventory;
+    const allowance=receivables*.02, allowanceExpense=allowance-creditBalances.貸倒引当金, insurance=debitBalances.保険料*6/12;
+    const netIncome=sales-cost-allowanceExpense-depreciation-insurance-accruedWages-tax;
+    const totalAssets=debitBalances.現金+(receivables-allowance)+endingInventory+(debitBalances.備品-creditBalances.減価償却累計額-depreciation)+(debitBalances.保険料-insurance);
+    const totalEquityLiabilities=creditBalances.買掛金+unrecordedPurchases+accruedWages+tax+creditBalances.資本金+creditBalances.繰越利益剰余金+netIncome;
+    derivedCells={sales,cost,allowanceExpense,depreciation,insurance,accruedWages,tax,netIncome,totalAssets,totalEquityLiabilities};
+    statements={plDebit:cost+allowanceExpense+depreciation+insurance+accruedWages+tax+netIncome,plCredit:sales,bsDebit:totalAssets,bsCredit:totalEquityLiabilities};
   } else if (/統合決算B/.test(item.category)) {
     const cashAfter=255000, sales=1800000+50000, purchases=980000+70000, cost=980000+purchases-240000;
     derivedCells={cashAfter,sales,purchases,cost,advertising:30000,depreciation:470000*.10,vatPayable:144000-96000,accruedIncome:10000,accruedWages:25000,tax:80000};
