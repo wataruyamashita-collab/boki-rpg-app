@@ -135,6 +135,22 @@ for (const [id, authored, mutated] of [['D019','insurance:160000','insurance:200
   vm.runInNewContext(mutatedSource, sourceMutationSandbox);
   assert.strictEqual(sourceMutationSandbox.window.validateSemanticQuestionData().findings[id].status, 'INVALID', `${id}のロード前source answer改ざんを独立oracleで検出する`);
 }
+const sourceAnswerMutations = [
+  ['J004', '"account": "買掛金"', '"account": "未払金"'],
+  ['D020', 'profit:180000', 'profit:160000'],
+  ['L039', 'profitTransfer:18000', 'profitTransfer:9000'],
+  ['L040', 'lossA:120000', 'lossA:60000'],
+  ['L044', "[50000,18000,32000]", "[50000,18000,50000]"],
+  ['T001', '"total_debit": 1024000', '"total_debit": 410000'],
+  ['E001', '"debitAccount": "広告宣伝費"', '"debitAccount": "備品"']
+];
+for (const [id, authored, mutated] of sourceAnswerMutations) {
+  const mutationSandbox = { window:{} };
+  const mutatedSource = questionDataSource.replace(authored, mutated);
+  assert.notStrictEqual(mutatedSource, questionDataSource, `${id}のsource answer mutationが適用される`);
+  vm.runInNewContext(mutatedSource, mutationSandbox);
+  assert.strictEqual(mutationSandbox.window.validateSemanticQuestionData().findings[id].status, 'INVALID', `${id}のロード前source answer改ざんを表示事実と会計規則から検出する`);
+}
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
 const eightColumn = browserSandbox.window.QuestionData.D001;
 assert.strictEqual(eightColumn.format, 'eight-column-worksheet', 'WORKSHEET-01: D001を本物の8桁精算表として識別する');
