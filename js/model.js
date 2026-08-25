@@ -21,7 +21,7 @@
           reviewSchedule: saved.reviewSchedule && typeof saved.reviewSchedule === 'object' && !Array.isArray(saved.reviewSchedule)
             ? Object.fromEntries(Object.entries(saved.reviewSchedule).filter(([id, item]) => this.questions[id] && item &&
               Number.isSafeInteger(item.stage) && item.stage >= 0 && item.stage <= 4 && Number.isFinite(item.dueAt) && item.dueAt >= 0)) : {},
-          attempts: Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [],
+          attempts: Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.questionId || item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [],
           completed: saved.completed === true,
           examAttempt: Number.isSafeInteger(saved.examAttempt) && saved.examAttempt >= 0 ? saved.examAttempt : 0,
           examSession: this.validExamSession(saved.examSession) ? saved.examSession : null,
@@ -64,9 +64,9 @@
       return this.state.incorrectIds.filter(id => !this.state.reviewSchedule[id] || this.state.reviewSchedule[id].dueAt <= now)
         .sort((a, b) => (this.state.reviewSchedule[a]?.dueAt || 0) - (this.state.reviewSchedule[b]?.dueAt || 0));
     }
-    recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now()) {
+    recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now(), reviewStage = null) {
       if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0) return false;
-      this.state.attempts.push({ id, concept:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, responseMs, wrongType:String(wrongType || ''), delayedSuccess:delayedSuccess === true, at:now });
+      this.state.attempts.push({ questionId:id, id, concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now });
       this.state.attempts = this.state.attempts.slice(-200); this.save(); return true;
     }
     adaptiveDifficulty(concept, fallback = 2) {
@@ -81,9 +81,10 @@
       return current;
     }
     recommendedIds(concept) {
+      const attempted = new Set(this.state.attempts.map(item => item.questionId || item.id));
       const candidates = Object.values(this.questions).filter(item => item.category === concept);
       const target = this.adaptiveDifficulty(concept, candidates[0]?.difficulty || 2);
-      return candidates.sort((a,b) => Math.abs(a.difficulty-target)-Math.abs(b.difficulty-target)).map(item => item.id);
+      return candidates.sort((a,b) => Math.abs(a.difficulty-target)-Math.abs(b.difficulty-target) || Number(attempted.has(a.id))-Number(attempted.has(b.id))).map(item => item.id);
     }
   }
   root.ProgressModel = ProgressModel;

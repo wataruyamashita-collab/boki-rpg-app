@@ -22,7 +22,7 @@
     constructor(document, questions) {
       this.document = document; this.questions = questions; this.ids = Object.keys(questions); this.view = new root.AppView(document);
       const storage = getStorage();
-      this.model = new root.ProgressModel(questions, storage); this.rpg = new root.RPGModel(storage); this.currentId = null; this.expression = '0'; this.calculatorTarget = null; this.examTimerId = null;
+      this.model = new root.ProgressModel(questions, storage); this.rpg = new root.RPGModel(storage); this.currentId = null; this.questionStartedAt = null; this.reviewSourceId = null; this.expression = '0'; this.calculatorTarget = null; this.examTimerId = null;
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
       this.filters = { query: '', account: '', mistakes: 'all' };
       this.submitting = false;
@@ -106,7 +106,12 @@
     }
     reviewIds() {
       const due = this.model.dueReviewIds();
-      if (due.length) return due;
+      if (due.length) return due.map(sourceId => {
+        const source = this.questions[sourceId];
+        const stage = this.model.state.reviewSchedule[sourceId]?.stage || 0;
+        const variants = this.model.recommendedIds(source.category).filter(id => id !== sourceId && !due.includes(id));
+        return variants[stage % Math.max(variants.length, 1)] || sourceId;
+      });
       if (!this.model.state.incorrectIds.length) return this.ids;
       // 復習時刻までは同じ問題を即時反復せず、同一概念の別表現を優先して転移を促す。
       const categories = new Set(this.model.state.incorrectIds.map(id => this.questions[id]?.category));
@@ -192,7 +197,7 @@
       this.document.getElementById('resume-progress').textContent = `Chapter進捗 ${chapterIds.filter(id => this.model.state.answeredIds.includes(id)).length} / ${chapterIds.length}｜役職 ${this.rpg.role}`;
       this.document.getElementById('resume-button').dataset.questionId = nextId;
     }
-    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.submitting = false; this.currentId = id; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
+    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? this.model.dueReviewIds().find(sourceId => sourceId === id || (this.questions[sourceId]?.category === this.questions[id].category && sourceId !== id)) || null : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
     saveDraft(message) { if (!this.currentId) return; this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) this.document.getElementById('save-status').textContent = '入力内容を保存しました。'; }
     submit() {
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
@@ -201,6 +206,10 @@
       const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question);
       if (this.model.state.mode === 'exam' && this.isExamExpired()) { this.model.state.examSession.status = 'EXPIRED'; this.finishExam(true); return; }
       const score = root.GradingEngine.grade(question, answer);
+      const answeredAt = Date.now(); const responseMs = Math.max(0, answeredAt - (Number.isFinite(this.questionStartedAt) ? this.questionStartedAt : answeredAt));
+      const reviewStage = this.reviewSourceId ? this.model.state.reviewSchedule[this.reviewSourceId]?.stage ?? null : null;
+      const wrongType = score.correct ? '' : (score.details?.find(detail => !detail.correct)?.cellId || (question.type === 'journal' ? 'journal-entry' : 'table-cell'));
+      this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, Boolean(this.reviewSourceId && score.correct), answeredAt, reviewStage);
       const confidence = this.document.querySelector('input[name="confidence"]:checked')?.value || 'careful';
       if (this.model.state.mode === 'exam') {
         const session = this.model.state.examSession;
@@ -212,14 +221,15 @@
         if (unanswered.length) return this.start(unanswered[0]);
         this.renderModes(); this.showMode('exam'); return;
       }
-      this.model.record(question.id, score.correct);
+      this.model.record(question.id, score.correct, answeredAt);
+      if (this.reviewSourceId && this.reviewSourceId !== question.id) this.model.record(this.reviewSourceId, score.correct, answeredAt);
       this.rpg.recordMastery?.(question, score);
       if (score.correct) this.rpg.reward(question, score, confidence === 'bold' ? 3 : 1);
       this.rpg.applyAnswer(score.correct, confidence);
       this.view.updateRpg(this.rpg); this.view.result(question, score, answer); this.view.show('view-result');
       if (this.rpg.state.companyHP === 0) this.showGameOver();
     }
-    next() { if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story'); const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
+    next() { if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story'); if (this.model.state.mode !== 'exam') { const concept = this.questions[this.currentId]?.category; const adaptive = concept && this.model.recommendedIds(concept).find(id => id !== this.currentId && !this.model.state.answeredIds.includes(id)); if (adaptive) return this.start(adaptive); } const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
     formatAmount(input) {
       const before = normalizeNumber(input.value);
       const selectionStart = input.selectionStart ?? before.length;
