@@ -46,10 +46,11 @@ assert.strictEqual(rpg.reward(question, { ratio: 0.5, earned: 1, possible: 2 }),
 assert.strictEqual(rpg.reward(question, { ratio: 1, earned: 2, possible: 2 }), false, '経験値は二重付与しない');
 assert.strictEqual(rpg.state.xp, 20);
 assert.strictEqual(rpg.state.companyHP, 100);
-rpg.applyAnswer(false, 'bold');
-assert.strictEqual(rpg.state.companyHP, 70, '勝負回答の誤答は経営HPを30減らす');
-rpg.applyAnswer(true, 'careful');
-assert.strictEqual(rpg.state.companyHP, 75, '正解は経営HPを5回復する');
+rpg.applyAnswer(false, 'sure');
+assert.strictEqual(rpg.state.companyHP, 95, '自信ありの誤答でも帳簿信頼度は小さく下がり学習を妨げない');
+rpg.applyAnswer(true, 'unsure');
+assert.strictEqual(rpg.state.companyHP, 100, '訂正できれば帳簿信頼度を誤答時より速く回復する');
+assert.deepStrictEqual(rpg.state.confidenceOutcomes, { sureCorrect:0, sureWrong:1, unsureCorrect:1, unsureWrong:0 }, '確信度と正誤の4象限をメタ認知データとして記録する');
 const corruptValues = {
   'boki-rpg-progress-v2': JSON.stringify({ mode: 'invalid', answeredIds: 'J1', incorrectIds: ['unknown'], drafts: [], mistakeCounts: { J1: -2 }, completed: 'yes' }),
   'boki-rpg-character-v1': JSON.stringify({ xp: '999', rewardedIds: null, mastery: { 現金: { earned: 'bad', possible: 1 } }, companyHP: -80, totalTransactionAmount: -1 })
@@ -63,8 +64,12 @@ const brokenJsonStorage = { getItem() { return '{broken'; }, setItem() { throw n
 const memoryProgress = new ProgressModel({ J1: {} }, brokenJsonStorage);
 const memoryRpg = new RPGModel(brokenJsonStorage);
 assert.doesNotThrow(() => { memoryProgress.record('J1', false); memoryRpg.applyAnswer(false); }, '壊れたJSONと書込不能なstorageでもメモリ上で動作を続ける');
-assert.deepStrictEqual([memoryProgress.state.incorrectIds[0], memoryRpg.state.companyHP], ['J1', 90], 'storage障害時も現在セッションの状態を保持する');
+assert.deepStrictEqual([memoryProgress.state.incorrectIds[0], memoryRpg.state.companyHP], ['J1', 95], 'storage障害時も現在セッションの状態を保持する');
 assert.strictEqual(memoryProgress.record('unknown', false), false, '未定義の問題IDを進捗へ混入させない');
+const confidenceProgress = new ProgressModel({ C1:{ category:'売掛金', difficulty:3 }, C2:{ category:'売掛金', difficulty:2 } }, storage, 'confidence-adaptive');
+confidenceProgress.recordAttempt('C1', false, 30000, 'journal-entry', false, Date.now(), null, 'sure');
+assert.strictEqual(confidenceProgress.state.attempts[0].confidence, 'sure', '回答前の確信度をattemptへ保存する');
+assert.strictEqual(confidenceProgress.adaptiveDifficulty('売掛金'), 2, '自信あり誤答を強い思い込みとして次の難度調整へ接続する');
 
 const html = fs.readFileSync('index.html', 'utf8');
 const release = fs.readFileSync('service-worker.js', 'utf8').match(/const RELEASE = '([^']+)'/)[1];
@@ -374,7 +379,7 @@ assert(html.includes('id="answer-comparison"'), '誤答した仕訳を正答と�
 assert(/\.answer-comparison:empty\s*{[^}]*display:\s*none/s.test(cssSource), '空の誤答比較欄は赤枠ごと非表示にする');
 assert(/\.answer-comparison\[hidden\][\s\S]*?display:\s*none/s.test(cssSource), 'hidden属性でも誤答比較欄を確実に非表示にする');
 assert(viewSource.includes('container.hidden = true') && viewSource.includes('container.hidden = false'), '誤答比較欄は誤答時だけ表示する');
-assert(controllerSource.includes('this.view.result(question, score, answer)'), '採点結果画面へ回答者の仕訳を渡す');
+assert(controllerSource.includes('this.view.result(question, score, answer, confidence)'), '採点結果画面へ回答者の仕訳を渡す');
 assert(viewSource.includes("heading.textContent = 'あなたの仕訳（誤答）'"), '回答者が入力した誤答を表示する');
 assert(viewSource.includes("heading.textContent = 'なぜ間違えた？'") && viewSource.includes('diagnostic.nextRule'), '誤答理由と次回の判別ポイントを表示する');
 assert(viewSource.includes("this.byId('explanation').before(container)"), '古いHTMLがキャッシュされていても正しい仕訳の表示領域を補完する');
@@ -397,10 +402,10 @@ assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhone�
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
 assert(html.includes('readonly inputmode="numeric"'), '電卓表示にもiPhone向けの数値入力属性を付ける');
 assert(html.includes('id="result-status" class="result-box" role="status" aria-live="polite"'), '動的な採点結果をスクリーンリーダーへ通知する');
-assert(html.includes('aria-labelledby="game-over-title" aria-describedby="game-over-description"'), '資金ショートダイアログの名前と説明を関連付ける');
+assert(!html.includes('資金ショート') && !html.includes('XP 3倍'), '誤答で学習を遮断する資金ショートと確信度ギャンブルを表示しない');
 assert(!html.includes('pattern="[0-9]*"'), 'カンマや演算子を表示する入力欄へ不整合なpattern制約を付けない');
 assert(controllerSource.includes("querySelector?.('.amount-input.calculator-selected')"), '電卓は選択クラスの付いた金額欄も転記先として復元する');
-assert(controllerSource.includes("if (first) this.start(first)"), '資金ショート後のリトライは該当モードの最初の問題から開始する');
+assert(!controllerSource.includes('confidence === \'bold\' ? 3 : 1'), '確信度をXP倍率へ接続しない');
 assert(/min-height:\s*100svh/.test(cssSource), 'iPhoneの可変ブラウザーバーを考慮した画面高を使う');
 assert(/min-height:\s*100dvh/.test(cssSource), 'iPhone Chromeの可変ビューポート高へ追従する');
 assert(/env\(safe-area-inset-top\)/.test(cssSource), 'iPhoneの上側セーフエリアを確保する');

@@ -218,8 +218,8 @@
       const answeredAt = Date.now(); const responseMs = Math.max(0, answeredAt - (Number.isFinite(this.questionStartedAt) ? this.questionStartedAt : answeredAt));
       const reviewStage = this.reviewSourceId ? this.model.state.reviewSchedule[this.reviewSourceId]?.stage ?? null : null;
       const wrongType = score.correct ? '' : (score.details?.find(detail => !detail.correct)?.cellId || (question.type === 'journal' ? 'journal-entry' : 'table-cell'));
-      this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, Boolean(this.reviewSourceId && score.correct), answeredAt, reviewStage);
-      const confidence = this.document.querySelector('input[name="confidence"]:checked')?.value || 'careful';
+      const confidence = this.document.querySelector('input[name="confidence"]:checked')?.value || 'unsure';
+      this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, Boolean(this.reviewSourceId && score.correct), answeredAt, reviewStage, confidence);
       if (this.model.state.mode === 'exam') {
         const session = this.model.state.examSession;
         if (this.isExamExpired(Date.now(), session)) { session.status = 'EXPIRED'; this.finishExam(true); return; }
@@ -233,10 +233,9 @@
       if (this.reviewSourceId) this.model.completeReview(this.reviewSourceId, score.correct, answeredAt);
       else this.model.record(question.id, score.correct, answeredAt);
       this.rpg.recordMastery?.(question, score);
-      if (score.correct) this.rpg.reward(question, score, confidence === 'bold' ? 3 : 1);
+      if (score.correct) this.rpg.reward(question, score, 1);
       this.rpg.applyAnswer(score.correct, confidence);
-      this.view.updateRpg(this.rpg); this.view.result(question, score, answer); this.view.show('view-result');
-      if (this.rpg.state.companyHP === 0) this.showGameOver();
+      this.view.updateRpg(this.rpg); this.view.result(question, score, answer, confidence); this.view.show('view-result');
     }
     next() { if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story'); if (this.model.state.mode === 'review') { const due = this.modeIds(); if (due.length) return this.start(due.find(id => id !== this.currentId) || due[0]); this.renderModes(); return this.showMode('review'); } if (this.model.state.mode !== 'exam') { const concept = this.questions[this.currentId]?.category; const adaptive = concept && this.model.recommendedIds(concept).find(id => id !== this.currentId && !this.model.state.answeredIds.includes(id) && !this.model.state.reviewSchedule[id]); if (adaptive) return this.start(adaptive); } const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
     formatAmount(input) {

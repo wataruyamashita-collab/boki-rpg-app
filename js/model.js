@@ -84,9 +84,9 @@
       if (recorded) { delete this.state.reviewAssignments[sourceQuestionId]; this.save(); }
       return recorded;
     }
-    recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now(), reviewStage = null) {
+    recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now(), reviewStage = null, confidence = 'unsure') {
       if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0) return false;
-      this.state.attempts.push({ questionId:id, id, concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now });
+      this.state.attempts.push({ questionId:id, id, concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now });
       this.state.attempts = this.state.attempts.slice(-200); this.save(); return true;
     }
     adaptiveDifficulty(concept, fallback = 2) {
@@ -96,6 +96,7 @@
       const fast = recent.filter(item => item.correct && item.responseMs <= 60000).length / recent.length;
       const delayed = recent.some(item => item.delayedSuccess);
       const current = recent[recent.length - 1].difficulty;
+      if (!recent[recent.length - 1].correct && recent[recent.length - 1].confidence === 'sure') return Math.max(1, current - 1);
       if (recent.slice(-2).every(item => !item.correct)) return Math.max(1, current - 1);
       if (recent.length >= 3 && accuracy >= .8 && fast >= .6 && delayed) return Math.min(4, current + 1);
       return current;

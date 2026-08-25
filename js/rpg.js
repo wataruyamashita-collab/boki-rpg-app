@@ -4,7 +4,7 @@
   class RPGModel {
     constructor(storage, key = 'boki-rpg-character-v1') {
       this.storage = storage; this.key = key;
-      this.state = { xp: 0, rewardedIds: [], mastery: {}, companyHP: 100, totalTransactionAmount: 0 };
+      this.state = { xp: 0, rewardedIds: [], mastery: {}, companyHP: 100, totalTransactionAmount: 0, confidenceOutcomes: { sureCorrect:0, sureWrong:0, unsureCorrect:0, unsureWrong:0 } };
       this.load();
     }
     load() {
@@ -18,9 +18,16 @@
             ? Object.fromEntries(Object.entries(saved.mastery).filter(([, value]) => value &&
               Number.isFinite(value.earned) && value.earned >= 0 && Number.isFinite(value.possible) && value.possible >= value.earned)) : {},
           companyHP: Number.isFinite(saved.companyHP) ? Math.max(0, Math.min(100, saved.companyHP)) : 100,
-          totalTransactionAmount: Number.isFinite(saved.totalTransactionAmount) && saved.totalTransactionAmount >= 0 ? saved.totalTransactionAmount : 0
+          totalTransactionAmount: Number.isFinite(saved.totalTransactionAmount) && saved.totalTransactionAmount >= 0 ? saved.totalTransactionAmount : 0,
+          confidenceOutcomes: this.validConfidenceOutcomes(saved.confidenceOutcomes)
         };
       } catch (_) { /* An unavailable/corrupt store starts a clean character. */ }
+    }
+    validConfidenceOutcomes(value) {
+      const clean = { sureCorrect:0, sureWrong:0, unsureCorrect:0, unsureWrong:0 };
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return clean;
+      Object.keys(clean).forEach(key => { if (Number.isSafeInteger(value[key]) && value[key] >= 0) clean[key] = value[key]; });
+      return clean;
     }
     save() { try { this.storage?.setItem?.(this.key, JSON.stringify(this.state)); } catch (_) {} }
     get level() { return Math.min(30, Math.floor(Math.sqrt(this.state.xp / 20)) + 1); }
@@ -43,9 +50,12 @@
       if (question.type === 'journal') return (question.answer?.debit || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
       return Object.values(question.answer?.cells || {}).reduce((sum, value) => sum + (Number(value) || 0), 0);
     }
-    applyAnswer(correct, confidence = 'careful') {
-      const damage = confidence === 'bold' ? 30 : 10;
-      this.state.companyHP = Math.max(0, Math.min(100, this.state.companyHP + (correct ? 5 : -damage)));
+    applyAnswer(correct, confidence = 'unsure') {
+      const sure = confidence === 'sure';
+      const key = `${sure ? 'sure' : 'unsure'}${correct ? 'Correct' : 'Wrong'}`;
+      this.state.confidenceOutcomes[key] += 1;
+      // A mistake lowers ledger trust but never blocks learning; correction restores it faster.
+      this.state.companyHP = Math.max(0, Math.min(100, this.state.companyHP + (correct ? 10 : -5)));
       this.save();
       return this.state.companyHP;
     }
