@@ -3,7 +3,7 @@
   class ProgressModel {
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
@@ -28,6 +28,9 @@
               Number.isFinite(item.assignedAt) && ['assigned', 'completed'].includes(item.status))) : {},
           attempts: Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.questionId || item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [],
           completed: saved.completed === true,
+          placement: saved.placement && saved.placement.completed === true && this.questions[saved.placement.startQuestionId] &&
+            Number.isFinite(saved.placement.foundation) && Number.isFinite(saved.placement.closing)
+            ? { completed:true, foundation:Math.max(0, Math.min(100, saved.placement.foundation)), closing:Math.max(0, Math.min(100, saved.placement.closing)), startQuestionId:saved.placement.startQuestionId, completedAt:Number(saved.placement.completedAt) || 0 } : null,
           examAttempt: Number.isSafeInteger(saved.examAttempt) && saved.examAttempt >= 0 ? saved.examAttempt : 0,
           examSession: this.validExamSession(saved.examSession) ? saved.examSession : null,
           examHistory: Array.isArray(saved.examHistory) ? saved.examHistory.filter(item => item && Number.isFinite(item.finishedAt) && Number.isFinite(item.points)).slice(-10) : [],
@@ -62,11 +65,14 @@
           this.state.incorrectIds = this.state.incorrectIds.filter(value => value !== id);
           delete this.state.reviewSchedule[id];
         } else this.state.reviewSchedule[id] = { stage:nextStage, dueAt:now + intervals[nextStage] };
-      } else if (!scheduled) this.state.incorrectIds = this.state.incorrectIds.filter(value => value !== id);
+      } else if (!scheduled) {
+        this.state.incorrectIds = this.state.incorrectIds.filter(value => value !== id);
+        this.state.reviewSchedule[id] = { stage:0, dueAt:now + intervals[0] };
+      }
       delete this.state.drafts[id]; this.save(); return true;
     }
     dueReviewIds(now = Date.now()) {
-      return this.state.incorrectIds.filter(id => !this.state.reviewSchedule[id] || this.state.reviewSchedule[id].dueAt <= now)
+      return Object.keys(this.state.reviewSchedule).filter(id => this.state.reviewSchedule[id].dueAt <= now)
         .sort((a, b) => (this.state.reviewSchedule[a]?.dueAt || 0) - (this.state.reviewSchedule[b]?.dueAt || 0));
     }
     assignReview(sourceQuestionId, reviewQuestionId, now = Date.now()) {
@@ -103,7 +109,8 @@
     }
     recommendedIds(concept) {
       const attempted = new Set(this.state.attempts.map(item => item.questionId || item.id));
-      const candidates = Object.values(this.questions).filter(item => item.category === concept);
+      // Review items are released only by dueReviewIds; transfer items are reserved for unseen assessment.
+      const candidates = Object.values(this.questions).filter(item => item.category === concept && !['review', 'transfer', 'exam'].includes(item.learningRole));
       const target = this.adaptiveDifficulty(concept, candidates[0]?.difficulty || 2);
       const roleOrder = { core:0, drill:1, reinforcement:1, review:2, transfer:3, exam:4 };
       return candidates.sort((a,b) => Number(attempted.has(a.id))-Number(attempted.has(b.id)) ||
@@ -117,6 +124,15 @@
         .filter(item => item.learningRole === 'core' || item.learningRole === 'drill')
         .sort((a, b) => a.chapter - b.chapter || a.difficulty - b.difficulty)
         .find(item => item.chapter >= targetChapter)?.id || Object.keys(this.questions)[0] || null;
+    }
+    completePlacement(scores = {}, now = Date.now()) {
+      const foundation = Math.max(0, Math.min(100, Number(scores.foundation) || 0));
+      const closing = Math.max(0, Math.min(100, Number(scores.closing) || 0));
+      const startQuestionId = this.placementStart({ foundation, closing });
+      if (!startQuestionId) return null;
+      this.state.placement = { completed:true, foundation, closing, startQuestionId, completedAt:now };
+      this.state.currentQuestionId = startQuestionId; this.state.mode = 'story'; this.save();
+      return startQuestionId;
     }
   }
   root.ProgressModel = ProgressModel;

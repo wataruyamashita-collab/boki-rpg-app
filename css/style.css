@@ -71,6 +71,10 @@ input { -webkit-tap-highlight-color: rgba(52, 152, 219, .2); }
 .mode-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 24px; }
 .mode-nav button { min-width: 0; margin: 0; padding: 10px 4px; font-size: clamp(.72rem, 2.6vw, .95rem); }
 .mode-nav button[aria-current="page"] { color: #17202a; background: #f1c40f; }
+.placement-view { max-width: 760px; margin-inline: auto; }
+.placement-grid { display: grid; gap: 12px; margin: 20px 0; }
+.placement-grid fieldset { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; }
+.placement-grid label { display: inline-flex; align-items: center; gap: 6px; margin: 8px 20px 0 0; }
 .question-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
 .question-list button { margin: 0; text-align: left; font-size: .9rem; }
 
