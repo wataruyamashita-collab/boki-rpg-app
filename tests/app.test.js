@@ -357,6 +357,10 @@ browserSandbox.window.confirm = () => true;
 assert.strictEqual(examPrototype.finishExam.call(completeExam, false, 2), true, 'CASE 4: 全15問回答後に初めて正式採点する');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(resultScore)), { correct: true, earned: 100, possible: 100 }, '明示配点の合計を100点として採点する');
 const examIds = browserSandbox.window.AppController.prototype.buildExamIds.call(examAudit);
+const poolSeparation={questions:browserSandbox.window.QuestionData,ids:Object.keys(browserSandbox.window.QuestionData),model:{state:{mode:'training'}},reviewIds(){return[];},buildExamIds(){return examIds;},storyIds(){return[];}};
+const trainingIds=browserSandbox.window.AppController.prototype.modeIds.call(poolSeparation);
+assert.strictEqual(examIds.some(id=>trainingIds.includes(id)),false,'Training PoolとExam Poolで同じQuestion IDを使わない');
+assert(examIds.every(id=>browserSandbox.window.QuestionData[id].learningRole==='transfer'),'Exam Poolは初見転移用Questionへ限定する');
 assert.strictEqual(examIds.length, 15, '模試は設計通り15問を選出する');
 examIds.forEach(id => { const question = browserSandbox.window.QuestionData[id]; assert(question.type === 'journal' || (question.table && question.table.inputCells.every(cell => cell in question.answer.cells)), `${id}は必要な入力欄と正答を持つ`); if (question.materials?.length) assert(viewSource.includes('this.renderMaterials(question)'), `${id}の資料を問題表示で描画する`); });
 examIds.forEach(id => assert.strictEqual(semanticAudit.findings[id].status, 'VALID', `EXAM-VALIDITY: ${id}は独立Semantic監査でVALIDである`));
@@ -507,6 +511,16 @@ for (let i=0;i<3;i+=1) adaptive.recordAttempt('J001',true,30000,'',i===2);
 assert.strictEqual(adaptive.adaptiveDifficulty(browserSandbox.window.QuestionData.J001.category),Math.min(4,browserSandbox.window.QuestionData.J001.difficulty+1),'高速・高正答・遅延成功で難化する');
 adaptive.recordAttempt('J001',false,90000,'account'); adaptive.recordAttempt('J001',false,90000,'account');
 assert.strictEqual(adaptive.adaptiveDifficulty(browserSandbox.window.QuestionData.J001.category),Math.max(1,browserSandbox.window.QuestionData.J001.difficulty-1),'同concept連続誤答で易化する');
+const placementQuestions={
+  basic:{id:'basic',chapter:1,difficulty:1,learningRole:'core'},
+  middle:{id:'middle',chapter:4,difficulty:2,learningRole:'drill'},
+  closing:{id:'closing',chapter:7,difficulty:3,learningRole:'core'}
+};
+const placement=new ProgressModel(placementQuestions,storage,'placement-test');
+const startA=placement.placementStart({foundation:95,closing:30});
+const startB=placement.placementStart({foundation:20,closing:10});
+assert.notStrictEqual(startA,startB,'初期診断の基礎95・決算30と基礎20・決算10で開始地点を変える');
+assert.deepStrictEqual([startA,startB],['closing','basic'],'診断結果を章の開始地点へ接続する');
 const integrationQuestions=Object.fromEntries(Object.entries(browserSandbox.window.QuestionData).filter(([,q]) => q.category === browserSandbox.window.QuestionData.J001.category));
 const integrationModel=new ProgressModel(integrationQuestions,{getItem(){return null;},setItem(){}},'controller-adaptive');
 let integrationShown=''; const integrationQuestion=integrationQuestions.J001;
