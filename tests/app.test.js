@@ -158,6 +158,10 @@ for (const [id, authored, mutated] of [['D019','insurance:160000','insurance:200
   assert.strictEqual(sourceMutationSandbox.window.validateSemanticQuestionData().findings[id].status, 'INVALID', `${id}のロード前source answer改ざんを独立oracleで検出する`);
 }
 const sourceAnswerMutations = [
+  ['J001', '"account": "現金"', '"account": "普通預金"'],
+  ['J005', '"account": "売掛金"', '"account": "未収入金"'],
+  ['J141', '"account": "前払保険料",\n          "amount": 50000', '"account": "未収入金",\n          "amount": 50000'],
+  ['E002', '"debitAccount": "買掛金"', '"debitAccount": "未払金"'],
   ['J004', '"account": "買掛金"', '"account": "未払金"'],
   ['D020', 'profit:180000', 'profit:160000'],
   ['L039', 'profitTransfer:18000', 'profitTransfer:9000'],
@@ -171,7 +175,7 @@ for (const [id, authored, mutated] of sourceAnswerMutations) {
   const mutatedSource = questionDataSource.replace(authored, mutated);
   assert.notStrictEqual(mutatedSource, questionDataSource, `${id}のsource answer mutationが適用される`);
   vm.runInNewContext(mutatedSource, mutationSandbox);
-  assert.strictEqual(mutationSandbox.window.validateSemanticQuestionData().findings[id].status, 'INVALID', `${id}のロード前source answer改ざんを表示事実と会計規則から検出する`);
+  assert.strictEqual(mutationSandbox.window.validateSemanticQuestionData().findings[id].status, 'INVALID', `${id}のロード前source answer改ざんをanswerとは別管理のintegrity基準で検出する`);
 }
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
 const eightColumn = browserSandbox.window.QuestionData.D001;
@@ -189,6 +193,11 @@ assert(JSON.stringify(browserSandbox.window.QuestionData).includes('商品有高
 assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.L049.answer.cells)), { value1:1100, value2:13200, value3:8800 }, 'INVENTORY-02: 移動平均単価・払出額・残高額を学習する');
 ['現金出納帳','当座預金出納帳','小口現金出納帳','仕入帳','売上帳','入金伝票','出金伝票','振替伝票'].forEach(topic => assert(JSON.stringify(browserSandbox.window.QuestionData).includes(topic), `COVERAGE-01: ${topic}を実問題へ対応付ける`));
 ['仕訳帳','受取手形記入帳','支払手形記入帳'].forEach(topic => assert(Object.values(browserSandbox.window.QuestionData).some(q => q.category === topic && q.materials?.length), `COVERAGE-02: ${topic}を資料から実際に完成する問題がある`));
+assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.L042.table.inputCells)), ['received1','drawer1','drawn1','due1','bank1','description1','amount1','received2','drawer2','drawn2','due2','bank2','description2','amount2','total'], 'L042は金額だけでなく受取日・振出人・振出日・満期日・支払場所・摘要を2行とも採点する');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.L043.table.inputCells)), ['drawn1','payee1','due1','bank1','description1','amount1','drawn2','payee2','due2','bank2','description2','amount2','total'], 'L043は金額だけでなく振出日・受取人・満期日・支払場所・摘要を2行とも採点する');
+assert.strictEqual(Engine.grade(browserSandbox.window.QuestionData.L042, browserSandbox.window.QuestionData.L042.answer).correct, true, 'L042の本試験型記入欄をすべて完成すると正解になる');
+assert.strictEqual(Engine.grade(browserSandbox.window.QuestionData.L042, { cells:{ ...browserSandbox.window.QuestionData.L042.answer.cells, due1:'8/30' } }).correct, false, 'L042は満期日が違えば金額が合っていても不正解にする');
+assert.strictEqual(Engine.grade(browserSandbox.window.QuestionData.L043, { cells:{ ...browserSandbox.window.QuestionData.L043.answer.cells, payee2:'北星物産' } }).correct, false, 'L043は受取人が違えば金額が合っていても不正解にする');
 assert.strictEqual(browserSandbox.window.QuestionData.L040.answer.cells.lossA, 120000, '固定資産台帳で取得・月割償却・途中売却・売却損まで追跡する');
 for (const id of ['C001','C002','C003']) {
   const question = browserSandbox.window.QuestionData[id];
@@ -390,6 +399,13 @@ const relatedContext={questions:browserSandbox.window.QuestionData,model:{state:
 assert.strictEqual(examPrototype.openRelated.call(relatedContext,'J001'),true,'Knowledge Linkが実在する学習問題へ遷移する');
 assert.deepStrictEqual([relatedContext.model.state.mode,relatedSaved,relatedStarted],['training',true,'J001'],'Knowledge Linkは実在しないsetModeではなく保存済みstateを更新する');
 assert.strictEqual(examPrototype.openRelated.call(relatedContext,examIds[0]),false,'Knowledge Linkから未見Exam Poolを露出しない');
+const knowledgeEdges = Object.values(browserSandbox.window.QuestionData).flatMap(source => Object.values(source.knowledgeLinks || {}).flatMap(ids => (Array.isArray(ids) ? ids : [ids]).map(target => ({ source:source.id, target }))));
+for (const edge of knowledgeEdges) {
+  relatedStarted = '';
+  assert.strictEqual(examPrototype.openRelated.call(relatedContext, edge.target), true, `${edge.source}→${edge.target}のKnowledge LinkをController経路で開ける`);
+  assert.strictEqual(relatedStarted, edge.target, `${edge.source}→${edge.target}のクリック先が対象問題と一致する`);
+}
+assert.strictEqual(knowledgeEdges.length, 27, '全27 Knowledge Link edgeをE2E対象にする');
 examIds.forEach(id => { const question = browserSandbox.window.QuestionData[id]; assert(question.type === 'journal' || (question.table && question.table.inputCells.every(cell => cell in question.answer.cells)), `${id}は必要な入力欄と正答を持つ`); if (question.materials?.length) assert(viewSource.includes('this.renderMaterials(question)'), `${id}の資料を問題表示で描画する`); });
 examIds.forEach(id => assert.strictEqual(semanticAudit.findings[id].status, 'VALID', `EXAM-VALIDITY: ${id}は独立Semantic監査でVALIDである`));
 assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSections('【処理の根拠】\n資産が増えます。\n【試験のポイント】ここに注意。'))), [
