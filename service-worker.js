@@ -1,9 +1,9 @@
 /* The release id is shared by every cache key in this deployment. */
-const RELEASE = '20260826-26';
+const RELEASE = '20260826-27';
 const CACHE_PREFIX = 'boki-rpg-';
 const CACHE_NAME = `${CACHE_PREFIX}${RELEASE}`;
 const VERSIONED_ASSETS = [
-  './css/style.css', './data/questions.js', './js/calculator.js', './js/model.js',
+  './css/style.css', './data/questions.js', './data/accounting-oracle.js', './js/calculator.js', './js/model.js',
   './js/rpg.js', './js/engine.js', './js/feedback.js', './js/view.js', './js/controller.js', './js/app.js'
 ].map(path => `${path}?v=${RELEASE}`);
 const APP_SHELL = [
