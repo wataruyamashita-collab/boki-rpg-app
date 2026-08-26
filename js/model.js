@@ -134,6 +134,14 @@
       this.state.currentQuestionId = startQuestionId; this.state.mode = 'story'; this.save();
       return startQuestionId;
     }
+    migrateLegacyPlacement(now = Date.now()) {
+      if (this.state.placement || (!this.state.attempts.length && !this.state.answeredIds.length)) return false;
+      const startQuestionId = this.state.currentQuestionId || this.state.answeredIds.at(-1) || Object.keys(this.questions)[0] || null;
+      if (!startQuestionId) return false;
+      this.state.placement = { completed:true, foundation:0, closing:0, startQuestionId, completedAt:now, migrated:true };
+      this.save(); return true;
+    }
+    resetPlacement() { this.state.placement = null; this.save(); }
   }
   root.ProgressModel = ProgressModel;
   if (typeof module !== 'undefined') module.exports = ProgressModel;
