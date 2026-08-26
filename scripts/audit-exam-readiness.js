@@ -29,7 +29,7 @@ function evaluateRows(questions) {
     ['初見転移', q => ['review','transfer'].includes(q.timelineRole) && q.materials?.length, 20]
   ];
   return rows.map(([topic,predicate,minimum]) => {
-    const matched=questions.filter(predicate); const practical=matched.filter(q => q.materials?.length && q.table?.inputCells?.length);
+    const matched=questions.filter(predicate); const practical=matched.filter(q => q.type === 'journal' || (q.materials?.length && q.table?.inputCells?.length));
     const transfer=demonstratesTransfer(matched); const grade=matched.length>=minimum && practical.length>=Math.min(minimum,matched.length) ? (transfer?'A':'B') : matched.length?'C':'D';
     return {officialTopic:topic,questions:matched.length,valid:matched.filter(q=>q.answer).length,practical:practical.length,firstTimeTransfer:transfer?'YES':'NO',learnability:grade,pass:grade==='A'};
   });

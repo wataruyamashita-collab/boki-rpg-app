@@ -4,9 +4,12 @@
   "private": true,
   "description": "Dependency-free bookkeeping learning RPG",
   "scripts": {
-    "test": "node tests/app.test.js && node tests/service-worker.test.js && node tests/audit-engagement.test.js && node scripts/audit-data.js && node scripts/audit-feedback.js",
+    "test": "node tests/app.test.js && node tests/service-worker.test.js && node tests/audit-engagement.test.js && node scripts/audit-data.js && node scripts/audit-feedback.js && node scripts/audit-oracle.js && node scripts/audit-exam-readiness.js",
     "audit:exam": "node scripts/audit-exam-readiness.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "audit:oracle": "node scripts/audit-oracle.js"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
