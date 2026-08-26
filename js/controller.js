@@ -190,6 +190,7 @@
       const review = { finishedAt: now, startedAt: session.startedAt, points, passed: correct, durationMs: Math.max(0, Math.min(now, session.endAt) - session.startedAt), unansweredCount: unanswered.length, items: session.ids.map((id, index) => ({ id, topic: this.questions[id].category, points: EXAM_POINTS[index], earned: Math.round((session.scores[id]?.ratio || 0) * EXAM_POINTS[index]), correct: session.scores[id]?.correct === true, answer: session.scores[id]?.answer ?? null })) };
       review.topicScores = review.items.reduce((out, item) => { const row = out[item.topic] || { earned: 0, possible: 0 }; row.earned += item.earned; row.possible += item.points; out[item.topic] = row; return out; }, {});
       session.status = 'FINISHED'; this.model.state.lastExamReview = review; this.model.state.examHistory = [...(this.model.state.examHistory || []), { finishedAt: review.finishedAt, points, passed: correct, durationMs: review.durationMs, topicScores: review.topicScores, unansweredCount: review.unansweredCount }].slice(-10);
+      this.model.updateCompletion?.(this.rpg);
       this.model.state.examAttempt += 1; this.model.state.examSession = null; this.model.save(); this.stopExamTimer();
       this.document?.body?.classList?.remove('exam-active');
       this.view.examResult(review, this.questions, this.model.state.examHistory);
@@ -258,6 +259,7 @@
       if (this.reviewSourceId) this.model.completeReview(this.reviewSourceId, score.correct, answeredAt);
       else this.model.record(question.id, score.correct, answeredAt);
       this.rpg.recordMastery?.(question, score);
+      this.model.updateCompletion?.(this.rpg);
       if (score.correct) this.rpg.reward(question, score, 1);
       this.rpg.applyAnswer(score.correct, confidence);
       this.view.updateRpg(this.rpg); this.view.result(question, score, answer, confidence); this.view.show('view-result');

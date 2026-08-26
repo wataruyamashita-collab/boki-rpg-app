@@ -142,6 +142,14 @@
       this.save(); return true;
     }
     resetPlacement() { this.state.placement = null; this.save(); }
+    updateCompletion(rpg) {
+      const passedExams = this.state.examHistory.filter(item => item.points >= 70).length;
+      const practicalTypes = ['ledger','worksheet','financial_statement','comprehensive'];
+      const practicalPassed = practicalTypes.every(type => this.state.answeredIds.some(id => this.questions[id]?.type === type));
+      const masteryPassed = ['仕訳','帳簿','決算整理','財務諸表'].every(skill => rpg?.skillMastery?.(skill) >= .7);
+      this.state.completed = practicalPassed && masteryPassed && passedExams >= 2;
+      this.save(); return this.state.completed;
+    }
   }
   root.ProgressModel = ProgressModel;
   if (typeof module !== 'undefined') module.exports = ProgressModel;

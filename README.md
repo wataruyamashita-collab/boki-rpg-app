@@ -53,8 +53,11 @@ python3 -m http.server 8000
 Node.js 18以降で、依存パッケージのインストールなしに実行できます。
 
 ```bash
-node tests/app.test.js
+npm ci
+npm test
 ```
+
+`npm test` はアプリ回帰、Service Worker、データ、誤答フィードバック、エンゲージメント監査を同じコマンドで実行します。試験準備度の厳格な未達ゲートも確認する場合は `npm run audit:exam` を実行してください。
 
 TypeScriptが利用できる開発環境では、段階的移行用の型定義も検証できます（アプリの実行にはTypeScriptもビルドも不要です）。
 

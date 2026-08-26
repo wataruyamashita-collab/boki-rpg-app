@@ -1,0 +1,12 @@
+{
+  "name": "boki-rpg-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dependency-free bookkeeping learning RPG",
+  "scripts": {
+    "test": "node tests/app.test.js && node tests/service-worker.test.js && node tests/audit-engagement.test.js && node scripts/audit-data.js && node scripts/audit-feedback.js",
+    "audit:exam": "node scripts/audit-exam-readiness.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": { "node": ">=18" }
+}
