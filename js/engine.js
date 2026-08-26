@@ -2,8 +2,19 @@
 // 採点エンジン基盤 (仕様書37)
 // =========================================
 const normalizeNumber = value => String(value ?? '')
+  .normalize('NFKC')
   .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
   .replace(/，/g, ',');
+
+const normalizeText = value => String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, ' ');
+const normalizeDate = value => {
+  const source = normalizeText(value).replace(/年/g, '/').replace(/月/g, '/').replace(/日/g, '').replace(/[.-]/g, '/');
+  const match = source.match(/^(?:(\d{4})\/)?(\d{1,2})\/(\d{1,2})$/);
+  if (!match) return source;
+  const month = Number(match[2]); const day = Number(match[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return source;
+  return `${match[1] ? `${match[1]}/` : ''}${month}/${day}`;
+};
 
 const GradingEngine = {
   /**
@@ -43,15 +54,17 @@ const GradingEngine = {
            matchSides(userAnswer.credit, correctAnswer.credit);
   },
 
-  gradeTable(userAnswer, correctAnswer) {
+  gradeTable(userAnswer, correctAnswer, inputMetadata = {}) {
     const expected = correctAnswer?.cells && typeof correctAnswer.cells === 'object' ? correctAnswer.cells : {};
     const details = Object.keys(expected).map(cellId => {
       const raw = userAnswer?.cells ? userAnswer.cells[cellId] : undefined;
       const source = normalizeNumber(raw).replace(/,/g, '').trim();
+      const semanticType = inputMetadata[cellId]?.semanticType;
       const normalized = typeof expected[cellId] === 'number'
         ? (source === '' ? Number.NaN : Number(source))
-        : String(raw ?? '').trim();
-      return { cellId, correct: normalized === expected[cellId], expected: expected[cellId], actual: normalized };
+        : semanticType === 'date' ? normalizeDate(raw) : normalizeText(raw);
+      const expectedValue = semanticType === 'date' ? normalizeDate(expected[cellId]) : typeof expected[cellId] === 'string' ? normalizeText(expected[cellId]) : expected[cellId];
+      return { cellId, correct: normalized === expectedValue, expected: expected[cellId], actual: normalized };
     });
     const earned = details.filter(item => item.correct).length;
     return { correct: earned === details.length, earned, possible: details.length, ratio: details.length ? earned / details.length : 0, details };
@@ -63,7 +76,7 @@ const GradingEngine = {
       const correct = this.gradeJournalEntry(userAnswer, question.answer);
       return { correct, earned: correct ? 1 : 0, possible: 1, ratio: correct ? 1 : 0, details: [] };
     }
-    return this.gradeTable(userAnswer, question.answer);
+    return this.gradeTable(userAnswer, question.answer, question.table?.inputMetadata);
   }
 };
 

@@ -14477,7 +14477,7 @@ Object.assign(QuestionData.J147, { category:'当座借越', variantGroup:'当座
 const practicalLedger = (id, category, question, materials, rows, cells, explanation) => ({
   id, type:'ledger', category, difficulty:3, chapter:9, scene:'本試験第2問・実地記帳',
   story:'証憑と前期からの繰越を読み、日付・摘要・相手勘定を省略せず帳簿へ転記する。', question, materials,
-  table:{ columns:['記入欄','解答'], rows:rows.map(item => ({item,amount:'入力'})), inputCells:Object.keys(cells), inputTypes:Object.fromEntries(Object.entries(cells).map(([key,value]) => [key, typeof value === 'number' ? 'amount' : 'text'])) },
+  table:{ columns:['記入欄','解答'], rows:rows.map(item => ({item,amount:'入力'})), inputCells:Object.keys(cells), inputTypes:Object.fromEntries(Object.entries(cells).map(([key,value]) => [key, typeof value === 'number' ? 'amount' : 'text'])), inputMetadata:Object.fromEntries(Object.keys(cells).map((key,index) => [key,{label:rows[index],semanticType:/日$/.test(rows[index]) ? 'date' : typeof cells[key] === 'number' ? 'amount' : /科目/.test(rows[index]) ? 'account' : 'text'}])) },
   answer:{cells}, explanation, learningRole:'transfer', timelineRole:'review', variantGroup:category
 });
 QuestionData.L039 = practicalLedger('L039','支払利息勘定（複数年度・再振替）','借入金600,000円（年利率3%、毎年9月30日後払い）について、前期決算から当期決算・損益振替まで支払利息勘定を完成しなさい。当期は4月1日から翌3月31日である。',
