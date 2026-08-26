@@ -14412,7 +14412,7 @@ QuestionData.D001 = {
   materials: worksheetRows.filter(([, values]) => values[0] || values[1]).map(([account, values]) => ({ '勘定科目': account, '借方': values[0] || '—', '貸方': values[1] || '—' })),
   table: { columns: ['勘定科目','試算表 借方','試算表 貸方','修正記入 借方','修正記入 貸方','損益計算書 借方','損益計算書 貸方','貸借対照表 借方','貸借対照表 貸方'], rows: worksheetTableRows, inputCells: worksheetInputCells },
   answer: { cells: worksheetCells }, explanation: '試算表、修正記入、損益計算書、貸借対照表の各組で借方と貸方が一致します。間接法では備品勘定そのものを減額しません。損益計算書欄の差額180,000円を当期純利益として借方へ、貸借対照表欄の貸方へ振り分けます。',
-  learningRole: 'transfer', timelineRole: 'main', variantGroup: 'eight-column-worksheet', knowledgeLinks: { prerequisite: [], nextConcept: ['F001'], related: ['F002'] }
+  learningRole: 'transfer', timelineRole: 'main', variantGroup: 'eight-column-worksheet', knowledgeLinks: { prerequisite: ['J048'], nextConcept: ['J047'], related: ['J019'] }
 };
 
 QuestionData.F001 = {
@@ -14423,7 +14423,7 @@ QuestionData.F001 = {
   table: { columns: ['区分','金額'], rows: [{ item:'売上高', amount:'入力' },{ item:'売上原価', amount:'入力' },{ item:'費用合計（売上原価を除く）', amount:'入力' },{ item:'当期純利益', amount:'入力' }], inputCells: ['sales','costOfSales','expenses','netIncome'] },
   answer: { cells: { sales:800000, costOfSales:400000, expenses:220000, netIncome:180000 } },
   explanation: '売上高800,000円－売上原価400,000円－保険料160,000円－減価償却費60,000円＝当期純利益180,000円です。',
-  learningRole: 'transfer', timelineRole: 'main', variantGroup: 'income-statement', knowledgeLinks: { prerequisite: ['D001'], related: ['F002'], reviewOf: ['D001'] }
+  learningRole: 'transfer', timelineRole: 'main', variantGroup: 'income-statement', knowledgeLinks: { prerequisite: ['J048'], related: ['J047'], reviewOf: ['J019'] }
 };
 
 const replacementLedgers = {
@@ -14435,12 +14435,21 @@ const replacementLedgers = {
   L049: ['商品有高帳・移動平均法', '期首10個@1,000円、仕入10個@1,200円の直後に12個を払い出した。移動平均法による平均単価、払出額、残高額を求めなさい。', ['移動平均単価','払出額','残高額'], [1100,13200,8800]],
   L050: ['伝票（3伝票制）', '現金売上50,000円、備品の現金購入20,000円、商品30,000円の掛仕入について、入金伝票・出金伝票・振替伝票へ記入する金額を判断しなさい。', ['入金伝票','出金伝票','振替伝票'], [50000,20000,30000]]
 };
+const ledgerKnowledgeLinks = [
+  { prerequisite:['J002'], related:['J017'], nextConcept:['J018'] },
+  { prerequisite:['J003'], related:['J004'], nextConcept:['J005'] },
+  { prerequisite:['J002'], related:['J021'], nextConcept:['J022'] },
+  { prerequisite:['J004'], related:['J008'], nextConcept:['J048'] },
+  { prerequisite:['J005'], related:['J009'], nextConcept:['J048'] },
+  { prerequisite:['J004'], related:['J005'], nextConcept:['J048'] },
+  { prerequisite:['J002'], related:['J004'], nextConcept:['J005'] }
+];
 Object.entries(replacementLedgers).forEach(([id, [category, question, labels, values]], offset) => {
   const inputCells = labels.map((_, index) => `value${index + 1}`);
   QuestionData[id] = { id, type:'ledger', category, difficulty: offset < 2 ? 2 : 3, chapter: offset < 5 ? 7 : 10, scene:'帳簿と伝票・実地記帳', story:'証憑から帳簿または伝票へ転記し、残高まで検算する。', question,
     table:{ columns:['記入欄','金額'], rows:labels.map(label => ({ item:label, amount:'入力' })), inputCells }, answer:{ cells:Object.fromEntries(inputCells.map((cell,index) => [cell,values[index]])) },
     explanation:`${labels.map((label,index) => `${label}${values[index].toLocaleString('ja-JP')}円`).join('、')}。名称の暗記ではなく取引または数量・単価から記帳します。`, learningRole:'transfer', timelineRole:'review', variantGroup:category,
-    knowledgeLinks: { prerequisite: offset === 5 ? ['L043'] : ['J002'], related: offset === 5 ? ['L042'] : ['L049'], nextConcept: offset === 5 ? ['D001'] : (id === 'L050' ? ['D001'] : ['L050']) } };
+    knowledgeLinks: ledgerKnowledgeLinks[offset] };
 });
 
 Object.assign(QuestionData.L044, { materials: [{ '日付':'4/3', '証ひょう':'入金票', '摘要':'売掛金の回収', '収入':50000, '支出':'—' }, { '日付':'4/5', '証ひょう':'領収証', '摘要':'通信費の支払', '収入':'—', '支出':18000 }] });
@@ -14468,7 +14477,7 @@ Object.assign(QuestionData.J147, { category:'当座借越', variantGroup:'当座
 const practicalLedger = (id, category, question, materials, rows, cells, explanation) => ({
   id, type:'ledger', category, difficulty:3, chapter:9, scene:'本試験第2問・実地記帳',
   story:'証憑と前期からの繰越を読み、日付・摘要・相手勘定を省略せず帳簿へ転記する。', question, materials,
-  table:{ columns:['記入欄','解答'], rows:rows.map(item => ({item,amount:'入力'})), inputCells:Object.keys(cells), inputTypes:Object.fromEntries(Object.entries(cells).map(([key,value]) => [key, typeof value === 'number' ? 'amount' : 'account'])) },
+  table:{ columns:['記入欄','解答'], rows:rows.map(item => ({item,amount:'入力'})), inputCells:Object.keys(cells), inputTypes:Object.fromEntries(Object.entries(cells).map(([key,value]) => [key, typeof value === 'number' ? 'amount' : 'text'])) },
   answer:{cells}, explanation, learningRole:'transfer', timelineRole:'review', variantGroup:category
 });
 QuestionData.L039 = practicalLedger('L039','支払利息勘定（複数年度・再振替）','借入金600,000円（年利率3%、毎年9月30日後払い）について、前期決算から当期決算・損益振替まで支払利息勘定を完成しなさい。当期は4月1日から翌3月31日である。',
@@ -14488,12 +14497,14 @@ QuestionData.L041 = practicalLedger('L041','仕訳帳','取引資料を仕訳帳
   '仕訳帳は日付順に、借方・貸方の科目、元丁、金額を記入します。4月3日は売掛金／売上90,000円、4月8日は通信費／現金12,000円です。');
 QuestionData.L042 = practicalLedger('L042','受取手形記入帳','受け取った約束手形を受取手形記入帳へ記帳し、手形金額合計を求めなさい。',
   [{受取日:'6/5',振出人:'青空商店',振出日:'6/4',満期日:'8/31',支払場所:'東都銀行',摘要:'売掛金回収',金額:180000},{受取日:'6/20',振出人:'港屋',振出日:'6/20',満期日:'9/30',支払場所:'中央銀行',摘要:'商品売上',金額:120000}],
-  ['6/5 手形金額','6/20 手形金額','受取手形合計'],{note1:180000,note2:120000,total:300000},
-  '受取日、振出人、振出日、満期日、支払場所、摘要を手形ごとに追跡し、金額合計は300,000円です。');
+  ['1行目 受取日','1行目 振出人','1行目 振出日','1行目 満期日','1行目 支払場所','1行目 摘要','1行目 金額','2行目 受取日','2行目 振出人','2行目 振出日','2行目 満期日','2行目 支払場所','2行目 摘要','2行目 金額','受取手形合計'],
+  {received1:'6/5',drawer1:'青空商店',drawn1:'6/4',due1:'8/31',bank1:'東都銀行',description1:'売掛金回収',amount1:180000,received2:'6/20',drawer2:'港屋',drawn2:'6/20',due2:'9/30',bank2:'中央銀行',description2:'商品売上',amount2:120000,total:300000},
+  '1行目は6月5日受取、振出人青空商店、6月4日振出、8月31日満期、東都銀行支払、摘要は売掛金回収、180,000円です。2行目は6月20日受取、振出人港屋、同日振出、9月30日満期、中央銀行支払、摘要は商品売上、120,000円です。合計は180,000＋120,000＝300,000円です。');
 QuestionData.L043 = practicalLedger('L043','支払手形記入帳','振り出した約束手形を支払手形記入帳へ記帳し、手形金額合計を求めなさい。',
   [{振出日:'7/10',受取人:'若葉物産',満期日:'10/31',支払場所:'東都銀行',摘要:'買掛金支払',金額:150000},{振出日:'7/25',受取人:'北星商事',満期日:'11/30',支払場所:'東都銀行',摘要:'商品仕入',金額:90000}],
-  ['7/10 手形金額','7/25 手形金額','支払手形合計'],{note1:150000,note2:90000,total:240000},
-  '振出日、受取人、満期日、支払場所、摘要を記録し、将来の資金決済額240,000円を管理します。');
+  ['1行目 振出日','1行目 受取人','1行目 満期日','1行目 支払場所','1行目 摘要','1行目 金額','2行目 振出日','2行目 受取人','2行目 満期日','2行目 支払場所','2行目 摘要','2行目 金額','支払手形合計'],
+  {drawn1:'7/10',payee1:'若葉物産',due1:'10/31',bank1:'東都銀行',description1:'買掛金支払',amount1:150000,drawn2:'7/25',payee2:'北星商事',due2:'11/30',bank2:'東都銀行',description2:'商品仕入',amount2:90000,total:240000},
+  '1行目は7月10日振出、受取人若葉物産、10月31日満期、東都銀行支払、摘要は買掛金支払、150,000円です。2行目は7月25日振出、受取人北星商事、11月30日満期、東都銀行支払、摘要は商品仕入、90,000円です。合計は150,000＋90,000＝240,000円です。');
 
 const integratedClosing = (id, category, question, materials, adjustments, cells, rows, explanation) => ({
   id, type:'comprehensive', format:'exam-question-3', category, difficulty:4, chapter:10, scene:'本試験第3問・統合決算',
@@ -14533,6 +14544,15 @@ Object.values(QuestionData).forEach(item => {
 
 // 正答とは別に、レビュー済み仕訳の改ざん検知用キーを閉じ込める。
 // validateSemanticQuestionDataへ渡されたコピーのanswerを書き換えても、この基準値は変化しない。
+// Static review fingerprints are intentionally authored separately from QuestionData.answer.
+// They detect source-before-load answer corruption; they are integrity evidence, not an accounting oracle.
+function answerFingerprint(answer) {
+  let hash = 2166136261;
+  for (const character of JSON.stringify(answer)) { hash ^= character.charCodeAt(0); hash = Math.imul(hash, 16777619); }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+const ReviewedAnswerFingerprints = Object.freeze({"J001":"d8e1c623","J002":"90c0eb06","J003":"000b10fe","J004":"0ec62aa1","J005":"37e4f9a8","J006":"9c615d8f","J007":"4276b057","J008":"eea9a423","J009":"d0284858","J010":"692f6625","J011":"57d82400","J012":"7c3bdf04","J013":"866e6f47","J014":"6a5a27dc","J015":"595da73e","J016":"6b79a2c8","J017":"405975aa","J018":"bcec67cd","J019":"e7cec67c","J020":"e839c7af","J021":"99b7dc60","J022":"13d9868a","J023":"09591681","J024":"cbf936d8","J025":"841a43be","J026":"886fd7d6","J027":"d357bb11","J028":"e921fa24","J029":"1b3d5a5b","J030":"3df1ac2a","J031":"938e7318","J032":"6da3bc3e","J033":"961583ca","J034":"8ad2899a","J035":"f324b1fa","J036":"bd1dd412","J037":"38468aee","J038":"49d23923","J039":"45d064fc","J040":"d708b5ac","J041":"de4d666a","J042":"989c7e9b","J043":"f418c9d5","J044":"991c75d1","J045":"122946f5","J046":"449a7dad","J047":"4faceaa5","J048":"afb7c946","J049":"3a76ef79","J050":"6ff6d32a","J051":"878a4a27","J052":"860f328a","J053":"b4f7e0e6","J054":"d242f36f","J055":"5e10a610","J056":"4dc01d99","J057":"2730b86b","J058":"39d31d01","J059":"7659d404","J060":"3ae1464b","J061":"9e4c0b00","J062":"3c1ca560","J063":"39654e15","J064":"c4f4a63c","J065":"d0a83a90","J066":"d37a3ee4","J067":"1849bd72","J068":"0c3db45f","J069":"32028cba","J070":"e839c7af","J071":"5dede936","J072":"d8c4e847","J073":"1d481c2f","J074":"bdc9bc10","J075":"e6d0ed78","J076":"ec98f716","J077":"5f3566cb","J078":"2c74d912","J079":"79fcdf65","J080":"3df1ac2a","J081":"938e7318","J082":"d5be62b8","J083":"61f51106","J084":"2371a8e4","J085":"d52786f1","J086":"de543e10","J087":"9855dcf6","J088":"0a40e16f","J089":"45d064fc","J090":"b0b067e8","J091":"cdeb5486","J092":"73334d89","J093":"4fe348e3","J094":"165d2583","J095":"a3f7e795","J096":"c4c7c981","J097":"965ce771","J098":"666a41b2","J099":"56d6f7e3","J100":"9427eeec","J101":"1f384c37","J102":"9d4b2846","J103":"d2715cda","J104":"917a6f75","J105":"451accc8","J106":"c045ff8b","J107":"17176333","J108":"f54e1463","J109":"92223788","J110":"44c8eaf7","J111":"c7732388","J112":"2d687d58","J113":"38ddfc8f","J114":"173da264","J115":"493e4aca","J116":"266570a0","J117":"d0b8bcde","J118":"89a1575d","J119":"d5825c78","J120":"e839c7af","J121":"50c52f16","J122":"2ebd6e72","J123":"37907545","J124":"5a31b008","J125":"ff657bc2","J126":"ad424646","J127":"82f029f5","J128":"6d069904","J129":"ad22f837","J130":"3df1ac2a","J131":"5b9288db","J132":"8ff0c342","J133":"858e9406","J134":"e6715465","J135":"24cefe8c","J136":"c173a64a","J137":"8b829b35","J138":"22b7f06b","J139":"45d064fc","J140":"b39d19f4","J141":"86758e3e","J142":"8e2d676f","J143":"241fef41","J144":"7b382d11","J145":"09fb42bd","J146":"517222ad","J147":"162482e7","J148":"b2f45e3c","J149":"70f9a78d","J150":"02b7de4d","L001":"30e8882b","L002":"d9b24adb","L003":"e27e8cf1","L004":"313c9cdb","L005":"c9e1f030","L006":"c9993f62","L007":"b969a7bd","L008":"01da67d1","L009":"209f326d","L010":"f2aaeddd","L011":"1415bb03","L012":"8d471f3d","L013":"1fd17166","L014":"639a28e0","L015":"c540fa8e","L016":"c8d324a5","L017":"2d43a24e","L018":"2251a2ba","L019":"80737433","L020":"69c5934b","L021":"422c0829","L022":"74dcc52a","L023":"89113099","L024":"45822471","L025":"1c19bb3e","L026":"79185952","L027":"1f50785d","L028":"940590a5","L029":"9ace9e94","L030":"a663fcc3","L031":"1162b987","L032":"8985aab4","L033":"4e4e5e34","L034":"d6782f2a","L035":"fadaca5c","L036":"b91607eb","L037":"f4ca9d23","L038":"62bf0ed4","L039":"0109514b","L040":"6bb39ff4","L041":"5b707f77","L042":"165b7152","L043":"48616ca4","L044":"903cf70c","L045":"b521774f","L046":"a2db7875","L047":"4a377801","L048":"91ae93e3","L049":"4392707f","L050":"c64a094d","T001":"5194d1c3","T002":"ac0b810b","T003":"543ad825","T004":"20ae2401","T005":"730bcf49","T006":"7e652a69","T007":"a10e7e61","T008":"cf9a69c3","T009":"e4bd12ed","T010":"9ac2336f","T011":"75ddcef3","T012":"df7fcfa1","T013":"b5919213","T014":"f269f023","T015":"e258a2df","T016":"331b7d99","T017":"09520621","T018":"80a602a7","T019":"ba2db99d","T020":"63c211bb","T021":"5ce3b7e9","T022":"6d1f9313","T023":"e25baa41","T024":"7eb7bc15","T025":"5ef98d01","T026":"713e6b2f","T027":"709d827f","T028":"00dfcac9","T029":"a7afbd81","T030":"24d302a1","T031":"600d6a93","T032":"43551a2f","T033":"4d6dd643","T034":"1c93f1fb","T035":"a492f949","T036":"a837d1f5","T037":"fa5f9aa1","T038":"bed837a1","T039":"f5491dc1","T040":"8310e8e7","E001":"917a82fa","E002":"b9ea9fe4","E003":"e217b7db","E004":"3ec70254","E005":"4b0e4435","E006":"187911d8","E007":"81f3f7a1","E008":"64156aed","E009":"ef9542c7","E010":"d899cdb2","E011":"adec7923","E012":"ee824d83","E013":"f4440ba3","E014":"9796574f","E015":"69f9ae35","E016":"b16f7ae4","E017":"18a8f0d0","E018":"b3355226","E019":"ded867c0","E020":"b24906e4","D001":"9ac7b8d4","D002":"25fc6159","D003":"b81f871d","D004":"3e0f7fbf","D005":"a116e047","D006":"98f50cb8","D007":"7c8018bf","D008":"787ed897","D009":"f8f3242c","D010":"5772d519","D011":"c35ce912","D012":"d40b11e8","D013":"7bcb0b14","D014":"2ca6aba7","D015":"6c4ff213","D016":"b6049069","D017":"8b48d74c","D018":"f754625c","D019":"7619ee65","D020":"8c305999","F001":"60c9a696","F002":"a50f7f00","F003":"1ae6477a","F004":"6c7a1529","F005":"ae5bb262","F006":"14c68a85","F007":"da6ad7d5","F008":"e463d96b","F009":"f3662ec7","F010":"bfe0a46c","C001":"a0f27f54","C002":"d54bf897","C003":"679225b3","C004":"db1d15be","C005":"375dcb65","C006":"e5100f3c","C007":"40d33ebc","C008":"0b26fd79","C009":"d5ff0eb4","C010":"d02182dc"});
+
 const SemanticJournalAnswerKey = new Map(Object.values(QuestionData)
   .filter(item => item.type === 'journal')
   .map(item => [item.id, JSON.stringify({ debit:item.answer.debit, credit:item.answer.credit })]));
@@ -14932,6 +14952,7 @@ function validateSemanticQuestionData(questionData = QuestionData) {
       else if (answer > 0 && item.format !== 'exam-question-3' && !canDerive(answer, inputs, text, item.type !== 'journal' || /[%％]|耐用年数|定額法|率/.test(text))) itemErrors.push(`正答金額 ${answer} を表示数値から導出できません`);
     }
     if (item.format === 'exam-question-3') itemErrors.push(...validateExamQuestion3(item).errors);
+    if (answerFingerprint(item.answer) !== ReviewedAnswerFingerprints[id]) itemErrors.push('レビュー済みanswer fingerprintと一致しません');
     if (item.type === 'journal') {
       const expectedJournal = SemanticJournalAnswerKey.get(id);
       const actualJournal = JSON.stringify({ debit:item.answer?.debit || [], credit:item.answer?.credit || [] });
