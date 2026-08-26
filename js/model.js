@@ -105,7 +105,18 @@
       const attempted = new Set(this.state.attempts.map(item => item.questionId || item.id));
       const candidates = Object.values(this.questions).filter(item => item.category === concept);
       const target = this.adaptiveDifficulty(concept, candidates[0]?.difficulty || 2);
-      return candidates.sort((a,b) => Math.abs(a.difficulty-target)-Math.abs(b.difficulty-target) || Number(attempted.has(a.id))-Number(attempted.has(b.id))).map(item => item.id);
+      const roleOrder = { core:0, drill:1, reinforcement:1, review:2, transfer:3, exam:4 };
+      return candidates.sort((a,b) => Number(attempted.has(a.id))-Number(attempted.has(b.id)) ||
+        (roleOrder[a.learningRole] ?? 2)-(roleOrder[b.learningRole] ?? 2) || Math.abs(a.difficulty-target)-Math.abs(b.difficulty-target)).map(item => item.id);
+    }
+    placementStart(scores = {}) {
+      const foundation = Math.max(0, Math.min(100, Number(scores.foundation) || 0));
+      const closing = Math.max(0, Math.min(100, Number(scores.closing) || 0));
+      const targetChapter = foundation >= 80 ? (closing >= 70 ? 10 : 7) : (foundation >= 50 ? 4 : 1);
+      return Object.values(this.questions)
+        .filter(item => item.learningRole === 'core' || item.learningRole === 'drill')
+        .sort((a, b) => a.chapter - b.chapter || a.difficulty - b.difficulty)
+        .find(item => item.chapter >= targetChapter)?.id || Object.keys(this.questions)[0] || null;
     }
   }
   root.ProgressModel = ProgressModel;
