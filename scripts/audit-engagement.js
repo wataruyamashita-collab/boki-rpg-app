@@ -5,7 +5,8 @@ const { evaluateRows } = require('./audit-exam-readiness');
 
 const questionSandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync('data/questions.js', 'utf8'), questionSandbox);
-const examRows = evaluateRows(Object.values(questionSandbox.window.QuestionData));
+const questions = Object.values(questionSandbox.window.QuestionData);
+const examRows = evaluateRows(questions);
 const readiness = Object.fromEntries(examRows.map(row => [row.officialTopic, row.pass ? 1 : 0]));
 const examEvidence = {
   independentReadiness: examRows.filter(row => row.pass).length / examRows.length,
@@ -17,6 +18,15 @@ const examEvidence = {
 };
 
 const source = ['index.html','js/controller.js','js/model.js','js/rpg.js','js/view.js'].map(file => fs.readFileSync(file, 'utf8')).join('\n');
+const coverage = predicate => questions.filter(predicate).length / questions.length;
+const engagementCoverage = {
+  knowledgeLinkCoverage: coverage(question => Object.values(question.knowledgeLinks || {}).flat().length > 0),
+  nextHookCoverage: coverage(question => Boolean(question.nextHook) || /次の疑問|Accounting Surprise/.test(`${question.story || ''}${question.explanation || ''}`)),
+  accountingSurpriseCoverage: coverage(question => Boolean(question.accountingSurprise) || /Accounting Surprise/.test(`${question.story || ''}${question.explanation || ''}`)),
+  missionCoverage: coverage(question => Boolean(question.missionId || question.mission)),
+  jobUnlockCoverage: coverage(question => Boolean(question.jobUnlock)),
+  novelInteractionCoverage: coverage(question => !['journal','ledger','trial_balance'].includes(question.type))
+};
 const groups = [
   ['A',.9,.5,.7], ['B',.1,.5,.4], ['C',.3,.6,.5], ['D',1,.7,.8], ['E',.4,.7,.5],
   ['F',.2,.8,.8], ['G',.8,.6,.6], ['H',.3,.15,.4], ['I',.4,.5,.5], ['J',.05,.7,.2]
@@ -29,9 +39,9 @@ const features = {
   nonBlockingFailure: !source.includes('資金ショート') && source.includes('帳簿信頼度'),
   progress: source.includes('Chapter進捗') && source.includes('mastery'),
   materials: source.includes('renderMaterials(question)'),
-  curiosityHook: /Accounting Surprise|curiosity|次の疑問/.test(source),
-  missionChunking: /mission/i.test(source),
-  jobUnlock: /NEW JOB|仕事マップ|解放/.test(source)
+  curiosityHook: engagementCoverage.nextHookCoverage >= .5,
+  missionChunking: engagementCoverage.missionCoverage >= .8,
+  jobUnlock: engagementCoverage.jobUnlockCoverage >= .5
 };
 function panel(active = features, exam = examEvidence) {
   const rows=[];
@@ -55,9 +65,9 @@ const rows=panel();
 const personas=Object.fromEntries(groups.map(([group])=>[group,summary(rows.filter(row=>row.group===group))]));
 const mutation={...features,nonBlockingFailure:false,progress:false,curiosityHook:false,missionChunking:false};
 const noExamReadiness = { independentReadiness: 0, question1: 0, question2: 0, question3: 0, unseenTransfer: 0 };
-const output={classification:'SIMULATED — deterministic heuristic, not real-user evidence',features,examEvidence,summary:summary(rows),personas,redTeam:{baselineOneMore:summary(rows).OneMoreQuestionIntent.mean,mutatedOneMore:summary(panel(mutation)).OneMoreQuestionIntent.mean,engagementDetected:summary(panel(mutation)).OneMoreQuestionIntent.mean < summary(rows).OneMoreQuestionIntent.mean,baselineExamConfidence:summary(rows).ExamConfidence.mean,mutatedExamConfidence:summary(panel(features,noExamReadiness)).ExamConfidence.mean,examReadinessDetected:summary(panel(features,noExamReadiness)).ExamConfidence.mean < summary(rows).ExamConfidence.mean}};
+const output={classification:'SIMULATED — deterministic heuristic, not real-user evidence',engagementCoverage,features,examEvidence,summary:summary(rows),personas,redTeam:{baselineOneMore:summary(rows).OneMoreQuestionIntent.mean,mutatedOneMore:summary(panel(mutation)).OneMoreQuestionIntent.mean,engagementDetected:summary(panel(mutation)).OneMoreQuestionIntent.mean < summary(rows).OneMoreQuestionIntent.mean,baselineExamConfidence:summary(rows).ExamConfidence.mean,mutatedExamConfidence:summary(panel(features,noExamReadiness)).ExamConfidence.mean,examReadinessDetected:summary(panel(features,noExamReadiness)).ExamConfidence.mean < summary(rows).ExamConfidence.mean}};
 if (require.main === module) {
   console.log(JSON.stringify(output,null,2));
   if (!output.redTeam.engagementDetected || !output.redTeam.examReadinessDetected) process.exitCode=1;
 }
-module.exports = { panel, summary, examEvidence, output };
+module.exports = { panel, summary, engagementCoverage, examEvidence, output };

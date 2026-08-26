@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260826-23">
+  <link rel="stylesheet" href="css/style.css?v=20260826-24">
 </head>
 <body>
 <div class="container">
@@ -35,19 +35,25 @@
   </aside>
 
   <main>
-    <section id="view-placement" class="view placement-view"><h2>最初の10問チェック</h2><p>約2分で、いまの理解に合う仕事から始めます。成績には影響しません。</p><form id="placement-form"><div class="placement-grid">
-      <fieldset><legend>1. 資産が増える側</legend><label><input type="radio" name="p1" value="1">借方</label><label><input type="radio" name="p1" value="0">貸方</label></fieldset>
-      <fieldset><legend>2. 負債が増える側</legend><label><input type="radio" name="p2" value="0">借方</label><label><input type="radio" name="p2" value="1">貸方</label></fieldset>
-      <fieldset><legend>3. 商品を掛けで仕入れたときの貸方</legend><label><input type="radio" name="p3" value="1">買掛金</label><label><input type="radio" name="p3" value="0">売掛金</label></fieldset>
-      <fieldset><legend>4. 商品を掛けで売ったときの借方</legend><label><input type="radio" name="p4" value="1">売掛金</label><label><input type="radio" name="p4" value="0">買掛金</label></fieldset>
-      <fieldset><legend>5. 交通費を現金で払ったときの借方</legend><label><input type="radio" name="p5" value="1">旅費交通費</label><label><input type="radio" name="p5" value="0">現金</label></fieldset>
-      <fieldset><legend>6. 売掛金を現金で回収したときの貸方</legend><label><input type="radio" name="p6" value="1">売掛金</label><label><input type="radio" name="p6" value="0">現金</label></fieldset>
-      <fieldset><legend>7. 決算で当期分だけを費用にする考え方</legend><label><input type="radio" name="p7" value="1">期間対応</label><label><input type="radio" name="p7" value="0">現金主義</label></fieldset>
-      <fieldset><legend>8. 備品の価値減少を費用にする科目</legend><label><input type="radio" name="p8" value="1">減価償却費</label><label><input type="radio" name="p8" value="0">仕入</label></fieldset>
-      <fieldset><legend>9. 期末商品を仕入から振り替える仕訳</legend><label><input type="radio" name="p9" value="1">仕入／繰越商品</label><label><input type="radio" name="p9" value="0">繰越商品／仕入</label></fieldset>
-      <fieldset><legend>10. 収益から費用を引いたもの</legend><label><input type="radio" name="p10" value="1">利益</label><label><input type="radio" name="p10" value="0">資産</label></fieldset>
+    <section id="view-placement" class="view placement-view"><h2>最初の16問チェック</h2><p>基礎仕訳から決算書類までを確認し、理解に合う仕事から始めます。成績には影響しません。</p><form id="placement-form"><div class="placement-grid">
+      <fieldset data-domain="foundation"><legend>1. 資産が増える側</legend><label><input type="radio" name="p1" value="correct">借方</label><label><input type="radio" name="p1" value="wrong">貸方</label></fieldset>
+      <fieldset data-domain="foundation"><legend>2. 負債が増える側</legend><label><input type="radio" name="p2" value="wrong">借方</label><label><input type="radio" name="p2" value="correct">貸方</label></fieldset>
+      <fieldset data-domain="foundation"><legend>3. 商品を掛けで仕入れたときの貸方</legend><label><input type="radio" name="p3" value="wrong">売掛金</label><label><input type="radio" name="p3" value="correct">買掛金</label></fieldset>
+      <fieldset data-domain="foundation"><legend>4. 商品を掛けで売ったときの借方</legend><label><input type="radio" name="p4" value="correct">売掛金</label><label><input type="radio" name="p4" value="wrong">買掛金</label></fieldset>
+      <fieldset data-domain="foundation"><legend>5. 交通費1,200円を現金で支払った仕訳</legend><label><input type="radio" name="p5" value="wrong">借：現金1,200／貸：旅費交通費1,200</label><label><input type="radio" name="p5" value="correct">借：旅費交通費1,200／貸：現金1,200</label></fieldset>
+      <fieldset data-domain="foundation"><legend>6. 売掛金を現金で回収したときの貸方</legend><label><input type="radio" name="p6" value="correct">売掛金</label><label><input type="radio" name="p6" value="wrong">現金</label></fieldset>
+      <fieldset data-domain="foundation"><legend>7. 備品100,000円を現金で購入したときの借方</legend><label><input type="radio" name="p7" value="wrong">現金</label><label><input type="radio" name="p7" value="correct">備品</label></fieldset>
+      <fieldset data-domain="foundation"><legend>8. 仕訳帳から勘定科目ごとに転記する帳簿</legend><label><input type="radio" name="p8" value="correct">総勘定元帳</label><label><input type="radio" name="p8" value="wrong">試算表</label></fieldset>
+      <fieldset data-domain="closing"><legend>9. 期末商品を仕入から振り替える仕訳</legend><label><input type="radio" name="p9" value="wrong">借：仕入／貸：繰越商品</label><label><input type="radio" name="p9" value="correct">借：繰越商品／貸：仕入</label></fieldset>
+      <fieldset data-domain="closing"><legend>10. 備品の価値減少を当期の費用にする科目</legend><label><input type="radio" name="p10" value="correct">減価償却費</label><label><input type="radio" name="p10" value="wrong">仕入</label></fieldset>
+      <fieldset data-domain="closing"><legend>11. 帳簿の借方合計と貸方合計を集計して一致を確かめる表</legend><label><input type="radio" name="p11" value="wrong">損益計算書</label><label><input type="radio" name="p11" value="correct">試算表</label></fieldset>
+      <fieldset data-domain="closing"><legend>12. 決算で翌期分の支払家賃を当期費用から除く処理</legend><label><input type="radio" name="p12" value="correct">前払家賃へ振り替える</label><label><input type="radio" name="p12" value="wrong">未払家賃へ振り替える</label></fieldset>
+      <fieldset data-domain="closing"><legend>13. 売上1,000円、費用700円の当期純利益</legend><label><input type="radio" name="p13" value="wrong">1,700円</label><label><input type="radio" name="p13" value="correct">300円</label></fieldset>
+      <fieldset data-domain="closing"><legend>14. 決算整理を一覧し、P/L・B/S欄へつなぐ表</legend><label><input type="radio" name="p14" value="correct">精算表</label><label><input type="radio" name="p14" value="wrong">仕訳帳</label></fieldset>
+      <fieldset data-domain="closing"><legend>15. 資産と負債・純資産を表示する決算書</legend><label><input type="radio" name="p15" value="wrong">損益計算書</label><label><input type="radio" name="p15" value="correct">貸借対照表</label></fieldset>
+      <fieldset data-domain="closing"><legend>16. 収益と費用から当期純利益を表示する決算書</legend><label><input type="radio" name="p16" value="correct">損益計算書</label><label><input type="radio" name="p16" value="wrong">貸借対照表</label></fieldset>
     </div><p id="placement-status" role="alert" aria-live="polite"></p><button type="submit">診断して仕事を始める</button></form></section>
-    <section id="view-story" class="view"><h2>ストーリーモード</h2><p>取引を処理して、会社の数字を見えるようにしましょう。</p><article id="story-resume" class="resume-card"><p id="resume-scene"></p><strong id="resume-task"></strong><p id="resume-progress"></p><button type="button" data-action="start" id="resume-button">続きから</button></article><details><summary>問題を選んで学ぶ</summary><div id="story-list" class="question-list"></div></details></section>
+    <section id="view-story" class="view"><h2>ストーリーモード</h2><p>取引を処理して、会社の数字を見えるようにしましょう。</p><article id="story-resume" class="resume-card"><p id="resume-scene"></p><strong id="resume-task"></strong><p id="resume-progress"></p><button type="button" data-action="start" id="resume-button">続きから</button></article><details><summary>問題を選んで学ぶ</summary><div id="story-list" class="question-list"></div></details><button type="button" data-action="placement-retake">実力診断をやり直す</button></section>
     <section id="view-training" class="view"><h2>トレーニングモード</h2><p>試算表・元帳・精算表などを形式別に練習します。</p><div id="training-list" class="question-list"></div></section>
     <section id="view-review" class="view"><h2>復習モード</h2><p>間違えた問題を優先して解き直します。</p><div id="review-list" class="question-list"></div></section>
     <section id="view-exam" class="view"><h2>総合演習模試</h2><p>本試験そのものではない独自15問演習です。制限時間60分・100点満点・70点以上を合格圏とし、全問回答後に採点します。</p><div id="exam-list" class="question-list"></div></section>
@@ -75,6 +81,6 @@
     <section id="view-result" class="view"><div id="result-status" class="result-box" role="status" aria-live="polite"></div><div id="answer-comparison" class="answer-comparison"></div><div id="correct-journal" class="correct-journal"></div><div id="explanation" class="explanation-box"></div><div id="standard-result-actions"><button type="button" data-action="next">次へ進む</button></div><div id="exam-result-actions" class="result-actions" hidden><button type="button" data-action="exam-home">ホームへ戻る</button><button type="button" class="secondary-button" data-action="exam-review">結果を復習する</button><button type="button" class="secondary-button" data-action="exam-retry">もう一度総合演習</button></div></section>
   </main>
 </div>
-<script src="data/questions.js?v=20260826-23"></script><script src="js/calculator.js?v=20260826-23"></script><script src="js/model.js?v=20260826-23"></script><script src="js/rpg.js?v=20260826-23"></script><script src="js/engine.js?v=20260826-23"></script><script src="js/feedback.js?v=20260826-23"></script><script src="js/view.js?v=20260826-23"></script><script src="js/controller.js?v=20260826-23"></script><script src="js/app.js?v=20260826-23"></script>
+<script src="data/questions.js?v=20260826-24"></script><script src="js/calculator.js?v=20260826-24"></script><script src="js/model.js?v=20260826-24"></script><script src="js/rpg.js?v=20260826-24"></script><script src="js/engine.js?v=20260826-24"></script><script src="js/feedback.js?v=20260826-24"></script><script src="js/view.js?v=20260826-24"></script><script src="js/controller.js?v=20260826-24"></script><script src="js/app.js?v=20260826-24"></script>
 </body>
 </html>
