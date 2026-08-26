@@ -104,7 +104,8 @@
           const cell = row.insertCell();
           if (value === '入力') {
             const id = question.table.inputCells[inputIndex++]; const inputType = question.table.inputTypes?.[id] || 'amount';
-            const input = inputType === 'amount' ? this.makeAmount('table-input', `${id}の回答（金額）`, draft.cells?.[id] ?? '') : this.makeText('table-input', `${id}の回答（勘定科目）`, draft.cells?.[id] ?? '');
+            const metadata = question.table.inputMetadata?.[id]; const label = metadata?.label || this.cellLabel(question, id);
+            const input = inputType === 'amount' ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[id] ?? '') : this.makeText('table-input', label, draft.cells?.[id] ?? '');
             input.dataset.cellId = id; input.dataset.inputType = inputType; cell.append(input);
           }
           else cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value);

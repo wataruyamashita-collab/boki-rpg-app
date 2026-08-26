@@ -19,6 +19,10 @@ assert.strictEqual(Engine.gradeTable({ cells: { cash: '１，0００' } }, { cel
 assert.strictEqual(Engine.gradeTable({ cells: { cash: '0' } }, { cells: { cash: 0 } }).correct, true, '明示的に入力した0は正答として扱う');
 assert.strictEqual(Engine.gradeTable({ cells: { cash: '-1' } }, { cells: { cash: 0 } }).correct, false, '負数を0へ暗黙変換しない');
 assert.strictEqual(Engine.gradeTable({ cells: { cash: '' } }, { cells: { cash: 0 } }).correct, false, '空欄を数値0の正答として扱わない');
+assert.strictEqual(Engine.gradeTable({ cells: { due: '６月５日' } }, { cells: { due: '06/05' } }, { due:{ semanticType:'date' } }).correct, true, '日付の全角・月日表記・ゼロ埋めを意味的に正規化する');
+assert.strictEqual(Engine.gradeTable({ cells: { due: '6/32' } }, { cells: { due: '6/5' } }, { due:{ semanticType:'date' } }).correct, false, '不正または異なる日付を正解にしない');
+assert.strictEqual(Engine.gradeTable({ cells: { entity: ' 北星商事 ' } }, { cells: { entity: '北星商事' } }, { entity:{ semanticType:'text' } }).correct, true, '自由記述のUnicodeと前後空白を正規化する');
+assert.strictEqual(Engine.gradeTable({ cells: { entity: '北星物産' } }, { cells: { entity: '北星商事' } }, { entity:{ semanticType:'text' } }).correct, false, '異なる取引先を表記揺れとして許容しない');
 assert.strictEqual(Engine.gradeJournalEntry({ debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }, { debit: [{ account: '現金', amount: 100 }], credit: [{ account: '売上', amount: 100 }] }), true);
 assert.strictEqual(Engine.gradeJournalEntry({ debit: [{ account: '現金', amount: NaN }], credit: [{ account: '売上', amount: NaN }] }, { debit: [{ account: '現金', amount: NaN }], credit: [{ account: '売上', amount: NaN }] }), false, '非有限金額を仕訳として受理しない');
 assert.strictEqual(Engine.gradeJournalEntry({}, { debit: [], credit: [] }), false, '壊れた回答データでも採点を例外終了しない');
@@ -195,6 +199,9 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.QuestionD
 ['仕訳帳','受取手形記入帳','支払手形記入帳'].forEach(topic => assert(Object.values(browserSandbox.window.QuestionData).some(q => q.category === topic && q.materials?.length), `COVERAGE-02: ${topic}を資料から実際に完成する問題がある`));
 assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.L042.table.inputCells)), ['received1','drawer1','drawn1','due1','bank1','description1','amount1','received2','drawer2','drawn2','due2','bank2','description2','amount2','total'], 'L042は金額だけでなく受取日・振出人・振出日・満期日・支払場所・摘要を2行とも採点する');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(browserSandbox.window.QuestionData.L043.table.inputCells)), ['drawn1','payee1','due1','bank1','description1','amount1','drawn2','payee2','due2','bank2','description2','amount2','total'], 'L043は金額だけでなく振出日・受取人・満期日・支払場所・摘要を2行とも採点する');
+assert.strictEqual(browserSandbox.window.QuestionData.L042.table.inputMetadata.received1.label, '1行目 受取日', 'L042は内部IDではなく利用者向けラベルを持つ');
+assert.strictEqual(browserSandbox.window.QuestionData.L043.table.inputMetadata.due2.semanticType, 'date', 'L043の満期日は日付として採点する');
+assert.strictEqual(Engine.grade(browserSandbox.window.QuestionData.L042, { cells:{ ...browserSandbox.window.QuestionData.L042.answer.cells, received1:'６月５日', drawn1:'06/04', due1:'８月３１日' } }).correct, true, 'L042は安全な日付表記揺れを正解にする');
 assert.strictEqual(Engine.grade(browserSandbox.window.QuestionData.L042, browserSandbox.window.QuestionData.L042.answer).correct, true, 'L042の本試験型記入欄をすべて完成すると正解になる');
 assert.strictEqual(Engine.grade(browserSandbox.window.QuestionData.L042, { cells:{ ...browserSandbox.window.QuestionData.L042.answer.cells, due1:'8/30' } }).correct, false, 'L042は満期日が違えば金額が合っていても不正解にする');
 assert.strictEqual(Engine.grade(browserSandbox.window.QuestionData.L043, { cells:{ ...browserSandbox.window.QuestionData.L043.answer.cells, payee2:'北星物産' } }).correct, false, 'L043は受取人が違えば金額が合っていても不正解にする');
