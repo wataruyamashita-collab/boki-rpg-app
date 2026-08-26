@@ -1,6 +1,12 @@
 (function (root) {
   'use strict';
-  const ROLES = [[30, '決算責任者'], [20, '月次決算担当'], [10, '経理主任'], [5, '経理担当'], [1, '経理見習い']];
+  const ROLES = [
+    { level:30, name:'決算責任者', skills:['決算整理','財務諸表'] },
+    { level:20, name:'月次決算担当', skills:['帳簿','決算整理'] },
+    { level:10, name:'経理主任', skills:['仕訳'] },
+    { level:5, name:'経理担当', skills:['仕訳'] },
+    { level:1, name:'経理見習い', skills:[] }
+  ];
   class RPGModel {
     constructor(storage, key = 'boki-rpg-character-v1') {
       this.storage = storage; this.key = key;
@@ -30,8 +36,15 @@
       return clean;
     }
     save() { try { this.storage?.setItem?.(this.key, JSON.stringify(this.state)); } catch (_) {} }
-    get level() { return Math.min(30, Math.floor(Math.sqrt(this.state.xp / 20)) + 1); }
-    get role() { return ROLES.find(([level]) => this.level >= level)[1]; }
+    // Lv.30 requires 12,615 XP: less than the XP available from completing the
+    // authored curriculum, while still requiring broad mastery for promotion.
+    get level() { return Math.min(30, Math.floor(Math.sqrt(this.state.xp / 15)) + 1); }
+    skillMastery(skill) {
+      const aggregate = this.state.mastery[`@skill:${skill}`];
+      return aggregate?.possible ? aggregate.earned / aggregate.possible : 0;
+    }
+    unlocked(role) { return this.level >= role.level && role.skills.every(skill => this.skillMastery(skill) >= .7); }
+    get role() { return ROLES.find(role => this.unlocked(role))?.name || '経理見習い'; }
     reward(question, score, multiplier = 1) {
       if (!question || typeof question.id !== 'string' || !Number.isFinite(question.difficulty) || question.difficulty < 0 || this.state.rewardedIds.includes(question.id)) return false;
       if (!score || !Number.isFinite(score.ratio) || score.ratio < 0 || score.ratio > 1 || !Number.isFinite(score.earned) || !Number.isFinite(score.possible) || score.earned < 0 || score.possible < score.earned || !Number.isFinite(multiplier) || multiplier < 0) return false;
@@ -44,7 +57,13 @@
       if (!question || typeof question.category !== 'string' || !score || !Number.isFinite(score.earned) || !Number.isFinite(score.possible) || score.earned < 0 || score.possible <= 0 || score.possible < score.earned) return false;
       const mastery = this.state.mastery[question.category] || { earned: 0, possible: 0 };
       mastery.earned += score.earned; mastery.possible += score.possible;
-      this.state.mastery[question.category] = mastery; this.save(); return true;
+      this.state.mastery[question.category] = mastery;
+      const skill = question.type === 'journal' ? '仕訳' : ['ledger','trial_balance','correction'].includes(question.type) ? '帳簿' : question.type === 'worksheet' ? '決算整理' : ['financial_statement','comprehensive'].includes(question.type) ? '財務諸表' : null;
+      if (skill) {
+        const key = `@skill:${skill}`; const aggregate = this.state.mastery[key] || { earned:0, possible:0 };
+        aggregate.earned += score.earned; aggregate.possible += score.possible; this.state.mastery[key] = aggregate;
+      }
+      this.save(); return true;
     }
     questionAmount(question) {
       if (question.type === 'journal') return (question.answer?.debit || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
