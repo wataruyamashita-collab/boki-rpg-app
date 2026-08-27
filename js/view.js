@@ -27,7 +27,8 @@
     tableLabel(value) { return TABLE_LABELS[value] || value; }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
     updateRpg(rpg) {
-      this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜帳簿信頼度 ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円`;
+      const completion = rpg.progressCompleted ? '｜修了：主要実務と異なる模試で能力を確認済み。次は間隔復習へ' : '';
+      this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜帳簿信頼度 ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円${completion}`;
     }
     renderQuestion(question, draft, mode = 'story') {
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;

@@ -51,8 +51,11 @@ assert.strictEqual(rpg.reward(question, { ratio: 0.5, earned: 1, possible: 2 }),
 assert.strictEqual(rpg.reward(question, { ratio: 1, earned: 2, possible: 2 }), false, '経験値は二重付与しない');
 assert.strictEqual(rpg.state.xp, 20);
 const maxXpRpg = new RPGModel({ getItem() { return null; }, setItem() {} });
-maxXpRpg.state.xp = 12760;
-assert.strictEqual(maxXpRpg.level, 30, '全300問で得られるXP内でLv.30に到達できる');
+// Reachability must use reward(), not direct XP injection. Exam candidates use
+// the same once-only route when an exam is finished correctly.
+for (let index = 0; index < 253; index += 1) maxXpRpg.reward({ id:`reachable-${index}`, difficulty:3, category:'test' }, { ratio:1, earned:1, possible:1 });
+assert.strictEqual(maxXpRpg.state.xp, 15180, '実ユーザー報酬経路で正当な到達可能XPを積み上げる');
+assert.strictEqual(maxXpRpg.level, 30, '実ユーザー報酬経路でLv.30に到達できる');
 maxXpRpg.state.mastery = { '@skill:仕訳':{ earned:10, possible:10 }, '@skill:帳簿':{ earned:10, possible:10 }, '@skill:決算整理':{ earned:10, possible:10 }, '@skill:財務諸表':{ earned:10, possible:10 } };
 assert.strictEqual(maxXpRpg.role, '決算責任者', '最終役職はXPと主要技能masteryの両方で解放する');
 maxXpRpg.state.mastery['@skill:財務諸表'] = { earned:0, possible:10 };
@@ -75,11 +78,15 @@ assert.deepStrictEqual([recoveredRpg.state.xp, recoveredRpg.state.rewardedIds.le
 const graduationQuestions = { J1:{ type:'journal' }, L1:{ type:'ledger' }, W1:{ type:'worksheet' }, F1:{ type:'financial_statement' }, C1:{ type:'comprehensive' } };
 const graduation = new ProgressModel(graduationQuestions, { getItem() { return null; }, setItem() {} }, 'graduation');
 graduation.state.answeredIds = Object.keys(graduationQuestions);
-graduation.state.examHistory = [{ points:80 }, { points:75 }];
+graduation.state.correctIds = Object.keys(graduationQuestions);
+graduation.state.examHistory = [{ points:80, setSignature:'set-a' }, { points:75, setSignature:'set-b' }];
 const graduationRpg = { skillMastery:() => .8 };
 assert.strictEqual(graduation.updateCompletion(graduationRpg), true, '主要mastery・実務形式・複数模試合格をすべて卒業条件とする');
-graduation.state.examHistory = [{ points:80 }];
+graduation.state.examHistory = [{ points:80, setSignature:'set-a' }];
 assert.strictEqual(graduation.updateCompletion(graduationRpg), false, '模試1回だけで卒業扱いにしない');
+graduation.state.correctIds = ['J1'];
+graduation.state.examHistory = [{ points:80, setSignature:'set-a' }, { points:75, setSignature:'set-b' }];
+assert.strictEqual(graduation.updateCompletion(graduationRpg), false, '実務問題は回答済みやmasteryだけでなく正解証拠を要求する');
 const brokenJsonStorage = { getItem() { return '{broken'; }, setItem() { throw new Error('quota'); } };
 const memoryProgress = new ProgressModel({ J1: {} }, brokenJsonStorage);
 const memoryRpg = new RPGModel(brokenJsonStorage);
@@ -401,6 +408,14 @@ assert(trainingIds.every(id=>browserSandbox.window.QuestionData[id].learningRole
 ['correction','worksheet','financial_statement','comprehensive'].forEach(type => assert(trainingIds.some(id => browserSandbox.window.QuestionData[id].type === type), `Trainingで${type}をExam前に学べる`));
 assert(examIds.every(id=>browserSandbox.window.QuestionData[id].learningRole==='transfer'),'Exam Poolは初見転移用Questionへ限定する');
 assert.strictEqual(examIds.length, 15, '模試は設計通り15問を選出する');
+const routeRpg = new RPGModel({ getItem(){ return null; }, setItem(){} }, 'route-xp');
+Object.values(browserSandbox.window.QuestionData).forEach(question => routeRpg.reward(question, { correct:true, ratio:1, earned:1, possible:1 }));
+const theoreticalXp = Object.values(browserSandbox.window.QuestionData).reduce((sum, question) => sum + 20 * question.difficulty, 0);
+assert.strictEqual(routeRpg.state.xp, theoreticalXp, 'Story・Training・Examを共通のreward-once経路で完遂した実到達XPを集計する');
+assert(routeRpg.level === 30 && routeRpg.state.xp >= 12615, 'Exam候補を含む正当な全問題完遂でLv.30へ到達できる');
+const beforeDuplicate = routeRpg.state.xp;
+assert.strictEqual(routeRpg.reward(browserSandbox.window.QuestionData[examIds[0]], { ratio:1, earned:1, possible:1 }), false, 'Exam再受験でも同一問題のXPを二重取得できない');
+assert.strictEqual(routeRpg.state.xp, beforeDuplicate, '重複報酬拒否後もXPは不変である');
 let relatedStarted=''; let relatedSaved=false;
 const relatedContext={questions:browserSandbox.window.QuestionData,model:{state:{mode:'story'},save(){relatedSaved=true;}},examCandidateIds:poolContext.examCandidateIds,ids:poolContext.ids,renderModes(){},start(id){relatedStarted=id;}};
 assert.strictEqual(examPrototype.openRelated.call(relatedContext,'J001'),true,'Knowledge Linkが実在する学習問題へ遷移する');

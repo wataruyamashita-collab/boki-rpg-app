@@ -3,7 +3,7 @@
   class ProgressModel {
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
@@ -13,6 +13,10 @@
           mode: ['story', 'training', 'review', 'exam'].includes(saved.mode) ? saved.mode : 'story',
           currentQuestionId: this.questions[saved.currentQuestionId] ? saved.currentQuestionId : null,
           answeredIds: Array.isArray(saved.answeredIds) ? saved.answeredIds.filter(id => this.questions[id]) : [],
+          // Legacy saves did not have correctIds. Only validated attempt evidence may be
+          // migrated; an old "answered" flag is deliberately not promoted to competence.
+          correctIds: Array.isArray(saved.correctIds) ? [...new Set(saved.correctIds.filter(id => this.questions[id]))]
+            : [...new Set((Array.isArray(saved.attempts) ? saved.attempts : []).filter(item => item?.correct === true && this.questions[item.questionId || item.id]).map(item => item.questionId || item.id))],
           incorrectIds: Array.isArray(saved.incorrectIds) ? saved.incorrectIds.filter(id => this.questions[id]) : [],
           drafts: saved.drafts && typeof saved.drafts === 'object' && !Array.isArray(saved.drafts)
             ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object')) : {},
@@ -53,6 +57,7 @@
     record(id, correct, now = Date.now()) {
       if (!this.questions[id]) return false;
       if (!this.state.answeredIds.includes(id)) this.state.answeredIds.push(id);
+      if (correct && !this.state.correctIds.includes(id)) this.state.correctIds.push(id);
       const intervals = [20 * 60 * 1000, 24 * 60 * 60 * 1000, 3 * 24 * 60 * 60 * 1000, 7 * 24 * 60 * 60 * 1000];
       const scheduled = this.state.reviewSchedule[id];
       if (!correct) {
@@ -143,11 +148,11 @@
     }
     resetPlacement() { this.state.placement = null; this.save(); }
     updateCompletion(rpg) {
-      const passedExams = this.state.examHistory.filter(item => item.points >= 70).length;
+      const passedExams = this.state.examHistory.filter(item => item.points >= 70 && item.setSignature).map(item => item.setSignature);
       const practicalTypes = ['ledger','worksheet','financial_statement','comprehensive'];
-      const practicalPassed = practicalTypes.every(type => this.state.answeredIds.some(id => this.questions[id]?.type === type));
+      const practicalPassed = practicalTypes.every(type => this.state.correctIds.some(id => this.questions[id]?.type === type));
       const masteryPassed = ['仕訳','帳簿','決算整理','財務諸表'].every(skill => rpg?.skillMastery?.(skill) >= .7);
-      this.state.completed = practicalPassed && masteryPassed && passedExams >= 2;
+      this.state.completed = practicalPassed && masteryPassed && new Set(passedExams).size >= 2;
       this.save(); return this.state.completed;
     }
   }
