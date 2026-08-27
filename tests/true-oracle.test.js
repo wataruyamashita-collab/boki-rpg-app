@@ -37,4 +37,25 @@ for(const phrase of ['株主から現金3,020,000円の追加払込みを受け�
   last.借方=last.貸方;last.貸方='—';
   assert.strictEqual(root.deriveAccountingExpected('L037',null,question).expected.cells.side,'借方','L037 side follows the final posting direction');
 }
+{
+  const positive=root.deriveAccountingExpected('L038').expected.cells;
+  assert.deepStrictEqual({side:positive.balanceSide,balance:positive.balance},{side:'貸方',balance:120000});
+  const negative=structuredClone(root.QuestionData.L038);negative.materials.at(-1).減少=300000;
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(root.deriveAccountingExpected('L038',null,negative).expected.cells)),{date:'5/27',counterpart:'仕入',balanceSide:'借方',balance:165000});
+  const zero=structuredClone(root.QuestionData.L038);zero.materials.at(-1).減少=135000;
+  assert.deepStrictEqual({side:root.deriveAccountingExpected('L038',null,zero).expected.cells.balanceSide,balance:root.deriveAccountingExpected('L038',null,zero).expected.cells.balance},{side:'貸方',balance:0});
+}
+{
+  const cash=structuredClone(root.QuestionData.L041);cash.materials[0].取引=cash.materials[0].取引.replace('掛販売','現金販売');
+  const expected=root.deriveAccountingExpected('L041',null,cash).expected.cells;
+  assert.deepStrictEqual({debit:expected.d1Account,credit:expected.c1Account},{debit:'現金',credit:'売上'});
+  const unknown=structuredClone(root.QuestionData.L041);unknown.materials[0].取引='商品90,000円を未知の手段で取引';
+  assert.strictEqual(root.deriveAccountingExpected('L041',null,unknown).status,'UNKNOWN_SOURCE');
+}
+{
+  const invalid=structuredClone(root.QuestionData.C001),row=invalid.materials.find(x=>x.資料区分==='整理前残高試算表');row.借方合計+=137;
+  const derived=root.deriveAccountingExpected('C001',null,invalid),finding=root.auditAccountingOracle({...root.QuestionData,C001:invalid}).findings.C001;
+  assert.strictEqual(derived.derivable,true);assert.strictEqual(derived.sourceValid,false);assert.strictEqual(derived.status,'INVALID_SOURCE');
+  assert.strictEqual(finding.status,'INVALID_SOURCE');assert.strictEqual(finding.overallPass,false);assert.strictEqual(finding.match,false);
+}
 console.log('true oracle tests: ok');

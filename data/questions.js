@@ -14667,7 +14667,16 @@ function independentlyDerivedTableCells(item) {
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('d1Account')) {
     const folios=Object.fromEntries([...String(item.question).matchAll(/(現金|売掛金|売上|通信費)([0-9]+)/g)].map(m=>[m[1],Number(m[2])]));
-    const entries=item.materials.map(source=>{const text=String(source.取引||source.内容||''), amount=Number(text.match(/([0-9,]+)円/)?.[1].replace(/,/g,''));return /掛販売/.test(text)?{d:'売掛金',c:'売上',amount}:{d:'通信費',c:'現金',amount};});
+    const entries=item.materials.map(source=>{
+      const text=String(source.取引||source.内容||''), amount=Number(text.match(/([0-9,]+)円/)?.[1].replace(/,/g,''));
+      if(/掛販売/.test(text))return {d:'売掛金',c:'売上',amount};
+      if(/現金販売/.test(text))return {d:'現金',c:'売上',amount};
+      if(/掛仕入/.test(text))return {d:'仕入',c:'買掛金',amount};
+      if(/現金仕入/.test(text))return {d:'仕入',c:'現金',amount};
+      if(/通信費.+現金(?:払い|で支払)/.test(text))return {d:'通信費',c:'現金',amount};
+      return null;
+    });
+    if(entries.some(entry=>!entry||!Number.isFinite(entry.amount)))return null;
     return {d1Account:entries[0].d,d1Ref:folios[entries[0].d],d1Amount:entries[0].amount,c1Account:entries[0].c,c1Ref:folios[entries[0].c],c1Amount:entries[0].amount,d2Account:entries[1].d,d2Ref:folios[entries[1].d],d2Amount:entries[1].amount,c2Account:entries[1].c,c2Ref:folios[entries[1].c],c2Amount:entries[1].amount};
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('date1')) {
@@ -14697,7 +14706,8 @@ function independentlyDerivedTableCells(item) {
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('balanceSide')) {
     const opening=Number(String(item.question).match(/期首貸方残高([0-9,]+)円/)?.[1].replace(/,/g,'')), last=item.materials.at(-1);
-    return {date:last.日付,counterpart:last.相手勘定,balanceSide:'貸方',balance:item.materials.reduce((sum,row)=>sum+numeric(row.増加)-numeric(row.減少),opening)};
+    const signedBalance=item.materials.reduce((sum,row)=>sum+numeric(row.増加)-numeric(row.減少),opening);
+    return {date:last.日付,counterpart:last.相手勘定,balanceSide:signedBalance<0?'借方':'貸方',balance:Math.abs(signedBalance)};
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('received1')) {
     const cells={};item.materials.forEach((row,i)=>{const n=i+1;Object.assign(cells,{[`received${n}`]:row.受取日,[`drawer${n}`]:row.振出人,[`drawn${n}`]:row.振出日,[`due${n}`]:row.満期日,[`bank${n}`]:row.支払場所,[`description${n}`]:row.摘要,[`amount${n}`]:row.金額});});cells.total=item.materials.reduce((s,r)=>s+r.金額,0);return cells;
