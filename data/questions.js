@@ -14583,6 +14583,24 @@ const SemanticTableAnswerKey = new Map(Object.values(QuestionData)
   .map(item => [item.id, JSON.stringify(item.answer.cells)]));
 
 // High-risk closing questions use visible accounting facts rather than the authored answer as their oracle.
+function parseMonthDay(value) {
+  const match=String(value || '').normalize('NFKC').match(/(?:\d{4}[年/.-])?(\d{1,2})[月/.-](\d{1,2})日?/);
+  if(!match)return null;
+  const month=Number(match[1]),day=Number(match[2]);
+  return month>=1&&month<=12&&day>=1&&day<=31?{month,day}:null;
+}
+// Disposal dates are exclusive; closing dates include the closing month.
+function monthDistance(startValue,endValue,{inclusiveEnd=false}={}) {
+  const start=parseMonthDay(startValue),end=parseMonthDay(endValue);
+  if(!start||!end)return null;
+  return (end.month-start.month+12)%12+(inclusiveEnd?1:0);
+}
+function chronologicalRows(rows,dateKey) {
+  return [...rows].map((row,index)=>({row,index,date:parseMonthDay(row[dateKey])})).sort((a,b)=>{
+    if(!a.date||!b.date)return a.date?-1:b.date?1:a.index-b.index;
+    return a.date.month-b.date.month||a.date.day-b.date.day||a.index-b.index;
+  }).map(entry=>entry.row);
+}
 function independentlyDerivedTableCells(item) {
   const rows=item?.table?.rows || [];
   const numeric=value => typeof value === 'number' ? value : 0;
@@ -14645,8 +14663,10 @@ function independentlyDerivedTableCells(item) {
   if (String(item?.category || '').startsWith('固定資産台帳') && /定額法/.test(item.question || '')) {
     if (item.id === 'L040' && item.materials?.length === 2) {
       const [a,b]=item.materials, life=Number(String(item.question).match(/耐用年数([0-9]+)年/)?.[1]);
-      const annualA=Number(a.取得原価)/life, depreciationA=annualA*6/12, bookA=Number(a.取得原価)-depreciationA;
-      const depreciationB=Number(b.取得原価)/life*9/12;
+      const monthsA=monthDistance(a.取得日,a.売却日),monthsB=monthDistance(b.取得日,'3/31',{inclusiveEnd:true});
+      if(!Number.isInteger(monthsA)||!Number.isInteger(monthsB)||!Number.isFinite(life)||life<=0)return null;
+      const annualA=Number(a.取得原価)/life, depreciationA=annualA*monthsA/12, bookA=Number(a.取得原価)-depreciationA;
+      const depreciationB=Number(b.取得原価)/life*monthsB/12;
       return {annualA,depreciationA,bookA,lossA:bookA-Number(a.売却価額),depreciationB,bookB:Number(b.取得原価)-depreciationB};
     }
     const row=item.table?.rows?.[0] || {}, depreciation=Number(row.acquisitionCost)/Number(row.life);
@@ -14693,10 +14713,10 @@ function independentlyDerivedTableCells(item) {
     return {date1:item.materials[0].日付,summary1:first.summary,folio1:`${folios[first.debit]}・${folios[first.credit]}`,debitTotal:total,creditTotal:total};
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('received')) {
-    const notes=item.materials.filter(row=>row.種類==='約束手形受取'); return {received:notes[0].日付,due:notes.at(-1).満期日,drawer:notes.map(row=>row.振出人).join('・'),total:notes.reduce((sum,row)=>sum+row.金額,0)};
+    const notes=chronologicalRows(item.materials.filter(row=>row.種類==='約束手形受取'),'日付'),due=chronologicalRows(notes,'満期日'); return {received:notes[0].日付,due:due.at(-1).満期日,drawer:notes.map(row=>row.振出人).join('・'),total:notes.reduce((sum,row)=>sum+row.金額,0)};
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('issued')) {
-    const notes=item.materials.filter(row=>row.種類==='約束手形振出'); return {issued:notes[0].日付,due:notes.at(-1).満期日,payee:notes.map(row=>row.受取人).join('・'),total:notes.reduce((sum,row)=>sum+row.金額,0)};
+    const notes=chronologicalRows(item.materials.filter(row=>row.種類==='約束手形振出'),'日付'),due=chronologicalRows(notes,'満期日'); return {issued:notes[0].日付,due:due.at(-1).満期日,payee:notes.map(row=>row.受取人).join('・'),total:notes.reduce((sum,row)=>sum+row.金額,0)};
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('side')) {
     const opening=Number(String(item.question).match(/期首残高([0-9,]+)円/)?.[1].replace(/,/g,'')), last=item.materials.at(-1);

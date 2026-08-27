@@ -1,22 +1,20 @@
 'use strict';
 const assert = require('assert');
 const fs = require('fs');
-const childProcess = require('child_process');
+const crypto = require('crypto');
 const vm = require('vm');
 
 const source = fs.readFileSync('service-worker.js', 'utf8');
 const release = source.match(/const RELEASE = '([^']+)'/)[1];
 const versionedAssets = [...source.matchAll(/'\.\/(?:css|data|js)\/[^']+'/g)]
   .map(match => match[0].slice(3, -1));
-const readRevision = (revision, file) => {
-  try { return childProcess.execFileSync('git', ['show', `${revision}:${file}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); }
-  catch (_) { return null; }
-};
-const previousWorker = readRevision('HEAD^', 'service-worker.js');
-if (previousWorker) {
-  const previousRelease = previousWorker.match(/const RELEASE = '([^']+)'/)[1];
-  const changedAsset = versionedAssets.find(file => readRevision('HEAD^', file) !== fs.readFileSync(file, 'utf8'));
-  if (changedAsset) assert.notStrictEqual(release, previousRelease, `${changedAsset} changed without a release bump`);
+const manifest = JSON.parse(fs.readFileSync('pwa-release-manifest.json', 'utf8'));
+assert.strictEqual(manifest.release, release, 'release manifest and worker use one release');
+assert.notStrictEqual(manifest.release, manifest.previousRelease, 'a production release must advance from its explicit baseline');
+assert.deepStrictEqual(Object.keys(manifest.assets).sort(), versionedAssets.sort(), 'manifest covers every versioned production asset');
+for (const [file, expectedHash] of Object.entries(manifest.assets)) {
+  const actualHash = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  assert.strictEqual(actualHash, expectedHash, `${file} changed without regenerating the release manifest`);
 }
 
 class MemoryCache {

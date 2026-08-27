@@ -159,6 +159,13 @@ deskCalculator.calcKey('C');
 assert.strictEqual(deskCalculator.expression, '0', 'Cは表示値だけを0に戻す');
 deskCalculator.calcKey('AC');
 assert.deepStrictEqual([deskCalculator.expression, deskCalculator.calculator.accumulator, deskCalculator.calculator.operator], ['0', null, null], 'ACは計算状態をすべて消去する');
+const operatorIndicator={textContent:''}; const operatorButtons=['＋','−','×','÷'].map(value=>({dataset:{calc:value},classList:{toggle(_name,on){this.active=on;}},setAttribute(name,value){this[name]=value;}}));
+deskCalculator.document={getElementById:id=>id==='calculator-operator'?operatorIndicator:{value:'',textContent:''},querySelectorAll:()=>operatorButtons};
+deskCalculator.calcKey('1'); deskCalculator.calcKey('2'); deskCalculator.calcKey('×');
+assert.strictEqual(operatorIndicator.textContent,'×','選択中の演算子を表示する');
+deskCalculator.calcKey('÷'); assert.strictEqual(operatorIndicator.textContent,'÷','演算子変更は表示と内部stateを同期する');
+deskCalculator.resetCalculator=browserSandbox.window.AppController.prototype.resetCalculator; deskCalculator.calculatorTarget={}; deskCalculator.resetCalculator();
+assert.deepStrictEqual([deskCalculator.expression,deskCalculator.calculator.operator,operatorIndicator.textContent,deskCalculator.calculatorTarget],['0',null,'',null],'問題遷移resetは表示・演算子・内部状態・転記先を消去する');
 const questionDataSource = fs.readFileSync('data/questions.js', 'utf8');
 vm.runInNewContext(`${questionDataSource}\nwindow.QuestionDataAudit = validateQuestionData();`, browserSandbox);
 for (const [id, authored, mutated] of [['D019','insurance:160000','insurance:200000'],['F001','netIncome:180000','netIncome:220000']]) {

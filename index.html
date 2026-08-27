@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260827-32">
+  <link rel="stylesheet" href="css/style.css?v=20260827-33">
 </head>
 <body>
 <div class="container">
@@ -64,7 +64,7 @@
         <div id="journal-container" class="journal-entry-area"></div>
         <div id="table-container" class="table-question-wrap"></div>
         <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
-          <input id="calculator-display" class="calculator-display" value="0" readonly inputmode="numeric" aria-label="計算機の表示">
+          <div class="calculator-readout"><input id="calculator-display" class="calculator-display" value="0" readonly inputmode="numeric" aria-label="計算機の表示"><output id="calculator-operator" class="calculator-operator-indicator" aria-label="選択中の演算子" aria-live="polite"></output></div>
           <div class="calculator-transfer"><span id="calculator-target" aria-live="polite">金額欄を選んでください</span><button type="button" data-action="calc-insert">表示中の金額を入力</button></div>
           <div class="calculator-keys" aria-label="計算機">
             <button type="button" data-action="calc" data-calc="AC">AC</button><button type="button" data-action="calc" data-calc="C">C</button><button type="button" data-action="calc" data-calc="÷">÷</button><button type="button" data-action="calc" data-calc="×">×</button>
@@ -81,6 +81,6 @@
     <section id="view-result" class="view"><div id="result-status" class="result-box" role="status" aria-live="polite"></div><div id="answer-comparison" class="answer-comparison"></div><div id="correct-journal" class="correct-journal"></div><div id="explanation" class="explanation-box"></div><div id="standard-result-actions"><button type="button" data-action="next">次へ進む</button></div><div id="exam-result-actions" class="result-actions" hidden><button type="button" data-action="exam-home">ホームへ戻る</button><button type="button" class="secondary-button" data-action="exam-review">結果を復習する</button><button type="button" class="secondary-button" data-action="exam-retry">もう一度総合演習</button></div></section>
   </main>
 </div>
-<script src="data/questions.js?v=20260827-32"></script><script src="data/accounting-oracle.js?v=20260827-32"></script><script src="js/calculator.js?v=20260827-32"></script><script src="js/model.js?v=20260827-32"></script><script src="js/rpg.js?v=20260827-32"></script><script src="js/engine.js?v=20260827-32"></script><script src="js/feedback.js?v=20260827-32"></script><script src="js/view.js?v=20260827-32"></script><script src="js/controller.js?v=20260827-32"></script><script src="js/app.js?v=20260827-32"></script>
+<script src="data/questions.js?v=20260827-33"></script><script src="data/accounting-oracle.js?v=20260827-33"></script><script src="js/calculator.js?v=20260827-33"></script><script src="js/model.js?v=20260827-33"></script><script src="js/rpg.js?v=20260827-33"></script><script src="js/engine.js?v=20260827-33"></script><script src="js/feedback.js?v=20260827-33"></script><script src="js/view.js?v=20260827-33"></script><script src="js/controller.js?v=20260827-33"></script><script src="js/app.js?v=20260827-33"></script>
 </body>
 </html>

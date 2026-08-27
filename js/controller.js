@@ -241,7 +241,7 @@
       this.document.getElementById('resume-progress').textContent = `Chapter進捗 ${chapterIds.filter(id => this.model.state.answeredIds.includes(id)).length} / ${chapterIds.length}｜役職 ${this.rpg.role}`;
       this.document.getElementById('resume-button').dataset.questionId = nextId;
     }
-    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
+    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.resetCalculator(); this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
     saveDraft(message) { if (!this.currentId) return; this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) this.document.getElementById('save-status').textContent = '入力内容を保存しました。'; }
     submit() {
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
@@ -305,7 +305,16 @@
         return decimal === undefined ? formatted : `${formatted}.${decimal}`;
       });
     }
-    updateCalculatorDisplay() { this.document.getElementById('calculator-display').value = this.formatCalculatorExpression(this.expression) || '0'; }
+    updateCalculatorDisplay() {
+      this.document.getElementById('calculator-display').value = this.formatCalculatorExpression(this.expression) || '0';
+      const active=this.calculator?.operator || '', indicator=this.document.getElementById('calculator-operator');
+      if (indicator) indicator.textContent=active;
+      this.document.querySelectorAll?.('[data-action="calc"][data-calc]').forEach(button=>{
+        const operator=['＋','−','×','÷'].includes(button.dataset.calc), selected=operator&&button.dataset.calc===active;
+        button.classList.toggle('calculator-operator-active',selected);
+        if(operator)button.setAttribute('aria-pressed',String(selected));
+      });
+    }
     insertCalculatorResult(shouldCalculate) {
       const selectedTarget = this.document.querySelector?.('.amount-input.calculator-selected');
       const target = this.document.body.contains(this.calculatorTarget) ? this.calculatorTarget : selectedTarget;
@@ -328,6 +337,10 @@
     }
     clearCalculator() {
       this.expression = '0'; this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
+    }
+    resetCalculator() {
+      this.clearCalculator(); this.calculatorTarget=null; this.updateCalculatorDisplay();
+      const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選んでください';
     }
     inputCalculatorDigit(key) {
       if (this.expression === 'エラー' || this.calculator.waitingForOperand) { this.expression = '0'; this.calculator.waitingForOperand = false; }

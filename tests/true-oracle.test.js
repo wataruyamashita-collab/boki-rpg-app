@@ -58,4 +58,15 @@ for(const phrase of ['株主から現金3,020,000円の追加払込みを受け�
   assert.strictEqual(derived.derivable,true);assert.strictEqual(derived.sourceValid,false);assert.strictEqual(derived.status,'INVALID_SOURCE');
   assert.strictEqual(finding.status,'INVALID_SOURCE');assert.strictEqual(finding.overallPass,false);assert.strictEqual(finding.match,false);
 }
+{
+  for(const id of ['L035','L036']){
+    const original=root.deriveAccountingExpected(id).expected.cells,shuffled=structuredClone(root.QuestionData[id]);
+    shuffled.materials.reverse();
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(root.deriveAccountingExpected(id,null,shuffled).expected.cells)),JSON.parse(JSON.stringify(original)),`${id}: material order cannot alter chronological facts`);
+  }
+  const disposal=structuredClone(root.QuestionData.L040);disposal.materials[0].売却日='11/1';
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(root.deriveAccountingExpected('L040',null,disposal).expected.cells)),{annualA:120000,depreciationA:70000,bookA:530000,lossA:110000,depreciationB:45000,bookB:255000});
+  const acquisition=structuredClone(root.QuestionData.L040);acquisition.materials[1].取得日='8/1';
+  assert.strictEqual(root.deriveAccountingExpected('L040',null,acquisition).expected.cells.depreciationB,40000,'L040 acquisition month controls proration');
+}
 console.log('true oracle tests: ok');
