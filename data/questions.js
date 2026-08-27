@@ -14666,11 +14666,61 @@ function independentlyDerivedTableCells(item) {
 // 仕訳も authored answer ではなく、表示された取引事実と勘定規則から導く。
 function independentlyDerivedJournal(item) {
   const text=String(item?.question || '');
-  const amountMatch=text.match(/商品([0-9,]+)円を仕入れ、代金は掛け/);
-  if (amountMatch) {
-    const amount=Number(amountMatch[1].replace(/,/g,''));
-    return {debit:[{account:'仕入',amount}],credit:[{account:'買掛金',amount}]};
-  }
+  const numbers=[...text.matchAll(/([0-9][0-9,]*(?:\.[0-9]+)?)\s*(％|%|円|年)?/g)].map(match=>({value:Number(match[1].replace(/,/g,'')),unit:match[2]||''}));
+  const yen=numbers.filter(number=>number.unit==='円').map(number=>number.value);
+  const amount=(index=0)=>yen[index];
+  const entry=(debit,credit)=>({debit,credit});
+  const row=(account,value)=>({account,amount:value});
+  if (/追加出資/.test(text)) return entry([row('現金',amount())],[row('資本金',amount())]);
+  if (/手許現金.+普通預金.+預け入れ/.test(text)) return entry([row('普通預金',amount())],[row('現金',amount())]);
+  if (/当座預金口座を開設/.test(text)) return entry([row('当座預金',amount())],[row('普通預金',amount())]);
+  if (/商品.+仕入れ、代金は掛け/.test(text) && !/運賃/.test(text)) return entry([row('仕入',amount())],[row('買掛金',amount())]);
+  if (/商品.+販売し、代金は掛け/.test(text) && !/運賃/.test(text)) return entry([row('売掛金',amount())],[row('売上',amount())]);
+  if (/仕入れ.+引取運賃/.test(text)) return entry([row('仕入',amount(0)+amount(1))],[row('買掛金',amount(0)),row('現金',amount(1))]);
+  if (/販売し.+発送運賃/.test(text)) return entry([row('売掛金',amount(0)),row('発送費',amount(1))],[row('売上',amount(0)),row('現金',amount(1))]);
+  if (/掛けで仕入れた商品.+返品/.test(text)) return entry([row('買掛金',amount())],[row('仕入',amount())]);
+  if (/掛けで販売した商品.+返品/.test(text)) return entry([row('売上',amount())],[row('売掛金',amount())]);
+  if (/売掛金.+普通預金.+振り込まれ/.test(text)) return entry([row('普通預金',amount())],[row('売掛金',amount())]);
+  if (/買掛金.+普通預金.+振り込んだ/.test(text)) return entry([row('買掛金',amount())],[row('普通預金',amount())]);
+  if (/買掛金.+電子記録債務/.test(text)) return entry([row('買掛金',amount())],[row('電子記録債務',amount())]);
+  if (/売掛金.+電子記録債権/.test(text)) return entry([row('電子記録債権',amount())],[row('売掛金',amount())]);
+  if (/クレジットカードで販売/.test(text)) {const sale=amount(),rate=(numbers.find(number=>number.unit==='％'||number.unit==='%')?.value||0)/100,fee=sale*rate;return entry([row('クレジット売掛金',sale-fee),row('支払手数料',fee)],[row('売上',sale)]);}
+  if (/商品受領前の内金/.test(text)) return entry([row('前払金',amount())],[row('現金',amount())]);
+  if (/商品引渡前の内金/.test(text)) return entry([row('現金',amount())],[row('前受金',amount())]);
+  if (/現金実査額が帳簿残高より/.test(text)) return entry([row('現金過不足',amount())],[row('現金',amount())]);
+  if (/現金不足額.+通信費/.test(text)) return entry([row('通信費',amount())],[row('現金過不足',amount())]);
+  if (/小口現金係.+定額資金/.test(text)) return entry([row('小口現金',amount())],[row('当座預金',amount())]);
+  if (/小口現金係.+交通費/.test(text)) {const total=amount(0)+amount(1)+amount(2);return entry([row('旅費交通費',amount(0)),row('通信費',amount(1)),row('消耗品費',amount(2))],[row('当座預金',total)]);}
+  if (/業務用パソコン/.test(text)) return entry([row('備品',amount())],[row('未払金',amount())]);
+  if (/取得原価.+減価償却累計額.+備品を.+売却/.test(text)) {const [cost,accumulated,proceeds]=yen,gain=proceeds-(cost-accumulated),settlement=/翌月受け取る/.test(text)?'未収入金':'普通預金';return entry([row(settlement,proceeds),row('減価償却累計額',accumulated),...(gain<0?[row('固定資産売却損',-gain)]:[])],[row('備品',cost),...(gain>0?[row('固定資産売却益',gain)]:[])]);}
+  if (/出張旅費の概算額/.test(text)) return entry([row('仮払金',amount())],[row('現金',amount())]);
+  if (/出張から戻り.+未使用の現金/.test(text)) return entry([row('旅費交通費',amount(0)),row('現金',amount(1))],[row('仮払金',amount(0)+amount(1))]);
+  if (/会社が現金で立て替え/.test(text)) return entry([row('立替金',amount())],[row('現金',amount())]);
+  if (/銀行から.+借り入れ/.test(text)) return entry([row('普通預金',amount())],[row('借入金',amount())]);
+  if (/借入金元本.+利息/.test(text)) return entry([row('借入金',amount(0)),row('支払利息',amount(1))],[row('普通預金',amount(0)+amount(1))]);
+  if (/給与総額.+所得税預り金.+社会保険料預り金/.test(text)) return entry([row('給料',amount(0))],[row('所得税預り金',amount(1)),row('社会保険料預り金',amount(2)),row('普通預金',amount(0)-amount(1)-amount(2))]);
+  if (/所得税.+税務署へ納付/.test(text)) return entry([row('所得税預り金',amount())],[row('普通預金',amount())]);
+  if (/社会保険料.+従業員預り分.+会社負担分/.test(text)) return entry([row('社会保険料預り金',amount(0)),row('法定福利費',amount(1))],[row('普通預金',amount(0)+amount(1))]);
+  if (/固定資産税/.test(text)) return entry([row('租税公課',amount())],[row('現金',amount())]);
+  if (/収入印紙.+購入し、直ちに使用/.test(text)) return entry([row('租税公課',amount())],[row('現金',amount())]);
+  if (/取引先へ.+貸し付け/.test(text)) return entry([row('貸付金',amount())],[row('普通預金',amount())]);
+  if (/貸付金の利息.+入金/.test(text)) return entry([row('普通預金',amount())],[row('受取利息',amount())]);
+  if (/収入印紙.+未使用/.test(text)) return entry([row('貯蔵品',amount())],[row('租税公課',amount())]);
+  if (/他店発行の商品券/.test(text)) return entry([row('受取商品券',amount())],[row('売上',amount())]);
+  if (/返還される敷金/.test(text)) return entry([row('差入保証金',amount())],[row('普通預金',amount())]);
+  if (/消耗品費.+誤って通信費/.test(text)) return entry([row('消耗品費',amount())],[row('通信費',amount())]);
+  if (/買掛金.+借方・貸方とも/.test(text)) {const difference=amount(0)-amount(1);return entry([row('買掛金',difference)],[row('普通預金',difference)]);}
+  if (/掛売上が未記帳/.test(text)) return entry([row('売掛金',amount())],[row('売上',amount())]);
+  if (/保険料.+次期分.+繰り延べ/.test(text)) return entry([row('前払保険料',amount(1))],[row('保険料',amount(1))]);
+  if (/借入金利息.+未払い/.test(text)) return entry([row('支払利息',amount())],[row('未払利息',amount())]);
+  if (/家賃.+次期分.+繰り延べ/.test(text)) return entry([row('受取家賃',amount(1))],[row('前受家賃',amount(1))]);
+  if (/貸付金.+利息.+未収/.test(text)) return entry([row('未収利息',amount())],[row('受取利息',amount())]);
+  if (/売掛金残高.+貸倒れを見積もる/.test(text)) {const receivables=amount(0),rate=(numbers.find(number=>number.unit==='％'||number.unit==='%')?.value||0)/100,opening=amount(1),expense=receivables*rate-opening;return entry([row('貸倒引当金繰入',expense)],[row('貸倒引当金',expense)]);}
+  if (/前期に発生した売掛金.+回収不能/.test(text)) return entry([row('貸倒引当金',amount())],[row('売掛金',amount())]);
+  if (/備品（取得原価.+耐用年数.+定額法/.test(text)) {const cost=amount(),life=numbers.find(number=>number.unit==='年')?.value,depreciation=cost/life;return entry([row('減価償却費',depreciation)],[row('減価償却累計額',depreciation)]);}
+  if (/期首商品棚卸高.+期末商品棚卸高/.test(text)) return entry([row('仕入',amount(0)),row('繰越商品',amount(1))],[row('繰越商品',amount(0)),row('仕入',amount(1))]);
+  if (/仮払消費税.+仮受消費税.+相殺/.test(text)) {const payable=amount(1)-amount(0);return entry([row('仮受消費税',amount(1))],[row('仮払消費税',amount(0)),row('未払消費税',payable)]);}
+  if (/損益勘定の貸方残高/.test(text)) return entry([row('損益',amount())],[row('繰越利益剰余金',amount())]);
   return null;
 }
 
