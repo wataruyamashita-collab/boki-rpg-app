@@ -14671,8 +14671,17 @@ function independentlyDerivedTableCells(item) {
     return {d1Account:entries[0].d,d1Ref:folios[entries[0].d],d1Amount:entries[0].amount,c1Account:entries[0].c,c1Ref:folios[entries[0].c],c1Amount:entries[0].amount,d2Account:entries[1].d,d2Ref:folios[entries[1].d],d2Amount:entries[1].amount,c2Account:entries[1].c,c2Ref:folios[entries[1].c],c2Amount:entries[1].amount};
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('date1')) {
-    const amounts=item.materials.map(source=>Number(String(source.内容).match(/([0-9,]+)円/)?.[1].replace(/,/g,'')));
-    return {date1:item.materials[0].日付,summary1:'掛売上',folio1:'113・401',debitTotal:amounts.reduce((a,b)=>a+b,0),creditTotal:amounts.reduce((a,b)=>a+b,0)};
+    const folios=Object.fromEntries([...String(item.question).matchAll(/(現金|売掛金|売上|通信費)([0-9]+)/g)].map(match=>[match[1],match[2]]));
+    const entries=item.materials.map(source=>{
+      const text=String(source.内容||''), amount=Number(text.match(/([0-9,]+)円/)?.[1].replace(/,/g,''));
+      if(/掛販売/.test(text))return {debit:'売掛金',credit:'売上',summary:'掛売上',amount};
+      if(/現金販売/.test(text))return {debit:'現金',credit:'売上',summary:'現金売上',amount};
+      if(/通信費.+現金(?:払い|で支払)/.test(text))return {debit:'通信費',credit:'現金',summary:'通信費現金払い',amount};
+      return null;
+    });
+    if(entries.some(entry=>!entry||!Number.isFinite(entry.amount)))return null;
+    const first=entries[0], total=entries.reduce((sum,entry)=>sum+entry.amount,0);
+    return {date1:item.materials[0].日付,summary1:first.summary,folio1:`${folios[first.debit]}・${folios[first.credit]}`,debitTotal:total,creditTotal:total};
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('received')) {
     const notes=item.materials.filter(row=>row.種類==='約束手形受取'); return {received:notes[0].日付,due:notes.at(-1).満期日,drawer:notes.map(row=>row.振出人).join('・'),total:notes.reduce((sum,row)=>sum+row.金額,0)};
@@ -14682,7 +14691,9 @@ function independentlyDerivedTableCells(item) {
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('side')) {
     const opening=Number(String(item.question).match(/期首残高([0-9,]+)円/)?.[1].replace(/,/g,'')), last=item.materials.at(-1);
-    return {date:last.日付,counterpart:last.相手勘定,side:'貸方',balance:item.materials.reduce((sum,row)=>sum+numeric(row.借方)-numeric(row.貸方),opening)};
+    const side=Number.isFinite(Number(last.借方))?'借方':Number.isFinite(Number(last.貸方))?'貸方':null;
+    if(!side)return null;
+    return {date:last.日付,counterpart:last.相手勘定,side,balance:item.materials.reduce((sum,row)=>sum+numeric(row.借方)-numeric(row.貸方),opening)};
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('balanceSide')) {
     const opening=Number(String(item.question).match(/期首貸方残高([0-9,]+)円/)?.[1].replace(/,/g,'')), last=item.materials.at(-1);
@@ -14833,7 +14844,7 @@ function journalEffectsForEvent(event) {
   const taxAmount=Math.round(netAmount*taxRate), cashReceipt=netAmount+taxAmount;
   return Object.freeze({ debit:Object.freeze([{account:'現金',amount:cashReceipt}]), credit:Object.freeze([{account:'売上',amount:netAmount},{account:'仮受消費税',amount:taxAmount}]), netAmount, taxAmount, cashReceipt });
 }
-function validateExamQuestion3(item) {
+function deriveExamQuestion3Expected(item) {
   if (item?.format !== 'exam-question-3') return { valid:false, errors:['第3問形式ではありません'], derivedCells:null };
   const text = JSON.stringify({question:item.question, materials:item.materials}); const errors=[]; let derivedCells=null; let trialBalance=null; let statements=null;
   const material = type => item.materials?.find(row => row.資料区分 === type);
@@ -14904,9 +14915,21 @@ function validateExamQuestion3(item) {
   if (trialBalance && trialBalance.debit!==trialBalance.credit) errors.push(`整理前貸借不一致 ${trialBalance.debit}/${trialBalance.credit}`);
   if (statements && statements.plDebit!==statements.plCredit) errors.push(`P/L不一致 ${statements.plDebit}/${statements.plCredit}`);
   if (statements && statements.bsDebit!==statements.bsCredit) errors.push(`B/S不一致 ${statements.bsDebit}/${statements.bsCredit}`);
-  if (derivedCells) { for (const [cell,expected] of Object.entries(derivedCells)) if (item.answer?.cells?.[cell]!==expected) errors.push(`${cell}を表示資料から再計算した値と正答が不一致`); }
-  else errors.push('表示資料から独立再計算する会計規則が未実装です');
+  if (!derivedCells) errors.push('表示資料から独立再計算する会計規則が未実装です');
   return Object.freeze({valid:errors.length===0,errors:Object.freeze(errors),derivedCells:derivedCells&&Object.freeze(derivedCells),trialBalance,statements});
+}
+function validateAuthoredAnswer(expected, authoredAnswer) {
+  const errors=[];
+  if(!expected)errors.push('表示資料から独立再計算する会計規則が未実装です');
+  else for(const [cell,value] of Object.entries(expected))if(authoredAnswer?.cells?.[cell]!==value)errors.push(`${cell}を表示資料から再計算した値と正答が不一致`);
+  return Object.freeze({valid:errors.length===0,errors:Object.freeze(errors)});
+}
+function validateExamQuestion3(item) {
+  const derivation=deriveExamQuestion3Expected(item);
+  if(!derivation.derivedCells)return derivation;
+  const answerValidation=validateAuthoredAnswer(derivation.derivedCells,item.answer);
+  const errors=Object.freeze([...derivation.errors,...answerValidation.errors]);
+  return Object.freeze({...derivation,valid:errors.length===0,errors,authoredAnswerMatch:answerValidation.valid});
 }
 
 const QuestionDataMeta = Object.freeze({
@@ -15177,6 +15200,8 @@ if (typeof window !== 'undefined') {
   window.validateQuestionData = validateQuestionData;
   window.validateSemanticQuestionData = validateSemanticQuestionData;
   window.validateExamQuestion3 = validateExamQuestion3;
+  window.deriveExamQuestion3Expected = deriveExamQuestion3Expected;
+  window.validateAuthoredAnswer = validateAuthoredAnswer;
   window.journalEffectsForEvent = journalEffectsForEvent;
   window.independentlyDerivedTableCells = independentlyDerivedTableCells;
   window.independentlyDerivedJournal = independentlyDerivedJournal;
