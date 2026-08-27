@@ -131,7 +131,15 @@
     }
     learningIds() {
       const exam = new Set(this.examCandidateIds());
-      return this.ids.filter(id => this.questions[id].learningRole !== 'review' && !exam.has(id));
+      const roleOrder = { core:0, drill:1, reinforcement:2, transfer:3 };
+      return this.ids.map((id, index) => ({ id, index }))
+        .filter(({ id }) => this.questions[id].learningRole !== 'review' && !exam.has(id))
+        // Keep the authored chapter sequence while making the Core -> Drill
+        // progression deterministic within a chapter. Transfer-only assessment
+        // variants remain isolated by the explicit exam contract above.
+        .sort((left, right) => this.questions[left.id].chapter - this.questions[right.id].chapter ||
+          (roleOrder[this.questions[left.id].learningRole] ?? 2) - (roleOrder[this.questions[right.id].learningRole] ?? 2) || left.index - right.index)
+        .map(item => item.id);
     }
     storyIds() {
       const flow = { journal: 0, ledger: 1, trial_balance: 2, correction: 3, worksheet: 4, financial_statement: 5, comprehensive: 6 };
