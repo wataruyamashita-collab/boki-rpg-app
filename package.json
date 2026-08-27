@@ -4,11 +4,12 @@
   "private": true,
   "description": "Dependency-free bookkeeping learning RPG",
   "scripts": {
-    "test": "node tests/app.test.js && node tests/service-worker.test.js && node tests/audit-engagement.test.js && node tests/true-oracle.test.js && node scripts/audit-data.js && node scripts/audit-feedback.js && node scripts/audit-oracle.js && node scripts/audit-exam-readiness.js",
+    "test": "node tests/app.test.js && node tests/service-worker.test.js && node tests/audit-engagement.test.js && node tests/true-oracle.test.js && node tests/audit-matrix.test.js && node scripts/audit-data.js && node scripts/audit-feedback.js && node scripts/audit-oracle.js && node scripts/audit-exam-readiness.js",
     "audit:exam": "node scripts/audit-exam-readiness.js",
     "typecheck": "tsc --noEmit",
     "audit:oracle": "node scripts/audit-oracle.js",
-    "audit:oracle-source": "node scripts/audit-oracle-source.js"
+    "audit:oracle-source": "node scripts/audit-oracle-source.js",
+    "audit:matrix": "node scripts/audit-matrix.js"
   },
   "engines": {
     "node": ">=18"
