@@ -10,8 +10,8 @@ function deriveExpected(_id,_unused,item=root.QuestionData?.[_id]){
   if(!item)return {derivable:false,mode:'UNKNOWN',fallbackUsed:false,error:'UNKNOWN_QUESTION'};
   let expected=null,rules=[],intermediate=[];
   if(item.format==='exam-question-3'){
-    const checked=root.validateExamQuestion3?.(item);
-    if(checked?.valid&&checked.derivedCells){expected=checked.derivedCells;rules=['SOURCE_SELECTION','ADJUSTMENT_JOURNALS','STATEMENT_CLASSIFICATION'];intermediate=[checked.trialBalance,checked.statements].filter(Boolean);}
+    const derivation=root.deriveExamQuestion3Expected?.(item);
+    if(derivation?.derivedCells){expected=derivation.derivedCells;rules=['SOURCE_SELECTION','ADJUSTMENT_JOURNALS','STATEMENT_CLASSIFICATION'];intermediate=[derivation.trialBalance,derivation.statements].filter(Boolean);}
   } else if(item.type==='journal') {
     expected=root.independentlyDerivedJournal?.(item);
     rules=['SEMANTIC_NORMALIZATION','ACCOUNT_EFFECT_CLASSIFICATION','DOUBLE_ENTRY'];
