@@ -15011,6 +15011,17 @@ function validateSemanticQuestionData(questionData = QuestionData) {
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {
+  // The exam pool is an explicit assessment contract. It is intentionally independent
+  // of object insertion order and is consumed by both Controller and the audits.
+  window.ExamPoolDefinition = Object.freeze([
+    ...Array.from({length:20},(_,i)=>`J${String(131+i).padStart(3,'0')}`),
+    ...Array.from({length:18},(_,i)=>`L${String(33+i).padStart(3,'0')}`),
+    ...Array.from({length:8},(_,i)=>`T${String(33+i).padStart(3,'0')}`),
+    ...Array.from({length:6},(_,i)=>`E${String(15+i).padStart(3,'0')}`),
+    ...Array.from({length:8},(_,i)=>`D${String(13+i).padStart(3,'0')}`),
+    'F001','F002','F003','F008','F009','F010',
+    'C001','C002','C003','C006','C007','C008','C009','C010'
+  ]);
   window.QuestionData = QuestionData;
   window.validateQuestionData = validateQuestionData;
   window.validateSemanticQuestionData = validateSemanticQuestionData;

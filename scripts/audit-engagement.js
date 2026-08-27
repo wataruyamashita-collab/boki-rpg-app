@@ -1,17 +1,17 @@
 'use strict';
 const fs = require('fs');
 const vm = require('vm');
-const { evaluateRows } = require('./audit-exam-readiness');
+const { runAudit } = require('./audit-exam-readiness');
 
 const questionSandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync('data/questions.js', 'utf8'), questionSandbox);
 const questions = Object.values(questionSandbox.window.QuestionData);
-const examRows = evaluateRows(questions);
+const examRows = runAudit().rows;
 const readiness = Object.fromEntries(examRows.map(row => [row.officialTopic, row.pass ? 1 : 0]));
 const examEvidence = {
   independentReadiness: examRows.filter(row => row.pass).length / examRows.length,
   question1: readiness['仕訳'],
-  question2: ['仕訳帳', '総勘定元帳', '受取手形記入帳', '支払手形記入帳', '固定資産（月割・売却）']
+  question2: ['仕訳帳', '総勘定元帳', '受取手形記入帳', '支払手形記入帳', '固定資産']
     .reduce((total, topic) => total + readiness[topic], 0) / 5,
   question3: readiness['P/L・B/S統合'],
   unseenTransfer: readiness['初見転移']

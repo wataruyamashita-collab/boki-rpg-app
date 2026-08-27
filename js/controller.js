@@ -115,11 +115,19 @@
       const attempt = Number(this.model.state.examAttempt || 0);
       const semanticAudit = this.semanticAudit || root.validateSemanticQuestionData(this.questions);
       const eligible = new Set(semanticAudit.eligibleIds);
-      return Object.entries(quota).flatMap(([type, count]) => { const pool = this.examCandidateIds().filter(id => this.questions[id].type === type && eligible.has(id)); if (pool.length < count) throw new Error(`独立Semantic監査済みの${type}転移問題が不足しています`); const start = (attempt * count) % pool.length; return Array.from({ length: count }, (_, index) => pool[(start + index) % pool.length]); });
+      return Object.entries(quota).flatMap(([type, count]) => {
+        const pool = this.examCandidateIds().filter(id => this.questions[id].type === type && eligible.has(id));
+        if (pool.length < count) throw new Error(`独立Semantic監査済みの${type}転移問題が不足しています`);
+        // Walk the explicit pool in quota-sized windows. Twenty audited attempts cover
+        // every candidate while pools larger than 2×quota cannot collapse to A/B sets.
+        const start = (attempt * count) % pool.length;
+        return Array.from({ length:count }, (_, index) => pool[(start + index) % pool.length]);
+      });
     }
     examCandidateIds() {
-      const quota = { journal: 5, ledger: 2, trial_balance: 2, correction: 2, worksheet: 2, financial_statement: 1, comprehensive: 1 };
-      return Object.entries(quota).flatMap(([type, count]) => this.ids.filter(id => this.questions[id].type === type && this.questions[id].learningRole === 'transfer').slice(-count * 2));
+      const contract = Array.isArray(root.ExamPoolDefinition) ? root.ExamPoolDefinition : [];
+      const seen = new Set();
+      return contract.filter(id => !seen.has(id) && seen.add(id) && this.questions[id]?.learningRole === 'transfer');
     }
     learningIds() {
       const exam = new Set(this.examCandidateIds());
