@@ -14548,7 +14548,31 @@ QuestionData.L036=examLedgerVariant('L036','支払手形記入帳','更新手形
 QuestionData.L037=examLedgerVariant('L037','総勘定元帳（売掛金）','個別転記','売掛金勘定へ日付・相手勘定・借貸位置を転記し、期末残高を求めなさい。期首残高40,000円。',[{日付:'4/8',取引:'掛売上',相手勘定:'売上',借方:120000,貸方:'—'},{日付:'4/20',取引:'現金回収',相手勘定:'現金',借方:'—',貸方:90000}],{date:'4/20',counterpart:'現金',side:'貸方',balance:70000},['最終取引日','最終相手勘定','最終転記の借貸位置','期末残高'],'40,000＋120,000－90,000＝70,000円。回収は売掛金勘定の貸方です。');
 QuestionData.L038=examLedgerVariant('L038','総勘定元帳（買掛金）','複数転記と残高方向','買掛金勘定へ3取引を転記し、最終相手勘定、残高方向、期末残高を求めなさい。期首貸方残高75,000円。',[{日付:'5/4',取引:'掛仕入',相手勘定:'仕入',増加:140000,減少:'—'},{日付:'5/18',取引:'普通預金から支払',相手勘定:'普通預金',増加:'—',減少:80000},{日付:'5/27',取引:'仕入返品',相手勘定:'仕入',増加:'—',減少:15000}],{date:'5/27',counterpart:'仕入',balanceSide:'貸方',balance:120000},['最終取引日','最終相手勘定','残高方向','期末残高'],'75,000＋140,000－80,000－15,000＝120,000円の貸方残高です。');
 
+// 特殊帳簿の転移問題には、日常仕訳・債権債務・満期決済を反復する
+// Core/Drill を明示的に接続する。模試内でも variantGroup の段階が分かれ、
+// 単なる数値差し替えではない二段階の初見転移を測定できる。
+Object.assign(QuestionData.L034, { variantGroup:'仕訳帳:段階転移1', curriculumPrerequisites:['J004','J005','J017'] });
+Object.assign(QuestionData.L035, { variantGroup:'受取手形記入帳:段階転移1', curriculumPrerequisites:['J005','J013','J037'] });
+Object.assign(QuestionData.L036, { variantGroup:'支払手形記入帳:段階転移1', curriculumPrerequisites:['J004','J012','J036'] });
+Object.assign(QuestionData.L041, { variantGroup:'仕訳帳:段階転移2', curriculumPrerequisites:['J004','J005','J038'] });
+Object.assign(QuestionData.L042, { variantGroup:'受取手形記入帳:段階転移2', curriculumPrerequisites:['J005','J013','J037'] });
+Object.assign(QuestionData.L043, { variantGroup:'支払手形記入帳:段階転移2', curriculumPrerequisites:['J004','J012','J036'] });
+
 ['J145','J146','J147'].forEach(id => Object.assign(QuestionData[id], { learningRole:'transfer', timelineRole:'transfer', materials:[{資料種別:'独立取引資料',取引内容:QuestionData[id].question}] }));
+
+// Chapter-wide boilerplate is retained as continuity, then every question receives
+// its own company-growth milestone. This keeps the four-act business arc visible
+// while preventing dozens of exercises from presenting an identical narrative.
+Object.values(QuestionData).forEach((item, index) => {
+  const stage = item.chapter <= 3
+    ? { label:'売上拡大', setting:'受注と取引量が増える' }
+    : item.chapter <= 6
+      ? { label:'備品導入', setting:'業務設備を整える' }
+      : item.chapter <= 9
+        ? { label:'資金調達', setting:'成長資金の動きを見直す' }
+        : { label:'決算', setting:'年度報告の準備を進める' };
+  item.story = `${item.story} ${stage.setting}なか、${item.category}の証憑を担当する第${index + 1}の場面。ここでの確認が${stage.label}の次工程へつながる。`;
+});
 
 // semanticには入力面の所在だけを記録する。VALIDや模試可否をデータ自身に宣言させず、
 // validateSemanticQuestionDataが表示情報と正答を独立に照合して毎回算出する。

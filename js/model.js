@@ -150,7 +150,15 @@
     updateCompletion(rpg) {
       const passedExams = this.state.examHistory.filter(item => item.points >= 70 && item.setSignature).map(item => item.setSignature);
       const practicalTypes = ['ledger','worksheet','financial_statement','comprehensive'];
-      const practicalPassed = practicalTypes.every(type => this.state.correctIds.some(id => this.questions[id]?.type === type));
+      // Graduation represents repeatable competence, not one lucky answer in each
+      // format.  IDs are de-duplicated on load, but use a Set here as a final
+      // defensive boundary for callers that construct state in memory.
+      const correctEvidence = new Set(this.state.correctIds);
+      const minimumEvidencePerType = 3;
+      const practicalPassed = practicalTypes.every(type => {
+        const distinctCorrect = [...correctEvidence].filter(id => this.questions[id]?.type === type);
+        return distinctCorrect.length >= minimumEvidencePerType;
+      });
       const masteryPassed = ['仕訳','帳簿','決算整理','財務諸表'].every(skill => rpg?.skillMastery?.(skill) >= .7);
       this.state.completed = practicalPassed && masteryPassed && new Set(passedExams).size >= 2;
       this.save(); return this.state.completed;
