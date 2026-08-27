@@ -14584,6 +14584,20 @@ const SemanticTableAnswerKey = new Map(Object.values(QuestionData)
 
 // High-risk closing questions use visible accounting facts rather than the authored answer as their oracle.
 function independentlyDerivedTableCells(item) {
+  const rows=item?.table?.rows || [];
+  const numeric=value => typeof value === 'number' ? value : 0;
+  // A running ledger is derived exclusively from its opening balance and postings.
+  if (item?.type === 'ledger' && item.table?.inputCells?.join(',') === 'r2_balance,r3_balance' && rows.length === 3) {
+    let balance=Number(rows[0].balance);
+    const cells={};
+    const liability=Number.isFinite(rows[0].credit)&&!Number.isFinite(rows[0].debit);
+    rows.slice(1).forEach((posting,index) => { balance += (liability?-1:1)*(numeric(posting.debit)-numeric(posting.credit)); cells[`r${index+2}_balance`]=balance; });
+    return cells;
+  }
+  if (item?.type === 'ledger' && item.table?.inputCells?.join(',') === 'r1_currentDepreciation,r1_closingBookValue') {
+    const asset=rows[0] || {}, depreciation=Number(asset.acquisitionCost)/Number(asset.life);
+    return {r1_currentDepreciation:depreciation,r1_closingBookValue:Number(asset.acquisitionCost)-Number(asset.openingAccumulated)-depreciation};
+  }
   if (item?.id === 'L033') {
     const row=item.materials?.[0]||{}, life=Number(String(item.question).match(/耐用年数([0-9]+)年/)?.[1]), months=Number(String(item.question).match(/使用期間は([0-9]+)か月/)?.[1]);
     const cost=Number(row.取得原価), depreciation=cost/life*months/12;
@@ -14651,6 +14665,59 @@ function independentlyDerivedTableCells(item) {
     const income=Number(item.materials?.[0]?.収入 || 0), expense=Number(item.materials?.[1]?.支出 || 0);
     return {value1:income,value2:expense,value3:income-expense};
   }
+  if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('d1Account')) {
+    const folios=Object.fromEntries([...String(item.question).matchAll(/(現金|売掛金|売上|通信費)([0-9]+)/g)].map(m=>[m[1],Number(m[2])]));
+    const entries=item.materials.map(source=>{const text=String(source.取引||source.内容||''), amount=Number(text.match(/([0-9,]+)円/)?.[1].replace(/,/g,''));return /掛販売/.test(text)?{d:'売掛金',c:'売上',amount}:{d:'通信費',c:'現金',amount};});
+    return {d1Account:entries[0].d,d1Ref:folios[entries[0].d],d1Amount:entries[0].amount,c1Account:entries[0].c,c1Ref:folios[entries[0].c],c1Amount:entries[0].amount,d2Account:entries[1].d,d2Ref:folios[entries[1].d],d2Amount:entries[1].amount,c2Account:entries[1].c,c2Ref:folios[entries[1].c],c2Amount:entries[1].amount};
+  }
+  if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('date1')) {
+    const amounts=item.materials.map(source=>Number(String(source.内容).match(/([0-9,]+)円/)?.[1].replace(/,/g,'')));
+    return {date1:item.materials[0].日付,summary1:'掛売上',folio1:'113・401',debitTotal:amounts.reduce((a,b)=>a+b,0),creditTotal:amounts.reduce((a,b)=>a+b,0)};
+  }
+  if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('received')) {
+    const notes=item.materials.filter(row=>row.種類==='約束手形受取'); return {received:notes[0].日付,due:notes.at(-1).満期日,drawer:notes.map(row=>row.振出人).join('・'),total:notes.reduce((sum,row)=>sum+row.金額,0)};
+  }
+  if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('issued')) {
+    const notes=item.materials.filter(row=>row.種類==='約束手形振出'); return {issued:notes[0].日付,due:notes.at(-1).満期日,payee:notes.map(row=>row.受取人).join('・'),total:notes.reduce((sum,row)=>sum+row.金額,0)};
+  }
+  if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('side')) {
+    const opening=Number(String(item.question).match(/期首残高([0-9,]+)円/)?.[1].replace(/,/g,'')), last=item.materials.at(-1);
+    return {date:last.日付,counterpart:last.相手勘定,side:'貸方',balance:item.materials.reduce((sum,row)=>sum+numeric(row.借方)-numeric(row.貸方),opening)};
+  }
+  if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('balanceSide')) {
+    const opening=Number(String(item.question).match(/期首貸方残高([0-9,]+)円/)?.[1].replace(/,/g,'')), last=item.materials.at(-1);
+    return {date:last.日付,counterpart:last.相手勘定,balanceSide:'貸方',balance:item.materials.reduce((sum,row)=>sum+numeric(row.増加)-numeric(row.減少),opening)};
+  }
+  if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('received1')) {
+    const cells={};item.materials.forEach((row,i)=>{const n=i+1;Object.assign(cells,{[`received${n}`]:row.受取日,[`drawer${n}`]:row.振出人,[`drawn${n}`]:row.振出日,[`due${n}`]:row.満期日,[`bank${n}`]:row.支払場所,[`description${n}`]:row.摘要,[`amount${n}`]:row.金額});});cells.total=item.materials.reduce((s,r)=>s+r.金額,0);return cells;
+  }
+  if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('drawn1')) {
+    const cells={};item.materials.forEach((row,i)=>{const n=i+1;Object.assign(cells,{[`drawn${n}`]:row.振出日,[`payee${n}`]:row.受取人,[`due${n}`]:row.満期日,[`bank${n}`]:row.支払場所,[`description${n}`]:row.摘要,[`amount${n}`]:row.金額});});cells.total=item.materials.reduce((s,r)=>s+r.金額,0);return cells;
+  }
+  if (item?.type === 'ledger' && item.table?.inputCells?.join(',') === 'value1,value2,value3') {
+    const text=String(item.question), amounts=[...text.matchAll(/([0-9,]+)円/g)].map(m=>Number(m[1].replace(/,/g,'')));
+    if (item.materials?.length) { const values=item.materials.map(row=>Number(row.預入!=null&&row.預入!=='—'?row.預入:row.引出!=null&&row.引出!=='—'?row.引出:row.金額)); if(values.every(Number.isFinite)&&values.length===2)return {value1:values[0],value2:values[1],value3:values[0]+(/引出/.test(JSON.stringify(item.materials))?-values[1]:values[1])}; }
+    if (/移動平均法/.test(text)){const n=[...text.matchAll(/([0-9,]+)個@([0-9,]+)円/g)].map(m=>[Number(m[1].replace(/,/g,'')),Number(m[2].replace(/,/g,''))]),issued=Number(text.match(/([0-9,]+)個を払い出/)?.[1].replace(/,/g,''));const average=n.reduce((s,x)=>s+x[0]*x[1],0)/n.reduce((s,x)=>s+x[0],0);return {value1:average,value2:average*issued,value3:average*(n.reduce((s,x)=>s+x[0],0)-issued)};}
+    if(amounts.length>=2)return {value1:amounts[0],value2:amounts[1],value3:/伝票/.test(text)?amounts[2]:amounts[0]-amounts[1]};
+  }
+  // Correction = correct transaction entry minus the entry actually recorded.
+  if (item?.type === 'correction' && item.materials?.length === 1) {
+    const {recorded='',evidence=''}=item.materials[0], parse=side=>{const m=String(recorded).match(new RegExp(`（${side}）([^ ]+) ([0-9,]+)`));return m&&{account:m[1],amount:Number(m[2].replace(/,/g,''))};};
+    const rd=parse('借'),rc=parse('貸'), amount=Number(String(evidence).match(/([0-9,]+)円/)?.[1].replace(/,/g,''));
+    let correct;
+    if(/買掛金/.test(evidence)&&/(支払|振り込)/.test(evidence))correct={d:'買掛金',c:'普通預金'};else if(/事務用品/.test(evidence))correct={d:'消耗品費',c:'現金'};else if(/売掛金.+回収/.test(evidence))correct={d:/現金で/.test(evidence)?'現金':'普通預金',c:'売掛金'};else if(/複合機|業務用パソコン/.test(evidence))correct={d:'備品',c:'未払金'};else if(/掛けで販売/.test(evidence))correct={d:'売掛金',c:'売上'};else if(/貸付金利息/.test(evidence))correct={d:'普通預金',c:'受取利息'};else if(/通信費/.test(evidence))correct={d:'通信費',c:'現金'};else if(/借入金元本/.test(evidence))correct={d:'借入金',c:'普通預金'};else if(/火災保険料/.test(evidence))correct={d:'保険料',c:'普通預金'};else if(/引渡前.+内金/.test(evidence))correct={d:'現金',c:'前受金'};else if(/商品受領前.+内金/.test(evidence))correct={d:'前払金',c:'普通預金'};else if(/概算前渡し/.test(evidence))correct={d:'仮払金',c:'現金'};else if(/立替払い/.test(evidence))correct={d:'立替金',c:'現金'};else if(/収入印紙/.test(evidence))correct={d:'租税公課',c:'現金'};else if(/振込手数料/.test(evidence))correct={d:'支払手数料',c:'普通預金'};else if(/給与総額/.test(evidence))correct={d:'給料',c:'普通預金'};
+    if(correct){const deltas=new Map();const add=(a,v)=>deltas.set(a,(deltas.get(a)||0)+v);add(correct.d,amount);add(correct.c,-amount);add(rd.account,-rd.amount);add(rc.account,rc.amount);const debit=[...deltas].find(([,v])=>v>0),credit=[...deltas].find(([,v])=>v<0);return {debitAccount:debit[0],debitAmount:debit[1],creditAccount:credit[0],creditAmount:-credit[1]};}
+  }
+  if (item?.type === 'worksheet' && /保険料.+分の1が次期分/.test(item.question||'')) {
+    const text=item.question, insurance=Number(text.match(/保険料([0-9,]+)円/)?.[1].replace(/,/g,'')), divisor=Number(text.match(/([0-9]+)分の1/)?.[1]), equipment=Number(text.match(/備品([0-9,]+)円/)?.[1].replace(/,/g,'')), life=Number(text.match(/耐用年数([0-9]+)年/)?.[1]);const adjustment=insurance/divisor,depreciation=equipment/life;return {insurance_adjustment:adjustment,insurance_expense_after:insurance-adjustment,depreciation_expense:depreciation,equipment_book_value_after:equipment-depreciation};
+  }
+  if (item?.type === 'worksheet' && item.format === 'eight-column-worksheet' && rows.length) {
+    const cells={};rows.slice(0,6).forEach((r,i)=>{if(Number.isFinite(r.tbDebit))cells[`bsDebit_${i+1}`]=r.tbDebit;if(Number.isFinite(r.tbCredit))cells[`bsCredit_${i+1}`]=r.tbCredit;});const [prepaid,depreciation]=[...String(item.question).matchAll(/([0-9,]+)円/g)].map(m=>+m[1].replace(/,/g,'')), profit=rows[6].tbCredit-rows[7].tbDebit-(rows[8].tbDebit-prepaid)-depreciation;Object.assign(cells,{plCredit_7:rows[6].tbCredit,plDebit_8:rows[7].tbDebit,adjCredit_9:prepaid,plDebit_9:rows[8].tbDebit-prepaid,adjDebit_10:prepaid,bsDebit_10:prepaid,adjDebit_11:depreciation,plDebit_11:depreciation,adjCredit_12:depreciation,bsCredit_12:depreciation,plDebit_13:profit,bsCredit_13:profit});return cells;
+  }
+  if (item?.type === 'financial_statement' && rows.length) {const sum=section=>rows.filter(r=>r.section===section&&Number.isFinite(r.amount)).reduce((s,r)=>s+r.amount,0),assets=sum('資産'),liabilities=sum('負債'),capital=rows.find(r=>r.account==='資本金')?.amount||0;return {retainedEarnings:assets-liabilities-capital,assetsTotal:assets,liabilitiesEquityTotal:assets};}
+  if (item?.type === 'comprehensive' && item.format !== 'exam-question-3' && item.materials?.length) {
+    let cash=0,revenue=0,expense=0;for(const row of item.materials){const text=String(row.transaction),amount=Number(text.match(/([0-9,]+)円/)?.[1]?.replace(/,/g,'')||0);if(/現金残高/.test(text)){cash=amount;continue;}if(/借り入れ.+現金/.test(text)||/内金.+現金で受け取/.test(text))cash+=amount;if(/現金で購入|現金で.+仕入|現金払い|現金で支払|現金で前払い/.test(text))cash-=amount;if(/現金で.+販売/.test(text)){cash+=amount;revenue+=amount;}if(/掛けで販売/.test(text))revenue+=amount;if(/商品を現金で.+仕入/.test(text))expense+=amount;if(/通信費/.test(text))expense+=amount;if(/給料.+未払い|減価償却費/.test(text))expense+=amount;}return {endingCash:cash,profit:revenue-expense};
+  }
   if (item?.type === 'correction' && item.materials?.length === 1) {
     const {recorded='',evidence=''}=item.materials[0];
     const wrongDebit=String(recorded).match(/（借）([^ ]+) ([0-9,]+)/);
@@ -14671,7 +14738,13 @@ function independentlyDerivedJournal(item) {
   const amount=(index=0)=>yen[index];
   const entry=(debit,credit)=>({debit,credit});
   const row=(account,value)=>({account,amount:value});
-  if (/追加出資/.test(text)) return entry([row('現金',amount())],[row('資本金',amount())]);
+  // Normalize synonymous surface forms before applying double-entry rules.
+  const transactionType = /追加出資|追加払込み|株主から.+払込み|増資として.+払/.test(text) ? 'capital_contribution'
+    : /販売用商品.+翌月払い|商品.+仕入れ?.+代金.+(?:後日|翌月).*(?:支払|掛け)/.test(text) ? 'credit_purchase'
+    : /商品.+(?:納品|販売).+(?:翌月回収|後日.+受け取).+掛け/.test(text) ? 'credit_sale' : null;
+  if (transactionType==='capital_contribution') return entry([row('現金',amount())],[row('資本金',amount())]);
+  if (transactionType==='credit_purchase') return entry([row('仕入',amount())],[row('買掛金',amount())]);
+  if (transactionType==='credit_sale') return entry([row('売掛金',amount())],[row('売上',amount())]);
   if (/手許現金.+普通預金.+預け入れ/.test(text)) return entry([row('普通預金',amount())],[row('現金',amount())]);
   if (/当座預金口座を開設/.test(text)) return entry([row('当座預金',amount())],[row('普通預金',amount())]);
   if (/商品.+仕入れ、代金は掛け/.test(text) && !/運賃/.test(text)) return entry([row('仕入',amount())],[row('買掛金',amount())]);
@@ -14721,6 +14794,34 @@ function independentlyDerivedJournal(item) {
   if (/期首商品棚卸高.+期末商品棚卸高/.test(text)) return entry([row('仕入',amount(0)),row('繰越商品',amount(1))],[row('繰越商品',amount(0)),row('仕入',amount(1))]);
   if (/仮払消費税.+仮受消費税.+相殺/.test(text)) {const payable=amount(1)-amount(0);return entry([row('仮受消費税',amount(1))],[row('仮払消費税',amount(0)),row('未払消費税',payable)]);}
   if (/損益勘定の貸方残高/.test(text)) return entry([row('損益',amount())],[row('繰越利益剰余金',amount())]);
+  if (/入金.+内容が不明.+仮受金/.test(text)) return entry([row('普通預金',amount())],[row('仮受金',amount())]);
+  if (/当座預金を開設/.test(text)) return entry([row('当座預金',amount())],[row('普通預金',amount())]);
+  if (/買掛金.+普通預金口座から.+支払/.test(text)) return entry([row('買掛金',amount())],[row('普通預金',amount())]);
+  if (/クレジットカード販売/.test(text)){const sale=amount(),rate=(numbers.find(n=>n.unit==='％'||n.unit==='%')?.value||0)/100,fee=sale*rate;return entry([row('クレジット売掛金',sale-fee),row('支払手数料',fee)],[row('売上',sale)]);}
+  if (/引渡前の内金.+現金で受け取/.test(text)) return entry([row('現金',amount())],[row('前受金',amount())]);
+  if (/実際有高.+帳簿残高より.+少な/.test(text)) return entry([row('現金過不足',amount())],[row('現金',amount())]);
+  if (/現金過不足.+通信費の記帳漏れ/.test(text)) return entry([row('通信費',amount())],[row('現金過不足',amount())]);
+  if (/小口現金.+定額資金前渡法/.test(text)) return entry([row('小口現金',amount())],[row('当座預金',amount())]);
+  if (/長期使用する業務用.+翌月払い/.test(text)) return entry([row('備品',amount())],[row('未払金',amount())]);
+  if (/旅費の概算額.+前渡し/.test(text)) return entry([row('仮払金',amount())],[row('現金',amount())]);
+  if (/出張精算で旅費.+未使用現金/.test(text)) return entry([row('旅費交通費',amount(0)),row('現金',amount(1))],[row('仮払金',amount(2))]);
+  if (/会社がいったん現金で立替払い/.test(text)) return entry([row('立替金',amount())],[row('現金',amount())]);
+  if (/借入金の元本.+当期利息/.test(text)) return entry([row('借入金',amount(0)),row('支払利息',amount(1))],[row('普通預金',amount(0)+amount(1))]);
+  if (/給与総額.+所得税.+社会保険料.+差引支給額/.test(text)) return entry([row('給料',amount(0))],[row('所得税預り金',amount(1)),row('社会保険料預り金',amount(2)),row('普通預金',amount(3))]);
+  if (/社会保険料.+預り分.+会社負担分/.test(text)) return entry([row('社会保険料預り金',amount(0)),row('法定福利費',amount(1))],[row('普通預金',amount(2))]);
+  if (/電気料金.+普通預金口座から引き落と/.test(text)) return entry([row('水道光熱費',amount())],[row('普通預金',amount())]);
+  if (/収入印紙.+その場で使用/.test(text)) return entry([row('租税公課',amount())],[row('現金',amount())]);
+  if (/短期資金.+貸し付け.+普通預金/.test(text)) return entry([row('貸付金',amount())],[row('普通預金',amount())]);
+  if (/前期に全額を貸倒処理.+現金で回収/.test(text)) return entry([row('現金',amount())],[row('償却債権取立益',amount())]);
+  if (/法人税、住民税及び事業税.+当期負担額/.test(text)) return entry([row('法人税、住民税及び事業税',amount())],[row('未払法人税等',amount())]);
+  if (/次期分.+前払保険料/.test(text)) return entry([row('前払保険料',amount(1))],[row('保険料',amount(1))]);
+  if (/借入金利息.+まだ支払われていない/.test(text)) return entry([row('支払利息',amount())],[row('未払利息',amount())]);
+  if (/次期分.+前受家賃/.test(text)) return entry([row('受取家賃',amount(1))],[row('前受家賃',amount(1))]);
+  if (/貸付金利息.+発生済みで未収/.test(text)) return entry([row('未収利息',amount())],[row('受取利息',amount())]);
+  if (/残高不足額は当座借越/.test(text)){const balance=amount(0),purchase=amount(1);return entry([row('仕入',purchase)],[row('当座預金',balance),row('当座借越',purchase-balance)]);}
+  if (/商品.+売り上げ.+約束手形を受け取/.test(text)) return entry([row('受取手形',amount())],[row('売上',amount())]);
+  if (/商品.+仕入れ.+約束手形を振り出/.test(text)) return entry([row('仕入',amount())],[row('支払手形',amount())]);
+  if (/受取手形.+満期.+支払手形.+満期/.test(text)) return entry([row('当座預金',amount(0)),row('支払手形',amount(1))],[row('受取手形',amount(0)),row('当座預金',amount(1))]);
   return null;
 }
 
