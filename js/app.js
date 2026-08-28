@@ -9,8 +9,6 @@
     },
     init() {
       this.controller = new root.AppController(document, root.QuestionData); this.controller.init(this.initialRoute());
-      const filters = document.getElementById('question-filters'); const mobile = root.matchMedia?.('(max-width: 768px)');
-      const syncFilters = () => { if (filters && !filters.hidden) filters.open = !mobile?.matches; }; mobile?.addEventListener?.('change', syncFilters); syncFilters();
       if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' });
     },
     calculateExpression(expression) { return root.SafeCalculator.evaluate(expression); }
