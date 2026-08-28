@@ -56,12 +56,12 @@
     makeAmount(className, label, value = '') {
       const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'numeric');
       input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.setAttribute('pattern', '[0-9,]*');
-      input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocorrect', 'off'); input.setAttribute('spellcheck', 'false'); input.value = value;
+      input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocorrect', 'off'); input.setAttribute('spellcheck', 'false'); input.maxLength = 24; input.value = value;
       return input;
     }
     makeText(className, label, value = '') {
       const input = this.document.createElement('input'); input.type = 'text'; input.className = `${className} table-text-input`;
-      input.setAttribute('aria-label', label); input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocomplete', 'off'); input.value = value; return input;
+      input.setAttribute('aria-label', label); input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocomplete', 'off'); input.maxLength = 120; input.value = value; return input;
     }
     updateSelectTitle(select) {
       select.title = select.selectedOptions[0]?.textContent || '';
@@ -121,17 +121,28 @@
       }).filter(item => item.account || Number.isFinite(item.amount));
       return { debit: side('debit'), credit: side('credit') };
     }
-    result(question, score, userAnswer, confidence = 'unsure') {
+    result(question, score, userAnswer, confidence = 'unsure', achievement = {}) {
       const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
       if (standardActions) standardActions.hidden = false; if (examActions) examActions.hidden = true;
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
       const calibration = confidence === 'sure'
-        ? (score.correct ? '自信と理解が一致しています。' : '強い思い込みを発見しました。復習候補に追加します。')
-        : (score.correct ? '正解ですが、まだ不安定な知識です。復習で確かめましょう。' : '土台を作るチャンスです。解説の判断ルールを確認しましょう。');
-      box.textContent = `${score.correct ? '正解です！' : 'もう一歩です'} ${calibration}`;
+        ? (score.correct ? '自信と理解が一致しました。この判断軸を次の仕事でも再現しましょう。' : '強い思い込みを発見できました。今ここで直せば、次の正解がより確かな力になります。')
+        : (score.correct ? '慎重に考えて正解へ到達しました。解説で根拠を言葉にすると自信へ変わります。' : '「まだ自信なし」と見抜けたことも前進です。解説の判別ポイントを一つ持ち帰りましょう。');
+      const headline = this.document.createElement('strong'); headline.className = 'result-headline'; headline.textContent = score.correct ? '正解です！' : 'もう一歩です';
+      const confidenceFeedback = this.document.createElement('span'); confidenceFeedback.className = `confidence-feedback confidence-${confidence}-${score.correct ? 'correct' : 'wrong'}`;
+      confidenceFeedback.textContent = `${confidence === 'sure' ? '自信あり' : 'まだ自信なし'} × ${score.correct ? '正解' : '要確認'}｜${calibration}`;
+      box.replaceChildren(headline, confidenceFeedback);
+      this.renderAchievement(box, achievement);
       this.renderAnswerComparison(question, score, userAnswer);
       this.renderCorrectJournal(question);
       this.renderExplanation(question, score, userAnswer);
+    }
+    renderAchievement(anchor, achievement = {}) {
+      let banner = this.byId('achievement-banner');
+      if (!banner) { banner = this.document.createElement('aside'); banner.id = 'achievement-banner'; banner.className = 'achievement-banner'; banner.setAttribute('role', 'status'); banner.setAttribute('aria-live', 'polite'); anchor.after(banner); }
+      const unlocks = [achievement.level ? `LEVEL UP！ Lv.${achievement.level}` : '', achievement.role ? `NEW ROLE！「${achievement.role}」解放` : ''].filter(Boolean);
+      banner.hidden = unlocks.length === 0; banner.textContent = unlocks.join(' ／ ');
+      if (!banner.isConnected) anchor.after(banner);
     }
     journalTable(answer) {
       const wrap = this.document.createElement('div'); wrap.className = 'journal-table-wrap';
@@ -216,11 +227,12 @@
       }
       return `回答欄${index + 1}`;
     }
-    examResult(review, questions, history) {
+    examResult(review, questions, history, achievement = {}) {
       const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
       if (standardActions) standardActions.hidden = true; if (examActions) examActions.hidden = false;
       const box = this.byId('result-status'); box.className = `result-box ${review.passed ? 'result-correct' : 'result-incorrect'}`;
       box.textContent = `${review.points}点 / 100点（${review.passed ? '合格圏' : '要復習'}）｜未回答 ${review.unansweredCount}問`;
+      this.renderAchievement(box, achievement);
       this.byId('answer-comparison').hidden = true; this.byId('correct-journal').replaceChildren();
       const container = this.byId('explanation'); container.replaceChildren();
       const heading = this.document.createElement('h3'); heading.textContent = '問題別レビュー'; container.append(heading);

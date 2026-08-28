@@ -4,7 +4,20 @@
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
   const getStorage = () => {
-    try { return root.localStorage; } catch (_) { return null; }
+    try {
+      const storage = root.localStorage;
+      if (!storage) return null;
+      let writable = true;
+      return {
+        getItem(key) { try { return storage.getItem(key); } catch (_) { return null; } },
+        setItem(key, value) {
+          if (!writable) return false;
+          try { storage.setItem(key, value); return true; }
+          catch (_) { writable = false; return false; }
+        },
+        removeItem(key) { try { storage.removeItem(key); return true; } catch (_) { return false; } }
+      };
+    } catch (_) { return null; }
   };
   // 同じ会計的性質の科目を先に提示し、単なる見た目の5択ではなく識別学習にする。
   const JOURNAL_GROUPS = [
@@ -216,6 +229,7 @@
       if (!timedOut && unanswered.length) { root.alert?.(`未回答が${unanswered.length}問あります。全問回答後に採点してください。`); this.start(unanswered[0]); return false; }
       if (!timedOut && root.confirm && !root.confirm('全15問の回答を終了し、採点しますか？')) return false;
       session.status = 'FINISHING';
+      const previousProgress = { level:this.rpg.level, role:this.rpg.role };
       const earned = session.ids.reduce((sum, id, index) => sum + (session.scores[id]?.ratio || 0) * EXAM_POINTS[index], 0);
       const points = Math.round(earned); const correct = points >= 70;
       session.ids.forEach(id => { const result = session.scores[id]; if (result) { this.model.record(id, result.correct); this.rpg.recordMastery(this.questions[id], result); if (result.correct) this.rpg.reward?.(this.questions[id], result, 1); } });
@@ -226,7 +240,8 @@
       this.rpg.progressCompleted = this.model.updateCompletion?.(this.rpg) === true;
       this.model.state.examAttempt += 1; this.model.state.examSession = null; this.model.save(); this.stopExamTimer();
       this.document?.body?.classList?.remove('exam-active');
-      this.view.examResult(review, this.questions, this.model.state.examHistory);
+      const achievement = { level:this.rpg.level > previousProgress.level ? this.rpg.level : null, role:this.rpg.role !== previousProgress.role ? this.rpg.role : null };
+      this.view.examResult(review, this.questions, this.model.state.examHistory, achievement);
       this.view.show('view-result'); return true;
     }
     questionAccounts(question) { return question.type === 'journal' ? [...question.answer.debit, ...question.answer.credit].map(item => item.account) : []; }
@@ -289,13 +304,18 @@
         if (unanswered.length) return this.start(unanswered[0]);
         this.renderModes(); this.showMode('exam'); return;
       }
+      const previousProgress = { level:this.rpg.level, role:this.rpg.role };
       if (this.reviewSourceId) this.model.completeReview(this.reviewSourceId, score.correct, answeredAt);
       else this.model.record(question.id, score.correct, answeredAt);
       this.rpg.recordMastery?.(question, score);
       this.rpg.progressCompleted = this.model.updateCompletion?.(this.rpg) === true;
       if (score.correct) this.rpg.reward(question, score, 1);
       this.rpg.applyAnswer(score.correct, confidence);
-      this.view.updateRpg(this.rpg); this.view.result(question, score, answer, confidence); this.view.show('view-result');
+      const achievement = {
+        level: this.rpg.level > previousProgress.level ? this.rpg.level : null,
+        role: this.rpg.role !== previousProgress.role ? this.rpg.role : null
+      };
+      this.view.updateRpg(this.rpg); this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result');
     }
     next() { if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story'); if (this.model.state.mode === 'review') { const due = this.modeIds(); if (due.length) return this.start(due.find(id => id !== this.currentId) || due[0]); this.renderModes(); return this.showMode('review'); } if (this.model.state.mode !== 'exam') { const concept = this.questions[this.currentId]?.category; const adaptive = concept && this.model.recommendedIds(concept).find(id => id !== this.currentId && !this.model.state.answeredIds.includes(id) && !this.model.state.reviewSchedule[id]); if (adaptive) return this.start(adaptive); } const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
     formatAmount(input) {

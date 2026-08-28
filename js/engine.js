@@ -39,8 +39,8 @@ const GradingEngine = {
       if (userSide.length !== correctSide.length) return false;
       
       // ユーザー入力のコピーを作り、マッチしたものを消していく
-      let remainingCorrect = [...correctSide];
-      for (let uItem of userSide) {
+      const remainingCorrect = [...correctSide];
+      for (const uItem of userSide) {
         const matchIndex = remainingCorrect.findIndex(cItem => 
           cItem.account === uItem.account && cItem.amount === uItem.amount
         );

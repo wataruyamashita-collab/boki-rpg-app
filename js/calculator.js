@@ -7,11 +7,13 @@
   /** Evaluates arithmetic without eval/Function. Only decimal numbers and four operators are accepted. */
   function evaluate(expression) {
     const source = String(expression).replace(/[＋−×÷]/g, token => operators[token]);
+    if (source.length > 256) throw new Error('expression too long');
     const tokens = source.match(/\d+(?:\.\d*)?|\.\d+|[()+\-*/]/g) || [];
     if (!source.trim() || tokens.join('') !== source.replace(/\s/g, '')) throw new Error('invalid expression');
     const output = [];
     const stack = [];
     let expectsValue = true;
+    if (tokens.length > 128) throw new Error('too many tokens');
     tokens.forEach(token => {
       if (/^(?:\d|\.)/.test(token)) {
         if (!expectsValue) throw new Error('missing operator');
