@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260828-38">
+  <link rel="stylesheet" href="css/style.css?v=20260828-39">
 </head>
 <body>
 <div class="container">
@@ -22,8 +22,6 @@
     <button type="button" data-action="mode" data-mode="review">復習</button>
     <button type="button" data-action="mode" data-mode="exam">総合演習模試</button>
   </nav>
-  <div class="product-actions"><button id="pwa-install" type="button" hidden>アプリをインストール</button><button type="button" data-action="export-backup">バックアップを書き出す</button><button type="button" data-action="import-backup">バックアップを復元</button><input id="backup-file" type="file" accept="application/json" hidden><p id="storage-status" role="alert" aria-live="assertive"></p></div>
-  <div id="update-toast" class="update-toast" role="status" aria-live="polite" hidden>新しいバージョンが利用可能です。<button id="pwa-update" type="button">更新</button></div>
   <aside id="exam-hud" class="exam-hud" aria-label="総合演習模試の進行状況"><p id="exam-timer" class="exam-timer" aria-live="polite">残り 60:00</p><p id="exam-progress" aria-live="polite"></p><button type="button" data-action="finish-exam">試験を終了して採点</button></aside>
 
   <details id="question-filters" class="question-filters" aria-labelledby="filter-heading" open><summary>問題の検索・絞り込み</summary>
@@ -74,6 +72,6 @@
   </main>
   <dialog id="game-over-dialog" class="game-over-dialog"><h2>帳簿信頼度が0になりました</h2><p>水野先輩「まだ立て直せる。未解決伝票を緊急精算しよう」</p><button type="button" data-action="review-game-over">緊急精算（復習モード）へ</button><button type="button" data-action="retry-mode">最初の案件から再挑戦</button></dialog>
 </div>
-<script src="data/questions.js?v=20260828-38"></script><script src="data/accounting-oracle.js?v=20260828-38"></script><script src="js/calculator.js?v=20260828-38"></script><script src="js/model.js?v=20260828-38"></script><script src="js/rpg.js?v=20260828-38"></script><script src="js/engine.js?v=20260828-38"></script><script src="js/feedback.js?v=20260828-38"></script><script src="js/view.js?v=20260828-38"></script><script src="js/controller.js?v=20260828-38"></script><script src="js/app.js?v=20260828-38"></script>
+<script src="data/questions.js?v=20260828-39"></script><script src="data/accounting-oracle.js?v=20260828-39"></script><script src="js/calculator.js?v=20260828-39"></script><script src="js/model.js?v=20260828-39"></script><script src="js/rpg.js?v=20260828-39"></script><script src="js/engine.js?v=20260828-39"></script><script src="js/feedback.js?v=20260828-39"></script><script src="js/view.js?v=20260828-39"></script><script src="js/controller.js?v=20260828-39"></script><script src="js/app.js?v=20260828-39"></script>
 </body>
 </html>

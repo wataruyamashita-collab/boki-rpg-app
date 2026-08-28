@@ -36,8 +36,6 @@
       return clean;
     }
     save() { try { return this.storage?.setItem?.(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
-    exportState() { return JSON.parse(JSON.stringify(this.state)); }
-    importState(state) { if (!state || typeof state !== 'object' || Array.isArray(state)) return false; try { const prior = this.state; this.storage?.setItem?.(this.key, JSON.stringify(state)); this.load(); return this.save(); } catch (_) { return false; } }
     get unlockedTools() {
       const tools = ['標準電卓'];
       if (this.level >= 5) tools.push('税込・税抜クイック計算');
