@@ -210,6 +210,9 @@ for (const [id, authored, mutated] of sourceAnswerMutations) {
   vm.runInNewContext(mutatedSource, mutationSandbox);
   assert.strictEqual(mutationSandbox.window.validateSemanticQuestionData().findings[id].status, 'INVALID', `${id}のロード前source answer改ざんをanswerとは別管理のintegrity基準で検出する`);
 }
+const narrativeQuestions = Object.values(browserSandbox.window.QuestionData);
+assert.strictEqual(new Set(narrativeQuestions.map(question => question.story)).size, narrativeQuestions.length, 'NARRATIVE-01: 全300問に固有の業務場面を持たせる');
+assert.deepStrictEqual([...new Set(narrativeQuestions.map(question => question.chapter))].sort((a, b) => a - b), Array.from({ length:12 }, (_, index) => index + 1), 'NARRATIVE-02: 4月から決算までの12章を物語で網羅する');
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
 const eightColumn = browserSandbox.window.QuestionData.D001;
 assert.strictEqual(eightColumn.format, 'eight-column-worksheet', 'WORKSHEET-01: D001を本物の8桁精算表として識別する');
