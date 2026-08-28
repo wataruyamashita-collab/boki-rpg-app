@@ -77,7 +77,9 @@ const recoveredRpg = new RPGModel(corruptStorage);
 assert.deepStrictEqual([recoveredRpg.state.xp, recoveredRpg.state.rewardedIds.length, recoveredRpg.state.companyHP, recoveredRpg.state.totalTransactionAmount], [0, 0, 0, 0], '破損したRPG状態を型検証し範囲内へ補正する');
 const graduationQuestions = { J1:{ type:'journal' } };
 for (const [prefix, type] of Object.entries({ L:'ledger', W:'worksheet', F:'financial_statement', C:'comprehensive' })) {
-  for (let index = 1; index <= 3; index += 1) graduationQuestions[`${prefix}${index}`] = { type };
+  for (let index = 1; index <= 3; index += 1) graduationQuestions[`${prefix}${index}`] = {
+    type, category:index === 1 ? `${type}-foundation` : `${type}-application`, variantGroup:`${type}-structure-${Math.min(index, 2)}`
+  };
 }
 const graduation = new ProgressModel(graduationQuestions, { getItem() { return null; }, setItem() {} }, 'graduation');
 graduation.state.answeredIds = Object.keys(graduationQuestions);
@@ -88,6 +90,13 @@ assert.strictEqual(graduation.updateCompletion(graduationRpg), true, '主要mast
 graduation.state.correctIds = graduation.state.correctIds.filter(id => id !== 'L3');
 assert.strictEqual(graduation.updateCompletion(graduationRpg), false, '各実務形式は異なる3問の正解証拠がなければ卒業扱いにしない');
 graduation.state.correctIds.push('L3');
+graduationQuestions.L2.category = graduationQuestions.L1.category;
+graduationQuestions.L2.variantGroup = graduationQuestions.L1.variantGroup;
+graduationQuestions.L3.category = graduationQuestions.L1.category;
+graduationQuestions.L3.variantGroup = graduationQuestions.L1.variantGroup;
+assert.strictEqual(graduation.updateCompletion(graduationRpg), false, '同一構造の数値違い3問だけでは実務形式の深度を満たさない');
+graduationQuestions.L3.category = 'ledger-application';
+graduationQuestions.L3.variantGroup = 'ledger-structure-2';
 graduation.state.examHistory = [{ points:80, setSignature:'set-a' }];
 assert.strictEqual(graduation.updateCompletion(graduationRpg), false, '模試1回だけで卒業扱いにしない');
 graduation.state.correctIds = ['J1'];
@@ -426,6 +435,21 @@ assert(examIds.every(id=>browserSandbox.window.QuestionData[id].learningRole==='
   assert(prerequisites.every(prerequisite => ['core','drill'].includes(browserSandbox.window.QuestionData[prerequisite].learningRole)), `${id}の前提演習はExam転移問題を参照しない`);
   assert(prerequisites.every(prerequisite => storyOrder.indexOf(prerequisite) < storyOrder.length), `${id}の前提演習はStoryで模試前に学習できる`);
 });
+const prerequisiteContext = {
+  questions:browserSandbox.window.QuestionData,
+  model:{state:{correctIds:[]}},
+  examCandidateIds:poolContext.examCandidateIds,
+  examPrerequisiteIds:examPrototype.examPrerequisiteIds
+};
+const requiredBeforeExam = examPrototype.examPrerequisiteIds.call(prerequisiteContext);
+assert(requiredBeforeExam.includes('J148') && requiredBeforeExam.includes('J149') && requiredBeforeExam.includes('J150'), '手形の受入・振出・満期決済を模試前の実演習として要求する');
+assert.deepStrictEqual(
+  examPrototype.unmetExamPrerequisites.call(prerequisiteContext),
+  requiredBeforeExam,
+  '未正解のCore/Drill前提を実行時の模試ゲートへ接続する'
+);
+prerequisiteContext.model.state.correctIds = [...requiredBeforeExam];
+assert.strictEqual(examPrototype.unmetExamPrerequisites.call(prerequisiteContext).length, 0, '全前提の正解後に模試ゲートを解放する');
 assert.strictEqual(examIds.length, 15, '模試は設計通り15問を選出する');
 const routeRpg = new RPGModel({ getItem(){ return null; }, setItem(){} }, 'route-xp');
 Object.values(browserSandbox.window.QuestionData).forEach(question => routeRpg.reward(question, { correct:true, ratio:1, earned:1, possible:1 }));

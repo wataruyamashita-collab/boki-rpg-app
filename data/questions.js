@@ -14459,9 +14459,9 @@ Object.assign(QuestionData.L046, { materials: [{ '日付':'6/7', '証ひょう':
 Object.assign(QuestionData.D019, { category:'決算整理後残高試算表', format:'adjusted-trial-balance', scene:'決算・整理後残高の確認', story:'決算整理仕訳を転記し、財務諸表作成前の残高を貸借一致まで確かめる。', question:'下記の全勘定の決算整理前残高と整理事項を反映し、貸借が一致する決算整理後残高試算表を完成しなさい。', materials:[{勘定科目:'現金',整理前借方:240000,整理前貸方:'—',整理事項:'なし'},{勘定科目:'売掛金',整理前借方:200000,整理前貸方:'—',整理事項:'なし'},{勘定科目:'保険料',整理前借方:200000,整理前貸方:'—',整理事項:'前払分40,000円を振替'},{勘定科目:'備品',整理前借方:600000,整理前貸方:'—',整理事項:'間接法のため取得原価を維持'},{勘定科目:'買掛金',整理前借方:'—',整理前貸方:100000,整理事項:'なし'},{勘定科目:'資本金',整理前借方:'—',整理前貸方:300000,整理事項:'なし'},{勘定科目:'繰越利益剰余金',整理前借方:'—',整理前貸方:40000,整理事項:'なし'},{勘定科目:'売上',整理前借方:'—',整理前貸方:800000,整理事項:'なし'},{勘定科目:'前払保険料',整理前借方:'—',整理前貸方:'—',整理事項:'借方40,000円'},{勘定科目:'減価償却費',整理前借方:'—',整理前貸方:'—',整理事項:'借方60,000円'},{勘定科目:'減価償却累計額',整理前借方:'—',整理前貸方:'—',整理事項:'貸方60,000円'}], table:{columns:['勘定科目','整理後借方','整理後貸方'],rows:[{account:'現金',debit:'入力',credit:'—'},{account:'売掛金',debit:'入力',credit:'—'},{account:'保険料',debit:'入力',credit:'—'},{account:'前払保険料',debit:'入力',credit:'—'},{account:'備品',debit:'入力',credit:'—'},{account:'減価償却費',debit:'入力',credit:'—'},{account:'買掛金',debit:'—',credit:'入力'},{account:'減価償却累計額',debit:'—',credit:'入力'},{account:'資本金',debit:'—',credit:'入力'},{account:'繰越利益剰余金',debit:'—',credit:'入力'},{account:'売上',debit:'—',credit:'入力'},{account:'合計',debit:'入力',credit:'入力'}],inputCells:['cash','receivables','insurance','prepaid','equipment','depreciation','payables','accumulated','capital','retained','sales','debitTotal','creditTotal']}, answer:{cells:{cash:240000,receivables:200000,insurance:160000,prepaid:40000,equipment:600000,depreciation:60000,payables:100000,accumulated:60000,capital:300000,retained:40000,sales:800000,debitTotal:1300000,creditTotal:1300000}}, explanation:'前払分40,000円と減価償却費60,000円を転記すると、整理後の借方・貸方合計はいずれも1,300,000円です。備品は間接法なので備品勘定そのものを減額しません。' });
 Object.assign(QuestionData.D020, { category:'帳簿締切', format:'closing-entries', scene:'決算・収益費用勘定の締切', story:'損益勘定を経由して収益・費用を締め切る。', question:'売上800,000円、仕入400,000円、保険料160,000円、減価償却費60,000円だけがある。各収益・費用を損益勘定へ振り替えた後、当期純利益を繰越利益剰余金へ振り替える締切金額を完成しなさい。', table:{columns:['締切手続','金額'],rows:[{item:'売上から損益への振替',amount:'入力'},{item:'仕入から損益への振替',amount:'入力'},{item:'保険料から損益への振替',amount:'入力'},{item:'減価償却費から損益への振替',amount:'入力'},{item:'損益から繰越利益剰余金への振替',amount:'入力'}],inputCells:['sales','purchases','insurance','depreciation','profit']}, answer:{cells:{sales:800000,purchases:400000,insurance:160000,depreciation:60000,profit:180000}}, explanation:'収益800,000円と費用620,000円を損益へ振り替え、差額180,000円を繰越利益剰余金へ振り替えます。間接法では備品勘定そのものを減額しません。' });
 
-Object.assign(QuestionData.J148, { timelineRole:'transfer', learningRole:'transfer', category:'受取手形', variantGroup:'受取手形', scene:'応用・手形の受入', story:'約束手形で代金を受け取る独立ケース。', question:'商品80,000円を売り上げ、得意先振出の約束手形を受け取った。', answer:{ debit:[{account:'受取手形',amount:80000}], credit:[{account:'売上',amount:80000}] }, explanation:'将来代金を受け取る手形債権は受取手形（資産）です。' });
-Object.assign(QuestionData.J149, { timelineRole:'transfer', learningRole:'transfer', category:'支払手形', variantGroup:'支払手形', scene:'応用・手形の振出', story:'自店の約束手形を振り出す独立ケース。', question:'商品60,000円を仕入れ、代金として約束手形を振り出した。', answer:{ debit:[{account:'仕入',amount:60000}], credit:[{account:'支払手形',amount:60000}] }, explanation:'将来代金を支払う手形債務は支払手形（負債）です。' });
-Object.assign(QuestionData.J150, { timelineRole:'transfer', learningRole:'transfer', category:'手形の取立と支払', variantGroup:'手形の取立と支払', scene:'応用・手形の決済', story:'受取手形と支払手形が満期になった独立ケース。', question:'受取手形80,000円が満期となり当座預金に取り立てられた。また、支払手形60,000円が満期となり当座預金から支払われた。', answer:{ debit:[{account:'当座預金',amount:80000},{account:'支払手形',amount:60000}], credit:[{account:'受取手形',amount:80000},{account:'当座預金',amount:60000}] }, explanation:'取立てで受取手形が減って当座預金が増え、支払で支払手形と当座預金が減ります。' });
+Object.assign(QuestionData.J148, { timelineRole:'story', learningRole:'core', category:'受取手形', variantGroup:'手形基礎:受入', scene:'基礎・手形の受入', story:'得意先との掛取引が増え、経理担当は初めて約束手形を受け入れる。', question:'商品80,000円を売り上げ、得意先振出の約束手形を受け取った。', answer:{ debit:[{account:'受取手形',amount:80000}], credit:[{account:'売上',amount:80000}] }, explanation:'将来代金を受け取る手形債権は受取手形（資産）です。' });
+Object.assign(QuestionData.J149, { timelineRole:'story', learningRole:'drill', category:'支払手形', variantGroup:'手形基礎:振出', scene:'反復・手形の振出', story:'仕入先との支払条件を整え、自店振出の約束手形を債務として管理する。', question:'商品60,000円を仕入れ、代金として約束手形を振り出した。', answer:{ debit:[{account:'仕入',amount:60000}], credit:[{account:'支払手形',amount:60000}] }, explanation:'将来代金を支払う手形債務は支払手形（負債）です。' });
+Object.assign(QuestionData.J150, { timelineRole:'story', learningRole:'drill', category:'手形の取立と支払', variantGroup:'手形基礎:満期決済', scene:'反復・手形の決済', story:'資金繰り表と当座預金を照合し、受取手形と支払手形の満期決済を同日に処理する。', question:'受取手形80,000円が満期となり当座預金に取り立てられた。また、支払手形60,000円が満期となり当座預金から支払われた。', answer:{ debit:[{account:'当座預金',amount:80000},{account:'支払手形',amount:60000}], credit:[{account:'受取手形',amount:80000},{account:'当座預金',amount:60000}] }, explanation:'取立てで受取手形が減って当座預金が増え、支払で支払手形と当座預金が減ります。' });
 
 // J081には問題文48,000円に対して旧正答58,000円という不整合があった。
 Object.assign(QuestionData.J081, { answer:{ debit:[{account:'租税公課',amount:48000}], credit:[{account:'現金',amount:48000}] }, explanation:'事業に係る固定資産税は租税公課として費用計上し、現金を減らします。借方・貸方はいずれも48,000円です。' });
@@ -14552,26 +14552,38 @@ QuestionData.L038=examLedgerVariant('L038','総勘定元帳（買掛金）','複
 // Core/Drill を明示的に接続する。模試内でも variantGroup の段階が分かれ、
 // 単なる数値差し替えではない二段階の初見転移を測定できる。
 Object.assign(QuestionData.L034, { variantGroup:'仕訳帳:段階転移1', curriculumPrerequisites:['J004','J005','J017'] });
-Object.assign(QuestionData.L035, { variantGroup:'受取手形記入帳:段階転移1', curriculumPrerequisites:['J005','J013','J037'] });
-Object.assign(QuestionData.L036, { variantGroup:'支払手形記入帳:段階転移1', curriculumPrerequisites:['J004','J012','J036'] });
+Object.assign(QuestionData.L035, { variantGroup:'受取手形記入帳:段階転移1', curriculumPrerequisites:['J005','J148','J150'] });
+Object.assign(QuestionData.L036, { variantGroup:'支払手形記入帳:段階転移1', curriculumPrerequisites:['J004','J149','J150'] });
 Object.assign(QuestionData.L041, { variantGroup:'仕訳帳:段階転移2', curriculumPrerequisites:['J004','J005','J038'] });
-Object.assign(QuestionData.L042, { variantGroup:'受取手形記入帳:段階転移2', curriculumPrerequisites:['J005','J013','J037'] });
-Object.assign(QuestionData.L043, { variantGroup:'支払手形記入帳:段階転移2', curriculumPrerequisites:['J004','J012','J036'] });
+Object.assign(QuestionData.L042, { variantGroup:'受取手形記入帳:段階転移2', curriculumPrerequisites:['J005','J148','J150'] });
+Object.assign(QuestionData.L043, { variantGroup:'支払手形記入帳:段階転移2', curriculumPrerequisites:['J004','J149','J150'] });
 
 ['J145','J146','J147'].forEach(id => Object.assign(QuestionData[id], { learningRole:'transfer', timelineRole:'transfer', materials:[{資料種別:'独立取引資料',取引内容:QuestionData[id].question}] }));
 
-// Chapter-wide boilerplate is retained as continuity, then every question receives
-// its own company-growth milestone. This keeps the four-act business arc visible
-// while preventing dozens of exercises from presenting an identical narrative.
-Object.values(QuestionData).forEach((item, index) => {
-  const stage = item.chapter <= 3
-    ? { label:'売上拡大', setting:'受注と取引量が増える' }
-    : item.chapter <= 6
-      ? { label:'備品導入', setting:'業務設備を整える' }
-      : item.chapter <= 9
-        ? { label:'資金調達', setting:'成長資金の動きを見直す' }
-        : { label:'決算', setting:'年度報告の準備を進める' };
-  item.story = `${item.story} ${stage.setting}なか、${item.category}の証憑を担当する第${index + 1}の場面。ここでの確認が${stage.label}の次工程へつながる。`;
+// Each month advances the same company's year.  The suffix is based on the work
+// actually shown by the question (not an artificial question number and not a
+// blanket claim that every exercise has documentary evidence).
+const NarrativeMonths = Object.freeze([
+  '4月、開業資金を受け入れ最初の取引を記録する', '5月、固定客が増えて掛取引を整える',
+  '6月、受注増加に合わせて入出金管理を分担する', '7月、配送と仕入の拡大に備えて備品を導入する',
+  '8月、立替・仮払を整理して現場精算を早める', '9月、従業員を迎えて給与と預り金を管理する',
+  '10月、運転資金を調達して返済計画を確認する', '11月、債権回収と支払期日を資金繰りへ反映する',
+  '12月、繁忙期の取引を補助簿から総勘定元帳へ集約する', '1月、決算整理に向けて残高と未処理事項を洗い出す',
+  '2月、棚卸・減価償却・見越繰延を反映する', '3月、財務諸表を完成して年度報告へ引き継ぐ'
+]);
+const NarrativeWork = Object.freeze({
+  journal:'取引の原因と決済手段を読み分け、貸借を仕訳へ落とし込む。',
+  ledger:'日付・摘要・相手勘定を照合し、残高まで帳簿へつなぐ。',
+  trial_balance:'各勘定の残高を集計し、貸借一致を確かめる。',
+  correction:'誤記帳の影響を特定し、正しい残高へ戻す。',
+  worksheet:'整理事項を精算表へ反映し、損益と財政状態を分ける。',
+  financial_statement:'確定残高を表示区分へ振り分け、報告書を仕上げる。',
+  comprehensive:'複数資料を突き合わせ、年度を締める判断へ結び付ける。'
+});
+Object.values(QuestionData).forEach(item => {
+  const month = NarrativeMonths[Math.max(0, Math.min(11, Number(item.chapter || 1) - 1))];
+  const work = NarrativeWork[item.type] || '資料と取引のつながりを確認し、次の業務へ引き継ぐ。';
+  item.story = `${item.story} ${month}。${item.category}を担当し、${work}`;
 });
 
 // semanticには入力面の所在だけを記録する。VALIDや模試可否をデータ自身に宣言させず、
@@ -15242,7 +15254,7 @@ if (typeof window !== 'undefined') {
   // The exam pool is an explicit assessment contract. It is intentionally independent
   // of object insertion order and is consumed by both Controller and the audits.
   window.ExamPoolDefinition = Object.freeze([
-    ...Array.from({length:20},(_,i)=>`J${String(131+i).padStart(3,'0')}`),
+    ...Array.from({length:20},(_,i)=>`J${String(128+i).padStart(3,'0')}`),
     ...Array.from({length:18},(_,i)=>`L${String(33+i).padStart(3,'0')}`),
     ...Array.from({length:8},(_,i)=>`T${String(33+i).padStart(3,'0')}`),
     ...Array.from({length:6},(_,i)=>`E${String(15+i).padStart(3,'0')}`),

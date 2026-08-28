@@ -55,7 +55,7 @@
       this.model.migrateLegacyPlacement();
       if (!this.model.state.placement) { this.showPlacement(); return; }
       const mode = ['story', 'training', 'review', 'exam'].includes(route.mode) ? route.mode : 'story';
-      this.showMode(mode);
+      if (this.showMode(mode) === false) return;
       if (typeof route.questionId === 'string' && this.questions[route.questionId] && (mode !== 'exam' || this.modeIds().includes(route.questionId))) this.start(route.questionId);
     }
     bindEvents() {
@@ -94,6 +94,13 @@
       this.document.querySelector('.mode-nav').hidden = false; this.renderModes(); this.start(startId); return startId;
     }
     showMode(mode) {
+      if (mode === 'exam') {
+        const unmet = this.unmetExamPrerequisites();
+        if (unmet.length) {
+          root.alert?.(`模試の前に基礎演習を完了してください（残り${unmet.length}問）。`);
+          return false;
+        }
+      }
       this.model.state.mode = mode;
       if (mode === 'exam') this.ensureExamSession();
       else this.stopExamTimer();
@@ -101,6 +108,7 @@
       this.document.body?.classList?.toggle('exam-active', mode === 'exam');
       this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false'));
       if (mode === 'exam') { this.updateExamStatus(); this.startExamTimer(); }
+      return true;
     }
     leaveExamResult(mode) { this.currentId = null; this.showMode(mode); this.renderModes(); }
     retryExam(now = Date.now()) {
@@ -128,6 +136,14 @@
       const contract = Array.isArray(root.ExamPoolDefinition) ? root.ExamPoolDefinition : [];
       const seen = new Set();
       return contract.filter(id => !seen.has(id) && seen.add(id) && this.questions[id]?.learningRole === 'transfer');
+    }
+    examPrerequisiteIds() {
+      return [...new Set(this.examCandidateIds().flatMap(id => this.questions[id].curriculumPrerequisites || []))]
+        .filter(id => this.questions[id] && ['core', 'drill'].includes(this.questions[id].learningRole));
+    }
+    unmetExamPrerequisites() {
+      const correct = new Set(this.model.state.correctIds || []);
+      return this.examPrerequisiteIds().filter(id => !correct.has(id));
     }
     learningIds() {
       const exam = new Set(this.examCandidateIds());
