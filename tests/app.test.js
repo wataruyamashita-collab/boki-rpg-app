@@ -495,7 +495,9 @@ assert(html.includes('id="answer-comparison"'), '誤答した仕訳を正答と�
 assert(/\.answer-comparison:empty\s*{[^}]*display:\s*none/s.test(cssSource), '空の誤答比較欄は赤枠ごと非表示にする');
 assert(/\.answer-comparison\[hidden\][\s\S]*?display:\s*none/s.test(cssSource), 'hidden属性でも誤答比較欄を確実に非表示にする');
 assert(viewSource.includes('container.hidden = true') && viewSource.includes('container.hidden = false'), '誤答比較欄は誤答時だけ表示する');
-assert(controllerSource.includes('this.view.result(question, score, answer, confidence)'), '採点結果画面へ回答者の仕訳を渡す');
+assert(controllerSource.includes('this.view.result(question, score, answer, confidence, achievement)'), '採点結果画面へ回答者の仕訳と達成通知を渡す');
+assert(controllerSource.includes('writable = false'), 'QuotaExceededErrorの反復を避けてストレージをFail-Safe化する');
+assert(viewSource.includes('confidence-feedback') && viewSource.includes('achievement-banner'), '確信度校正とレベル・役職解放を結果画面で強調する');
 assert(viewSource.includes("heading.textContent = 'あなたの仕訳（誤答）'"), '回答者が入力した誤答を表示する');
 assert(viewSource.includes("heading.textContent = 'なぜ間違えた？'") && viewSource.includes('diagnostic.nextRule'), '誤答理由と次回の判別ポイントを表示する');
 assert(viewSource.includes("this.byId('explanation').before(container)"), '古いHTMLがキャッシュされていても正しい仕訳の表示領域を補完する');
