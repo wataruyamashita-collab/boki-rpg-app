@@ -28,7 +28,7 @@
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
     updateRpg(rpg) {
       const completion = rpg.progressCompleted ? '｜修了：主要実務と異なる模試で能力を確認済み。次は間隔復習へ' : '';
-      this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜帳簿信頼度 ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円${completion}`;
+      this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜帳簿信頼度 ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円｜解放ツール ${rpg.unlockedTools.join('・')}${completion}`;
     }
     renderQuestion(question, draft, mode = 'story') {
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;
@@ -98,11 +98,13 @@
       const wrap = this.byId('table-container'); wrap.replaceChildren();
       wrap.classList.toggle('worksheet-scroll', question.format === 'eight-column-worksheet');
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
+      if (question.format === 'eight-column-worksheet') table.setAttribute('role', 'grid');
       const thead = table.createTHead(); const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); head.append(th); });
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
-        const row = body.insertRow(); Object.values(rowData).forEach(value => {
+        const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach(value => {
           const cell = row.insertCell();
+          if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');
           if (value === '入力') {
             const id = question.table.inputCells[inputIndex++]; const inputType = question.table.inputTypes?.[id] || 'amount';
             const metadata = question.table.inputMetadata?.[id]; const label = metadata?.label || this.cellLabel(question, id);
@@ -140,7 +142,7 @@
     renderAchievement(anchor, achievement = {}) {
       let banner = this.byId('achievement-banner');
       if (!banner) { banner = this.document.createElement('aside'); banner.id = 'achievement-banner'; banner.className = 'achievement-banner'; banner.setAttribute('role', 'status'); banner.setAttribute('aria-live', 'polite'); anchor.after(banner); }
-      const unlocks = [achievement.level ? `LEVEL UP！ Lv.${achievement.level}` : '', achievement.role ? `NEW ROLE！「${achievement.role}」解放` : ''].filter(Boolean);
+      const unlocks = [achievement.level ? `LEVEL UP！ Lv.${achievement.level}` : '', achievement.role ? `NEW ROLE！「${achievement.role}」解放 — 新ツールと専用Boss Caseを確認できます` : ''].filter(Boolean);
       banner.hidden = unlocks.length === 0; banner.textContent = unlocks.join(' ／ ');
       if (!banner.isConnected) anchor.after(banner);
     }
@@ -183,6 +185,7 @@
       const diagnostics = this.renderDiagnostics(question, userAnswer, score);
       if (diagnostics) container.append(diagnostics);
       const heading = this.document.createElement('h3'); heading.textContent = '詳しい解説'; container.append(heading);
+      if (question.npcDialogue) { const dialogue = this.document.createElement('blockquote'); dialogue.className = 'npc-dialogue'; dialogue.textContent = question.npcDialogue; container.append(dialogue); }
       if (question.type === 'journal' && question.answer) {
         const badges = this.document.createElement('div'); badges.className = 'explanation-accounts';
         [...question.answer.debit, ...question.answer.credit].forEach(item => badges.append(this.accountLabel(item.account)));

@@ -1,5 +1,5 @@
 /* The release id is shared by every cache key in this deployment. */
-const RELEASE = '20260827-37';
+const RELEASE = '20260828-38';
 const CACHE_PREFIX = 'boki-rpg-';
 const CACHE_NAME = `${CACHE_PREFIX}${RELEASE}`;
 const VERSIONED_ASSETS = [
@@ -23,6 +23,7 @@ self.addEventListener('activate', event => {
     await self.clients.claim();
   })());
 });
+self.addEventListener('message', event => { if (event.data?.type === 'SKIP_WAITING') self.skipWaiting(); });
 
 const networkFirst = async request => {
   const cache = await caches.open(CACHE_NAME);

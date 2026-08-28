@@ -15248,6 +15248,30 @@ function validateSemanticQuestionData(questionData = QuestionData) {
   return Object.freeze({ ok: errors.length === 0, errors:Object.freeze(errors), findings:Object.freeze(findings), eligibleIds:Object.freeze(eligibleIds), counts:Object.freeze({ VALID:validCount, QUESTIONABLE:0, INVALID:entries.length-validCount }) });
 }
 
+// Twelve chapter arcs make each accounting task part of a company-wide incident.
+const ChapterDrama = Object.freeze({
+  1:{theme:'消えた創業伝票',goal:'会社の出発点を復元する',resolution:'創業時の帳簿を確定する'},
+  2:{theme:'営業部の未精算',goal:'売上と立替を追跡する',resolution:'営業残高を一致させる'},
+  3:{theme:'総務倉庫の食い違い',goal:'備品と経費を照合する',resolution:'社内資産を確定する'},
+  4:{theme:'資金繰り警報',goal:'債権債務の期限を守る',resolution:'支払危機を回避する'},
+  5:{theme:'給与日の混乱',goal:'給与と預り金を整理する',resolution:'全員への支給を完了する'},
+  6:{theme:'証憑監査',goal:'誤記と不足資料を発見する',resolution:'監査指摘を解消する'},
+  7:{theme:'月次締めの壁',goal:'帳簿を転記して締める',resolution:'月次報告を完成する'},
+  8:{theme:'社長の緊急質問',goal:'試算表から経営状況を読む',resolution:'数字で信頼を取り戻す'},
+  9:{theme:'決算前夜',goal:'決算整理事項を調査する',resolution:'未処理をゼロにする'},
+  10:{theme:'年度決算',goal:'精算表を完成する',resolution:'利益と財政状態を報告する'},
+  11:{theme:'取締役会報告',goal:'財務諸表の根拠を固める',resolution:'経営判断を支える'},
+  12:{theme:'未来を託す最終決算',goal:'一年の全記録を統合する',resolution:'社長の信頼と次の役職を得る'}
+});
+Object.values(QuestionData).forEach((item, index) => {
+  const arc = ChapterDrama[item.chapter] || ChapterDrama[12];
+  const oldStory = String(item.story || '').replace(/\s*【業務記録[^】]+】[^。]*。?/g, '').trim();
+  const npc = item.type === 'comprehensive' || item.id === 'C010' ? '社長「この数字で、次の一手を決められるか？」' : index % 3 === 0 ? '水野先輩「根拠を一つずつつなごう」' : index % 3 === 1 ? '営業担当「取引先への説明が待っている」' : '総務担当「社員と備品の記録を守って」';
+  item.chapterArc = arc;
+  item.story = `${npc} ${arc.theme}を解決するため、${oldStory || arc.goal}。案件${item.id}の判断を${arc.resolution}へつなげる。`;
+  item.npcDialogue = npc;
+});
+
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {

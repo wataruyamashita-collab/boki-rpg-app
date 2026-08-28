@@ -52,8 +52,17 @@
         typeof score.correct === 'boolean' && Number.isFinite(score.earned) && Number.isFinite(score.possible) &&
         Number.isFinite(score.ratio) && score.earned >= 0 && score.possible > 0 && score.earned <= score.possible && score.ratio >= 0 && score.ratio <= 1);
     }
-    save() { try { this.storage?.setItem?.(this.key, JSON.stringify(this.state)); } catch (_) { /* learning remains usable */ } }
-    setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; this.save(); return true; }
+    save() { try { return this.storage?.setItem?.(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
+    setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; return this.save(); }
+    exportState() { return typeof structuredClone === 'function' ? structuredClone(this.state) : JSON.parse(JSON.stringify(this.state)); }
+    importState(state) {
+      if (!state || typeof state !== 'object' || Array.isArray(state)) return false;
+      try { this.storage?.setItem?.(this.key, JSON.stringify(state)); } catch (_) { return false; }
+      const previous = this.state; this.state = { mode:'story', currentQuestionId:null, answeredIds:[], correctIds:[], incorrectIds:[], mistakeCounts:{}, reviewSchedule:{}, reviewAssignments:{}, attempts:[], drafts:{}, completed:false, placement:null, examAttempt:0, examSession:null, examHistory:[], lastExamReview:null };
+      this.load();
+      if (!Array.isArray(this.state.answeredIds)) { this.state = previous; return false; }
+      return this.save();
+    }
     record(id, correct, now = Date.now()) {
       if (!this.questions[id]) return false;
       if (!this.state.answeredIds.includes(id)) this.state.answeredIds.push(id);
