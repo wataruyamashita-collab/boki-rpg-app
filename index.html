@@ -9,12 +9,13 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260828-39">
+  <link rel="stylesheet" href="css/style.css?v=20260828-40">
 </head>
 <body>
 <div class="container">
   <header class="app-header">
-    <div><p class="app-kicker">日商簿記3級を物語で学ぶ</p><h1>経理シミュレーションRPG</h1><p id="player-status" class="player-status" aria-live="polite"></p></div>
+    <div class="app-brand"><p class="app-kicker">日商簿記3級 学習アプリ</p><h1>新人経理の1年間</h1><p class="app-lead">取引から決算まで、仕事の流れに沿って身につける</p></div>
+    <dl id="player-status" class="player-status" aria-label="学習ステータス" aria-live="polite"></dl>
   </header>
   <nav class="mode-nav" aria-label="学習モード">
     <button type="button" data-action="mode" data-mode="story">ストーリー</button>
@@ -24,7 +25,7 @@
   </nav>
   <aside id="exam-hud" class="exam-hud" aria-label="総合演習模試の進行状況"><p id="exam-timer" class="exam-timer" aria-live="polite">残り 60:00</p><p id="exam-progress" aria-live="polite"></p><button type="button" data-action="finish-exam">試験を終了して採点</button></aside>
 
-  <details id="question-filters" class="question-filters" aria-labelledby="filter-heading" open><summary>問題の検索・絞り込み</summary>
+  <details id="question-filters" class="question-filters" aria-labelledby="filter-heading"><summary>問題を検索・絞り込む</summary>
     <div class="filter-heading"><h2 id="filter-heading">問題を絞り込む</h2><button type="button" class="filter-reset" data-action="filter-reset">条件をクリア</button></div>
     <div class="filter-grid">
       <label>キーワード<input id="filter-query" type="search" placeholder="問題文・カテゴリ・勘定科目" autocomplete="off"></label>
@@ -72,6 +73,6 @@
   </main>
   <dialog id="game-over-dialog" class="game-over-dialog"><h2>帳簿信頼度が0になりました</h2><p>水野先輩「まだ立て直せる。未解決伝票を緊急精算しよう」</p><button type="button" data-action="review-game-over">緊急精算（復習モード）へ</button><button type="button" data-action="retry-mode">最初の案件から再挑戦</button></dialog>
 </div>
-<script src="data/questions.js?v=20260828-39"></script><script src="data/accounting-oracle.js?v=20260828-39"></script><script src="js/calculator.js?v=20260828-39"></script><script src="js/model.js?v=20260828-39"></script><script src="js/rpg.js?v=20260828-39"></script><script src="js/engine.js?v=20260828-39"></script><script src="js/feedback.js?v=20260828-39"></script><script src="js/view.js?v=20260828-39"></script><script src="js/controller.js?v=20260828-39"></script><script src="js/app.js?v=20260828-39"></script>
+<script src="data/questions.js?v=20260828-40"></script><script src="data/accounting-oracle.js?v=20260828-40"></script><script src="js/calculator.js?v=20260828-40"></script><script src="js/model.js?v=20260828-40"></script><script src="js/rpg.js?v=20260828-40"></script><script src="js/engine.js?v=20260828-40"></script><script src="js/feedback.js?v=20260828-40"></script><script src="js/view.js?v=20260828-40"></script><script src="js/controller.js?v=20260828-40"></script><script src="js/app.js?v=20260828-40"></script>
 </body>
 </html>

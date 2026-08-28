@@ -27,8 +27,22 @@
     tableLabel(value) { return TABLE_LABELS[value] || value; }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
     updateRpg(rpg) {
-      const completion = rpg.progressCompleted ? '｜修了：主要実務と異なる模試で能力を確認済み。次は間隔復習へ' : '';
-      this.byId('player-status').textContent = `Lv.${rpg.level} ${rpg.role}｜EXP ${rpg.state.xp}｜帳簿信頼度 ${rpg.state.companyHP}/100｜総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円｜解放ツール ${rpg.unlockedTools.join('・')}${completion}`;
+      const status = this.byId('player-status');
+      const items = [
+        ['現在の役割', `Lv.${rpg.level} ${rpg.role}`],
+        ['経験値', `${yen(rpg.state.xp)} EXP`],
+        ['帳簿信頼度', `${rpg.state.companyHP} / 100`]
+      ];
+      status.replaceChildren(...items.map(([label, value]) => {
+        const group = this.document.createElement('div');
+        const term = this.document.createElement('dt'); term.textContent = label;
+        const description = this.document.createElement('dd'); description.textContent = value;
+        group.append(term, description); return group;
+      }));
+      const details = `総取引処理額 ${yen(rpg.state.totalTransactionAmount)}円。解放ツール ${rpg.unlockedTools.join('・')}`;
+      status.title = details;
+      status.setAttribute('aria-label', `学習ステータス。${items.map(([label, value]) => `${label} ${value}`).join('。')}。${details}${rpg.progressCompleted ? '。主要実務を修了済みです' : ''}`);
+      if (rpg.progressCompleted) status.setAttribute('data-completed', 'true'); else status.removeAttribute('data-completed');
     }
     renderQuestion(question, draft, mode = 'story') {
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;

@@ -89,7 +89,7 @@
       });
       this.document.getElementById('placement-form').addEventListener('submit', event => { event.preventDefault(); this.finishPlacement(); });
     }
-    showPlacement() { this.stopExamTimer(); this.view.show('view-placement'); this.document.getElementById('question-filters').hidden = true; this.document.querySelector('.mode-nav').hidden = true; }
+    showPlacement() { this.stopExamTimer(); this.document.body?.classList?.add('placement-active'); this.view.show('view-placement'); this.document.getElementById('question-filters').hidden = true; this.document.querySelector('.mode-nav').hidden = true; }
     skipPlacement() {
       const first = this.storyIds()[0] || this.ids[0];
       if (!first) return false;
@@ -111,9 +111,11 @@
       const scores = { foundation:score('foundation'), closing:score('closing') };
       const startId = this.model.completePlacement(scores);
       if (!startId) return null;
+      this.document.body?.classList?.remove('placement-active');
       this.document.querySelector('.mode-nav').hidden = false; this.renderModes(); this.start(startId); return startId;
     }
     showMode(mode) {
+      this.document.body?.classList?.remove('placement-active');
       if (mode === 'exam') {
         const unmet = this.unmetExamPrerequisites();
         if (unmet.length) {
