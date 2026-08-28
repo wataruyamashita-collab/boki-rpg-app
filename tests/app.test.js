@@ -643,10 +643,10 @@ const reloadedPlacement=new ProgressModel(placementQuestions,placementStorage,'p
 assert.deepStrictEqual([reloadedPlacement.state.placement.startQuestionId,reloadedPlacement.state.currentQuestionId],['closing','closing'],'Placement結果と開始地点をreload後も維持する');
 const placementMarkup=html.match(/<form id="placement-form">[\s\S]*?<\/form>/)[0];
 const fieldsets=[...placementMarkup.matchAll(/<fieldset data-domain="(foundation|closing)">([\s\S]*?)<\/fieldset>/g)];
-assert.strictEqual(fieldsets.length,16,'Placementは基礎・商品売買・債権債務・固定資産・帳簿・試算表・決算整理・財務諸表を測る');
+assert.strictEqual(fieldsets.length,6,'Placementは離脱を防ぐ6問のショート診断とする');
 const firstChoiceCorrect=fieldsets.filter(([, ,body])=>body.match(/<input[^>]+value="([^"]+)"/)[1] === 'correct').length;
-assert.strictEqual(firstChoiceCorrect,8,'Placementの正答位置を1番目と2番目に均等配置する');
-assert(/9\. 期末商品[\s\S]*?value="correct">借：繰越商品／貸：仕入/.test(placementMarkup),'Placement Q9は借方・繰越商品／貸方・仕入を正答とする');
+assert.strictEqual(firstChoiceCorrect,3,'Placementの正答位置を1番目と2番目に均等配置する');
+assert(/data-action="placement-skip"/.test(html),'Placementをスキップして第1章から開始できる');
 assert.strictEqual(firstChoiceCorrect/fieldsets.length,.5,'常に1番目を選ぶBotは高得点にならない');
 const legacyValues={legacy:JSON.stringify({answeredIds:['basic'],attempts:[{questionId:'basic',correct:true,responseMs:1000}],currentQuestionId:'middle'})};
 const legacy=new ProgressModel(placementQuestions,{getItem:key=>legacyValues[key]||null,setItem:(key,value)=>{legacyValues[key]=value;}},'legacy');

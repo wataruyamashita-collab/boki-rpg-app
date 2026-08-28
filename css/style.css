@@ -79,6 +79,13 @@ input { -webkit-tap-highlight-color: rgba(52, 152, 219, .2); }
 .question-list button { margin: 0; text-align: left; font-size: .9rem; }
 
 .question-filters { margin: 0 0 24px; padding: 14px; border: 1px solid #d5dce0; border-radius: 10px; background: #f8fafb; }
+.question-filters > summary { min-height: 44px; padding: 8px 0; font-weight: 800; cursor: pointer; }
+.product-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: -10px 0 16px; }
+.product-actions button { width: auto; padding: 9px 12px; font-size: .85rem; }
+.product-actions p { flex-basis: 100%; min-height: 1.3em; margin: 0; }
+.storage-error { color: #b42318 !important; font-weight: 800; }
+.update-toast { position: fixed; z-index: 20; right: 16px; bottom: 16px; max-width: 360px; padding: 14px; border-radius: 10px; color: #fff; background: #17202a; box-shadow: 0 8px 30px #0005; }
+.update-toast button { display: inline-block; width: auto; margin: 0 0 0 8px; padding: 8px 12px; }
 .question-filters[hidden] { display: none; }
 .filter-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .filter-heading h2 { margin: 0; font-size: 1rem; }
@@ -359,6 +366,8 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .achievement-banner { margin: 14px 0 0; padding: 16px; border: 2px solid #d4ac0d; border-radius: 10px; background: linear-gradient(135deg, #fff8cf, #ffeaa0); color: #6e5100; font-size: 1.15rem; font-weight: 800; text-align: center; box-shadow: 0 4px 14px rgba(180, 130, 0, .2); animation: achievement-arrive .45s ease-out both; }
 .achievement-banner[hidden] { display: none; }
 @keyframes achievement-arrive { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes achievement-glow { 0%,100% { box-shadow: 0 4px 14px rgba(180,130,0,.2); } 50% { transform: scale(1.025); box-shadow: 0 0 32px rgba(241,196,15,.75); } }
+.achievement-banner:not([hidden]) { animation: achievement-arrive .45s ease-out both, achievement-glow 1.2s .45s ease-in-out 2; }
 @media (prefers-reduced-motion: reduce) { .achievement-banner { animation: none; } }
 
 .explanation-box {
@@ -390,6 +399,7 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .account-badge-unknown { background: #626567; }
 .explanation-accounts { display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 0 0 12px; }
 .explanation-card { margin: 10px 0 0; padding: 12px 14px; border-radius: 8px; background: #fff; border-left: 4px solid #7f8c8d; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
+.npc-dialogue { margin: 10px 0; padding: 12px 14px; border-left: 5px solid #8e44ad; border-radius: 0 8px 8px 0; background: #f7effb; font-weight: 700; }
 .explanation-card h4 { margin: 0 0 6px; font-size: .9rem; }
 .explanation-card p { margin: 0; }
 .explanation-card-point { border-left-color: #d68910; background: #fffaf0; }

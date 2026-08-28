@@ -35,7 +35,17 @@
       Object.keys(clean).forEach(key => { if (Number.isSafeInteger(value[key]) && value[key] >= 0) clean[key] = value[key]; });
       return clean;
     }
-    save() { try { this.storage?.setItem?.(this.key, JSON.stringify(this.state)); } catch (_) {} }
+    save() { try { return this.storage?.setItem?.(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
+    exportState() { return JSON.parse(JSON.stringify(this.state)); }
+    importState(state) { if (!state || typeof state !== 'object' || Array.isArray(state)) return false; try { const prior = this.state; this.storage?.setItem?.(this.key, JSON.stringify(state)); this.load(); return this.save(); } catch (_) { return false; } }
+    get unlockedTools() {
+      const tools = ['標準電卓'];
+      if (this.level >= 5) tools.push('税込・税抜クイック計算');
+      if (this.level >= 10) tools.push('過去ログ分析');
+      if (this.level >= 20) tools.push('Boss Case：月次決算');
+      if (this.level >= 30) tools.push('Boss Case：年度決算');
+      return tools;
+    }
     // Lv.30 requires 12,615 XP: less than the XP available from completing the
     // authored curriculum, while still requiring broad mastery for promotion.
     get level() { return Math.min(30, Math.floor(Math.sqrt(this.state.xp / 15)) + 1); }
