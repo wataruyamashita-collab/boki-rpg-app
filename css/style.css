@@ -80,12 +80,7 @@ input { -webkit-tap-highlight-color: rgba(52, 152, 219, .2); }
 
 .question-filters { margin: 0 0 24px; padding: 14px; border: 1px solid #d5dce0; border-radius: 10px; background: #f8fafb; }
 .question-filters > summary { min-height: 44px; padding: 8px 0; font-weight: 800; cursor: pointer; }
-.product-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: -10px 0 16px; }
-.product-actions button { width: auto; padding: 9px 12px; font-size: .85rem; }
-.product-actions p { flex-basis: 100%; min-height: 1.3em; margin: 0; }
 .storage-error { color: #b42318 !important; font-weight: 800; }
-.update-toast { position: fixed; z-index: 20; right: 16px; bottom: 16px; max-width: 360px; padding: 14px; border-radius: 10px; color: #fff; background: #17202a; box-shadow: 0 8px 30px #0005; }
-.update-toast button { display: inline-block; width: auto; margin: 0 0 0 8px; padding: 8px 12px; }
 .question-filters[hidden] { display: none; }
 .filter-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .filter-heading h2 { margin: 0; font-size: 1rem; }

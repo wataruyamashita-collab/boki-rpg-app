@@ -114,6 +114,7 @@ assert.strictEqual(confidenceProgress.state.attempts[0].confidence, 'sure', '回
 assert.strictEqual(confidenceProgress.adaptiveDifficulty('売掛金'), 2, '自信あり誤答を強い思い込みとして次の難度調整へ接続する');
 
 const html = fs.readFileSync('index.html', 'utf8');
+assert(!/アプリをインストール|バックアップを書き出す|バックアップを復元/.test(html), '運用機能を学習者向け画面へ表示しない');
 const release = fs.readFileSync('service-worker.js', 'utf8').match(/const RELEASE = '([^']+)'/)[1];
 assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置かない');
 ['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));

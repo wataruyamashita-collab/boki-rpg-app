@@ -74,7 +74,7 @@
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), 'export-backup': () => this.exportBackup(), 'import-backup': () => this.document.getElementById('backup-file').click(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
+        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
@@ -88,7 +88,6 @@
         this.submit();
       });
       this.document.getElementById('placement-form').addEventListener('submit', event => { event.preventDefault(); this.finishPlacement(); });
-      this.document.getElementById('backup-file').addEventListener('change', event => this.importBackup(event.target.files?.[0]));
     }
     showPlacement() { this.stopExamTimer(); this.view.show('view-placement'); this.document.getElementById('question-filters').hidden = true; this.document.querySelector('.mode-nav').hidden = true; }
     skipPlacement() {
@@ -97,17 +96,6 @@
       this.model.completePlacement({ foundation:0, closing:0 });
       this.model.state.currentQuestionId = first; this.model.save();
       this.document.querySelector('.mode-nav').hidden = false; this.renderModes(); this.showMode('story'); return true;
-    }
-    storageNotice(message, failed = false) { const status = this.document.getElementById('storage-status'); status.textContent = message; status.classList.toggle('storage-error', failed); }
-    exportBackup() {
-      const payload = { schema:'boki-rpg-backup-v1', exportedAt:new Date().toISOString(), progress:this.model.exportState(), rpg:this.rpg.exportState() };
-      const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' }));
-      const link = this.document.createElement('a'); link.href = url; link.download = `boki-rpg-backup-${Date.now()}.json`; link.click(); URL.revokeObjectURL(url); this.storageNotice('バックアップを書き出しました。');
-    }
-    async importBackup(file) {
-      if (!file) return false;
-      try { const data = JSON.parse(await file.text()); if (data.schema !== 'boki-rpg-backup-v1' || !this.model.importState(data.progress) || !this.rpg.importState(data.rpg)) throw new Error('invalid'); this.storageNotice('バックアップを復元しました。画面を更新します。'); root.location?.reload?.(); return true; }
-      catch (_) { this.storageNotice('復元できませんでした。正しいバックアップJSONを選んでください。', true); return false; }
     }
     openRelated(id) {
       if (!this.questions[id] || this.examCandidateIds().includes(id) || this.questions[id].learningRole === 'review') return false;
