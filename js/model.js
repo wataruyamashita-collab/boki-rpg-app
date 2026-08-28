@@ -156,8 +156,13 @@
       const correctEvidence = new Set(this.state.correctIds);
       const minimumEvidencePerType = 3;
       const practicalPassed = practicalTypes.every(type => {
-        const distinctCorrect = [...correctEvidence].filter(id => this.questions[id]?.type === type);
-        return distinctCorrect.length >= minimumEvidencePerType;
+        const distinctCorrect = [...correctEvidence].map(id => this.questions[id]).filter(question => question?.type === type);
+        // Repeated numeric variants must not masquerade as breadth.  Require both
+        // three independent answers and two accounting structures (category plus
+        // authored variant/format) in every practical format.
+        const structures = new Set(distinctCorrect.map(question =>
+          `${question.category || 'uncategorized'}::${question.variantGroup || question.format || 'base'}`));
+        return distinctCorrect.length >= minimumEvidencePerType && structures.size >= 2;
       });
       const masteryPassed = ['仕訳','帳簿','決算整理','財務諸表'].every(skill => rpg?.skillMastery?.(skill) >= .7);
       this.state.completed = practicalPassed && masteryPassed && new Set(passedExams).size >= 2;
