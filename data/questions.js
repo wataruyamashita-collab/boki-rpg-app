@@ -15246,22 +15246,42 @@ function validateSemanticQuestionData(questionData = QuestionData) {
   return Object.freeze({ ok: errors.length === 0, errors:Object.freeze(errors), findings:Object.freeze(findings), eligibleIds:Object.freeze(eligibleIds), counts:Object.freeze({ VALID:validCount, QUESTIONABLE:0, INVALID:entries.length-validCount }) });
 }
 
-// 12章を一つの会社再建劇として進める。問題文と同じ事実を語り直さず、
-// 「何が危ないか」「処理すると何が分かるか」だけを短く提示する。
+// 12章を一つの会社再建劇として進める。storyは抽象的な煽り文ではなく、
+// 読み手が「誰に、何を頼まれ、この回答で何が分かるか」を一読で追える文章にする。
 const ChapterDrama = Object.freeze({
-  1:{theme:'消えた創業伝票',goal:'会社の出発点を復元する',stakes:'創業時の残高を誤れば、この先の数字はすべて崩れる'},
-  2:{theme:'営業部の未精算',goal:'売上と立替を追跡する',stakes:'回収先を特定できなければ、黒字のまま資金が尽きる'},
-  3:{theme:'総務倉庫の食い違い',goal:'備品と経費を照合する',stakes:'帳簿にある資産が、倉庫には見当たらない'},
-  4:{theme:'資金繰り警報',goal:'債権債務の期限を洗い出す',stakes:'週明けの支払いまで、残された時間は少ない'},
-  5:{theme:'給与日の混乱',goal:'給与と預り金を整理する',stakes:'一人分でも誤れば、社員の生活と会社の信用を傷つける'},
-  6:{theme:'証憑監査',goal:'誤記と不足資料を発見する',stakes:'監査担当は、説明できない一円も見逃さない'},
-  7:{theme:'月次締めの壁',goal:'散らばった記録を帳簿へつなぐ',stakes:'締切までに貸借を合わせなければ月次報告を出せない'},
-  8:{theme:'社長の緊急質問',goal:'試算表から経営の実像を読む',stakes:'「利益はどこへ消えた？」社長が答えを待っている'},
-  9:{theme:'決算前夜',goal:'決算整理の未処理を暴く',stakes:'翌朝までに、期間をまたぐ数字を正さなければならない'},
-  10:{theme:'年度決算',goal:'精算表から一年の成果を確定する',stakes:'利益の一行が、会社の次年度を左右する'},
-  11:{theme:'取締役会報告',goal:'財務諸表の根拠を固める',stakes:'役員の追及に、推測ではなく数字で答える'},
-  12:{theme:'最後の決算',goal:'一年の全記録を統合する',stakes:'この報告が、会社とあなたの次の一年を決める'}
+  1:{theme:'消えた創業伝票',place:'入社初日の経理室',requester:'水野先輩',problem:'創業時の帳簿に、証憑と一致しない空欄が見つかりました',goal:'会社の最初の残高を復元する',result:'創業時の残高'},
+  2:{theme:'営業部の未精算',place:'営業会議後の経理室',requester:'営業担当の高橋',problem:'入金予定と未精算の立替金が混ざり、回収すべき相手が分からなくなっています',goal:'売上と立替金の回収先を明らかにする',result:'回収先別の残高'},
+  3:{theme:'総務倉庫の食い違い',place:'総務倉庫の棚卸し現場',requester:'総務担当者',problem:'倉庫にある備品と台帳の記録が一致しません',goal:'備品と経費の記録を実物と一致させる',result:'備品と経費の正しい残高'},
+  4:{theme:'資金繰り警報',place:'週末の資金繰り会議',requester:'社長',problem:'週明けの支払額に対して、使える資金がいくらあるのか判断できません',goal:'債権と債務の金額・期限を整理する',result:'週明けに必要な資金額'},
+  5:{theme:'給与日の混乱',place:'給与振込前日の経理室',requester:'人事担当者',problem:'給与、会社負担分、従業員からの預り分が集計表で混在しています',goal:'従業員ごとの支給額と会社の負担額を確定する',result:'給与振込と納付に必要な金額'},
+  6:{theme:'証憑監査',place:'監査資料を広げた会議室',requester:'監査担当者',problem:'帳簿の一部について、証憑との対応を説明できない状態です',goal:'誤記と不足資料を特定する',result:'証憑で説明できる帳簿残高'},
+  7:{theme:'月次締めの壁',place:'月末の経理室',requester:'水野先輩',problem:'伝票と補助簿への転記が終わらず、月次の残高を確定できません',goal:'証憑から各帳簿への転記を完了する',result:'月次報告に使う帳簿残高'},
+  8:{theme:'社長の緊急質問',place:'社長室',requester:'社長',problem:'利益が出ているのに現金が増えない理由を、試算表から説明するよう求められました',goal:'試算表から利益と資金の違いを説明する',result:'社長への回答に使う数値'},
+  9:{theme:'決算前夜',place:'決算前夜の経理室',requester:'水野先輩',problem:'当期に含めるべき収益と費用の確認が残っています',goal:'決算整理の未処理を解消する',result:'当期に帰属する収益・費用'},
+  10:{theme:'年度決算',place:'年度決算の作業室',requester:'経理責任者',problem:'精算表の空欄が残り、一年間の利益をまだ確定できません',goal:'精算表を完成して一年間の成果を確定する',result:'当期純利益と期末残高'},
+  11:{theme:'取締役会報告',place:'取締役会前の会議室',requester:'社長',problem:'役員へ提出する財務諸表について、各数値の根拠を確認する必要があります',goal:'財務諸表の数値を帳簿から説明できるようにする',result:'財務諸表の根拠となる数値'},
+  12:{theme:'最後の決算',place:'取締役会当日の経理室',requester:'水野先輩',problem:'一年分の記録をまとめた最終報告書に、確認待ちの項目が残っています',goal:'一年分の記録を最終報告書にまとめる',result:'会社の成果と財政状態'}
 });
+
+const WorkInstructions = Object.freeze({
+  journal:'取引の増減を整理し、借方・貸方の科目と金額を決めてください',
+  ledger:'日付・相手先・金額を確かめ、指定された帳簿へ記入してください',
+  trial_balance:'残高を集計し、借方合計と貸方合計を確かめてください',
+  correction:'誤記と正しい記録を比べ、訂正仕訳を作ってください',
+  worksheet:'残高と修正内容を確認し、精算表の空欄を埋めてください',
+  financial_statement:'帳簿と決算整理を確認し、財務諸表の金額を確定してください',
+  comprehensive:'資料を順に照合し、求められた数値を確定してください'
+});
+
+const ReaderFacingBeats = Object.freeze([
+  (arc, item, instruction) => `${arc.place}。${arc.requester}があなたに「${arc.problem}」と説明し、${item.category}の資料を渡しました。${instruction}。`,
+  (arc, item, instruction) => `${arc.place}。まだ${arc.goal}ことができません。あなたは次の${item.category}の確認を任されました。${instruction}。`,
+  (arc, item, instruction) => `${arc.place}。あなたは、これまでに確認した資料と${item.category}の記録を照合します。食い違いを残さないよう、${instruction}。`,
+  (arc, item, instruction) => `${arc.place}。報告の時刻が近づき、${arc.requester}は${arc.result}の確定を待っています。あなたは今回の${item.category}について、${instruction}。`,
+  (arc, item, instruction, isLast) => isLast
+    ? `${arc.place}。最終報告に残った確認は、${item.category}です。${arc.requester}が報告書をあなたに託しました。${instruction}。この回答で、${arc.result}を確定します。`
+    : `${arc.place}。${arc.result}を確定するまで、残る確認はわずかです。あなたは次の${item.category}の資料を受け取り、${instruction}。`
+]);
 Object.values(QuestionData).forEach((item, index) => {
   // Keep every month playable: 300 cases are divided into twelve equal
   // 25-case chapters instead of allowing the large trial-balance sets to
@@ -15271,14 +15291,8 @@ Object.values(QuestionData).forEach((item, index) => {
   const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
   const chapterPosition = index % 25;
   const phase = Math.min(4, Math.floor(chapterPosition / 5));
-  const beats = [
-    `水野先輩が資料を一枚だけ抜き出した。「まず事実を固定しよう」`,
-    `照合を進めるほど、最初の説明ではつじつまが合わなくなる。${arc.stakes}。`,
-    `別々に見えた記録が、同じ残高へつながり始めた。鍵は「${item.category}」だ。`,
-    `締切が迫る。ここでの判断が、章末報告の数字を直接動かす。`,
-    chapterPosition === 24 ? `最後の資料がそろった。水野先輩は黙って報告書を差し出した。` : `残る資料はあと${25 - chapterPosition}件。矛盾の中心が見えてきた。`
-  ];
-  const npc = phase === 0 ? '水野先輩「結論より先に、証憑が示す事実を読んで。」' : phase === 4 ? '水野先輩「ここからは、あなたの数字で決着をつけて。」' : '';
+  const instruction = WorkInstructions[item.type] || WorkInstructions.comprehensive;
+  const npc = phase === 0 ? `${arc.requester}「問題文に書かれた事実を一つずつ確認しましょう。」` : phase === 4 ? `${arc.requester}「計算の根拠を確認してから、報告書へ反映してください。」` : '';
   const surprise = `${arc.theme}の手掛かりは、${item.category}の記録にある`;
   const nextArc = ChapterDrama[Math.min(12, item.chapter + 1)];
   item.chapterArc = arc;
@@ -15288,11 +15302,11 @@ Object.values(QuestionData).forEach((item, index) => {
   item.mission = `${arc.goal}：証憑から${item.category}の真相を示す`;
   item.nextHook = chapterPosition === 24 && item.chapter < 12
     ? `報告は通った。だが次の机には「${nextArc.theme}」の資料が置かれていた。`
-    : chapterPosition === 24 ? '一年分の数字が、ついに一つの報告書になった。' : '処理後の残高が、次の手掛かりになる。';
+    : chapterPosition === 24 ? '一年分の数字が、ついに一つの報告書になった。' : '次は、確定した金額と次の資料を照合します。';
   item.jobUnlock = chapterPosition === 24 ? `第${item.chapter}章 Boss Case 完了` : '経理実務の調査権限';
   item.bossCase = chapterPosition === 24;
-  item.story = `${beats[phase]} ${arc.goal}には、この取引を正しく記録するしかない。〔調査 ${chapterPosition + 1}/25〕`;
-  item.explanation = `${String(item.explanation || '').trim()}\n【物語の進展】${item.category}を処理し、章末報告に必要な残高を一つ確定しました。\n【次の手掛かり】${item.nextHook}`;
+  item.story = `${ReaderFacingBeats[phase](arc, item, instruction, chapterPosition === 24)}〔確認 ${chapterPosition + 1}/25〕`;
+  item.explanation = `${String(item.explanation || '').trim()}\n【業務の結果】${item.category}の処理が完了し、${arc.result}を構成する数値が一つ確定しました。\n【次の確認】${item.nextHook}`;
   item.npcDialogue = npc;
 });
 
