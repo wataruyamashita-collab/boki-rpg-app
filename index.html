@@ -9,13 +9,13 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260829-42">
+  <link rel="stylesheet" href="css/style.css?v=20260829-43">
 </head>
 <body>
 <div class="container">
   <header class="app-header">
     <div class="app-brand"><p class="app-kicker">日商簿記3級 学習アプリ</p><h1>新人経理の1年間</h1><p class="app-lead">取引から決算まで、仕事の流れに沿って身につける</p></div>
-    <dl id="player-status" class="player-status" aria-label="学習ステータス" aria-live="polite"></dl>
+    <div class="header-controls"><dl id="player-status" class="player-status" aria-label="学習ステータス" aria-live="polite"></dl><button type="button" class="settings-button" data-action="open-settings" aria-haspopup="dialog" aria-controls="settings-dialog">⚙<span>設定・データ管理</span></button></div>
   </header>
   <nav class="mode-nav" aria-label="学習モード">
     <button type="button" data-action="mode" data-mode="story">ストーリー</button>
@@ -23,11 +23,11 @@
     <button type="button" data-action="mode" data-mode="review">復習</button>
     <button type="button" data-action="mode" data-mode="exam">総合演習模試</button>
   </nav>
-  <details class="data-menu"><summary>アプリ・データ管理</summary><div class="data-menu-actions">
+  <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title"><form method="dialog" class="dialog-close-row"><button aria-label="設定を閉じる">×</button></form><h2 id="settings-title">設定・データ管理</h2><p>学習画面から離れた安全な場所で、端末へのインストールと進捗データを管理します。</p><div class="data-menu-actions">
     <button type="button" id="install-app" hidden>アプリをインストール</button>
     <button type="button" data-action="backup-export">進捗をJSONでバックアップ</button>
     <label class="button-like" for="backup-import">JSONバックアップを復元</label><input id="backup-import" type="file" accept="application/json,.json" hidden>
-  </div><p id="backup-status" role="status" aria-live="polite"></p></details>
+  </div><p id="backup-status" role="status" aria-live="polite"></p></dialog>
   <p id="storage-warning" class="storage-warning" role="alert" aria-live="assertive" hidden>端末へ保存できません。進捗はこの画面を閉じるまでメモリ上で保持されます。JSONバックアップをご利用ください。</p>
   <aside id="app-toast" class="app-toast" role="status" aria-live="polite" hidden><span id="app-toast-message"></span><button type="button" id="app-toast-action" hidden></button></aside>
   <aside id="exam-hud" class="exam-hud" aria-label="総合演習模試の進行状況"><p id="exam-timer" class="exam-timer" aria-live="off">残り 60:00</p><p id="exam-timer-announcement" class="visually-hidden" role="status" aria-live="polite"></p><p id="exam-progress" aria-live="polite"></p><button type="button" data-action="finish-exam">試験を終了して採点</button></aside>
@@ -51,7 +51,7 @@
       <fieldset data-domain="closing"><legend>5. 当期分の減価償却で借方に記入する勘定</legend><label><input type="radio" name="p5" value="wrong">減価償却累計額</label><label><input type="radio" name="p5" value="correct">減価償却費</label></fieldset>
       <fieldset data-domain="closing"><legend>6. 収益と費用を集計して当期純利益を求める勘定</legend><label><input type="radio" name="p6" value="correct">損益</label><label><input type="radio" name="p6" value="wrong">繰越商品</label></fieldset>
     </div><p id="placement-status" role="alert" aria-live="polite"></p><button type="submit">診断して仕事を始める</button></form></section>
-    <section id="view-story" class="view"><h2>ストーリーモード</h2><p>取引を処理して、会社の数字を見えるようにしましょう。</p><article id="story-resume" class="resume-card"><p id="resume-scene"></p><strong id="resume-task"></strong><p id="resume-progress"></p><button type="button" data-action="start" id="resume-button">続きから</button></article><details><summary>問題を選んで学ぶ</summary><div id="story-list" class="question-list"></div></details><button type="button" data-action="placement-retake">実力診断をやり直す</button></section>
+    <section id="view-story" class="view"><h2>ストーリーモード</h2><p>取引を処理して、会社の数字を見えるようにしましょう。</p><article id="story-resume" class="resume-card"><p id="resume-scene"></p><strong id="resume-task"></strong><p id="resume-progress"></p><button type="button" data-action="start" id="resume-button">続きから</button></article><section class="operations-desk" aria-labelledby="operations-title"><div><p class="section-label">経理部オペレーション</p><h3 id="operations-title">昇進で広がる実務デスク</h3></div><div id="unlocked-operations" class="operation-grid"></div><div id="tax-tool" class="tax-tool" hidden><label>税抜金額<input id="tax-base" type="text" inputmode="numeric" value="1000"></label><button type="button" data-action="tax-calculate">10%税込を計算</button><output id="tax-result" aria-live="polite"></output></div><div id="log-analysis" class="log-analysis" hidden></div></section><details><summary>問題を選んで学ぶ</summary><div id="story-list" class="question-list"></div></details><button type="button" data-action="placement-retake">実力診断をやり直す</button></section>
     <section id="view-training" class="view"><h2>トレーニングモード</h2><p>試算表・元帳・精算表などを形式別に練習します。</p><div id="training-list" class="question-list"></div></section>
     <section id="view-review" class="view"><h2>復習モード</h2><p>間違えた問題を優先して解き直します。</p><div id="review-list" class="question-list"></div></section>
     <section id="view-exam" class="view"><h2>総合演習模試</h2><p>本試験そのものではない独自15問演習です。制限時間60分・100点満点・70点以上を合格圏とし、全問回答後に採点します。</p><div id="exam-list" class="question-list"></div></section>
@@ -80,6 +80,6 @@
   </main>
   <dialog id="game-over-dialog" class="game-over-dialog"><h2>帳簿信頼度が0になりました</h2><p>水野先輩「まだ立て直せる。未解決伝票を緊急精算しよう」</p><button type="button" data-action="review-game-over">緊急精算（復習モード）へ</button><button type="button" data-action="retry-mode">最初の案件から再挑戦</button></dialog>
 </div>
-<script src="data/questions.js?v=20260829-42"></script><script src="data/accounting-oracle.js?v=20260829-42"></script><script src="js/calculator.js?v=20260829-42"></script><script src="js/model.js?v=20260829-42"></script><script src="js/rpg.js?v=20260829-42"></script><script src="js/engine.js?v=20260829-42"></script><script src="js/feedback.js?v=20260829-42"></script><script src="js/view.js?v=20260829-42"></script><script src="js/controller.js?v=20260829-42"></script><script src="js/app.js?v=20260829-42"></script>
+<script src="data/questions.js?v=20260829-43"></script><script src="data/accounting-oracle.js?v=20260829-43"></script><script src="js/calculator.js?v=20260829-43"></script><script src="js/model.js?v=20260829-43"></script><script src="js/rpg.js?v=20260829-43"></script><script src="js/engine.js?v=20260829-43"></script><script src="js/feedback.js?v=20260829-43"></script><script src="js/view.js?v=20260829-43"></script><script src="js/controller.js?v=20260829-43"></script><script src="js/app.js?v=20260829-43"></script>
 </body>
 </html>

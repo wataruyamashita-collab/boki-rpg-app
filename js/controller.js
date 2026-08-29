@@ -74,7 +74,7 @@
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'backup-export': () => this.exportBackup(), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
+      const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
@@ -90,6 +90,35 @@
       this.document.getElementById('placement-form').addEventListener('submit', event => { event.preventDefault(); this.finishPlacement(); });
       this.document.getElementById('backup-import')?.addEventListener('change', event => this.importBackup(event.target.files?.[0]));
       root.addEventListener?.('boki-storage-error', () => { const warning = this.document.getElementById('storage-warning'); if (warning) warning.hidden = false; });
+    }
+    openSettings() {
+      const dialog = this.document.getElementById('settings-dialog');
+      if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+    }
+    calculateTax() {
+      if (this.rpg.level < 5) return false;
+      const input = this.document.getElementById('tax-base');
+      const base = Number(normalizeNumber(input.value).replace(/,/g, ''));
+      const output = this.document.getElementById('tax-result');
+      if (!Number.isFinite(base) || base < 0) { output.textContent = '0以上の金額を入力してください。'; return false; }
+      output.textContent = `税込 ${Math.round(base * 1.1).toLocaleString('ja-JP')}円（消費税 ${Math.round(base * .1).toLocaleString('ja-JP')}円）`;
+      return true;
+    }
+    openLogAnalysis() {
+      if (this.rpg.level < 10) return false;
+      const attempts = this.model.state.attempts || [], correct = attempts.filter(item => item.correct).length;
+      const weak = Object.entries(this.model.state.mistakeCounts || {}).sort((a,b) => b[1] - a[1]).slice(0, 3).map(([id, count]) => `${this.questions[id]?.category || id}（${count}回）`);
+      const panel = this.document.getElementById('log-analysis'); panel.hidden = false;
+      panel.textContent = `直近${attempts.length}件の正答率：${attempts.length ? Math.round(correct / attempts.length * 100) : 0}%｜重点確認：${weak.join('、') || 'まだありません'}`;
+      return true;
+    }
+    startBoss(kind) {
+      const required = kind === 'annual' ? 30 : 20;
+      if (this.rpg.level < required) return false;
+      const types = kind === 'annual' ? ['comprehensive', 'financial_statement'] : ['worksheet', 'trial_balance'];
+      const id = this.learningIds().filter(id => types.includes(this.questions[id].type)).sort((a,b) => (this.questions[b].difficulty || 0) - (this.questions[a].difficulty || 0))[0];
+      if (!id) return false;
+      this.model.state.mode = 'story'; this.model.save(); this.start(id); return true;
     }
     exportBackup() {
       const payload = { format:'boki-rpg-backup', version:1, exportedAt:new Date().toISOString(), progress:this.model.state, character:this.rpg.state };

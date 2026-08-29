@@ -4,9 +4,9 @@
    ========================================= */
 :root {
   --primary-color: #2c3e50;
-  --accent-color: #3498db;
+  --accent-color: #1f6fa5;
   --bg-color: #f4f6f7;
-  --correct-color: #27ae60;
+  --correct-color: #187a43;
   --incorrect-color: #e74c3c;
 }
 
@@ -85,8 +85,13 @@ input { -webkit-tap-highlight-color: rgba(52, 152, 219, .2); }
 .question-filters > summary { min-height: 44px; padding: 8px 0; font-weight: 800; cursor: pointer; }
 .storage-error { color: #b42318 !important; font-weight: 800; }
 .storage-warning { margin: 0 0 16px; padding: 12px; border: 2px solid #b42318; border-radius: 8px; background: #fff1f0; color: #8a1c13; font-weight: 800; }
-.data-menu { margin: 0 0 16px; padding: 10px 14px; border: 1px solid #d5dce0; border-radius: 10px; background: #fff; }
-.data-menu > summary { min-height: 44px; padding: 10px 0; font-weight: 800; cursor: pointer; }
+.header-controls { display: flex; align-items: center; gap: 8px; }
+.settings-button { width: auto; margin: 0; padding: 8px 10px; background: #fff; color: #1f618d; border: 1px solid #1f618d; }
+.settings-button span { margin-left: 5px; }
+.settings-dialog { width: min(560px, calc(100% - 32px)); box-sizing: border-box; padding: 24px; border: 0; border-radius: 16px; color: var(--primary-color); box-shadow: 0 24px 80px #0006; }
+.settings-dialog::backdrop { background: #17202acc; backdrop-filter: blur(3px); }
+.dialog-close-row { float: right; }
+.dialog-close-row button { width: 44px; margin: 0; padding: 0; color: #17202a; background: #eef2f5; }
 .data-menu-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .button-like { display: inline-flex; align-items: center; min-height: 44px; padding: 9px 14px; border-radius: 8px; background: #34495e; color: #fff; font-weight: 700; cursor: pointer; }
 .app-toast { position: fixed; z-index: 1000; right: 18px; bottom: 18px; max-width: min(420px, calc(100vw - 36px)); padding: 14px; border-radius: 10px; background: #17202a; color: #fff; box-shadow: 0 8px 30px #0005; }
@@ -225,6 +230,17 @@ button.secondary-button:hover { color: #fff; }
 .resume-card { margin: 14px 0 20px; padding: 16px; border: 2px solid #3498db; border-radius: 10px; background: #f7fbff; }
 .resume-card p { margin: 2px 0 8px; }
 .resume-card strong { display: block; }
+.operations-desk { margin: 20px 0; padding: 18px; border-radius: 14px; color: #edf6ff; background: linear-gradient(145deg, #17202a, #273746); box-shadow: 0 12px 30px #17202a33; }
+.operations-desk h3 { margin: 0 0 14px; }
+.operation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.operation-card { display: grid; align-content: start; padding: 12px; border: 1px solid #ffffff24; border-radius: 10px; background: #ffffff0d; }
+.operation-card.locked { opacity: .62; }
+.operation-card small { color: #f4d03f; font-weight: 800; }
+.operation-card p { min-height: 3em; margin: 4px 0 10px; font-size: .82rem; }
+.operation-card button { margin-top: auto; }
+.tax-tool, .log-analysis { margin-top: 12px; padding: 12px; border-radius: 10px; background: #fff; color: #17202a; }
+.tax-tool label { display: grid; }
+.tax-tool output { display: block; font-weight: 800; }
 #view-story > details > summary { min-height: 44px; padding: 10px 4px; cursor: pointer; font-weight: 700; }
 
 .journal-header {
@@ -272,6 +288,10 @@ select, .amount-input {
 .amount-input.calculator-selected { border-color: var(--accent-color); outline: 3px solid rgba(52, 152, 219, .2); }
 
 @media (max-width: 480px) {
+  .settings-button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .player-status { grid-template-columns: repeat(3, 1fr); }
+  .header-controls { width: 100%; align-items: stretch; }
+  .operation-grid { grid-template-columns: 1fr; }
   .container {
     padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   }

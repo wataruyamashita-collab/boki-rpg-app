@@ -8,6 +8,42 @@ record('L038','ZERO',q=>{q.materials.at(-1).減少=135000},(_b,a)=>a.expected.ce
 record('L041','TRANSACTION_SEMANTIC',q=>{q.materials[0].取引=q.materials[0].取引.replace('掛販売','現金販売')},(_b,a)=>a.expected.cells.d1Account==='現金'&&a.expected.cells.c1Account==='売上');
 record('L041','UNKNOWN_SEMANTIC',q=>{q.materials[0].取引='商品90,000円を未対応決済'},(_b,a)=>a.status==='UNKNOWN_SOURCE'&&!a.derivable);
 record('C001','CONSISTENCY_BREAK',q=>{q.materials.find(x=>x.資料区分==='整理前残高試算表').借方合計+=137},(_b,a)=>a.status==='INVALID_SOURCE'&&a.sourceValid===false);
+// Dynamically prove that every authored question is bound to at least one visible
+// source fact.  For each question, mutate candidate facts one at a time and require
+// the independent oracle either to derive a different answer or fail closed.  This
+// prevents a newly-added archetype from silently escaping source-sensitivity CI.
+const sourceCandidates = question => {
+  const candidates=[];
+  const visit=(value,path=[])=>{
+    if (typeof value === 'number' && Number.isFinite(value)) candidates.push({path, value, replacement:value === 0 ? 17 : value + Math.max(1, Math.round(Math.abs(value)*.17))});
+    else if (typeof value === 'string') {
+      const matches=[...value.matchAll(/\d[\d,]*/g)].reverse();
+      matches.forEach(match=>{
+        const numeric=Number(match[0].replace(/,/g,'')); if (!Number.isFinite(numeric)) return;
+        const changed=String(numeric === 0 ? 17 : numeric + Math.max(1,Math.round(Math.abs(numeric)*.17)));
+        candidates.push({path, value, replacement:value.slice(0,match.index)+changed+value.slice(match.index+match[0].length)});
+      });
+    } else if (Array.isArray(value)) value.forEach((item,index)=>visit(item,[...path,index]));
+    else if (value && typeof value === 'object') Object.entries(value).forEach(([key,item])=>visit(item,[...path,key]));
+  };
+  ['question','materials','table'].forEach(key=>visit(question[key],[key]));
+  return candidates;
+};
+const setPath=(target,path,value)=>{let cursor=target;for(let i=0;i<path.length-1;i+=1)cursor=cursor[path[i]];cursor[path.at(-1)]=value;};
+for (const id of Object.keys(root.QuestionData)) {
+  const original=structuredClone(root.QuestionData[id]);
+  const before=root.deriveAccountingExpected(id,null,original);
+  let proof=null;
+  for (const candidate of sourceCandidates(original)) {
+    const mutated=structuredClone(original); setPath(mutated,candidate.path,candidate.replacement);
+    const after=root.deriveAccountingExpected(id,null,mutated);
+    const changed=after.derivable===false || after.status==='INVALID_SOURCE' || after.status==='UNKNOWN_SOURCE' || JSON.stringify(before.expected)!==JSON.stringify(after.expected);
+    if (changed) { proof={candidate,after}; break; }
+  }
+  const pass=Boolean(proof);
+  evidence.push({questionId:id,mutationClass:'DYNAMIC_SOURCE',path:proof?.candidate.path.join('.')||null,status:proof?.after.status||'NO_SENSITIVE_SOURCE',sourceValid:proof?.after.sourceValid,pass});
+  assert.ok(pass,`${id} DYNAMIC_SOURCE: visible source mutation did not affect the oracle`);
+}
 // Every authored archetype and all 300 questions are guarded against answer-key tampering.
 for (const id of Object.keys(root.QuestionData)) {
   const original=structuredClone(root.QuestionData[id]), mutated=structuredClone(original);
