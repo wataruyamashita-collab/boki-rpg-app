@@ -11,14 +11,17 @@
       this.controller = new root.AppController(document, root.QuestionData); this.controller.init(this.initialRoute());
       this.setupInstallPrompt();
       if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' }).then(registration => {
-        const offerUpdate = worker => { if (!worker || !navigator.serviceWorker.controller) return; this.showToast('新しいバージョンが利用可能です。', '更新', () => { worker.postMessage({ type:'SKIP_WAITING' }); root.location.reload(); }); };
+        let updateAccepted = false;
+        const offerUpdate = worker => { if (!worker || !navigator.serviceWorker.controller) return; this.showToast('新しいバージョンが利用可能です。', '更新', () => { updateAccepted = true; worker.postMessage({ type:'SKIP_WAITING' }); }); };
         offerUpdate(registration.waiting); registration.addEventListener('updatefound', () => registration.installing?.addEventListener('statechange', () => { if (registration.installing?.state === 'installed') offerUpdate(registration.installing); }));
-        navigator.serviceWorker.addEventListener('controllerchange', () => root.location.reload());
+        navigator.serviceWorker.addEventListener('controllerchange', () => { if (updateAccepted) root.location.reload(); });
       });
     },
     setupInstallPrompt() {
       const button = document.getElementById('install-app'); let promptEvent = null;
-      root.addEventListener('beforeinstallprompt', event => { event.preventDefault(); promptEvent = event; button.hidden = false; });
+      const standalone = () => root.matchMedia?.('(display-mode: standalone)').matches || root.navigator?.standalone === true;
+      if (button) button.hidden = true;
+      root.addEventListener('beforeinstallprompt', event => { event.preventDefault(); if (standalone()) return; promptEvent = event; if (button) button.hidden = false; });
       button?.addEventListener('click', async () => { if (!promptEvent) return; await promptEvent.prompt(); promptEvent = null; button.hidden = true; });
       root.addEventListener('appinstalled', () => { promptEvent = null; if (button) button.hidden = true; this.showToast('アプリをインストールしました。'); });
     },

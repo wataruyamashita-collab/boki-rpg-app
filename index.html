@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260828-41">
+  <link rel="stylesheet" href="css/style.css?v=20260829-42">
 </head>
 <body>
 <div class="container">
@@ -30,7 +30,7 @@
   </div><p id="backup-status" role="status" aria-live="polite"></p></details>
   <p id="storage-warning" class="storage-warning" role="alert" aria-live="assertive" hidden>端末へ保存できません。進捗はこの画面を閉じるまでメモリ上で保持されます。JSONバックアップをご利用ください。</p>
   <aside id="app-toast" class="app-toast" role="status" aria-live="polite" hidden><span id="app-toast-message"></span><button type="button" id="app-toast-action" hidden></button></aside>
-  <aside id="exam-hud" class="exam-hud" aria-label="総合演習模試の進行状況"><p id="exam-timer" class="exam-timer" aria-live="polite">残り 60:00</p><p id="exam-progress" aria-live="polite"></p><button type="button" data-action="finish-exam">試験を終了して採点</button></aside>
+  <aside id="exam-hud" class="exam-hud" aria-label="総合演習模試の進行状況"><p id="exam-timer" class="exam-timer" aria-live="off">残り 60:00</p><p id="exam-timer-announcement" class="visually-hidden" role="status" aria-live="polite"></p><p id="exam-progress" aria-live="polite"></p><button type="button" data-action="finish-exam">試験を終了して採点</button></aside>
 
   <details id="question-filters" class="question-filters" aria-labelledby="filter-heading"><summary>問題を検索・絞り込む</summary>
     <div class="filter-heading"><h2 id="filter-heading">問題を絞り込む</h2><button type="button" class="filter-reset" data-action="filter-reset">条件をクリア</button></div>
@@ -47,9 +47,9 @@
       <fieldset data-domain="foundation"><legend>1. 資産が増える側</legend><label><input type="radio" name="p1" value="correct">借方</label><label><input type="radio" name="p1" value="wrong">貸方</label></fieldset>
       <fieldset data-domain="foundation"><legend>2. 負債が増える側</legend><label><input type="radio" name="p2" value="wrong">借方</label><label><input type="radio" name="p2" value="correct">貸方</label></fieldset>
       <fieldset data-domain="foundation"><legend>3. 商品を掛けで仕入れたときの貸方</legend><label><input type="radio" name="p3" value="wrong">売掛金</label><label><input type="radio" name="p3" value="correct">買掛金</label></fieldset>
-      <fieldset data-domain="foundation"><legend>4. 商品を掛けで売ったときの借方</legend><label><input type="radio" name="p4" value="correct">売掛金</label><label><input type="radio" name="p4" value="wrong">買掛金</label></fieldset>
-      <fieldset data-domain="foundation"><legend>5. 交通費1,200円を現金で支払った仕訳</legend><label><input type="radio" name="p5" value="wrong">借：現金1,200／貸：旅費交通費1,200</label><label><input type="radio" name="p5" value="correct">借：旅費交通費1,200／貸：現金1,200</label></fieldset>
-      <fieldset data-domain="foundation"><legend>6. 売掛金を現金で回収したときの貸方</legend><label><input type="radio" name="p6" value="correct">売掛金</label><label><input type="radio" name="p6" value="wrong">現金</label></fieldset>
+      <fieldset data-domain="closing"><legend>4. 決算日に未使用の消耗品を振り替える勘定</legend><label><input type="radio" name="p4" value="correct">消耗品</label><label><input type="radio" name="p4" value="wrong">消耗品費</label></fieldset>
+      <fieldset data-domain="closing"><legend>5. 当期分の減価償却で借方に記入する勘定</legend><label><input type="radio" name="p5" value="wrong">減価償却累計額</label><label><input type="radio" name="p5" value="correct">減価償却費</label></fieldset>
+      <fieldset data-domain="closing"><legend>6. 収益と費用を集計して当期純利益を求める勘定</legend><label><input type="radio" name="p6" value="correct">損益</label><label><input type="radio" name="p6" value="wrong">繰越商品</label></fieldset>
     </div><p id="placement-status" role="alert" aria-live="polite"></p><button type="submit">診断して仕事を始める</button></form></section>
     <section id="view-story" class="view"><h2>ストーリーモード</h2><p>取引を処理して、会社の数字を見えるようにしましょう。</p><article id="story-resume" class="resume-card"><p id="resume-scene"></p><strong id="resume-task"></strong><p id="resume-progress"></p><button type="button" data-action="start" id="resume-button">続きから</button></article><details><summary>問題を選んで学ぶ</summary><div id="story-list" class="question-list"></div></details><button type="button" data-action="placement-retake">実力診断をやり直す</button></section>
     <section id="view-training" class="view"><h2>トレーニングモード</h2><p>試算表・元帳・精算表などを形式別に練習します。</p><div id="training-list" class="question-list"></div></section>
@@ -80,6 +80,6 @@
   </main>
   <dialog id="game-over-dialog" class="game-over-dialog"><h2>帳簿信頼度が0になりました</h2><p>水野先輩「まだ立て直せる。未解決伝票を緊急精算しよう」</p><button type="button" data-action="review-game-over">緊急精算（復習モード）へ</button><button type="button" data-action="retry-mode">最初の案件から再挑戦</button></dialog>
 </div>
-<script src="data/questions.js?v=20260828-41"></script><script src="data/accounting-oracle.js?v=20260828-41"></script><script src="js/calculator.js?v=20260828-41"></script><script src="js/model.js?v=20260828-41"></script><script src="js/rpg.js?v=20260828-41"></script><script src="js/engine.js?v=20260828-41"></script><script src="js/feedback.js?v=20260828-41"></script><script src="js/view.js?v=20260828-41"></script><script src="js/controller.js?v=20260828-41"></script><script src="js/app.js?v=20260828-41"></script>
+<script src="data/questions.js?v=20260829-42"></script><script src="data/accounting-oracle.js?v=20260829-42"></script><script src="js/calculator.js?v=20260829-42"></script><script src="js/model.js?v=20260829-42"></script><script src="js/rpg.js?v=20260829-42"></script><script src="js/engine.js?v=20260829-42"></script><script src="js/feedback.js?v=20260829-42"></script><script src="js/view.js?v=20260829-42"></script><script src="js/controller.js?v=20260829-42"></script><script src="js/app.js?v=20260829-42"></script>
 </body>
 </html>

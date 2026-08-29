@@ -243,6 +243,11 @@
       const remaining = Math.max(0, session.endAt - now); const seconds = Math.ceil(remaining / 1000);
       const timer = this.document.getElementById('exam-timer'); const progress = this.document.getElementById('exam-progress');
       if (timer) timer.textContent = `残り ${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+      const announcement = this.document.getElementById('exam-timer-announcement');
+      if (announcement && [600, 300, 60, 30].includes(seconds) && this.lastExamAnnouncement !== seconds) {
+        announcement.textContent = `試験終了まで残り${seconds >= 60 ? `${seconds / 60}分` : `${seconds}秒`}です。`;
+        this.lastExamAnnouncement = seconds;
+      }
       const position = Math.max(0, session.ids.indexOf(this.currentId)) + 1;
       if (progress) progress.textContent = `第${position}問 / ${session.ids.length}問｜回答済み ${session.ids.length - this.unansweredExamIds().length}問`;
       if (remaining === 0) { session.status = 'EXPIRED'; this.finishExam(true, now); }
