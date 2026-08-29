@@ -13,7 +13,7 @@
         setItem(key, value) {
           if (!writable) return false;
           try { storage.setItem(key, value); return true; }
-          catch (_) { writable = false; return false; }
+          catch (_) { writable = false; root.dispatchEvent?.(new Event('boki-storage-error')); return false; }
         },
         removeItem(key) { try { storage.removeItem(key); return true; } catch (_) { return false; } }
       };
@@ -74,7 +74,7 @@
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
+        const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'backup-export': () => this.exportBackup(), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
@@ -88,6 +88,25 @@
         this.submit();
       });
       this.document.getElementById('placement-form').addEventListener('submit', event => { event.preventDefault(); this.finishPlacement(); });
+      this.document.getElementById('backup-import')?.addEventListener('change', event => this.importBackup(event.target.files?.[0]));
+      root.addEventListener?.('boki-storage-error', () => { const warning = this.document.getElementById('storage-warning'); if (warning) warning.hidden = false; });
+    }
+    exportBackup() {
+      const payload = { format:'boki-rpg-backup', version:1, exportedAt:new Date().toISOString(), progress:this.model.state, character:this.rpg.state };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+      const link = this.document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `boki-rpg-backup-${new Date().toISOString().slice(0, 10)}.json`; link.click(); URL.revokeObjectURL(link.href);
+      this.document.getElementById('backup-status').textContent = 'バックアップを書き出しました。';
+    }
+    async importBackup(file) {
+      const status = this.document.getElementById('backup-status');
+      try {
+        const payload = JSON.parse(await file.text());
+        if (payload?.format !== 'boki-rpg-backup' || payload.version !== 1 || !payload.progress || !payload.character) throw new Error('invalid');
+        const progressSaved = this.model.storage?.setItem?.(this.model.key, JSON.stringify(payload.progress));
+        const characterSaved = this.rpg.storage?.setItem?.(this.rpg.key, JSON.stringify(payload.character));
+        if (progressSaved === false || characterSaved === false) throw new Error('storage');
+        status.textContent = 'バックアップを復元しました。画面を再読み込みします。'; root.location?.reload?.(); return true;
+      } catch (_) { status.textContent = '復元できませんでした。BOKI RPGが書き出したJSONファイルを選んでください。'; status.classList.add('storage-error'); return false; }
     }
     showPlacement() { this.stopExamTimer(); this.document.body?.classList?.add('placement-active'); this.view.show('view-placement'); this.document.getElementById('question-filters').hidden = true; this.document.querySelector('.mode-nav').hidden = true; }
     skipPlacement() {
