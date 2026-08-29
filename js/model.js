@@ -10,7 +10,7 @@
       try {
         const saved = JSON.parse(this.storage?.getItem?.(this.key));
         if (saved && typeof saved === 'object' && !Array.isArray(saved)) this.state = Object.assign(this.state, saved, {
-          mode: ['story', 'training', 'review', 'exam'].includes(saved.mode) ? saved.mode : 'story',
+          mode: ['story', 'training', 'review', 'exam', 'desk'].includes(saved.mode) ? saved.mode : 'story',
           currentQuestionId: this.questions[saved.currentQuestionId] ? saved.currentQuestionId : null,
           answeredIds: Array.isArray(saved.answeredIds) ? saved.answeredIds.filter(id => this.questions[id]) : [],
           // Legacy saves did not have correctIds. Only validated attempt evidence may be
