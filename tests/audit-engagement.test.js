@@ -11,8 +11,13 @@ assert.equal(output.summary.ExamConfidence.mean, 99);
 assert.equal(output.redTeam.engagementDetected, true);
 assert.equal(output.redTeam.examReadinessDetected, true);
 assert.equal(engagementCoverage.knowledgeLinkCoverage, 9 / 300);
-assert.equal(engagementCoverage.missionCoverage, 0);
-assert.equal(output.features.missionChunking, false);
+assert.equal(engagementCoverage.nextHookCoverage, 1);
+assert.equal(engagementCoverage.accountingSurpriseCoverage, 1);
+assert.equal(engagementCoverage.missionCoverage, 1);
+assert.equal(engagementCoverage.jobUnlockCoverage, 1);
+assert.equal(output.features.curiosityHook, true);
+assert.equal(output.features.missionChunking, true);
+assert.equal(output.features.jobUnlock, true);
 
 const completeReadiness = { independentReadiness: 1, question1: 1, question2: 1, question3: 1, unseenTransfer: 1 };
 assert.equal(summary(panel(undefined, completeReadiness)).ExamConfidence.mean, output.summary.ExamConfidence.mean);
