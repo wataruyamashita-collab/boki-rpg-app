@@ -15246,20 +15246,21 @@ function validateSemanticQuestionData(questionData = QuestionData) {
   return Object.freeze({ ok: errors.length === 0, errors:Object.freeze(errors), findings:Object.freeze(findings), eligibleIds:Object.freeze(eligibleIds), counts:Object.freeze({ VALID:validCount, QUESTIONABLE:0, INVALID:entries.length-validCount }) });
 }
 
-// Twelve chapter arcs make each accounting task part of a company-wide incident.
+// 12章を一つの会社再建劇として進める。問題文と同じ事実を語り直さず、
+// 「何が危ないか」「処理すると何が分かるか」だけを短く提示する。
 const ChapterDrama = Object.freeze({
-  1:{theme:'消えた創業伝票',goal:'会社の出発点を復元する',resolution:'創業時の帳簿を確定する'},
-  2:{theme:'営業部の未精算',goal:'売上と立替を追跡する',resolution:'営業残高を一致させる'},
-  3:{theme:'総務倉庫の食い違い',goal:'備品と経費を照合する',resolution:'社内資産を確定する'},
-  4:{theme:'資金繰り警報',goal:'債権債務の期限を守る',resolution:'支払危機を回避する'},
-  5:{theme:'給与日の混乱',goal:'給与と預り金を整理する',resolution:'全員への支給を完了する'},
-  6:{theme:'証憑監査',goal:'誤記と不足資料を発見する',resolution:'監査指摘を解消する'},
-  7:{theme:'月次締めの壁',goal:'帳簿を転記して締める',resolution:'月次報告を完成する'},
-  8:{theme:'社長の緊急質問',goal:'試算表から経営状況を読む',resolution:'数字で信頼を取り戻す'},
-  9:{theme:'決算前夜',goal:'決算整理事項を調査する',resolution:'未処理をゼロにする'},
-  10:{theme:'年度決算',goal:'精算表を完成する',resolution:'利益と財政状態を報告する'},
-  11:{theme:'取締役会報告',goal:'財務諸表の根拠を固める',resolution:'経営判断を支える'},
-  12:{theme:'未来を託す最終決算',goal:'一年の全記録を統合する',resolution:'社長の信頼と次の役職を得る'}
+  1:{theme:'消えた創業伝票',goal:'会社の出発点を復元する',stakes:'創業時の残高を誤れば、この先の数字はすべて崩れる'},
+  2:{theme:'営業部の未精算',goal:'売上と立替を追跡する',stakes:'回収先を特定できなければ、黒字のまま資金が尽きる'},
+  3:{theme:'総務倉庫の食い違い',goal:'備品と経費を照合する',stakes:'帳簿にある資産が、倉庫には見当たらない'},
+  4:{theme:'資金繰り警報',goal:'債権債務の期限を洗い出す',stakes:'週明けの支払いまで、残された時間は少ない'},
+  5:{theme:'給与日の混乱',goal:'給与と預り金を整理する',stakes:'一人分でも誤れば、社員の生活と会社の信用を傷つける'},
+  6:{theme:'証憑監査',goal:'誤記と不足資料を発見する',stakes:'監査担当は、説明できない一円も見逃さない'},
+  7:{theme:'月次締めの壁',goal:'散らばった記録を帳簿へつなぐ',stakes:'締切までに貸借を合わせなければ月次報告を出せない'},
+  8:{theme:'社長の緊急質問',goal:'試算表から経営の実像を読む',stakes:'「利益はどこへ消えた？」社長が答えを待っている'},
+  9:{theme:'決算前夜',goal:'決算整理の未処理を暴く',stakes:'翌朝までに、期間をまたぐ数字を正さなければならない'},
+  10:{theme:'年度決算',goal:'精算表から一年の成果を確定する',stakes:'利益の一行が、会社の次年度を左右する'},
+  11:{theme:'取締役会報告',goal:'財務諸表の根拠を固める',stakes:'役員の追及に、推測ではなく数字で答える'},
+  12:{theme:'最後の決算',goal:'一年の全記録を統合する',stakes:'この報告が、会社とあなたの次の一年を決める'}
 });
 Object.values(QuestionData).forEach((item, index) => {
   // Keep every month playable: 300 cases are divided into twelve equal
@@ -15267,32 +15268,31 @@ Object.values(QuestionData).forEach((item, index) => {
   // accumulate in a single chapter.
   item.chapter = Math.floor(index / 25) + 1;
   const arc = ChapterDrama[item.chapter] || ChapterDrama[12];
-  const oldStory = String(item.story || '').replace(/\s*【業務記録[^】]+】[^。]*。?/g, '').trim();
   const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
-  const dialogue = [
-    '水野先輩「数字は嘘をつかないわ。違和感の正体を突き止めなさい！」',
-    '社長「売上は伸びているのに、なぜ使えるお金が増えないんだ！？」',
-    '営業・高橋「領収書？ あ、ポケットで揉みくちゃになってました！」',
-    '総務・森「高橋さん、証憑と帳簿が一致するまで確認しますよ。」'
-  ];
-  const npc = item.type === 'comprehensive' || item.id === 'C010' ? dialogue[1] : dialogue[index % dialogue.length];
-  const surprise = `${item.category}の記録に、帳簿だけでは説明できない違和感がある。なぜ数字が食い違うのだろう？`;
-  const nextArc = ChapterDrama[Math.min(12, item.chapter + 1)];
   const chapterPosition = index % 25;
+  const phase = Math.min(4, Math.floor(chapterPosition / 5));
+  const beats = [
+    `水野先輩が資料を一枚だけ抜き出した。「まず事実を固定しよう」`,
+    `照合を進めるほど、最初の説明ではつじつまが合わなくなる。${arc.stakes}。`,
+    `別々に見えた記録が、同じ残高へつながり始めた。鍵は「${item.category}」だ。`,
+    `締切が迫る。ここでの判断が、章末報告の数字を直接動かす。`,
+    chapterPosition === 24 ? `最後の資料がそろった。水野先輩は黙って報告書を差し出した。` : `残る資料はあと${25 - chapterPosition}件。矛盾の中心が見えてきた。`
+  ];
+  const npc = phase === 0 ? '水野先輩「結論より先に、証憑が示す事実を読んで。」' : phase === 4 ? '水野先輩「ここからは、あなたの数字で決着をつけて。」' : '';
+  const surprise = `${arc.theme}の手掛かりは、${item.category}の記録にある`;
+  const nextArc = ChapterDrama[Math.min(12, item.chapter + 1)];
   item.chapterArc = arc;
   item.scene = `${months[item.chapter - 1]}・${arc.theme}`;
-  const narrative = (oldStory || arc.goal).replace(/。$/u, '');
-  const evidenceMemo = String(item.question || item.category).replace(/。$/u, '');
   item.accountingSurprise = surprise;
   item.missionId = `chapter-${item.chapter}`;
   item.mission = `${arc.goal}：証憑から${item.category}の真相を示す`;
-  item.nextHook = chapterPosition === 24
-    ? `章末Boss Caseを突破した。しかし、次は「${nextArc.theme}」の謎が待っている。`
-    : `この処理が別の残高へどう波及するのか、次の証憑で確かめよう。`;
+  item.nextHook = chapterPosition === 24 && item.chapter < 12
+    ? `報告は通った。だが次の机には「${nextArc.theme}」の資料が置かれていた。`
+    : chapterPosition === 24 ? '一年分の数字が、ついに一つの報告書になった。' : '処理後の残高が、次の手掛かりになる。';
   item.jobUnlock = chapterPosition === 24 ? `第${item.chapter}章 Boss Case 完了` : '経理実務の調査権限';
   item.bossCase = chapterPosition === 24;
-  item.story = `Accounting Surprise：${surprise} ${npc} ${arc.theme}を解決するため、${narrative}。${months[item.chapter - 1]}の第${chapterPosition + 1}調査票には「${evidenceMemo}」とある。この事実に基づく判断を、${arc.resolution}ための報告へつなげる。`;
-  item.explanation = `${String(item.explanation || '').trim()}\n【事件解決】${item.category}を正しく処理したことで違和感の原因が判明し、${arc.resolution}ための数字がつながりました。\n【次の疑問】${item.nextHook}`;
+  item.story = `${beats[phase]} ${arc.goal}には、この取引を正しく記録するしかない。〔調査 ${chapterPosition + 1}/25〕`;
+  item.explanation = `${String(item.explanation || '').trim()}\n【物語の進展】${item.category}を処理し、章末報告に必要な残高を一つ確定しました。\n【次の手掛かり】${item.nextHook}`;
   item.npcDialogue = npc;
 });
 

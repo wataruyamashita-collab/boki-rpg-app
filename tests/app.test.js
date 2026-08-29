@@ -117,7 +117,9 @@ const html = fs.readFileSync('index.html', 'utf8');
 assert(/アプリをインストール/.test(html) && /JSONでバックアップ/.test(html) && /JSONバックアップを復元/.test(html), 'PWA導入と進捗バックアップをデータ管理メニューから利用できる');
 const release = fs.readFileSync('service-worker.js', 'utf8').match(/const RELEASE = '([^']+)'/)[1];
 assert(!/\sonclick=/.test(html), 'インラインイベントハンドラを置かない');
-['story', 'training', 'review', 'exam'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
+['story', 'training', 'review', 'exam', 'desk'].forEach(mode => assert(html.includes(`view-${mode}`), `${mode}ビューが必要`));
+assert(html.includes('data-mode="desk"') && html.includes('id="view-desk"'), '実務デスクへ専用ナビゲーションから移動できる');
+assert(html.indexOf('class="operations-desk"') > html.indexOf('id="view-desk"'), '実務デスクをストーリー画面に混在させない');
 assert(/<form id="question-form"[^>]*>[\s\S]*<button class="confirm-button" type="submit">回答を確定する<\/button>[\s\S]*<\/form>/.test(html), '回答欄はEnterキーで送信できるフォームにする');
 const localAssets = [...html.matchAll(/(?:href|src)="((?:css|js|data)\/[^"?]+)([^"]*)"/g)];
 assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === `?v=${release}`), 'すべてのローカルCSS/JSに最新のキャッシュバスターを付ける');
@@ -213,6 +215,8 @@ for (const [id, authored, mutated] of sourceAnswerMutations) {
 }
 const narrativeQuestions = Object.values(browserSandbox.window.QuestionData);
 assert.strictEqual(new Set(narrativeQuestions.map(question => question.story)).size, narrativeQuestions.length, 'NARRATIVE-01: 全300問に固有の業務場面を持たせる');
+assert(narrativeQuestions.every(question => question.story.length <= 120), 'NARRATIVE-01b: 物語本文を一読できる長さに絞る');
+assert(narrativeQuestions.every(question => !question.story.includes(question.question)), 'NARRATIVE-01c: 問題文を物語で重複させない');
 assert.deepStrictEqual([...new Set(narrativeQuestions.map(question => question.chapter))].sort((a, b) => a - b), Array.from({ length:12 }, (_, index) => index + 1), 'NARRATIVE-02: 4月から決算までの12章を物語で網羅する');
 assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題データをブラウザーのwindowに公開する');
 const eightColumn = browserSandbox.window.QuestionData.D001;

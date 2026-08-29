@@ -68,7 +68,7 @@
       this.bindEvents(); this.populateAccountFilter(); this.renderModes(); this.view.updateRpg(this.rpg);
       this.model.migrateLegacyPlacement();
       if (!this.model.state.placement) { this.showPlacement(); return; }
-      const mode = ['story', 'training', 'review', 'exam'].includes(route.mode) ? route.mode : 'story';
+      const mode = ['story', 'training', 'review', 'exam', 'desk'].includes(route.mode) ? route.mode : 'story';
       if (this.showMode(mode) === false) return;
       if (typeof route.questionId === 'string' && this.questions[route.questionId] && (mode !== 'exam' || this.modeIds().includes(route.questionId))) this.start(route.questionId);
     }
@@ -175,7 +175,7 @@
       this.model.state.mode = mode;
       if (mode === 'exam') this.ensureExamSession();
       else this.stopExamTimer();
-      this.model.save(); this.view.show(`view-${mode}`); this.document.getElementById('question-filters').hidden = mode === 'exam';
+      this.model.save(); this.view.show(`view-${mode}`); this.document.getElementById('question-filters').hidden = mode === 'exam' || mode === 'desk';
       this.document.body?.classList?.toggle('exam-active', mode === 'exam');
       this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false'));
       if (mode === 'exam') { this.updateExamStatus(); this.startExamTimer(); }
@@ -334,7 +334,7 @@
     renderModes() {
       const render = (id, ids) => { const filtered = this.filteredIds(ids); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; const mistakes = this.model.state.mistakeCounts[qid] || 0; button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}`; return button; })); return filtered.length; };
       const counts = [render('story-list', this.storyIds()), render('training-list', this.learningIds().filter(id => this.questions[id].type !== 'journal')), render('review-list', this.reviewIds()), render('exam-list', this.buildExamIds())];
-      const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode); const count = counts[Math.max(modeIndex, 0)]; this.document.getElementById('filter-status').textContent = `${count}問を表示しています。`;
+      const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode); const count = modeIndex < 0 ? 0 : counts[modeIndex]; this.document.getElementById('filter-status').textContent = `${count}問を表示しています。`;
       const storyIds = this.storyIds();
       const nextId = storyIds.find(id => !this.model.state.answeredIds.includes(id)) || this.model.state.currentQuestionId || storyIds[0];
       const next = this.questions[nextId]; const chapterIds = storyIds.filter(id => this.questions[id].chapter === next.chapter);
