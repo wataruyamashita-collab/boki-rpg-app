@@ -675,6 +675,10 @@ assert(integrationModel.state.attempts[0].responseMs >= 3600 && integrationModel
 assert.strictEqual(integrationModel.state.attempts[0].questionId,'J001','Controller回答フローがquestionId・concept・difficultyを含むattemptを保存する');
 browserSandbox.window.AppController.prototype.next.call(controllerIntegration);
 assert.notStrictEqual(integrationShown,'J051','core正答直後に同conceptのreview問題を表示しない');
+let emergencyView=''; let emergencyRendered=0; let emergencySaved=0; let emergencyDialog=0;
+const emergencyContext={model:{state:{mode:'story'},save(){emergencySaved+=1;}},renderModes(){emergencyRendered+=1;},view:{show(id){emergencyView=id;}},document:{getElementById(id){if(id==='question-filters') return {hidden:false}; return {showModal(){emergencyDialog+=1;}};}}};
+browserSandbox.window.AppController.prototype.showGameOver.call(emergencyContext);
+assert.deepStrictEqual([emergencyContext.model.state.mode,emergencyView,emergencySaved,emergencyRendered,emergencyDialog],['review','view-review',1,1,1],'帳簿信頼度0はダイアログだけで停止せず緊急精算ビューへ強制遷移する');
 const {evaluateRows,demonstratesTransfer}=require('../scripts/audit-exam-readiness.js');
 assert.strictEqual(evaluateRows([{type:'journal',category:'x',answer:{},difficulty:1}])[0].pass,false,'learnability Cは問題数だけでPASSしない');
 const transferPair=[{type:'ledger',question:'金額を記入',table:{columns:['金額'],inputCells:['a']},materials:[{金額:1}]},{type:'ledger',question:'台帳を完成',table:{columns:['日付','摘要'],inputCells:['a','b']},materials:[{日付:'4/1'}]}];

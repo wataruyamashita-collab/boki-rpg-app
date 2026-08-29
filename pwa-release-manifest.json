@@ -1,6 +1,6 @@
 {
-  "release": "20260829-44",
-  "previousRelease": "20260829-43",
+  "release": "20260829-45",
+  "previousRelease": "20260829-44",
   "assets": {
     "css/style.css": "b433d7a23b1c89eeeb39e8e35c7fead9644c9038e01a206d81e72ac09e17bdf2",
     "data/questions.js": "39814485eb85e355770e1e205bc76d1befa3e0ed22d6c58bddaabe5c25298587",
@@ -11,7 +11,7 @@
     "js/engine.js": "a0f94eaa142ce19c07da284d3777a23a2c7af38c7b1eb6591e982ab48de50f78",
     "js/feedback.js": "ea57a497326fc784dfb0a2caada57e2224939fd5e7cc1a534d6a4b1cca4159d6",
     "js/view.js": "c8b334bc62651b412cf83a9e7a905d5192de346cc9cabc6b602ba524e4849030",
-    "js/controller.js": "2b380d07ecb63d250180a07f60f04e2e710443716b5ed4d8f9cda1e8def60bcd",
+    "js/controller.js": "c654b3e3c159361aa42e5c23c994f2491739260079bc7e442e40b57900db0efb",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b"
   }
 }

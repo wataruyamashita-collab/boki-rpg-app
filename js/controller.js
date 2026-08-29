@@ -4,20 +4,21 @@
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
   const getStorage = () => {
+    const reportFailure = () => root.dispatchEvent?.(new Event('boki-storage-error'));
     try {
       const storage = root.localStorage;
-      if (!storage) return null;
+      if (!storage) { queueMicrotask(reportFailure); return null; }
       let writable = true;
       return {
         getItem(key) { try { return storage.getItem(key); } catch (_) { return null; } },
         setItem(key, value) {
           if (!writable) return false;
           try { storage.setItem(key, value); return true; }
-          catch (_) { writable = false; root.dispatchEvent?.(new Event('boki-storage-error')); return false; }
+          catch (_) { writable = false; reportFailure(); return false; }
         },
         removeItem(key) { try { storage.removeItem(key); return true; } catch (_) { return false; } }
       };
-    } catch (_) { return null; }
+    } catch (_) { queueMicrotask(reportFailure); return null; }
   };
   // 同じ会計的性質の科目を先に提示し、単なる見た目の5択ではなく識別学習にする。
   const JOURNAL_GROUPS = [
@@ -477,6 +478,13 @@
       } catch (_) { this.expression = 'エラー'; this.calculator.accumulator = null; this.calculator.operator = null; }
     }
     showGameOver() {
+      // HP 0 is a recovery state, not a dismissible notification: move the
+      // learner to the unresolved-document queue before presenting guidance.
+      this.model.state.mode = 'review';
+      this.model.save();
+      this.renderModes();
+      this.view.show('view-review');
+      this.document.getElementById('question-filters').hidden = true;
       const dialog = this.document.getElementById('game-over-dialog');
       if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
     }
