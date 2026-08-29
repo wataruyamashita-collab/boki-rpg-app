@@ -1,9 +1,9 @@
 {
-  "release": "20260829-43",
-  "previousRelease": "20260829-42",
+  "release": "20260829-44",
+  "previousRelease": "20260829-43",
   "assets": {
     "css/style.css": "b433d7a23b1c89eeeb39e8e35c7fead9644c9038e01a206d81e72ac09e17bdf2",
-    "data/questions.js": "541092ac8d677430ec019f2e46089a3ba2d945bfbc0e179038a999d67bc3ffe0",
+    "data/questions.js": "39814485eb85e355770e1e205bc76d1befa3e0ed22d6c58bddaabe5c25298587",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
     "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
     "js/model.js": "37f75cef0c1e82e7dd464594166c3dd29fd312f1f337e39e513596d8fe1aebb5",
