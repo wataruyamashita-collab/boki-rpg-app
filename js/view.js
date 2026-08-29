@@ -43,6 +43,26 @@
       status.title = details;
       status.setAttribute('aria-label', `学習ステータス。${items.map(([label, value]) => `${label} ${value}`).join('。')}。${details}${rpg.progressCompleted ? '。主要実務を修了済みです' : ''}`);
       if (rpg.progressCompleted) status.setAttribute('data-completed', 'true'); else status.removeAttribute('data-completed');
+      this.renderOperations(rpg);
+    }
+    renderOperations(rpg) {
+      const panel = this.byId('unlocked-operations'); if (!panel) return;
+      const operations = [
+        { level:5, label:'税込・税抜クイック計算', action:'tax-calculate', detail:'請求書の税込額を即座に確認' },
+        { level:10, label:'過去ログ分析', action:'open-log-analysis', detail:'誤答傾向から次の調査先を特定' },
+        { level:20, label:'月次決算 Boss Case', action:'start-boss', boss:'monthly', detail:'試算表・精算表の難関案件' },
+        { level:30, label:'年度決算 Boss Case', action:'start-boss', boss:'annual', detail:'財務諸表を完成させ社長へ報告' }
+      ];
+      panel.replaceChildren(...operations.map(item => {
+        const card = this.document.createElement('article'); card.className = `operation-card${rpg.level >= item.level ? ' unlocked' : ' locked'}`;
+        const badge = this.document.createElement('small'); badge.textContent = rpg.level >= item.level ? '解放済み' : `Lv.${item.level}で解放`;
+        const title = this.document.createElement('strong'); title.textContent = item.label;
+        const detail = this.document.createElement('p'); detail.textContent = item.detail;
+        const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = item.action; if (item.boss) button.dataset.boss = item.boss;
+        button.textContent = rpg.level >= item.level ? (item.boss ? '案件に挑む' : 'ツールを開く') : '未解放'; button.disabled = rpg.level < item.level;
+        if (item.level === 5) button.addEventListener('click', () => { const tool = this.byId('tax-tool'); tool.hidden = !tool.hidden; });
+        card.append(badge, title, detail, button); return card;
+      }));
     }
     renderQuestion(question, draft, mode = 'story') {
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;
