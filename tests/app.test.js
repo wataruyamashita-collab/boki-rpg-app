@@ -645,6 +645,8 @@ assert.deepStrictEqual([reloadedPlacement.state.placement.startQuestionId,reload
 const placementMarkup=html.match(/<form id="placement-form">[\s\S]*?<\/form>/)[0];
 const fieldsets=[...placementMarkup.matchAll(/<fieldset data-domain="(foundation|closing)">([\s\S]*?)<\/fieldset>/g)];
 assert.strictEqual(fieldsets.length,6,'Placementは離脱を防ぐ6問のショート診断とする');
+const domainCounts=fieldsets.reduce((counts,[,domain])=>({...counts,[domain]:(counts[domain]||0)+1}),{});
+assert.deepStrictEqual(domainCounts,{foundation:3,closing:3},'Placementは基礎と決算を3問ずつ診断し、上級開始判定を到達可能にする');
 const firstChoiceCorrect=fieldsets.filter(([, ,body])=>body.match(/<input[^>]+value="([^"]+)"/)[1] === 'correct').length;
 assert.strictEqual(firstChoiceCorrect,3,'Placementの正答位置を1番目と2番目に均等配置する');
 assert(/data-action="placement-skip"/.test(html),'Placementをスキップして第1章から開始できる');
