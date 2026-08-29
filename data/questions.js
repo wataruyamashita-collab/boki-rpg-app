@@ -15104,17 +15104,15 @@ function validateQuestionData(questionData = QuestionData) {
     }
   }
 
-  // Story timeline: J051以降で「入社初日」や月表示へ戻さない。
-  for (let n = 51; n <= 150; n += 1) {
-    const id = `J${String(n).padStart(3, '0')}`;
-    const item = questionData[id];
-    if (!item) continue;
-    if (String(item.story || '').includes('入社初日')) {
-      errors.push(`${id}: 復習・応用編で入社初日に戻っています`);
-    }
-    if (/^\d+月・/.test(String(item.scene || ''))) {
-      errors.push(`${id}: 復習・応用編で物語月が巻き戻っています`);
-    }
+  // Story timeline: the master arc intentionally promotes every case into the
+  // April-to-March chronology. Guard the balanced twelve-chapter contract
+  // instead of treating later journal exercises as timeless review material.
+  const chapterCounts = Object.values(questionData).reduce((counts, item) => {
+    counts[item.chapter] = (counts[item.chapter] || 0) + 1; return counts;
+  }, {});
+  const chapterSizes = Array.from({ length:12 }, (_, index) => chapterCounts[index + 1] || 0);
+  if (Math.max(...chapterSizes) - Math.min(...chapterSizes) > 1 || chapterSizes.some(size => size === 0)) {
+    errors.push(`12章の配分が不均衡です: ${chapterSizes.join(',')}`);
   }
 
   // 決算整理表: 間接法なのに「備品（取得原価）」を直接調整するように見せない。
@@ -15264,13 +15262,37 @@ const ChapterDrama = Object.freeze({
   12:{theme:'未来を託す最終決算',goal:'一年の全記録を統合する',resolution:'社長の信頼と次の役職を得る'}
 });
 Object.values(QuestionData).forEach((item, index) => {
+  // Keep every month playable: 300 cases are divided into twelve equal
+  // 25-case chapters instead of allowing the large trial-balance sets to
+  // accumulate in a single chapter.
+  item.chapter = Math.floor(index / 25) + 1;
   const arc = ChapterDrama[item.chapter] || ChapterDrama[12];
   const oldStory = String(item.story || '').replace(/\s*【業務記録[^】]+】[^。]*。?/g, '').trim();
-  const npc = item.type === 'comprehensive' || item.id === 'C010' ? '社長「この数字で、次の一手を決められるか？」' : index % 3 === 0 ? '水野先輩「根拠を一つずつつなごう」' : index % 3 === 1 ? '営業担当「取引先への説明が待っている」' : '総務担当「社員と備品の記録を守って」';
+  const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+  const dialogue = [
+    '水野先輩「数字は嘘をつかないわ。違和感の正体を突き止めなさい！」',
+    '社長「売上は伸びているのに、なぜ使えるお金が増えないんだ！？」',
+    '営業・高橋「領収書？ あ、ポケットで揉みくちゃになってました！」',
+    '総務・森「高橋さん、証憑と帳簿が一致するまで確認しますよ。」'
+  ];
+  const npc = item.type === 'comprehensive' || item.id === 'C010' ? dialogue[1] : dialogue[index % dialogue.length];
+  const surprise = `${item.category}の記録に、帳簿だけでは説明できない違和感がある。なぜ数字が食い違うのだろう？`;
+  const nextArc = ChapterDrama[Math.min(12, item.chapter + 1)];
+  const chapterPosition = index % 25;
   item.chapterArc = arc;
+  item.scene = `${months[item.chapter - 1]}・${arc.theme}`;
   const narrative = (oldStory || arc.goal).replace(/。$/u, '');
   const evidenceMemo = String(item.question || item.category).replace(/。$/u, '');
-  item.story = `${npc} ${arc.theme}を解決するため、${narrative}。受付順に並べた証憑束の${index + 1}枚目には「${evidenceMemo}」とある。この事実に基づく判断を、${arc.resolution}ための報告へつなげる。`;
+  item.accountingSurprise = surprise;
+  item.missionId = `chapter-${item.chapter}`;
+  item.mission = `${arc.goal}：証憑から${item.category}の真相を示す`;
+  item.nextHook = chapterPosition === 24
+    ? `章末Boss Caseを突破した。しかし、次は「${nextArc.theme}」の謎が待っている。`
+    : `この処理が別の残高へどう波及するのか、次の証憑で確かめよう。`;
+  item.jobUnlock = chapterPosition === 24 ? `第${item.chapter}章 Boss Case 完了` : '経理実務の調査権限';
+  item.bossCase = chapterPosition === 24;
+  item.story = `Accounting Surprise：${surprise} ${npc} ${arc.theme}を解決するため、${narrative}。${months[item.chapter - 1]}の第${chapterPosition + 1}調査票には「${evidenceMemo}」とある。この事実に基づく判断を、${arc.resolution}ための報告へつなげる。`;
+  item.explanation = `${String(item.explanation || '').trim()}\n【事件解決】${item.category}を正しく処理したことで違和感の原因が判明し、${arc.resolution}ための数字がつながりました。\n【次の疑問】${item.nextHook}`;
   item.npcDialogue = npc;
 });
 
