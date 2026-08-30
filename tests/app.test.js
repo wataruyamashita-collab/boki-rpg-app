@@ -504,7 +504,13 @@ assert(controllerSource.includes('this.view.result(question, score, answer, conf
 assert(controllerSource.includes('writable = false'), 'QuotaExceededErrorの反復を避けてストレージをFail-Safe化する');
 assert(viewSource.includes('confidence-feedback') && viewSource.includes('achievement-banner'), '確信度校正とレベル・役職解放を結果画面で強調する');
 assert(viewSource.includes("heading.textContent = 'あなたの仕訳（誤答）'"), '回答者が入力した誤答を表示する');
-assert(viewSource.includes("heading.textContent = 'なぜ間違えた？'") && viewSource.includes('diagnostic.nextRule'), '誤答理由と次回の判別ポイントを表示する');
+assert(viewSource.includes("heading.textContent = '今回の解説'") && viewSource.includes('diagnostic.nextRule'), '誤答理由と次回の判別ポイントを一つの解説内に表示する');
+assert(!viewSource.includes("heading.textContent = 'なぜ間違えた？'") && !viewSource.includes("heading.textContent = '詳しい解説'"), '意味が重なる二つの解説見出しを表示しない');
+Object.values(browserSandbox.window.QuestionData).forEach(question => {
+  assert(/【やさしい考え方】/.test(question.explanation), `${question.id}に初心者向けの考え方がある`);
+  assert(/【実務での使い方】/.test(question.explanation), `${question.id}に経理実務での用途がある`);
+  assert(/【試験のポイント】/.test(question.explanation), `${question.id}に試験POINTがある`);
+});
 assert(viewSource.includes("this.byId('explanation').before(container)"), '古いHTMLがキャッシュされていても正しい仕訳の表示領域を補完する');
 assert(!/\.journal-header,\s*\.journal-row\s*{[^}]*min-width:\s*520px/s.test(cssSource), 'モバイルの仕訳欄を画面幅より広くしない');
 assert(/\.journal-entry-area\s*{[^}]*max-width:\s*100%[^}]*overflow-x:\s*clip/s.test(cssSource), '仕訳票自体を画面幅内に収めて横スクロールを発生させない');
