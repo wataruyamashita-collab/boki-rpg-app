@@ -5,7 +5,7 @@ const { loadQuestions } = require('./audit-matrix');
 const INTERNAL_LABEL = /(?:案件|業務記録)[A-Z][0-9]{3,}/u;
 const ROUGH_PUNCTUATION = /[。、]{2,}/u;
 const DUPLICATED_PARTICLE = /(?:(?<!も)のの|をを|がが|はは|にに)/u;
-const ABSTRACT_STORY_CLICHE = /(?:章末報告の数字|ここでの判断が.+数字|この取引を正しく記録するしかない|鍵は「.+」だ)/u;
+const ABSTRACT_STORY_CLICHE = /(?:章末報告の数字|締切が迫る|ここでの判断が.+数字(?:を直接動かす)?|この取引を正しく記録するしかない|鍵は「.+」だ)/u;
 const READER_ACTION = /(?:確認|確かめ|分け|決め|記入|集計|比べ|作っ|埋め|確定)/u;
 
 const auditEditorial = questions => {
