@@ -349,9 +349,18 @@ class FakeElement {
   constructor(tagName = 'div') { this.tagName = tagName; this.children = []; this.hidden = false; }
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
+  setAttribute(name, value) { this[name] = value; }
   createTHead() { const section = new FakeElement('thead'); section.insertRow = () => { const row = new FakeElement('tr'); section.append(row); return row; }; this.append(section); return section; }
   createTBody() { const section = new FakeElement('tbody'); section.insertRow = () => { const row = new FakeElement('tr'); row.insertCell = () => { const cell = new FakeElement('td'); row.append(cell); return cell; }; section.append(row); return row; }; this.append(section); return section; }
 }
+const feedbackView = new browserSandbox.window.AppView({ createElement: tag => new FakeElement(tag) });
+const wrongJ001 = { debit:[{ account:'売上', amount:50000 }], credit:[{ account:'現金', amount:40000 }] };
+const feedbackDom = feedbackView.renderDiagnostics(browserSandbox.window.QuestionData.J001, wrongJ001, { correct:false });
+const domText = node => [node?.textContent || '', ...(node?.children || []).flatMap(domText)].join('\n');
+const feedbackText = domText(feedbackDom);
+assert(feedbackText.includes('貸借が逆') && feedbackText.includes('次の確認：'), 'DOMに今回の誤答原因と次の確認を表示する');
+assert(!feedbackText.includes(browserSandbox.window.QuestionData.J001.explanation), 'DOMのdiagnostic-cardへ問題解説全文をコピーしない');
+assert.strictEqual((feedbackText.match(/正しい考え方/g) || []).length, 0, '診断カード内で学習解説の見出しを反復しない');
 const materialElements = { 'question-materials': new FakeElement('section') };
 const materialView = new browserSandbox.window.AppView({ getElementById: id => materialElements[id], createElement: tag => new FakeElement(tag) });
 materialView.renderMaterials(browserSandbox.window.QuestionData.E001);

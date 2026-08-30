@@ -208,9 +208,11 @@
       const diagnostics = root.WrongAnswerFeedback.diagnoseWrongAnswer(question, answer, score);
       if (!diagnostics.length) return null;
       const section = this.document.createElement('section'); section.className = 'wrong-answer-feedback'; section.setAttribute('aria-label', '誤答理由と考え方');
-      const appendCard = (parent, diagnostic) => { const card = this.document.createElement('article'); card.className = `diagnostic-card diagnostic-${diagnostic.kind}`; const title = this.document.createElement('h4'); title.textContent = diagnostic.title; const reason = this.document.createElement('p'); reason.textContent = diagnostic.reason; const thinkingTitle = this.document.createElement('strong'); thinkingTitle.textContent = '正しい考え方'; const thinking = this.document.createElement('p'); thinking.textContent = diagnostic.thinking; const nextTitle = this.document.createElement('strong'); nextTitle.textContent = '次回の判別ポイント'; const next = this.document.createElement('p'); next.textContent = diagnostic.nextRule; card.append(title, reason, thinkingTitle, thinking, nextTitle, next); parent.append(card); };
+      const appendCard = (parent, diagnostic) => { const card = this.document.createElement('article'); card.className = `diagnostic-card diagnostic-${diagnostic.kind}`; const title = this.document.createElement('h4'); title.textContent = diagnostic.title; const reason = this.document.createElement('p'); reason.textContent = diagnostic.reason; card.append(title, reason); parent.append(card); };
       diagnostics.slice(0, 3).forEach(diagnostic => appendCard(section, diagnostic));
       if (diagnostics.length > 3) { const details = this.document.createElement('details'); details.className = 'diagnostic-details'; const summary = this.document.createElement('summary'); summary.textContent = `残り${diagnostics.length - 3}件の正答と根拠を見る`; details.append(summary); diagnostics.slice(3).forEach(diagnostic => appendCard(details, diagnostic)); section.append(details); }
+      const diagnostic = diagnostics[0];
+      const next = this.document.createElement('p'); next.className = 'diagnostic-next'; next.textContent = `次の確認：${diagnostic.nextRule}`; section.append(next);
       return section;
     }
     renderExplanation(question, score, userAnswer) {
