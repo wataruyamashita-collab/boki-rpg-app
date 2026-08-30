@@ -50,8 +50,10 @@
     return [`「${wrong}」は${genericConcept(wrong)}です。一方「${correct}」は${genericConcept(correct)}です。問題文の取引は「${correct}」の定義に該当するため、「${wrong}」では取引の対象・原因または決済手段が異なります。`, `名称の印象で選ばず、「何を取引したか」「いつ認識するか」「どの決済手段か」を問題文「${question.question}」から特定し、${correct}の定義と照合します。`];
   };
 
+  // Diagnostics describe only this attempt. The authored lesson is rendered once
+  // by AppView, rather than copied into every incorrect-field card.
   const context = question => {
-    const base = String(question.explanation || '').replace(/【[^】]+】/g, '').trim();
+    const base = `${question.category}では、問題文の事実を勘定科目・貸借・金額（または表の行と列）へ順に対応させます。`;
     const rows = all(question.answer); const cost = rows.find(row => row.account === '備品')?.amount; const accumulated = rows.find(row => /減価償却累計額/.test(row.account))?.amount;
     const proceeds = rows.find(row => ['現金','普通預金','未収入金'].includes(row.account))?.amount;
     return cost && accumulated && proceeds ? `${base} 取得原価${yen(cost)}円－減価償却累計額${yen(accumulated)}円＝帳簿価額${yen(cost - accumulated)}円で、売却額${yen(proceeds)}円との差額を売却損益にします。` : base;
@@ -108,7 +110,7 @@
     if (question.id === 'D019' && ['insurance','prepaid'].includes(id)) return '整理前の保険料200,000円のうち翌期分40,000円は当期費用ではありません。保険料は200,000－40,000＝160,000円、前払保険料は40,000円です。';
     if (question.id === 'D020' && id === 'profit') return '損益勘定では、売上800,000円－（仕入400,000円＋保険料160,000円＋減価償却費60,000円）＝当期純利益180,000円です。';
     if (question.type === 'financial_statement' && /income|profit/i.test(id)) return `当期純利益は収益から売上原価と費用を控除して求めます。${context(question)}`;
-    const expression = sumExpression(question, expected); if (expression) return `合計を構成する金額を漏れなく足すと、${expression}です。入力値${actual}円は一項目漏れ・二重計上がないか照合します。`;
+    const expression = sumExpression(question, expected); if (expression) return `合計を構成する金額を漏れなく足すと、${expression}です。${actual === '未入力' ? '未入力のため、根拠となる項目を一つずつ転記します。' : `入力値${actual}は、一項目漏れ・二重計上がないか照合します。`}`;
     return context(question);
   }
   const typeRule = question => ({
@@ -121,7 +123,7 @@
   }[question.type] || '資料、会計ルール、計算式、転記先の順に確認します。');
   function diagnoseTable(question, answer) {
     return Object.entries(question.answer.cells).filter(([id, expected]) => !sameValue(answer?.cells?.[id], expected)).map(([id, expected]) => {
-      const actual = answer?.cells?.[id]; const shown = actual == null || String(actual).trim() === '' ? '未入力' : (typeof expected === 'number' ? `${yen(normalize(actual))}円` : `「${actual}」`); const label = humanLabel(question, id); const correct = typeof expected === 'number' ? `${yen(expected)}円` : `「${expected}」`;
+      const actual = answer?.cells?.[id]; const normalized = normalize(actual); const numeric = normalized !== '' && Number.isFinite(Number(normalized)); const shown = actual == null || String(actual).trim() === '' ? '未入力' : (typeof expected === 'number' ? (numeric ? `${yen(normalized)}円` : `入力値「${String(actual)}」`) : `「${actual}」`); const label = humanLabel(question, id); const correct = typeof expected === 'number' ? `${yen(expected)}円` : `「${expected}」`;
       return entry('cell', `${label}を見直します`, `${label}は${shown}ではなく${correct}です。${typeRule(question)}`, derivation(question, id, expected, shown), `「${label}」の意味を確認し、根拠となる資料と計算式を照合して${correct}を記入します。`, `${question.type}:${label}`);
     });
   }
