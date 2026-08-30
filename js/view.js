@@ -207,8 +207,7 @@
     renderDiagnostics(question, answer, score) {
       const diagnostics = root.WrongAnswerFeedback.diagnoseWrongAnswer(question, answer, score);
       if (!diagnostics.length) return null;
-      const section = this.document.createElement('section'); section.className = 'wrong-answer-feedback'; section.setAttribute('aria-labelledby', `feedback-${question.id}`);
-      const heading = this.document.createElement('h3'); heading.id = `feedback-${question.id}`; heading.textContent = 'なぜ間違えた？'; section.append(heading);
+      const section = this.document.createElement('section'); section.className = 'wrong-answer-feedback'; section.setAttribute('aria-label', '誤答理由と考え方');
       const appendCard = (parent, diagnostic) => { const card = this.document.createElement('article'); card.className = `diagnostic-card diagnostic-${diagnostic.kind}`; const title = this.document.createElement('h4'); title.textContent = diagnostic.title; const reason = this.document.createElement('p'); reason.textContent = diagnostic.reason; const thinkingTitle = this.document.createElement('strong'); thinkingTitle.textContent = '正しい考え方'; const thinking = this.document.createElement('p'); thinking.textContent = diagnostic.thinking; const nextTitle = this.document.createElement('strong'); nextTitle.textContent = '次回の判別ポイント'; const next = this.document.createElement('p'); next.textContent = diagnostic.nextRule; card.append(title, reason, thinkingTitle, thinking, nextTitle, next); parent.append(card); };
       diagnostics.slice(0, 3).forEach(diagnostic => appendCard(section, diagnostic));
       if (diagnostics.length > 3) { const details = this.document.createElement('details'); details.className = 'diagnostic-details'; const summary = this.document.createElement('summary'); summary.textContent = `残り${diagnostics.length - 3}件の正答と根拠を見る`; details.append(summary); diagnostics.slice(3).forEach(diagnostic => appendCard(details, diagnostic)); section.append(details); }
@@ -216,9 +215,14 @@
     }
     renderExplanation(question, score, userAnswer) {
       const container = this.byId('explanation'); container.replaceChildren();
+      const heading = this.document.createElement('h3'); heading.textContent = '今回の解説'; container.append(heading);
+      const lead = this.document.createElement('p'); lead.className = 'explanation-summary';
+      lead.textContent = score.correct
+        ? '正解です。答えの根拠、実務での使い方、試験での見分け方を順に確認しましょう。'
+        : 'もう一歩です。誤答の原因から正しい考え方へつなげ、実務と試験で使える判断手順まで一続きで確認しましょう。';
+      container.append(lead);
       const diagnostics = this.renderDiagnostics(question, userAnswer, score);
       if (diagnostics) container.append(diagnostics);
-      const heading = this.document.createElement('h3'); heading.textContent = '詳しい解説'; container.append(heading);
       if (question.npcDialogue) { const dialogue = this.document.createElement('blockquote'); dialogue.className = 'npc-dialogue'; dialogue.textContent = question.npcDialogue; container.append(dialogue); }
       if (question.type === 'journal' && question.answer) {
         const badges = this.document.createElement('div'); badges.className = 'explanation-accounts';
