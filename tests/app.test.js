@@ -163,6 +163,21 @@ assert.strictEqual(calculatorTarget.value, '1,500', '電卓の計算結果を選
 assert.strictEqual(calculatorElements['calculator-display'].value, '1,500', '電卓の計算結果にも3桁区切りのカンマを表示する');
 assert.strictEqual(calculatorController.saved, true, '電卓から転記した金額を下書きへ保存する');
 assert.strictEqual(browserSandbox.window.AppController.prototype.formatCalculatorExpression('1234567＋8900.5'), '1,234,567＋8,900.5', '計算途中の各数値にもカンマを表示する');
+const editableTarget = { value: '12,500', getAttribute() { return '貸方 1行目の金額'; }, classList: { toggle() {} } };
+const editableElements = { 'calculator-target': { textContent: '' }, 'calculator-display': { value: '' }, 'calculator-operator': { textContent: '' } };
+const editableCalculator = {
+  expression: '999', calculatorTarget: null,
+  calculator: { accumulator: 999, operator: '＋', waitingForOperand: true, lastOperator: null, lastOperand: null },
+  document: { querySelectorAll: selector => selector === '.amount-input' ? [editableTarget] : [], getElementById: id => editableElements[id] },
+  clearCalculator: browserSandbox.window.AppController.prototype.clearCalculator,
+  updateCalculatorDisplay: browserSandbox.window.AppController.prototype.updateCalculatorDisplay,
+  formatCalculatorExpression: browserSandbox.window.AppController.prototype.formatCalculatorExpression
+};
+browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(editableCalculator, editableTarget);
+assert.strictEqual(editableCalculator.expression, '12500', '入力済みの金額欄を選ぶと現在値を電卓へ読み込む');
+assert.strictEqual(editableElements['calculator-display'].value, '12,500', '入力欄の現在値を電卓上で確認して修正できる');
+assert.strictEqual(editableCalculator.calculator.operator, null, '別の入力欄を選んだときは以前の計算状態を引き継がない');
+assert.match(editableElements['calculator-target'].textContent, /現在値を修正できます/, '入力済み金額を修正できることを案内する');
 const deskCalculator = {
   expression: '0',
   calculator: { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null },

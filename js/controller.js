@@ -404,7 +404,15 @@
     }
     selectCalculatorTarget(input) {
       this.document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
-      this.calculatorTarget = input; this.document.getElementById('calculator-target').textContent = `${input.getAttribute('aria-label')}へ入力します`;
+      this.calculatorTarget = input;
+      const currentAmount = normalizeNumber(input.value).replace(/,/g, '');
+      this.clearCalculator();
+      if (/^\d+(?:\.\d+)?$/.test(currentAmount)) this.expression = String(Number(currentAmount));
+      this.updateCalculatorDisplay();
+      const target = this.document.getElementById('calculator-target');
+      target.textContent = currentAmount
+        ? `${input.getAttribute('aria-label')}の現在値を修正できます`
+        : `${input.getAttribute('aria-label')}へ入力します`;
     }
     formatCalculatorExpression(expression) {
       return String(expression).replace(/\d+(?:\.\d*)?/g, numberText => {
@@ -448,7 +456,7 @@
     }
     resetCalculator() {
       this.clearCalculator(); this.calculatorTarget=null; this.updateCalculatorDisplay();
-      const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選び、計算機で入力してください';
+      const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選ぶと、現在の数字を計算機で修正できます';
     }
     inputCalculatorDigit(key) {
       if (this.expression === 'エラー' || this.calculator.waitingForOperand) { this.expression = '0'; this.calculator.waitingForOperand = false; }
