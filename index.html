@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
   <title>日商簿記3級 経理シミュレーションRPG</title>
-  <link rel="stylesheet" href="css/style.css?v=20260830-52">
+  <link rel="stylesheet" href="css/style.css?v=20260831-53">
 </head>
 <body>
 <div class="container">
@@ -65,7 +65,7 @@
         <div id="table-container" class="table-question-wrap"></div>
         <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
           <div class="calculator-readout"><input id="calculator-display" class="calculator-display" value="0" readonly inputmode="numeric" aria-label="計算機の表示"><output id="calculator-operator" class="calculator-operator-indicator" aria-label="選択中の演算子" aria-live="polite"></output></div>
-          <div class="calculator-transfer"><span id="calculator-target" aria-live="polite">金額欄を選んでください</span><button type="button" data-action="calc-insert">表示中の金額を入力</button></div>
+          <div class="calculator-transfer"><span id="calculator-target" aria-live="polite">金額欄を選び、計算機で入力してください</span><button type="button" data-action="calc-insert">表示中の金額を入力</button></div>
           <div class="calculator-keys" aria-label="計算機">
             <button type="button" data-action="calc" data-calc="AC">AC</button><button type="button" data-action="calc" data-calc="C">C</button><button type="button" data-action="calc" data-calc="÷">÷</button><button type="button" data-action="calc" data-calc="×">×</button>
             <button type="button" data-action="calc" data-calc="7">7</button><button type="button" data-action="calc" data-calc="8">8</button><button type="button" data-action="calc" data-calc="9">9</button><button type="button" data-action="calc" data-calc="−">−</button>
@@ -82,6 +82,6 @@
   </main>
   <dialog id="game-over-dialog" class="game-over-dialog"><h2>帳簿信頼度が0になりました</h2><p>水野先輩「まだ立て直せる。未解決伝票を緊急精算しよう」</p><button type="button" data-action="review-game-over">緊急精算（復習モード）へ</button><button type="button" data-action="retry-mode">最初の案件から再挑戦</button></dialog>
 </div>
-<script src="data/questions.js?v=20260830-52"></script><script src="data/accounting-oracle.js?v=20260830-52"></script><script src="js/calculator.js?v=20260830-52"></script><script src="js/model.js?v=20260830-52"></script><script src="js/rpg.js?v=20260830-52"></script><script src="js/engine.js?v=20260830-52"></script><script src="js/feedback.js?v=20260830-52"></script><script src="js/view.js?v=20260830-52"></script><script src="js/controller.js?v=20260830-52"></script><script src="js/app.js?v=20260830-52"></script>
+<script src="data/questions.js?v=20260831-53"></script><script src="data/accounting-oracle.js?v=20260831-53"></script><script src="js/calculator.js?v=20260831-53"></script><script src="js/model.js?v=20260831-53"></script><script src="js/rpg.js?v=20260831-53"></script><script src="js/engine.js?v=20260831-53"></script><script src="js/feedback.js?v=20260831-53"></script><script src="js/view.js?v=20260831-53"></script><script src="js/controller.js?v=20260831-53"></script><script src="js/app.js?v=20260831-53"></script>
 </body>
 </html>

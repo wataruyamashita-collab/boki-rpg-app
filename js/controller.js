@@ -448,7 +448,7 @@
     }
     resetCalculator() {
       this.clearCalculator(); this.calculatorTarget=null; this.updateCalculatorDisplay();
-      const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選んでください';
+      const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選び、計算機で入力してください';
     }
     inputCalculatorDigit(key) {
       if (this.expression === 'エラー' || this.calculator.waitingForOperand) { this.expression = '0'; this.calculator.waitingForOperand = false; }

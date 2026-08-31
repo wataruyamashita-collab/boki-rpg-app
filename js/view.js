@@ -88,9 +88,9 @@
       wrap.append(table); container.append(heading, wrap);
     }
     makeAmount(className, label, value = '') {
-      const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'numeric');
+      const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'none'); input.readOnly = true;
       input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.setAttribute('pattern', '[0-9,]*');
-      input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocorrect', 'off'); input.setAttribute('spellcheck', 'false'); input.maxLength = 24; input.value = value;
+      input.setAttribute('title', '金額は計算機から入力してください'); input.maxLength = 24; input.value = value;
       return input;
     }
     makeText(className, label, value = '') {
