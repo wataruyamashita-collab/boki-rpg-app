@@ -72,7 +72,10 @@
       this.renderMaterials(question);
       this.byId('journal-container').hidden = question.type !== 'journal';
       this.byId('table-container').hidden = question.type === 'journal';
-      if (question.type === 'journal') this.renderJournal(question, draft, mode); else this.renderTable(question, draft);
+      if (question.type === 'journal') this.renderJournal(question, draft, mode);
+      else if (question.type === 'correction') this.renderCorrection(question, draft);
+      else if (question.category === '仕訳帳' && question.table?.inputCells?.includes('d1Account')) this.renderJournalBook(question, draft);
+      else this.renderTable(question, draft);
     }
     renderMaterials(question) {
       let container = this.byId('question-materials');
@@ -118,6 +121,44 @@
           row.append(select, amount);
         }); container.append(row);
       }
+    }
+    renderCorrection(question, draft = {}) {
+      const container = this.byId('table-container'); container.replaceChildren();
+      container.classList.remove('worksheet-scroll');
+      const entry = this.document.createElement('div'); entry.className = 'correction-entry';
+      const header = this.document.createElement('div'); header.className = 'correction-header';
+      header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>';
+      const row = this.document.createElement('div'); row.className = 'correction-row';
+      ['debitAccount', 'debitAmount', 'creditAccount', 'creditAmount'].forEach(cellId => {
+        const label = this.tableLabel(cellId); const inputType = question.table.inputTypes?.[cellId];
+        const input = inputType === 'account'
+          ? this.makeText('table-input correction-account', label, draft.cells?.[cellId] ?? '')
+          : this.makeAmount('table-input correction-amount', `${label}（金額）`, draft.cells?.[cellId] ?? '');
+        input.dataset.cellId = cellId; input.dataset.inputType = inputType; row.append(input);
+      });
+      entry.append(header, row); container.append(entry);
+    }
+    renderJournalBook(question, draft = {}) {
+      const container = this.byId('table-container'); container.replaceChildren();
+      container.classList.add('journal-book-scroll');
+      const table = this.document.createElement('table'); table.className = 'journal-book-entry';
+      const head = table.createTHead().insertRow();
+      ['日付', '借方科目', '元丁', '借方金額', '貸方科目', '元丁', '貸方金額'].forEach(label => {
+        const th = this.document.createElement('th'); th.textContent = label; head.append(th);
+      });
+      const body = table.createTBody();
+      for (let index = 1; question.table.inputCells.includes(`d${index}Account`); index += 1) {
+        const row = body.insertRow(); const date = question.table.inputMetadata?.[`d${index}Account`]?.label?.split(' ')[0] || '';
+        const dateCell = row.insertCell(); dateCell.textContent = date;
+        [`d${index}Account`, `d${index}Ref`, `d${index}Amount`, `c${index}Account`, `c${index}Ref`, `c${index}Amount`].forEach(cellId => {
+          const cell = row.insertCell(); const inputType = question.table.inputTypes?.[cellId]; const label = this.cellLabel(question, cellId);
+          const input = inputType === 'amount'
+            ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[cellId] ?? '')
+            : this.makeText('table-input', label, draft.cells?.[cellId] ?? '');
+          input.dataset.cellId = cellId; input.dataset.inputType = inputType; cell.append(input);
+        });
+      }
+      container.append(table);
     }
     accountType(account) {
       return Object.keys(ACCOUNT_TYPES).find(type => ACCOUNT_TYPES[type].has(account)) || 'unknown';
