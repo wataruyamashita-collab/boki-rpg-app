@@ -72,7 +72,9 @@
       this.renderMaterials(question);
       this.byId('journal-container').hidden = question.type !== 'journal';
       this.byId('table-container').hidden = question.type === 'journal';
-      if (question.type === 'journal') this.renderJournal(question, draft, mode); else this.renderTable(question, draft);
+      if (question.type === 'journal') this.renderJournal(question, draft, mode);
+      else if (question.type === 'correction') this.renderCorrection(question, draft);
+      else this.renderTable(question, draft);
     }
     renderMaterials(question) {
       let container = this.byId('question-materials');
@@ -118,6 +120,22 @@
           row.append(select, amount);
         }); container.append(row);
       }
+    }
+    renderCorrection(question, draft = {}) {
+      const container = this.byId('table-container'); container.replaceChildren();
+      container.classList.remove('worksheet-scroll');
+      const entry = this.document.createElement('div'); entry.className = 'correction-entry';
+      const header = this.document.createElement('div'); header.className = 'correction-header';
+      header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>';
+      const row = this.document.createElement('div'); row.className = 'correction-row';
+      ['debitAccount', 'debitAmount', 'creditAccount', 'creditAmount'].forEach(cellId => {
+        const label = this.tableLabel(cellId); const inputType = question.table.inputTypes?.[cellId];
+        const input = inputType === 'account'
+          ? this.makeText('table-input correction-account', label, draft.cells?.[cellId] ?? '')
+          : this.makeAmount('table-input correction-amount', `${label}（金額）`, draft.cells?.[cellId] ?? '');
+        input.dataset.cellId = cellId; input.dataset.inputType = inputType; row.append(input);
+      });
+      entry.append(header, row); container.append(entry);
     }
     accountType(account) {
       return Object.keys(ACCOUNT_TYPES).find(type => ACCOUNT_TYPES[type].has(account)) || 'unknown';
