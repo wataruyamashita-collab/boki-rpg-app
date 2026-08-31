@@ -1,6 +1,6 @@
 {
-  "release": "20260830-52",
-  "previousRelease": "20260830-51",
+  "release": "20260831-53",
+  "previousRelease": "20260830-52",
   "assets": {
     "css/style.css": "b433d7a23b1c89eeeb39e8e35c7fead9644c9038e01a206d81e72ac09e17bdf2",
     "data/questions.js": "592b7c80aa15b17672f4f2550befd7d1c027977adec0200f174dcc8ed46e730d",
@@ -10,8 +10,8 @@
     "js/rpg.js": "4b67a0a19fbe87c44146e1e1cdbffadb7384756e744e6fe8811901e3d9f83248",
     "js/engine.js": "a0f94eaa142ce19c07da284d3777a23a2c7af38c7b1eb6591e982ab48de50f78",
     "js/feedback.js": "9145f07984a0dcd2fce36f8637f012451ca236a61cee9c9c5e684bfa66bc95c5",
-    "js/view.js": "dd13064e6ae39f4052f658b9dbda375bc7a17ea61c13380c62ed7983346ce8a6",
-    "js/controller.js": "8712346a5a685d768b4c77603b160103fb0efd711d5ba30c1a677e06629425e9",
+    "js/view.js": "1249adfcefdada723e74402c8b0e74c5ca32dc0a9c55a54c67e33f9174b202bd",
+    "js/controller.js": "89e3f56fab2c64c3d8434d833cbeda3ace9a05401eb53cb9c6b80ebd1e3ebd03",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b"
   }
 }

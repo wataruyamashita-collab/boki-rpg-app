@@ -496,9 +496,9 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSecti
 ], '解説見出しを実務MEMO・試験POINTのカード構造へ正規化する');
 assert(viewSource.includes("score.correct ? '正解です！' : 'もう一歩です'"), '採点結果は従来どおり正解またはもう一歩と表示する');
 assert(!viewSource.includes('部分点'), 'ユーザー向けの採点結果に部分点を表示しない');
-assert(viewSource.includes("input.type = 'text'; input.setAttribute('inputmode', 'numeric')"), '金額欄ではモバイル端末の数字キーパッドを呼び出す');
+assert(viewSource.includes("input.type = 'text'; input.setAttribute('inputmode', 'none'); input.readOnly = true"), '金額欄は読み取り専用にしてiPhoneの数字キーパッドを起動しない');
 assert(viewSource.includes("input.setAttribute('pattern', '[0-9,]*')"), '桁区切り済みの金額もフォームの入力書式として許可する');
-assert(viewSource.includes("input.setAttribute('enterkeyhint', 'done')"), 'iPhoneのキーボードに完了キーを表示する');
+assert(viewSource.includes("input.setAttribute('title', '金額は計算機から入力してください')"), '金額欄が計算機専用であることを案内する');
 assert(viewSource.includes('select.title = select.selectedOptions[0]?.textContent'), '選択中の勘定科目をtitleに反映する');
 const cssSource = fs.readFileSync('css/style.css', 'utf8');
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
