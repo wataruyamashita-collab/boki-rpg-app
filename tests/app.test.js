@@ -516,6 +516,9 @@ assert(viewSource.includes("input.setAttribute('pattern', '[0-9,]*')"), '桁区�
 assert(viewSource.includes("input.setAttribute('title', '金額は計算機から入力してください')"), '金額欄が計算機専用であることを案内する');
 assert(viewSource.includes('select.title = select.selectedOptions[0]?.textContent'), '選択中の勘定科目をtitleに反映する');
 const cssSource = fs.readFileSync('css/style.css', 'utf8');
+assert(viewSource.includes("else if (question.type === 'correction') this.renderCorrection(question, draft)"), '記帳訂正は通常の縦型表ではなく専用の仕訳入力欄で表示する');
+assert(viewSource.includes("header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'"), '記帳訂正に借方・貸方の科目欄と金額欄を明示する');
+assert(/\.correction-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 3fr\) minmax\(0, 2fr\) minmax\(0, 3fr\) minmax\(0, 2fr\)/s.test(cssSource), '記帳訂正の借方科目・金額と貸方科目・金額を横一列にする');
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
 assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');
 assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');
