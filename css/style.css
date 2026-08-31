@@ -275,6 +275,20 @@ button.secondary-button:hover { color: #fff; }
 .correction-row > :nth-child(3) { border-left-width: 2px; border-left-color: #7f8c8d; }
 .correction-row .table-input { width: 100%; min-width: 0; box-sizing: border-box; }
 
+.journal-book-scroll { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+.journal-book-entry { width: max(100%, 820px); border-collapse: collapse; table-layout: fixed; }
+.journal-book-entry th,
+.journal-book-entry td { padding: 6px 4px; border: 1px solid #bdc3c7; text-align: center; }
+.journal-book-entry th { color: #566573; background: #eef2f5; font-size: .8rem; }
+.journal-book-entry th:nth-child(1) { width: 9%; }
+.journal-book-entry th:nth-child(2),
+.journal-book-entry th:nth-child(5) { width: 22%; }
+.journal-book-entry th:nth-child(3),
+.journal-book-entry th:nth-child(6) { width: 8%; }
+.journal-book-entry th:nth-child(4),
+.journal-book-entry th:nth-child(7) { width: 15.5%; }
+.journal-book-entry .table-input { width: 100%; min-width: 0; box-sizing: border-box; }
+
 .journal-row {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
