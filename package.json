@@ -10,7 +10,8 @@
     "audit:oracle": "node scripts/audit-oracle.js",
     "audit:oracle-source": "node scripts/audit-oracle-source.js",
     "audit:matrix": "node scripts/audit-matrix.js",
-    "audit:editorial": "node scripts/audit-editorial.js"
+    "audit:editorial": "node scripts/audit-editorial.js",
+    "audit:explanations": "node scripts/audit-explanations.js"
   },
   "engines": {
     "node": ">=18"
