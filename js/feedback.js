@@ -91,13 +91,26 @@
     return result;
   }
 
+  function diagnoseCorrection(question, answer) {
+    const expected = question.answer.cells; const actual = answer?.cells || {};
+    const wrong = Object.keys(expected).filter(id => !sameValue(actual[id], expected[id]));
+    if (!wrong.length) return [];
+    const material = question.materials?.[0] || {};
+    const correction = `（借）${expected.debitAccount} ${yen(expected.debitAmount)}円／（貸）${expected.creditAccount} ${yen(expected.creditAmount)}円`;
+    const labels = wrong.map(id => ({ debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額' }[id] || id)).join('・');
+    const reason = `①帳簿の記録「${material.recorded || '記録なし'}」を確認します。②証憑「${material.evidence || '証憑なし'}」から本来の処理を判断します。③すでに正しい部分は残し、帳簿との差だけを「${correction}」で直します。この訂正仕訳を既存の記録へ加えると証憑どおりになります。`;
+    return [entry('correction', `${labels}を3段階で確認します`, reason, '訂正仕訳は、誤った仕訳を丸ごと書き直すのではなく、既存記録と証憑上の正しい処理との差額だけを追加します。', '帳簿の記録→証憑から分かる正しい処理→両者の差、の順に書き出してから仕訳します。', `correction:${labels}`)];
+  }
+
   function cellInfo(question, id) {
     if (!question?.table) return { label:question?.category || '回答欄', column:'回答欄' };
     const fixedLabels = { debitAccount:'訂正仕訳の借方科目', debitAmount:'訂正仕訳の借方金額', creditAccount:'訂正仕訳の貸方科目', creditAmount:'訂正仕訳の貸方金額', total_debit:'借方合計', total_credit:'貸方合計', netIncome:'当期純利益' };
     if (fixedLabels[id]) return { label:fixedLabels[id], column:'回答欄' };
+    const metadataLabel = question.table.inputMetadata?.[id]?.label;
+    if (metadataLabel) return { label:String(metadataLabel), column:'回答欄' };
     const index = question.table.inputCells.indexOf(id); let cursor = -1;
     for (const row of question.table.rows) for (const [column, value] of Object.entries(row)) if (value === '入力' && ++cursor === index) {
-      let label = Object.values(row).find(item => item !== '入力' && item !== '—') || question.category;
+      let label = ['account','item','description'].map(key => row[key]).find(item => item != null && item !== '' && item !== '入力' && item !== '—') || Object.values(row).find(item => item !== '入力' && item !== '—') || question.category;
       if (label === id || /^(?:value|field|row)\d+$/.test(String(label))) label = `${question.category} ${index + 1}番目の記入欄`;
       return { label:String(label), column };
     }
@@ -129,7 +142,7 @@
   }
   function diagnoseWrongAnswer(question, answer, score) {
     if (!question || score?.correct) return [];
-    const diagnostics = question.type === 'journal' ? diagnoseJournal(question, answer || {}) : diagnoseTable(question, answer || {});
+    const diagnostics = question.type === 'journal' ? diagnoseJournal(question, answer || {}) : question.type === 'correction' ? diagnoseCorrection(question, answer || {}) : diagnoseTable(question, answer || {});
     return diagnostics.length ? diagnostics : [entry('general', '正解との差を確認します', '入力した科目・金額・位置の組合せが会計処理と一致していません。', context(question), typeRule(question))];
   }
   return Object.freeze({ diagnoseWrongAnswer, MISCONCEPTIONS, humanLabel });
