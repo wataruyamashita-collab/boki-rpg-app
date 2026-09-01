@@ -303,10 +303,10 @@ assert(tableFeedback.some(item => item.kind === 'cell' && /160,000円/.test(item
 const closingFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.D020, { cells:{ ...browserSandbox.window.QuestionData.D020.answer.cells, profit:160000 } }, { correct:false });
 assert(closingFeedback.some(item => /800,000/.test(item.thinking) && /400,000/.test(item.thinking) && /180,000/.test(item.thinking)), 'WAF-CLOSING: 損益振替の利益計算式を示す');
 const correctionFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.E001, { cells:{ ...browserSandbox.window.QuestionData.E001.answer.cells, debitAccount:'消耗品費' } }, { correct:false });
-assert(correctionFeedback.some(item => /誤仕訳を逆仕訳で取り消し/.test(item.reason) && !/debitAccount/.test(JSON.stringify(item))), 'WAF-CORRECTION: 訂正仕訳固有の手順を内部IDなしで説明する');
+assert(correctionFeedback.some(item => /帳簿の記録/.test(item.reason) && /証憑/.test(item.reason) && /（借）広告宣伝費 22,500円／（貸）備品 22,500円/.test(item.reason) && !/debitAccount/.test(JSON.stringify(item))), 'WAF-CORRECTION: 帳簿・証憑・訂正仕訳を3段階で内部IDなしに説明する');
 assert.strictEqual(correctionFeedback.length, 1, 'WAF-CORRECTION: 1つの科目誤りに同じ解説を複数表示しない');
 const multipleCorrectionFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.E001, { cells:{} }, { correct:false });
-assert.strictEqual(multipleCorrectionFeedback.filter(item => /誤仕訳を逆仕訳で取り消し/.test(item.reason)).length, 1, 'WAF-CORRECTION: 訂正仕訳共通の手順は誤答欄ごとに繰り返さない');
+assert.strictEqual(multipleCorrectionFeedback.filter(item => /帳簿の記録/.test(item.reason) && /証憑/.test(item.reason)).length, 1, 'WAF-CORRECTION: 訂正仕訳共通の手順は誤答欄ごとに繰り返さない');
 assert.deepStrictEqual(Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.J004, browserSandbox.window.QuestionData.J004.answer, { correct:true }), [], 'WAF-CORRECT: 正答時は誤答診断を生成しない');
 for (const question of Object.values(browserSandbox.window.QuestionData)) {
   const blank = question.type === 'journal' ? { debit:[], credit:[] } : { cells:{} };

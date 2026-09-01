@@ -1,6 +1,6 @@
 {
-  "release": "20260901-59",
-  "previousRelease": "20260901-58",
+  "release": "20260901-60",
+  "previousRelease": "20260901-59",
   "assets": {
     "css/style.css": "c473b2990120ed96354fa01fd7dcccc1fb2af1247ccdb3738a1f6333838d54db",
     "data/questions.js": "592b7c80aa15b17672f4f2550befd7d1c027977adec0200f174dcc8ed46e730d",
@@ -9,7 +9,7 @@
     "js/model.js": "3dd1763328d820e46a15c3bec9d14d5ccce2aefcd6d27762fd6c021bbe0091c7",
     "js/rpg.js": "4b67a0a19fbe87c44146e1e1cdbffadb7384756e744e6fe8811901e3d9f83248",
     "js/engine.js": "a0f94eaa142ce19c07da284d3777a23a2c7af38c7b1eb6591e982ab48de50f78",
-    "js/feedback.js": "0b309e22e1587428600c5b1849fe51ff3eb3c716499bc3511a26c40ff6a20de2",
+    "js/feedback.js": "8c04b1847aca22a44d48b5f0dc636cec47519b4d6c6f454333e3113cd8710b5f",
     "js/view.js": "3e7ad2af8627d5d85c6832cffdf578f6d61579303366c97ab0a44e5488dc8bbb",
     "js/controller.js": "c87e0ab44840742a5f73036191244dd0ea8ce3ecd013801473058646790e2ba9",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b"

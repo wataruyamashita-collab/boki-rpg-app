@@ -91,15 +91,15 @@
     return result;
   }
 
-  const correctionAsJournal = cells => ({
-    debit:[{ account:cells?.debitAccount || '', amount:cells?.debitAmount ?? '' }],
-    credit:[{ account:cells?.creditAccount || '', amount:cells?.creditAmount ?? '' }]
-  });
   function diagnoseCorrection(question, answer) {
-    const journalQuestion = { ...question, answer:correctionAsJournal(question.answer.cells) };
-    const diagnostics = diagnoseJournal(journalQuestion, correctionAsJournal(answer?.cells));
-    if (diagnostics.length) diagnostics[0] = { ...diagnostics[0], reason:`${diagnostics[0].reason} ${typeRule(question)}` };
-    return diagnostics;
+    const expected = question.answer.cells; const actual = answer?.cells || {};
+    const wrong = Object.keys(expected).filter(id => !sameValue(actual[id], expected[id]));
+    if (!wrong.length) return [];
+    const material = question.materials?.[0] || {};
+    const correction = `（借）${expected.debitAccount} ${yen(expected.debitAmount)}円／（貸）${expected.creditAccount} ${yen(expected.creditAmount)}円`;
+    const labels = wrong.map(id => ({ debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額' }[id] || id)).join('・');
+    const reason = `①帳簿の記録「${material.recorded || '記録なし'}」を確認します。②証憑「${material.evidence || '証憑なし'}」から本来の処理を判断します。③すでに正しい部分は残し、帳簿との差だけを「${correction}」で直します。この訂正仕訳を既存の記録へ加えると証憑どおりになります。`;
+    return [entry('correction', `${labels}を3段階で確認します`, reason, '訂正仕訳は、誤った仕訳を丸ごと書き直すのではなく、既存記録と証憑上の正しい処理との差額だけを追加します。', '帳簿の記録→証憑から分かる正しい処理→両者の差、の順に書き出してから仕訳します。', `correction:${labels}`)];
   }
 
   function cellInfo(question, id) {
