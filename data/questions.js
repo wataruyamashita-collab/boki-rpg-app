@@ -15312,6 +15312,14 @@ const methodFor = item => ({
   comprehensive:`${item.category}では証憑、仕訳、残高、決算整理の順に数字をつなぎ、途中の貸借一致も確認します`
 }[item.type] || `${item.category}の資料を発生順に照合し、求める欄まで数値をつなぎます`);
 const buildExplanation = item => {
+  if (item.type === 'correction') {
+    const material = item.materials?.[0] || {};
+    const cells = item.answer?.cells || {};
+    const correction = `（借）${cells.debitAccount} ${yenText(cells.debitAmount)}／（貸）${cells.creditAccount} ${yenText(cells.creditAmount)}`;
+    return `【やさしい考え方】帳簿には「${material.recorded || '記録なし'}」と記録されていますが、証憑は「${material.evidence || '証憑なし'}」を示しています。両者を比べ、誤っている科目や金額だけを直します。\n` +
+      `【試験のポイント】訂正仕訳は「${correction}」です。誤った仕訳をすべて記帳し直すのではなく、現在の帳簿へこの仕訳を加えた結果が証憑どおりになることを確認します。\n` +
+      `【実務での使い方】【業務の結果】帳簿の記録、証憑が示す正しい処理、両者の差額の順に確認すると、訂正後の残高を根拠とともに説明できます。`;
+  }
   const clue = String(item.question).replace(/[。！？\s]+/gu, ' ').slice(0, 20);
   const digest = answerDigest(item).slice(0, 38);
   const shortAnswer = digest.slice(0, 14);
