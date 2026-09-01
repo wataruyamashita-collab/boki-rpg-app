@@ -14406,9 +14406,9 @@ const worksheetTableRows = worksheetRows.map(([account, values], rowIndex) => {
   return row;
 });
 QuestionData.D001 = {
-  id: 'D001', type: 'worksheet', format: 'eight-column-worksheet', category: '8桁精算表', difficulty: 3, chapter: 10,
+  id: 'D001', type: 'worksheet', format: 'eight-column-worksheet', category: '8欄精算表（8桁精算表）', difficulty: 3, chapter: 10,
   scene: '決算・財務諸表へつなぐ', story: '同じ会社の決算整理から損益計算書と貸借対照表までを一枚で完成させる。',
-  question: '下記の元試算表と決算整理事項（保険料のうち40,000円を前払保険料へ振り替える、備品を間接法で60,000円減価償却する）を反映し、入力欄のみを完成しなさい。「—」は記入不要です。',
+  question: '「8桁」とは金額の桁数ではなく、4組の借方・貸方を合わせた8つの金額欄を指します。下記の元試算表と決算整理事項（保険料のうち40,000円を前払保険料へ振り替える、備品を間接法で60,000円減価償却する）を反映し、入力欄のみを完成しなさい。「—」は記入不要です。',
   materials: worksheetRows.filter(([, values]) => values[0] || values[1]).map(([account, values]) => ({ '勘定科目': account, '借方': values[0] || '—', '貸方': values[1] || '—' })),
   table: { columns: ['勘定科目','試算表 借方','試算表 貸方','修正記入 借方','修正記入 貸方','損益計算書 借方','損益計算書 貸方','貸借対照表 借方','貸借対照表 貸方'], rows: worksheetTableRows, inputCells: worksheetInputCells },
   answer: { cells: worksheetCells }, explanation: '試算表、修正記入、損益計算書、貸借対照表の各組で借方と貸方が一致します。間接法では備品勘定そのものを減額しません。損益計算書欄の差額180,000円を当期純利益として借方へ、貸借対照表欄の貸方へ振り分けます。',
