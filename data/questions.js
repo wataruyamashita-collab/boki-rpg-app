@@ -15283,13 +15283,16 @@ const ReaderFacingBeats = Object.freeze([
     : `${arc.place}。${arc.result}を確定するまで、残る確認はわずかです。あなたは次の${item.category}の資料を受け取り、${instruction}。`
 ]);
 const yenText = value => typeof value === 'number' ? `${value.toLocaleString('ja-JP')}円` : String(value);
+const answerLabel = Object.freeze({
+  debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額'
+});
 const answerDigest = item => {
   if (item.type === 'journal') {
     const side = name => (item.answer[name] || []).map(row => `${row.account}${yenText(row.amount)}`).join('・');
     return `借方を${side('debit')}、貸方を${side('credit')}`;
   }
   const cells = Object.entries(item.answer?.cells || item.answer || {}).slice(0, 4);
-  return cells.map(([key, value]) => `${item.table?.inputMetadata?.[key]?.label || key}は${yenText(value)}`).join('、');
+  return cells.map(([key, value]) => `${item.table?.inputMetadata?.[key]?.label || answerLabel[key] || key}は${yenText(value)}`).join('、');
 };
 const ledgerPurpose = category => {
   if (/現金出納帳/u.test(category)) return '現金の受払いと手許残高を日付順に追う帳簿';
