@@ -20292,7 +20292,7 @@
       "sequence": 261,
       "chapter": 11,
       "type": "worksheet",
-      "category": "8桁精算表",
+      "category": "8欄精算表（8桁精算表）",
       "story": {
         "status": "VERIFIED",
         "finding": "「2月・取締役会報告」で、依頼者・読み手の担当作業・「8桁精算表」の確認目的・回答後に確定する業務結果を明示している。"
@@ -20362,7 +20362,7 @@
         "finding": "scene「決算・財務諸表へつなぐ」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1e5a8232f2b7ac371e8b3432d830cb41c5d4ec1b6dfb3d25daacf0a179792519",
+      "sourceHash": "sha256:967d5233838cd4e4b03e5addc5f12a8a9f287ec8a9d153e6619f8c8dec1b53b2",
       "answerSchemaHash": "sha256:fb6dde714988200e24796064213a42383a3d2bb5fc1c0ca351ba140cd2724fa9"
     },
     {
