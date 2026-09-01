@@ -91,13 +91,26 @@
     return result;
   }
 
+  const correctionAsJournal = cells => ({
+    debit:[{ account:cells?.debitAccount || '', amount:cells?.debitAmount ?? '' }],
+    credit:[{ account:cells?.creditAccount || '', amount:cells?.creditAmount ?? '' }]
+  });
+  function diagnoseCorrection(question, answer) {
+    const journalQuestion = { ...question, answer:correctionAsJournal(question.answer.cells) };
+    const diagnostics = diagnoseJournal(journalQuestion, correctionAsJournal(answer?.cells));
+    if (diagnostics.length) diagnostics[0] = { ...diagnostics[0], reason:`${diagnostics[0].reason} ${typeRule(question)}` };
+    return diagnostics;
+  }
+
   function cellInfo(question, id) {
     if (!question?.table) return { label:question?.category || '回答欄', column:'回答欄' };
     const fixedLabels = { debitAccount:'訂正仕訳の借方科目', debitAmount:'訂正仕訳の借方金額', creditAccount:'訂正仕訳の貸方科目', creditAmount:'訂正仕訳の貸方金額', total_debit:'借方合計', total_credit:'貸方合計', netIncome:'当期純利益' };
     if (fixedLabels[id]) return { label:fixedLabels[id], column:'回答欄' };
+    const metadataLabel = question.table.inputMetadata?.[id]?.label;
+    if (metadataLabel) return { label:String(metadataLabel), column:'回答欄' };
     const index = question.table.inputCells.indexOf(id); let cursor = -1;
     for (const row of question.table.rows) for (const [column, value] of Object.entries(row)) if (value === '入力' && ++cursor === index) {
-      let label = Object.values(row).find(item => item !== '入力' && item !== '—') || question.category;
+      let label = ['account','item','description'].map(key => row[key]).find(item => item != null && item !== '' && item !== '入力' && item !== '—') || Object.values(row).find(item => item !== '入力' && item !== '—') || question.category;
       if (label === id || /^(?:value|field|row)\d+$/.test(String(label))) label = `${question.category} ${index + 1}番目の記入欄`;
       return { label:String(label), column };
     }
@@ -129,7 +142,7 @@
   }
   function diagnoseWrongAnswer(question, answer, score) {
     if (!question || score?.correct) return [];
-    const diagnostics = question.type === 'journal' ? diagnoseJournal(question, answer || {}) : diagnoseTable(question, answer || {});
+    const diagnostics = question.type === 'journal' ? diagnoseJournal(question, answer || {}) : question.type === 'correction' ? diagnoseCorrection(question, answer || {}) : diagnoseTable(question, answer || {});
     return diagnostics.length ? diagnostics : [entry('general', '正解との差を確認します', '入力した科目・金額・位置の組合せが会計処理と一致していません。', context(question), typeRule(question))];
   }
   return Object.freeze({ diagnoseWrongAnswer, MISCONCEPTIONS, humanLabel });
