@@ -406,6 +406,45 @@ comparisonView.renderAnswerComparison({ type: 'journal' }, { correct: true }, { 
 assert.strictEqual(comparison.hidden, true, '正解時は空の誤答比較欄をhiddenにする');
 comparisonView.renderAnswerComparison({ type: 'journal' }, { correct: false }, { debit: [], credit: [] });
 assert.strictEqual(comparison.hidden, false, '仕訳の誤答時だけ比較欄を表示する');
+const comparisonElements = { 'answer-comparison': new FakeElement('section') };
+const tableComparisonView = new browserSandbox.window.AppView({ getElementById: id => comparisonElements[id], createElement: tag => new FakeElement(tag) });
+const descendants = (node, tagName) => (node?.children || []).flatMap(child => [child, ...descendants(child, tagName)]).filter(child => !tagName || child.tagName === tagName);
+const representativeIds = { ledger:'L001', trial_balance:'T001', correction:'E001', worksheet:'D001', financial_statement:'F001', comprehensive:'C001' };
+for (const [type, id] of Object.entries(representativeIds)) {
+  const question = browserSandbox.window.QuestionData[id];
+  assert.strictEqual(question.type, type, `${id}を${type}比較表示の代表問題にする`);
+  const [wrongCell, matchingCell] = question.table.inputCells;
+  const wrongAnswer = { cells:{ ...question.answer.cells, [wrongCell]:'' } };
+  const score = Engine.grade(question, wrongAnswer);
+  assert.strictEqual(score.correct, false, `${id}の比較テストは実採点経路で誤答になる`);
+  tableComparisonView.renderAnswerComparison(question, score, wrongAnswer);
+  const container = comparisonElements['answer-comparison']; const rows = descendants(container, 'tr').slice(1);
+  const wrongIndex = question.table.inputCells.indexOf(wrongCell); const matchingIndex = question.table.inputCells.indexOf(matchingCell);
+  assert.strictEqual(container.hidden, false, `${id}の誤答時に比較欄を表示する`);
+  assert.strictEqual(rows.length, question.table.inputCells.length, `${id}をinputCells順で全行表示する`);
+  assert.strictEqual(rows[wrongIndex].children[0].textContent, question.table.inputMetadata?.[wrongCell]?.label || tableComparisonView.cellLabel(question, wrongCell), `${id}に利用者向け項目名を表示する`);
+  assert.strictEqual(rows[wrongIndex].children[1].textContent, '未入力', `${id}の空欄を未入力と表示する`);
+  assert.strictEqual(rows[wrongIndex].children[2].textContent, tableComparisonView.comparisonValue(question, wrongCell, question.answer.cells[wrongCell]), `${id}に正しい解答を表示する`);
+  assert.strictEqual(rows[wrongIndex].children[1].className, 'cell-mismatch', `${id}の誤答セルだけを識別する`);
+  assert(!rows[wrongIndex].children[2].className?.includes('cell-mismatch'), `${id}の正答表示へ誤答クラスを付けない`);
+  assert.strictEqual(rows[wrongIndex].children[3].textContent, '要確認', `${id}の誤答判定を文字でも表示する`);
+  assert.strictEqual(rows[matchingIndex].children[3].textContent, '一致', `${id}の一致セルを文字でも表示する`);
+  assert(!rows[matchingIndex].children[1].className?.includes('cell-mismatch'), `${id}の一致セルへ誤答クラスを付けない`);
+  assert(!domText(container).includes('undefined') && !domText(container).includes('null') && !domText(container).includes('NaN'), `${id}で無効値を直接表示しない`);
+  tableComparisonView.renderAnswerComparison(question, Engine.grade(question, question.answer), question.answer);
+  assert.strictEqual(container.hidden, true, `${id}の正解時は比較欄を表示しない`);
+}
+const journalDomView = new browserSandbox.window.AppView({ createElement: tag => new FakeElement(tag) });
+for (const answer of [wrongJ001, browserSandbox.window.QuestionData.J001.answer, browserSandbox.window.QuestionData.J137.answer]) {
+  const journal = journalDomView.journalTable(answer); const rows = descendants(journal, 'tr');
+  assert.deepStrictEqual(rows[0].children.map(cell => cell.textContent), ['借方', '貸方'], '仕訳表のグループ見出しは借方を左、貸方を右にする');
+  assert.deepStrictEqual(rows[1].children.map(cell => cell.textContent), ['借方科目', '借方金額', '貸方科目', '貸方金額'], '仕訳表のDOM列順を借方科目・借方金額・貸方科目・貸方金額に固定する');
+  rows.slice(2).forEach(row => assert.strictEqual(row.children.length, 4, '複合仕訳を含む全行で借貸4列を維持する'));
+  assert(domText(rows[2].children[0]).includes(answer.debit[0]?.account || '（未入力）'), '借方科目を左側グループへ表示する');
+  assert(domText(rows[2].children[1]).includes(answer.debit[0]?.amount?.toLocaleString('ja-JP') || '—'), '借方金額を第2列へ表示する');
+  assert(domText(rows[2].children[2]).includes(answer.credit[0]?.account || '（未入力）'), '貸方科目を右側グループへ表示する');
+  assert(domText(rows[2].children[3]).includes(answer.credit[0]?.amount?.toLocaleString('ja-JP') || '—'), '貸方金額を第4列へ表示する');
+}
 allJournalAccounts.forEach(account => assert.notStrictEqual(comparisonView.accountType(account), 'unknown', `${account}を簿記の5要素へ分類する`));
 assert.strictEqual(comparisonView.accountType('減価償却累計額'), 'contraAsset', '減価償却累計額は負債ではなく資産の控除項目とする');
 assert.strictEqual(comparisonView.accountType('貸倒引当金'), 'contraAsset', '貸倒引当金は資産の控除項目とする');

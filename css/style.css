@@ -465,11 +465,21 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .answer-comparison:empty { display: none; }
 .answer-comparison p { margin: 0 0 10px; color: #633; }
 .answer-comparison h3, .correct-journal h3, .explanation-box h3 { margin: 0 0 8px; font-size: 1rem; }
-.journal-table-wrap { width: 100%; max-width: 100%; overflow-x: hidden; overflow-x: clip; }
-.journal-table { width: 100%; table-layout: fixed; border-collapse: collapse; background: #fff; }
+.journal-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.journal-table { width: 100%; min-width: 480px; table-layout: fixed; border-collapse: collapse; background: #fff; }
 .journal-table th, .journal-table td { min-width: 0; padding: 8px 4px; overflow-wrap: anywhere; border: 1px solid #bdc3c7; }
 .journal-table th { background: #eef2f5; }
+.journal-table .journal-side-debit, .journal-table .journal-side-credit { background: #dce7ee; font-size: 1rem; }
 .journal-amount { text-align: right; white-space: nowrap; }
+.answer-comparison-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.answer-comparison-table { width: 100%; min-width: 520px; border-collapse: collapse; background: #fff; }
+.answer-comparison-table th, .answer-comparison-table td { padding: 9px 8px; border: 1px solid #bdc3c7; text-align: left; overflow-wrap: anywhere; }
+.answer-comparison-table th { background: #eef2f5; white-space: nowrap; }
+.answer-comparison-table .comparison-row-mismatch { background: #fff4f2; }
+.answer-comparison-table .cell-mismatch { border: 2px solid #b42318; background: #ffe4df; font-weight: 700; }
+.comparison-status { font-weight: 700; white-space: nowrap; }
+.comparison-status-match { color: #176b3a; }
+.comparison-status-mismatch { color: #9f1c12; }
 .explanation-text { white-space: pre-wrap; }
 .account-with-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .account-badge { display: inline-block; padding: 2px 6px; border-radius: 999px; color: #fff; font-size: .68rem; font-weight: 700; line-height: 1.35; white-space: nowrap; }
