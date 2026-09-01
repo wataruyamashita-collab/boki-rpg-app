@@ -312,6 +312,7 @@ for (const question of Object.values(browserSandbox.window.QuestionData)) {
   const blank = question.type === 'journal' ? { debit:[], credit:[] } : { cells:{} };
   const diagnostics = Feedback.diagnoseWrongAnswer(question, blank, { correct:false });
   assert(diagnostics.length > 0 && diagnostics.every(item => item.reason && item.thinking && item.nextRule), `WAF-COVERAGE: ${question.id}に理由・考え方・次回ルールがある`);
+  assert.strictEqual(new Set(diagnostics.map(item => item.reason)).size, diagnostics.length, `WAF-DUPLICATE: ${question.id}で同じ解説を複数表示しない`);
 }
 for (const id of ['D019','F001','L044','D020','T001','E001']) {
   const original = browserSandbox.window.QuestionData[id]; const first = Object.keys(original.answer.cells)[0];

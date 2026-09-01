@@ -106,9 +106,11 @@
     if (!question?.table) return { label:question?.category || '回答欄', column:'回答欄' };
     const fixedLabels = { debitAccount:'訂正仕訳の借方科目', debitAmount:'訂正仕訳の借方金額', creditAccount:'訂正仕訳の貸方科目', creditAmount:'訂正仕訳の貸方金額', total_debit:'借方合計', total_credit:'貸方合計', netIncome:'当期純利益' };
     if (fixedLabels[id]) return { label:fixedLabels[id], column:'回答欄' };
+    const metadataLabel = question.table.inputMetadata?.[id]?.label;
+    if (metadataLabel) return { label:String(metadataLabel), column:'回答欄' };
     const index = question.table.inputCells.indexOf(id); let cursor = -1;
     for (const row of question.table.rows) for (const [column, value] of Object.entries(row)) if (value === '入力' && ++cursor === index) {
-      let label = Object.values(row).find(item => item !== '入力' && item !== '—') || question.category;
+      let label = ['account','item','description'].map(key => row[key]).find(item => item != null && item !== '' && item !== '入力' && item !== '—') || Object.values(row).find(item => item !== '入力' && item !== '—') || question.category;
       if (label === id || /^(?:value|field|row)\d+$/.test(String(label))) label = `${question.category} ${index + 1}番目の記入欄`;
       return { label:String(label), column };
     }
