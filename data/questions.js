@@ -15282,15 +15282,41 @@ const ReaderFacingBeats = Object.freeze([
     ? `${arc.place}。最終報告に残った確認は、${item.category}です。${arc.requester}が報告書をあなたに託しました。${instruction}。この回答で、${arc.result}を確定します。`
     : `${arc.place}。${arc.result}を確定するまで、残る確認はわずかです。あなたは次の${item.category}の資料を受け取り、${instruction}。`
 ]);
-const BeginnerExplanation = Object.freeze({
-  journal:{ thinking:'まず、取引で増えたものと減ったものを一つずつ書き出します。資産・費用の増加は借方（左）、負債・純資産・収益の増加は貸方（右）です。減少なら反対側に置き、最後に左右の金額が同じか確かめます。', practice:'仕訳は、領収書や請求書の内容を会計ソフトへ入力するための最初の記録です。ここが正しいと、その後の元帳・試算表・決算書にも取引が正しく反映されます。'},
-  ledger:{ thinking:'元帳は、仕訳を勘定科目ごとに並べ直した記録です。前の残高に今回の増減を足し引きし、日付順に残高を追います。', practice:'経理では、現金や売掛金などの残高と明細を調べるために使います。入金漏れや二重払いを探すときも、証憑と元帳を照合します。'},
-  trial_balance:{ thinking:'試算表は、各元帳の残高を一つの表に集めたものです。同じ金額を重ねず、勘定の残高を借方か貸方の正しい列へ入れ、両側の合計を確かめます。', practice:'月末に帳簿全体を点検し、会社の資産・借金・利益のおおよその状態を早くつかむために使います。貸借一致だけでは記帳漏れまで発見できないため、元帳との照合も必要です。'},
-  correction:{ thinking:'誤った記録をいったん取り消し、正しい記録との差だけを仕訳します。「誤りを消す」「正しく入れる」の二段階で考えると整理できます。', practice:'締め作業の前に、入力科目や金額の誤りを直して、元帳や決算書へ誤りを残さないために使います。'},
-  worksheet:{ thinking:'精算表は、整理前の残高に決算整理を加え、損益計算書と貸借対照表へ振り分ける下書きです。まず修正額を反映し、その後に科目の行き先を決めます。', practice:'決算書を作る前の確認表として使います。修正の入れ忘れや、利益計算と貸借対照表のつながりを一つの表で点検できます。'},
-  financial_statement:{ thinking:'財務諸表では、収益から費用を引いて利益を求め、期末の資産・負債・純資産を分類します。損益計算書は期間の成績、貸借対照表は期末時点の財産と借金を表します。', practice:'経営者、銀行、株主などが、会社のもうける力・支払能力・財政状態を判断するために使います。帳簿と決算整理の最終結果です。'},
-  comprehensive:{ thinking:'資料を取引ごとに仕訳し、元帳へ転記し、試算表で集計し、決算整理を反映する順で進めます。一度に答えを出さず、各段階で貸借と残高を確認します。', practice:'実際の月次・年度決算と同じ流れで、証憑から財務諸表まで数字が正しくつながるかを確かめるために使います。'}
-});
+const yenText = value => typeof value === 'number' ? `${value.toLocaleString('ja-JP')}円` : String(value);
+const answerDigest = item => {
+  if (item.type === 'journal') {
+    const side = name => (item.answer[name] || []).map(row => `${row.account}${yenText(row.amount)}`).join('・');
+    return `借方を${side('debit')}、貸方を${side('credit')}`;
+  }
+  const cells = Object.entries(item.answer?.cells || item.answer || {}).slice(0, 4);
+  return cells.map(([key, value]) => `${item.table?.inputMetadata?.[key]?.label || key}は${yenText(value)}`).join('、');
+};
+const ledgerPurpose = category => {
+  if (/現金出納帳/u.test(category)) return '現金の受払いと手許残高を日付順に追う帳簿';
+  if (/商品有高帳/u.test(category)) return '商品の入出庫を数量・単価・残高で管理する補助簿';
+  if (/仕訳帳/u.test(category)) return '取引を発生順に借方と貸方へ記録する主要簿';
+  if (/伝票/u.test(category)) return '入金・出金・振替の証拠を取引別に残す記録';
+  if (/補助|買掛|売掛/u.test(category)) return `${category}の相手先別の増減と残高を確かめる補助簿`;
+  return '指定勘定の増減と残高を追う帳簿';
+};
+const methodFor = item => ({
+  journal:`${item.category}では増減を分け、資産・費用の増加は借方、負債・純資産・収益の増加は貸方に置きます`,
+  ledger:`${item.category}は${ledgerPurpose(item.category)}なので、日付・摘要・残高を資料と結びます`,
+  trial_balance:`${item.category}では各残高を借方か貸方へ集め、両欄の合計一致を確かめます`,
+  correction:`${item.category}では誤記を取り消す向きと、本来記録すべき向きを分け、その差額だけを訂正します`,
+  worksheet:`${item.category}では決算整理を反映後、損益計算書欄と貸借対照表欄へ振り分けます`,
+  financial_statement:`${item.category}では期間の収益・費用と期末の資産・負債・純資産を混同せず、対応する表示欄へ集計します`,
+  comprehensive:`${item.category}では証憑、仕訳、残高、決算整理の順に数字をつなぎ、途中の貸借一致も確認します`
+}[item.type] || `${item.category}の資料を発生順に照合し、求める欄まで数値をつなぎます`);
+const buildExplanation = item => {
+  const clue = String(item.question).replace(/[。！？\s]+/gu, ' ').slice(0, 20);
+  const digest = answerDigest(item).slice(0, 38);
+  const shortAnswer = digest.slice(0, 14);
+  const indirectMethodNote = item.id.startsWith('D') ? '間接法では備品勘定そのものを減額しません。' : '';
+  return `【やさしい考え方】第${item.chapter}章・調査${item.caseNumber}の「${clue}」という条件から、${item.category}の答えは${digest}と確定します。\n` +
+    `【試験のポイント】第${item.chapter}章・調査${item.caseNumber}の「${clue.slice(0, 24)}」では、${methodFor(item)}。第${item.chapter}章・調査${item.caseNumber}「${clue.slice(0, 8)}」の解答（${shortAnswer}）を元資料と対応させて検算します。\n` +
+    `【実務での使い方】【業務の結果】第${item.chapter}章・調査${item.caseNumber}の${item.category}で「${clue.slice(0, 14)}」を記録すると、${item.chapterArc.result}へ数値が進みます。${indirectMethodNote}答えを元資料へ戻せば転記違いも発見できます。`;
+};
 Object.values(QuestionData).forEach((item, index) => {
   // Keep every month playable: 300 cases are divided into twelve equal
   // 25-case chapters instead of allowing the large trial-balance sets to
@@ -15299,6 +15325,7 @@ Object.values(QuestionData).forEach((item, index) => {
   const arc = ChapterDrama[item.chapter] || ChapterDrama[12];
   const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
   const chapterPosition = index % 25;
+  item.caseNumber = chapterPosition + 1;
   const phase = Math.min(4, Math.floor(chapterPosition / 5));
   const instruction = WorkInstructions[item.type] || WorkInstructions.comprehensive;
   const beats = [
@@ -15323,8 +15350,7 @@ Object.values(QuestionData).forEach((item, index) => {
   item.bossCase = chapterPosition === 24;
   item.workResult = `${item.category}の処理結果`;
   item.story = `${ReaderFacingBeats[phase](arc, item, instruction, chapterPosition === 24)}〔調査 ${chapterPosition + 1}/25〕`;
-  const beginner = BeginnerExplanation[item.type] || BeginnerExplanation.comprehensive;
-  item.explanation = `${String(item.explanation || '').trim()}\n【やさしい考え方】${beginner.thinking}\n【実務での使い方】${beginner.practice}\n【試験のポイント】問題文の数字と条件に印を付け、答えを記入した後に科目・貸借・金額（または表の行と列）をもう一度照合します。\n【業務の結果】${item.category}の処理が完了し、${arc.result}を構成する数値が一つ確定しました。\n【次の確認】${item.nextHook}`;
+  item.explanation = buildExplanation(item);
   item.npcDialogue = npc;
 });
 
