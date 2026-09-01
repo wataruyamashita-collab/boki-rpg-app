@@ -131,9 +131,13 @@
       const row = this.document.createElement('div'); row.className = 'correction-row';
       ['debitAccount', 'debitAmount', 'creditAccount', 'creditAmount'].forEach(cellId => {
         const label = this.tableLabel(cellId); const inputType = question.table.inputTypes?.[cellId];
-        const input = inputType === 'account'
-          ? this.makeText('table-input correction-account', label, draft.cells?.[cellId] ?? '')
-          : this.makeAmount('table-input correction-amount', `${label}（金額）`, draft.cells?.[cellId] ?? '');
+        let input;
+        if (inputType === 'account') {
+          input = this.document.createElement('select'); input.className = 'table-input correction-account'; input.setAttribute('aria-label', label);
+          input.append(new Option('--勘定科目--', ''));
+          root.AppController.accountChoices(question, question.answer.cells[cellId]).forEach(name => input.append(new Option(name, name)));
+          input.value = draft.cells?.[cellId] ?? ''; this.updateSelectTitle(input);
+        } else input = this.makeAmount('table-input correction-amount', `${label}（金額）`, draft.cells?.[cellId] ?? '');
         input.dataset.cellId = cellId; input.dataset.inputType = inputType; row.append(input);
       });
       entry.append(header, row); container.append(entry);
