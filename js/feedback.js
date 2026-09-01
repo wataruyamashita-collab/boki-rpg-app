@@ -91,6 +91,17 @@
     return result;
   }
 
+  const correctionAsJournal = cells => ({
+    debit:[{ account:cells?.debitAccount || '', amount:cells?.debitAmount ?? '' }],
+    credit:[{ account:cells?.creditAccount || '', amount:cells?.creditAmount ?? '' }]
+  });
+  function diagnoseCorrection(question, answer) {
+    const journalQuestion = { ...question, answer:correctionAsJournal(question.answer.cells) };
+    const diagnostics = diagnoseJournal(journalQuestion, correctionAsJournal(answer?.cells));
+    if (diagnostics.length) diagnostics[0] = { ...diagnostics[0], reason:`${diagnostics[0].reason} ${typeRule(question)}` };
+    return diagnostics;
+  }
+
   function cellInfo(question, id) {
     if (!question?.table) return { label:question?.category || '回答欄', column:'回答欄' };
     const fixedLabels = { debitAccount:'訂正仕訳の借方科目', debitAmount:'訂正仕訳の借方金額', creditAccount:'訂正仕訳の貸方科目', creditAmount:'訂正仕訳の貸方金額', total_debit:'借方合計', total_credit:'貸方合計', netIncome:'当期純利益' };
@@ -129,7 +140,7 @@
   }
   function diagnoseWrongAnswer(question, answer, score) {
     if (!question || score?.correct) return [];
-    const diagnostics = question.type === 'journal' ? diagnoseJournal(question, answer || {}) : diagnoseTable(question, answer || {});
+    const diagnostics = question.type === 'journal' ? diagnoseJournal(question, answer || {}) : question.type === 'correction' ? diagnoseCorrection(question, answer || {}) : diagnoseTable(question, answer || {});
     return diagnostics.length ? diagnostics : [entry('general', '正解との差を確認します', '入力した科目・金額・位置の組合せが会計処理と一致していません。', context(question), typeRule(question))];
   }
   return Object.freeze({ diagnoseWrongAnswer, MISCONCEPTIONS, humanLabel });

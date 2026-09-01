@@ -304,6 +304,9 @@ const closingFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.Quest
 assert(closingFeedback.some(item => /800,000/.test(item.thinking) && /400,000/.test(item.thinking) && /180,000/.test(item.thinking)), 'WAF-CLOSING: 損益振替の利益計算式を示す');
 const correctionFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.E001, { cells:{ ...browserSandbox.window.QuestionData.E001.answer.cells, debitAccount:'消耗品費' } }, { correct:false });
 assert(correctionFeedback.some(item => /誤仕訳を逆仕訳で取り消し/.test(item.reason) && !/debitAccount/.test(JSON.stringify(item))), 'WAF-CORRECTION: 訂正仕訳固有の手順を内部IDなしで説明する');
+assert.strictEqual(correctionFeedback.length, 1, 'WAF-CORRECTION: 1つの科目誤りに同じ解説を複数表示しない');
+const multipleCorrectionFeedback = Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.E001, { cells:{} }, { correct:false });
+assert.strictEqual(multipleCorrectionFeedback.filter(item => /誤仕訳を逆仕訳で取り消し/.test(item.reason)).length, 1, 'WAF-CORRECTION: 訂正仕訳共通の手順は誤答欄ごとに繰り返さない');
 assert.deepStrictEqual(Feedback.diagnoseWrongAnswer(browserSandbox.window.QuestionData.J004, browserSandbox.window.QuestionData.J004.answer, { correct:true }), [], 'WAF-CORRECT: 正答時は誤答診断を生成しない');
 for (const question of Object.values(browserSandbox.window.QuestionData)) {
   const blank = question.type === 'journal' ? { debit:[], credit:[] } : { cells:{} };
@@ -321,6 +324,11 @@ for (let number = 1; number <= 20; number += 1) {
   const question = browserSandbox.window.QuestionData[`E${String(number).padStart(3, '0')}`];
   assert.deepStrictEqual(JSON.parse(JSON.stringify(question.table.inputTypes)), { debitAccount: 'account', debitAmount: 'amount', creditAccount: 'account', creditAmount: 'amount' }, `${question.id}は勘定科目と金額の入力型を明示する`);
   Object.entries(question.answer.cells).forEach(([cellId, value]) => assert.strictEqual(question.table.inputTypes[cellId] === 'amount', typeof value === 'number', `${question.id}/${cellId}の入力型と正答型を一致させる`));
+  ['debitAccount', 'creditAccount'].forEach(cellId => {
+    const choices = browserSandbox.window.AppController.accountChoices(question, question.answer.cells[cellId]);
+    assert.strictEqual(choices.length, 5, `${question.id}/${cellId}の科目プルダウンは5択にする`);
+    assert(choices.includes(question.answer.cells[cellId]), `${question.id}/${cellId}の科目プルダウンに正答を含める`);
+  });
 }
 const correction = browserSandbox.window.QuestionData.E001;
 assert.strictEqual(Engine.grade(correction, { cells: { debitAccount: '広告宣伝費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } }).correct, true, 'E001の科目・金額を入力して正解にできる');
@@ -516,6 +524,13 @@ assert(viewSource.includes("input.setAttribute('pattern', '[0-9,]*')"), '桁区�
 assert(viewSource.includes("input.setAttribute('title', '金額は計算機から入力してください')"), '金額欄が計算機専用であることを案内する');
 assert(viewSource.includes('select.title = select.selectedOptions[0]?.textContent'), '選択中の勘定科目をtitleに反映する');
 const cssSource = fs.readFileSync('css/style.css', 'utf8');
+assert(viewSource.includes("else if (question.type === 'correction') this.renderCorrection(question, draft)"), '記帳訂正は通常の縦型表ではなく専用の仕訳入力欄で表示する');
+assert(viewSource.includes("header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'"), '記帳訂正に借方・貸方の科目欄と金額欄を明示する');
+assert(viewSource.includes("input = this.document.createElement('select'); input.className = 'table-input correction-account'"), '記帳訂正の科目欄をプルダウンで表示する');
+assert(/\.correction-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 3fr\) minmax\(0, 2fr\) minmax\(0, 3fr\) minmax\(0, 2fr\)/s.test(cssSource), '記帳訂正の借方科目・金額と貸方科目・金額を横一列にする');
+assert(viewSource.includes("this.renderJournalBook(question, draft)"), '仕訳帳形式も借方と貸方を横並びの専用帳票で表示する');
+assert(viewSource.includes("['日付', '借方科目', '元丁', '借方金額', '貸方科目', '元丁', '貸方金額']"), '仕訳帳に日付・借方・貸方の正式な列見出しを表示する');
+assert(/\.journal-book-entry\s*\{[^}]*table-layout:\s*fixed/s.test(cssSource), '仕訳帳の借方列と貸方列を同じ行に固定する');
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
 assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');
 assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');
