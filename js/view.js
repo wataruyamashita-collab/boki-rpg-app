@@ -228,8 +228,10 @@
     journalTable(answer) {
       const wrap = this.document.createElement('div'); wrap.className = 'journal-table-wrap';
       const table = this.document.createElement('table'); table.className = 'journal-table';
-      const head = table.createTHead().insertRow();
-      ['借方科目', '金額', '貸方科目', '金額'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; head.append(th); });
+      const tableHead = table.createTHead(); const sideHead = tableHead.insertRow();
+      [['借方', 'debit'], ['貸方', 'credit']].forEach(([label, side]) => { const th = this.document.createElement('th'); th.colSpan = 2; th.scope = 'colgroup'; th.className = `journal-side-${side}`; th.textContent = label; sideHead.append(th); });
+      const columnHead = tableHead.insertRow();
+      ['借方科目', '借方金額', '貸方科目', '貸方金額'].forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; columnHead.append(th); });
       const body = table.createTBody(); const rows = Math.max(answer.debit.length, answer.credit.length, 1);
       for (let index = 0; index < rows; index += 1) {
         const row = body.insertRow();
@@ -240,14 +242,48 @@
       }
       wrap.append(table); return wrap;
     }
+    comparisonValue(question, cellId, value) {
+      if (value == null || value === '' || (typeof value === 'number' && !Number.isFinite(value))) return '未入力';
+      const inputType = question.table?.inputTypes?.[cellId];
+      const semanticType = question.table?.inputMetadata?.[cellId]?.semanticType;
+      if ((inputType === 'amount' || semanticType === 'amount') && Number.isFinite(Number(normalizeNumber(value).replace(/,/g, '')))) {
+        return `${yen(normalizeNumber(value).replace(/,/g, ''))}円`;
+      }
+      return String(value);
+    }
+    tableAnswerComparison(question, score, userAnswer) {
+      const detailMap = new Map((score.details || []).map(detail => [detail.cellId, detail]));
+      const wrap = this.document.createElement('div'); wrap.className = 'answer-comparison-table-wrap';
+      const table = this.document.createElement('table'); table.className = 'answer-comparison-table';
+      const head = table.createTHead().insertRow();
+      ['項目', 'あなたの解答', '正しい解答', '判定'].forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; head.append(th); });
+      const body = table.createTBody();
+      question.table.inputCells.forEach(cellId => {
+        const correct = detailMap.get(cellId)?.correct === true; const row = body.insertRow();
+        if (!correct) row.className = 'comparison-row-mismatch';
+        const label = row.insertCell(); label.textContent = question.table.inputMetadata?.[cellId]?.label || this.cellLabel(question, cellId);
+        const actual = row.insertCell(); actual.textContent = this.comparisonValue(question, cellId, userAnswer.cells?.[cellId]);
+        if (!correct) actual.className = 'cell-mismatch';
+        const expected = row.insertCell(); expected.textContent = this.comparisonValue(question, cellId, question.answer.cells?.[cellId]);
+        const status = row.insertCell(); status.className = `comparison-status ${correct ? 'comparison-status-match' : 'comparison-status-mismatch'}`; status.textContent = correct ? '一致' : '要確認';
+      });
+      wrap.append(table); return wrap;
+    }
     renderAnswerComparison(question, score, userAnswer) {
       const container = this.byId('answer-comparison'); container.replaceChildren();
       container.hidden = true;
-      if (score.correct || question.type !== 'journal' || !userAnswer) return;
+      if (score.correct || !userAnswer) return;
       container.hidden = false;
-      const heading = this.document.createElement('h3'); heading.textContent = 'あなたの仕訳（誤答）';
-      const note = this.document.createElement('p'); note.textContent = '下の「正しい仕訳」と、科目・貸借・金額を一つずつ見比べましょう。';
-      container.append(heading, note, this.journalTable(userAnswer));
+      const heading = this.document.createElement('h3');
+      if (question.type === 'journal') {
+        heading.textContent = 'あなたの仕訳（誤答）';
+        const note = this.document.createElement('p'); note.textContent = '下の「正しい仕訳」と、科目・貸借・金額を一つずつ見比べましょう。';
+        container.append(heading, note, this.journalTable(userAnswer));
+        return;
+      }
+      heading.textContent = 'あなたの解答と正しい解答';
+      const note = this.document.createElement('p'); note.textContent = '「要確認」の項目を横に見比べて、入力と正解の違いを確認しましょう。';
+      container.append(heading, note, this.tableAnswerComparison(question, score, userAnswer));
     }
     renderDiagnostics(question, answer, score) {
       const diagnostics = root.WrongAnswerFeedback.diagnoseWrongAnswer(question, answer, score);
