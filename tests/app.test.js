@@ -437,6 +437,12 @@ for (const [type, id] of Object.entries(representativeIds)) {
     assert.strictEqual(descendants(container, 'table')[0].className, 'journal-table', 'E001の誤答を借方・貸方の仕訳表で表示する');
     continue;
   }
+  if (type === 'worksheet') {
+    assert.strictEqual(container.children[0].textContent, '決算整理表で回答を比較', 'D001の比較見出しを決算整理表として表示する');
+    assert.strictEqual(descendants(container, 'table')[0].className, 'answer-comparison-table worksheet-answer-comparison', 'D001を問題と同じ表形式で比較する');
+    assert(descendants(container, 'span').some(span => /^入力 /.test(span.textContent)) && descendants(container, 'span').some(span => /^正解 /.test(span.textContent)), 'D001の入力値と正解を同じセル内で横に比較する');
+    continue;
+  }
   assert.strictEqual(rows.length, question.table.inputCells.length, `${id}をinputCells順で全行表示する`);
   assert.strictEqual(rows[wrongIndex].children[0].textContent, question.table.inputMetadata?.[wrongCell]?.label || tableComparisonView.cellLabel(question, wrongCell), `${id}に利用者向け項目名を表示する`);
   assert.strictEqual(rows[wrongIndex].children[1].textContent, '未入力', `${id}の空欄を未入力と表示する`);
@@ -603,6 +609,8 @@ assert(viewSource.includes("heading.textContent = '今回の解説'") && viewSou
 assert(viewSource.includes("solutionHeading.textContent = '解き方（この順番で考える）'") && viewSource.includes("correction:['帳簿に記録済みの仕訳"), '解説に問題形式別の具体的な解法手順を表示する');
 assert(viewSource.includes("heading.textContent = question.type === 'correction' ? '正しい訂正仕訳' : '正しい仕訳'"), '訂正問題の正解を借方・貸方の仕訳表で表示する');
 assert(viewSource.includes("heading.textContent = 'あなたの訂正仕訳（誤答）'") && viewSource.includes('this.journalTable(this.correctionJournal(userAnswer))'), '訂正問題の誤答も仕訳形式の表で比較する');
+assert(viewSource.includes("heading.textContent = '決算整理表で回答を比較'") && viewSource.includes('this.worksheetAnswerComparison(question, score, userAnswer)'), '決算整理問題は元の行列を保った表で誤答と正答を比較する');
+assert(/\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*auto auto/s.test(cssSource), '決算整理の入力値と正解を横並びにする');
 assert(!viewSource.includes("heading.textContent = 'なぜ間違えた？'") && !viewSource.includes("heading.textContent = '詳しい解説'"), '意味が重なる二つの解説見出しを表示しない');
 Object.values(browserSandbox.window.QuestionData).forEach(question => {
   assert(/【やさしい考え方】/.test(question.explanation), `${question.id}に初心者向けの考え方がある`);

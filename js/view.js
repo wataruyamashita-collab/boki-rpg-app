@@ -291,6 +291,26 @@
       });
       wrap.append(table); return wrap;
     }
+    worksheetAnswerComparison(question, score, userAnswer) {
+      const details = new Map((score.details || []).map(detail => [detail.cellId, detail.correct === true]));
+      const wrap = this.document.createElement('div'); wrap.className = 'answer-comparison-table-wrap';
+      const table = this.document.createElement('table'); table.className = 'answer-comparison-table worksheet-answer-comparison';
+      const head = table.createTHead().insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = this.tableLabel(column); head.append(th); });
+      const body = table.createTBody(); let inputIndex = 0;
+      question.table.rows.forEach(rowData => {
+        const row = body.insertRow();
+        Object.values(rowData).forEach(value => {
+          const cell = row.insertCell();
+          if (value !== '入力') { cell.textContent = typeof value === 'number' ? yen(value) : this.tableLabel(value); return; }
+          const cellId = question.table.inputCells[inputIndex++]; const correct = details.get(cellId) === true;
+          const pair = this.document.createElement('div'); pair.className = `worksheet-comparison-pair${correct ? '' : ' cell-mismatch'}`;
+          const actual = this.document.createElement('span'); actual.className = 'comparison-actual'; actual.textContent = `入力 ${this.comparisonValue(question, cellId, userAnswer.cells?.[cellId])}`;
+          const expected = this.document.createElement('span'); expected.className = 'comparison-expected'; expected.textContent = `正解 ${this.comparisonValue(question, cellId, question.answer.cells?.[cellId])}`;
+          pair.append(actual, expected); cell.append(pair);
+        });
+      });
+      wrap.append(table); return wrap;
+    }
     renderAnswerComparison(question, score, userAnswer) {
       const container = this.byId('answer-comparison'); container.replaceChildren();
       container.hidden = true;
@@ -307,6 +327,12 @@
         heading.textContent = 'あなたの訂正仕訳（誤答）';
         const note = this.document.createElement('p'); note.textContent = '下の「正しい訂正仕訳」と、借方・貸方の科目と金額を見比べましょう。';
         container.append(heading, note, this.journalTable(this.correctionJournal(userAnswer)));
+        return;
+      }
+      if (question.type === 'worksheet') {
+        heading.textContent = '決算整理表で回答を比較';
+        const note = this.document.createElement('p'); note.textContent = '問題と同じ行・列の中で、入力した値と正解を横に見比べましょう。';
+        container.append(heading, note, this.worksheetAnswerComparison(question, score, userAnswer));
         return;
       }
       heading.textContent = 'あなたの解答と正しい解答';

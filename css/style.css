@@ -488,6 +488,12 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .answer-comparison-table th { background: #eef2f5; white-space: nowrap; }
 .answer-comparison-table .comparison-row-mismatch { background: #fff4f2; }
 .answer-comparison-table .cell-mismatch { border: 2px solid #b42318; background: #ffe4df; font-weight: 700; }
+.worksheet-answer-comparison { width: max(100%, 1180px); }
+.worksheet-answer-comparison th, .worksheet-answer-comparison td { min-width: 12ch; text-align: right; white-space: nowrap; }
+.worksheet-answer-comparison th:first-child, .worksheet-answer-comparison td:first-child { position: sticky; left: 0; z-index: 1; text-align: left; background: #f8fafb; }
+.worksheet-comparison-pair { display: inline-grid; grid-template-columns: auto auto; gap: 8px; align-items: center; padding: 5px; border-radius: 5px; }
+.worksheet-comparison-pair .comparison-actual { color: #8f241b; }
+.worksheet-comparison-pair .comparison-expected { color: #176b3a; font-weight: 700; }
 .comparison-status { font-weight: 700; white-space: nowrap; }
 .comparison-status-match { color: #176b3a; }
 .comparison-status-mismatch { color: #9f1c12; }
