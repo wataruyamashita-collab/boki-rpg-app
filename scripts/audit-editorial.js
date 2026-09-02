@@ -22,7 +22,9 @@ const auditEditorial = questions => {
     if (ABSTRACT_STORY_CLICHE.test(question.story || '')) findings.push({ id: question.id, field: 'story', reason: 'ABSTRACT_STORY_CLICHE' });
     if (!/(?:あなた|自分で)/u.test(question.story || '')) findings.push({ id: question.id, field: 'story', reason: 'MISSING_READER_VIEWPOINT' });
     if (!READER_ACTION.test(question.story || '')) findings.push({ id: question.id, field: 'story', reason: 'MISSING_READER_ACTION' });
-    if (!/【業務の結果】/u.test(question.explanation || '')) findings.push({ id: question.id, field: 'explanation', reason: 'MISSING_STORY_RESULT' });
+    // Runtime workResult is the dedicated story-result field; do not require a
+    // generic heading to be injected into reviewed instructional prose.
+    if (!/【業務の結果】/u.test(question.explanation || '') && !String(question.workResult || '').trim()) findings.push({ id: question.id, field: 'workResult', reason: 'MISSING_STORY_RESULT' });
   }
   return { ok: findings.length === 0, total: Object.keys(questions).length, findings };
 };
