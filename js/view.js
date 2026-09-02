@@ -225,12 +225,15 @@
       const sourceRows = question.table.rows.filter(row => row.section !== '合計');
       const left = sourceRows.filter(row => row.section === '資産');
       const right = sourceRows.filter(row => row.section === '負債' || row.section === '純資産');
-      const idFor = row => row.account === '繰越利益剰余金' ? 'retainedEarnings' : null;
       const appendValue = (tr, row) => {
         const account = tr.insertCell(); account.className = 'balance-account'; account.textContent = row?.account || '';
         const amount = tr.insertCell(); amount.className = 'balance-amount';
         if (!row) return;
-        const cellId = idFor(row);
+        if (row && (row === right[0] || row.section !== right[right.indexOf(row) - 1]?.section)) {
+          const section = this.document.createElement('span'); section.className = 'balance-section-label'; section.textContent = `${row.section}の部`; account.prepend(section);
+          tr.classList.add('balance-section-start');
+        }
+        const cellId = row.inputCellId;
         if (row.amount !== '入力') { amount.textContent = typeof row.amount === 'number' ? yen(row.amount) : row.amount; return; }
         if (comparison) {
           const actual = this.document.createElement('span'); actual.className = 'comparison-actual'; actual.textContent = `入力 ${this.comparisonValue(question, cellId, comparison.user.cells?.[cellId])}`;
@@ -249,7 +252,8 @@
           amount.innerHTML = `<span class="comparison-actual">入力 ${this.comparisonValue(question, cellId, comparison.user.cells?.[cellId])}</span><span class="comparison-expected">正解 ${this.comparisonValue(question, cellId, question.answer.cells[cellId])}</span>`;
         } else { const input = this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[cellId] ?? ''); input.dataset.cellId = cellId; input.dataset.inputType = 'amount'; amount.append(input); }
       };
-      appendTotal('資産合計', 'assetsTotal'); appendTotal('負債・純資産合計', 'liabilitiesEquityTotal');
+      const totals = question.table.rows.filter(row => row.section === '合計');
+      appendTotal(totals[0]?.account || '資産合計', totals[0]?.inputCellId); appendTotal(totals[1]?.account || '負債・純資産合計', totals[1]?.inputCellId);
       wrap.append(table); return wrap;
     }
     readAnswer(question) {

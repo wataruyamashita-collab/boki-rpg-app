@@ -1,0 +1,28 @@
+{
+  "total": 300,
+  "types": {
+    "journal": 150,
+    "ledger": 50,
+    "trial_balance": 40,
+    "correction": 20,
+    "worksheet": 20,
+    "financial_statement": 10,
+    "comprehensive": 10
+  },
+  "explanationLength": {
+    "min": 24,
+    "max": 357,
+    "mean": 100.6,
+    "outside150to350": 248
+  },
+  "specificity": {
+    "below100": 230
+  },
+  "journal": {
+    "total": 150,
+    "accountCoverage": "58/150",
+    "amountCoverage": "117/150"
+  },
+  "tableAnswerValueCoverage": "128/150",
+  "duplicateProseUnits": 42
+}

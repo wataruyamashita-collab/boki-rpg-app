@@ -1,0 +1,63 @@
+{
+  "total": 300,
+  "byType": {
+    "journal": 150,
+    "ledger": 50,
+    "trial_balance": 40,
+    "correction": 20,
+    "worksheet": 20,
+    "financial_statement": 10,
+    "comprehensive": 10
+  },
+  "explanationLength": {
+    "min": 268,
+    "max": 1400,
+    "mean": 432.4
+  },
+  "specificity": {
+    "threshold": 100,
+    "pass": 300,
+    "fail": 0
+  },
+  "journal": {
+    "total": 150,
+    "accountCoverage": "150/150",
+    "amountCoverage": "150/150",
+    "debitCreditReasoning": "150/150"
+  },
+  "tableAnswerValueCoverage": "150/150",
+  "typeQuality": {
+    "journal": {
+      "pass": 150,
+      "fail": 0
+    },
+    "ledger": {
+      "pass": 50,
+      "fail": 0
+    },
+    "trial_balance": {
+      "pass": 40,
+      "fail": 0
+    },
+    "correction": {
+      "pass": 20,
+      "fail": 0
+    },
+    "worksheet": {
+      "pass": 20,
+      "fail": 0
+    },
+    "financial_statement": {
+      "pass": 10,
+      "fail": 0
+    },
+    "comprehensive": {
+      "pass": 10,
+      "fail": 0
+    }
+  },
+  "duplicateProseUnits": 210,
+  "pass": 300,
+  "fail": 0,
+  "ok": true
+}
