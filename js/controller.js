@@ -343,7 +343,7 @@
       this.document.getElementById('resume-progress').textContent = `Chapter進捗 ${chapterIds.filter(id => this.model.state.answeredIds.includes(id)).length} / ${chapterIds.length}｜役職 ${this.rpg.role}`;
       this.document.getElementById('resume-button').dataset.questionId = nextId;
     }
-    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.resetCalculator(); this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; const firstAmount = this.document.querySelector('.amount-input:not(:disabled)'); if (firstAmount) this.selectCalculatorTarget(firstAmount); }
+    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.resetCalculator(); this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; }
     saveDraft(message) { if (!this.currentId) return false; const saved = this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) { const status = this.document.getElementById('save-status'); status.textContent = saved ? '入力内容を保存しました。' : '端末へ保存できません。内容はこのセッション中のみ保持されます。'; status.classList.toggle('storage-error', !saved); } return saved; }
     submit() {
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
@@ -405,6 +405,11 @@
     selectCalculatorTarget(input) {
       this.document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
       this.calculatorTarget = input;
+      const calculatorPanel = this.document.querySelector('.calculator');
+      if (calculatorPanel) {
+        calculatorPanel.open = true;
+        calculatorPanel.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+      }
       const currentAmount = normalizeNumber(input.value).replace(/,/g, '');
       this.clearCalculator();
       if (/^\d+(?:\.\d+)?$/.test(currentAmount)) this.expression = String(Number(currentAmount));
@@ -457,6 +462,7 @@
     resetCalculator() {
       this.clearCalculator(); this.calculatorTarget=null; this.updateCalculatorDisplay();
       const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選ぶと、現在の数字を計算機で修正できます';
+      const calculatorPanel=this.document.querySelector?.('.calculator'); if(calculatorPanel)calculatorPanel.open=false;
     }
     inputCalculatorDigit(key) {
       if (this.expression === 'エラー' || this.calculator.waitingForOperand) { this.expression = '0'; this.calculator.waitingForOperand = false; }

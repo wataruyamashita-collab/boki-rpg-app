@@ -176,21 +176,38 @@
     renderTable(question, draft = {}) {
       const wrap = this.byId('table-container'); wrap.replaceChildren();
       wrap.classList.toggle('worksheet-scroll', question.format === 'eight-column-worksheet');
+      if (question.format === 'eight-column-worksheet') {
+        const guide = this.document.createElement('aside'); guide.className = 'worksheet-guide';
+        const title = this.document.createElement('strong'); title.textContent = '「8桁」は、金額の桁数ではなく8つの金額欄という意味です';
+        const detail = this.document.createElement('p'); detail.textContent = '試算表・修正記入・損益計算書・貸借対照表に、それぞれ借方と貸方があるため、2欄×4組＝8欄です。表は横にスクロールして入力してください。';
+        guide.append(title, detail); wrap.append(guide);
+      }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
       if (question.format === 'eight-column-worksheet') table.setAttribute('role', 'grid');
-      const thead = table.createTHead(); const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); head.append(th); });
+      const thead = table.createTHead();
+      if (question.format === 'eight-column-worksheet') {
+        const groupHead = thead.insertRow();
+        const accountHead = this.document.createElement('th'); accountHead.textContent = '勘定科目'; accountHead.rowSpan = 2; accountHead.scope = 'col'; groupHead.append(accountHead);
+        ['試算表', '修正記入', '損益計算書', '貸借対照表'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.colSpan = 2; th.scope = 'colgroup'; groupHead.append(th); });
+        const sideHead = thead.insertRow();
+        for (let index = 0; index < 4; index += 1) ['借方', '貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; sideHead.append(th); });
+      } else {
+        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); th.scope = 'col'; head.append(th); });
+      }
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
-        const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach(value => {
+        const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
           const cell = row.insertCell();
           if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');
+          if (question.format === 'eight-column-worksheet' && columnIndex > 0) cell.classList.add('worksheet-value-cell');
           if (value === '入力') {
             const id = question.table.inputCells[inputIndex++]; const inputType = question.table.inputTypes?.[id] || 'amount';
             const metadata = question.table.inputMetadata?.[id]; const label = metadata?.label || this.cellLabel(question, id);
             const input = inputType === 'amount' ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[id] ?? '') : this.makeText('table-input', label, draft.cells?.[id] ?? '');
+            if (inputType === 'amount') cell.classList.add('amount-cell');
             input.dataset.cellId = id; input.dataset.inputType = inputType; cell.append(input);
           }
-          else cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value);
+          else { cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value); if (typeof value === 'number') cell.classList.add('amount-cell'); }
         });
       }); wrap.append(table);
     }
@@ -242,6 +259,11 @@
       }
       wrap.append(table); return wrap;
     }
+    correctionJournal(answer = {}) {
+      const cells = answer.cells || answer;
+      const row = side => ({ account:cells[`${side}Account`] || '', amount:Number(normalizeNumber(cells[`${side}Amount`] ?? '').replace(/,/g, '')) });
+      return { debit:[row('debit')], credit:[row('credit')] };
+    }
     comparisonValue(question, cellId, value) {
       if (value == null || value === '' || (typeof value === 'number' && !Number.isFinite(value))) return '未入力';
       const inputType = question.table?.inputTypes?.[cellId];
@@ -269,6 +291,26 @@
       });
       wrap.append(table); return wrap;
     }
+    worksheetAnswerComparison(question, score, userAnswer) {
+      const details = new Map((score.details || []).map(detail => [detail.cellId, detail.correct === true]));
+      const wrap = this.document.createElement('div'); wrap.className = 'answer-comparison-table-wrap';
+      const table = this.document.createElement('table'); table.className = 'answer-comparison-table worksheet-answer-comparison';
+      const head = table.createTHead().insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = this.tableLabel(column); head.append(th); });
+      const body = table.createTBody(); let inputIndex = 0;
+      question.table.rows.forEach(rowData => {
+        const row = body.insertRow();
+        Object.values(rowData).forEach(value => {
+          const cell = row.insertCell();
+          if (value !== '入力') { cell.textContent = typeof value === 'number' ? yen(value) : this.tableLabel(value); return; }
+          const cellId = question.table.inputCells[inputIndex++]; const correct = details.get(cellId) === true;
+          const pair = this.document.createElement('div'); pair.className = `worksheet-comparison-pair${correct ? '' : ' cell-mismatch'}`;
+          const actual = this.document.createElement('span'); actual.className = 'comparison-actual'; actual.textContent = `入力 ${this.comparisonValue(question, cellId, userAnswer.cells?.[cellId])}`;
+          const expected = this.document.createElement('span'); expected.className = 'comparison-expected'; expected.textContent = `正解 ${this.comparisonValue(question, cellId, question.answer.cells?.[cellId])}`;
+          pair.append(actual, expected); cell.append(pair);
+        });
+      });
+      wrap.append(table); return wrap;
+    }
     renderAnswerComparison(question, score, userAnswer) {
       const container = this.byId('answer-comparison'); container.replaceChildren();
       container.hidden = true;
@@ -279,6 +321,18 @@
         heading.textContent = 'あなたの仕訳（誤答）';
         const note = this.document.createElement('p'); note.textContent = '下の「正しい仕訳」と、科目・貸借・金額を一つずつ見比べましょう。';
         container.append(heading, note, this.journalTable(userAnswer));
+        return;
+      }
+      if (question.type === 'correction') {
+        heading.textContent = 'あなたの訂正仕訳（誤答）';
+        const note = this.document.createElement('p'); note.textContent = '下の「正しい訂正仕訳」と、借方・貸方の科目と金額を見比べましょう。';
+        container.append(heading, note, this.journalTable(this.correctionJournal(userAnswer)));
+        return;
+      }
+      if (question.type === 'worksheet') {
+        heading.textContent = '決算整理表で回答を比較';
+        const note = this.document.createElement('p'); note.textContent = '問題と同じ行・列の中で、入力した値と正解を横に見比べましょう。';
+        container.append(heading, note, this.worksheetAnswerComparison(question, score, userAnswer));
         return;
       }
       heading.textContent = 'あなたの解答と正しい解答';
@@ -304,6 +358,20 @@
         ? '正解です。答えの根拠、実務での使い方、試験での見分け方を順に確認しましょう。'
         : 'もう一歩です。誤答の原因から正しい考え方へつなげ、実務と試験で使える判断手順まで一続きで確認しましょう。';
       container.append(lead);
+      const solution = this.document.createElement('section'); solution.className = 'solution-steps';
+      const solutionHeading = this.document.createElement('h4'); solutionHeading.textContent = '解き方（この順番で考える）';
+      const list = this.document.createElement('ol');
+      const steps = {
+        journal:['取引によって増えたものと減ったものを拾います。','それぞれに適切な勘定科目を当てはめます。','資産・費用の増加は借方、負債・純資産・収益の増加は貸方に置き、減少は反対側に置きます。','借方合計と貸方合計が一致するまで金額を確認します。'],
+        correction:['帳簿に記録済みの仕訳を、借方・貸方に分けて書き出します。','証憑から本来の正しい仕訳を作ります。','誤った部分を逆向きにして取り消し、正しい処理との差額だけを訂正仕訳にします。','訂正仕訳を元の帳簿へ加え、証憑どおりの科目・金額になるか検算します。'],
+        ledger:['証憑を日付順に並べ、記帳する取引を選びます。','相手勘定と増減額を該当する行へ転記します。','直前残高へ増加を足し、減少を引いて新しい残高を求めます。','日付・相手勘定・最終残高を資料と照合します。'],
+        trial_balance:['各勘定の最終残高と残高方向を確認します。','借方残高は借方列、貸方残高は貸方列へ一度だけ転記します。','各列を合計します。','借方合計と貸方合計の一致で転記漏れや二重計上を検算します。'],
+        worksheet:['試算表の残高を出発点にします。','決算整理事項を仕訳にし、修正記入の借方・貸方へ記入します。','修正後の各勘定を、収益・費用は損益計算書、資産・負債・純資産は貸借対照表へ振り分けます。','各欄の借方・貸方を合計し、差額となる当期純利益まで一致を確認します。'],
+        financial_statement:['資料から収益・費用・資産・負債・純資産を分類します。','収益から売上原価と費用を差し引いて利益を求めます。','期末残高を対応する財務諸表の欄へ転記します。','合計や貸借の一致を確認します。'],
+        comprehensive:['資料ごとに必要な取引を仕訳します。','仕訳を帳簿へ転記して残高を集計します。','決算整理事項を反映します。','各段階の貸借一致を確認して最終数値を記入します。']
+      }[question.type] || ['資料の条件を整理します。','必要な会計処理を決めます。','計算して対応する欄へ転記します。','合計と資料を照合して検算します。'];
+      steps.forEach(step => { const item = this.document.createElement('li'); item.textContent = step; list.append(item); });
+      solution.append(solutionHeading, list); container.append(solution);
       const diagnostics = this.renderDiagnostics(question, userAnswer, score);
       if (diagnostics) container.append(diagnostics);
       if (question.npcDialogue) { const dialogue = this.document.createElement('blockquote'); dialogue.className = 'npc-dialogue'; dialogue.textContent = question.npcDialogue; container.append(dialogue); }
@@ -380,9 +448,10 @@
         this.byId('explanation').before(container);
       }
       container.replaceChildren();
-      if (question.type !== 'journal' || !question.answer) return;
-      const heading = this.document.createElement('h3'); heading.textContent = '正しい仕訳';
-      container.append(heading, this.journalTable(question.answer));
+      if (!['journal', 'correction'].includes(question.type) || !question.answer) return;
+      const heading = this.document.createElement('h3'); heading.textContent = question.type === 'correction' ? '正しい訂正仕訳' : '正しい仕訳';
+      const answer = question.type === 'correction' ? this.correctionJournal(question.answer) : question.answer;
+      container.append(heading, this.journalTable(answer));
     }
   }
   root.AppView = AppView;

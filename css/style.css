@@ -212,15 +212,26 @@ button.secondary-button:hover { color: #fff; }
   overflow-x: hidden;
   overflow-x: clip;
 }
-.table-question-wrap { width: 100%; max-width: 100%; margin-bottom: 20px; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; border: 1px solid #d5dce0; }
+.table-question-wrap { width: 100%; max-width: 100%; margin-bottom: 20px; overflow-x: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; border: 1px solid #d5dce0; }
+.table-question-wrap.worksheet-scroll { max-height: min(72vh, 720px); overflow: auto; }
 .answer-table { width: max(100%, 600px); table-layout: auto; border-collapse: separate; border-spacing: 0; }
 .answer-table th, .answer-table td { min-width: 0; padding: 8px; overflow-wrap: anywhere; border-right: 1px solid #bdc3c7; border-bottom: 1px solid #bdc3c7; background: #fff; text-align: right; }
 .answer-table th { position: sticky; top: 0; z-index: 2; background: #eef2f5; text-align: center; }
 .answer-table th:first-child, .answer-table td:first-child { position: sticky; left: 0; z-index: 1; min-width: 110px; text-align: left; background: #f8fafb; box-shadow: 2px 0 3px rgba(0,0,0,.12); }
 .answer-table th:first-child { z-index: 3; background: #eef2f5; }
-.eight-column-worksheet { width: max(100%, 1180px); }
+.worksheet-guide { position: sticky; left: 0; box-sizing: border-box; width: min(100%, 760px); padding: 10px 12px; border-bottom: 1px solid #b8d8ee; color: #1b4f72; background: #eef8ff; }
+.worksheet-guide strong { display: block; }
+.worksheet-guide p { margin: 4px 0 0; line-height: 1.55; }
+.eight-column-worksheet { width: max(100%, 1320px); }
+.eight-column-worksheet thead tr:first-child th { top: 0; height: 44px; }
+.eight-column-worksheet thead tr:nth-child(2) th { top: 44px; border-top: 1px solid #bdc3c7; }
+.eight-column-worksheet thead tr:nth-child(2) th:first-child { left: auto; }
+.eight-column-worksheet thead th { z-index: 4; white-space: nowrap; }
+.eight-column-worksheet thead th[rowspan] { left: 0; z-index: 5; }
 .eight-column-worksheet th:nth-child(2n), .eight-column-worksheet td:nth-child(2n) { border-left: 3px solid #7f8c8d; }
-.eight-column-worksheet .table-input { min-width: 88px; font-size: 16px; }
+.eight-column-worksheet th:not(:first-child), .eight-column-worksheet td:not(:first-child) { min-width: 13ch; }
+.eight-column-worksheet .worksheet-value-cell, .answer-table .amount-cell { overflow-wrap: normal; word-break: keep-all; white-space: nowrap; }
+.eight-column-worksheet .table-input { width: 100%; min-width: 11ch; font-size: 16px; }
 .table-input { min-width: 0; }
 .table-text-input { width: 100%; min-width: 120px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; }
 .answer-table td:focus-within { background: #fff4c2; box-shadow: inset 0 0 0 3px rgba(52,152,219,.28); }
@@ -477,10 +488,20 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .answer-comparison-table th { background: #eef2f5; white-space: nowrap; }
 .answer-comparison-table .comparison-row-mismatch { background: #fff4f2; }
 .answer-comparison-table .cell-mismatch { border: 2px solid #b42318; background: #ffe4df; font-weight: 700; }
+.worksheet-answer-comparison { width: max(100%, 1180px); }
+.worksheet-answer-comparison th, .worksheet-answer-comparison td { min-width: 12ch; text-align: right; white-space: nowrap; }
+.worksheet-answer-comparison th:first-child, .worksheet-answer-comparison td:first-child { position: sticky; left: 0; z-index: 1; text-align: left; background: #f8fafb; }
+.worksheet-comparison-pair { display: inline-grid; grid-template-columns: auto auto; gap: 8px; align-items: center; padding: 5px; border-radius: 5px; }
+.worksheet-comparison-pair .comparison-actual { color: #8f241b; }
+.worksheet-comparison-pair .comparison-expected { color: #176b3a; font-weight: 700; }
 .comparison-status { font-weight: 700; white-space: nowrap; }
 .comparison-status-match { color: #176b3a; }
 .comparison-status-mismatch { color: #9f1c12; }
 .explanation-text { white-space: pre-wrap; }
+.solution-steps { margin: 12px 0; padding: 12px 14px; border: 2px solid #9dc9e2; border-radius: 8px; background: #eef8ff; }
+.solution-steps h4 { margin: 0 0 8px; color: #154c70; }
+.solution-steps ol { margin: 0; padding-left: 1.5rem; }
+.solution-steps li { margin: 5px 0; line-height: 1.55; }
 .account-with-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .account-badge { display: inline-block; padding: 2px 6px; border-radius: 999px; color: #fff; font-size: .68rem; font-weight: 700; line-height: 1.35; white-space: nowrap; }
 .account-badge-asset { background: #2471a3; }
@@ -539,14 +560,14 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .diagnostic-card h4, .diagnostic-card p { margin: .35rem 0; }
 .diagnostic-card strong { display: block; margin-top: .7rem; color: #713f12; }
 
-/* The calculator stays near a long table without covering its active row. */
+/* The calculator remains in normal document flow so it never covers an active input. */
 .calculator-readout { position: relative; }
 .calculator-operator-indicator { position: absolute; left: 10px; top: 50%; min-width: 1.5em; color: #17202a; font-size: 1.25rem; font-weight: bold; transform: translateY(-50%); }
 .calculator-keys .calculator-operator-active { outline: 3px solid #f1c40f; outline-offset: 1px; font-weight: bold; }
-@media (min-width: 769px) { .calculator { position: sticky; bottom: 12px; z-index: 4; } }
 @media (max-width: 768px) {
-  #question-form { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
-  .calculator { position: sticky; bottom: env(safe-area-inset-bottom); z-index: 4; max-width: 100%; }
+  #question-form { padding-bottom: env(safe-area-inset-bottom); }
+  .calculator { max-width: 100%; }
+  .table-question-wrap.worksheet-scroll { max-height: 62vh; }
 }
 
 .visually-hidden {
