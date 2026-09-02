@@ -211,6 +211,8 @@ const correctionExplanations = Object.values(browserSandbox.window.QuestionData)
 assert(correctionExplanations.every(explanation => !/(?:debit|credit)(?:Account|Amount)/i.test(explanation)), '訂正仕訳の解説に英語の回答項目名を混在させない');
 assert(correctionExplanations.every(explanation => /帳簿には「.+」と記録されていますが、証憑は「.+」/.test(explanation)), '訂正仕訳の解説に帳簿と証憑の具体的な比較を示す');
 assert(correctionExplanations.every(explanation => /訂正仕訳は「（借）.+円／（貸）.+円」です/.test(explanation)), '訂正仕訳を省略せず日本語で表示する');
+const internalExplanationLabels = Object.values(browserSandbox.window.QuestionData).flatMap(question => (question.table?.inputCells || []).filter(cellId => /[A-Za-z_]/.test(cellId) && question.explanation.includes(`${cellId}は`)).map(cellId => `${question.id}:${cellId}`));
+assert.deepStrictEqual(internalExplanationLabels, [], '全問題の解説に内部用の英語回答IDを表示しない');
 for (const [id, authored, mutated] of [['D019','insurance:160000','insurance:200000'],['F001','netIncome:180000','netIncome:220000']]) {
   const sourceMutationSandbox = { window:{} };
   const mutatedSource = questionDataSource.replace(authored, mutated);
@@ -610,7 +612,8 @@ assert(viewSource.includes("solutionHeading.textContent = '解き方（この順
 assert(viewSource.includes("heading.textContent = question.type === 'correction' ? '正しい訂正仕訳' : '正しい仕訳'"), '訂正問題の正解を借方・貸方の仕訳表で表示する');
 assert(viewSource.includes("heading.textContent = 'あなたの訂正仕訳（誤答）'") && viewSource.includes('this.journalTable(this.correctionJournal(userAnswer))'), '訂正問題の誤答も仕訳形式の表で比較する');
 assert(viewSource.includes("heading.textContent = '決算整理表で回答を比較'") && viewSource.includes('this.worksheetAnswerComparison(question, score, userAnswer)'), '決算整理問題は元の行列を保った表で誤答と正答を比較する');
-assert(/\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*auto auto/s.test(cssSource), '決算整理の入力値と正解を横並びにする');
+assert(/\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*minmax\(9rem, auto\) minmax\(9rem, auto\)/s.test(cssSource), '決算整理の入力値と正解に十分な横幅を確保する');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*8\.75rem 8\.75rem/s.test(cssSource), 'iPhone幅でも入力値と正解の数値欄を常に二列表示する');
 assert(!viewSource.includes("heading.textContent = 'なぜ間違えた？'") && !viewSource.includes("heading.textContent = '詳しい解説'"), '意味が重なる二つの解説見出しを表示しない');
 Object.values(browserSandbox.window.QuestionData).forEach(question => {
   assert(/【やさしい考え方】/.test(question.explanation), `${question.id}に初心者向けの考え方がある`);

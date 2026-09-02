@@ -15286,13 +15286,24 @@ const yenText = value => typeof value === 'number' ? `${value.toLocaleString('ja
 const answerLabel = Object.freeze({
   debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額'
 });
+const answerFieldLabel = (item, key) => {
+  const metadata = item.table?.inputMetadata?.[key]?.label;
+  if (metadata && metadata !== key) return String(metadata);
+  const inputIndex = item.table?.inputCells?.indexOf(key) ?? -1; let cursor = -1;
+  for (const row of item.table?.rows || []) for (const [column, value] of Object.entries(row)) if (value === '入力' && ++cursor === inputIndex) {
+    const subject = ['account','item','description'].map(name => row[name]).find(value => value && value !== '入力' && value !== '—');
+    const columnLabel = { debit:'借方', credit:'貸方', amount:'金額', balance:'残高', adjustment:'修正額' }[column] || item.table?.columns?.[Object.keys(row).indexOf(column)] || '回答';
+    return subject ? `${subject}の${columnLabel}` : `${item.category}の${columnLabel}`;
+  }
+  return answerLabel[key] || `回答欄${inputIndex >= 0 ? inputIndex + 1 : ''}`;
+};
 const answerDigest = item => {
   if (item.type === 'journal') {
     const side = name => (item.answer[name] || []).map(row => `${row.account}${yenText(row.amount)}`).join('・');
     return `借方を${side('debit')}、貸方を${side('credit')}`;
   }
   const cells = Object.entries(item.answer?.cells || item.answer || {}).slice(0, 4);
-  return cells.map(([key, value]) => `${item.table?.inputMetadata?.[key]?.label || answerLabel[key] || key}は${yenText(value)}`).join('、');
+  return cells.map(([key, value]) => `${answerFieldLabel(item, key)}は${yenText(value)}`).join('、');
 };
 const ledgerPurpose = category => {
   if (/現金出納帳/u.test(category)) return '現金の受払いと手許残高を日付順に追う帳簿';
@@ -15321,8 +15332,8 @@ const buildExplanation = item => {
       `【実務での使い方】【業務の結果】帳簿の記録、証憑が示す正しい処理、両者の差額の順に確認すると、訂正後の残高を根拠とともに説明できます。`;
   }
   const clue = String(item.question).replace(/[。！？\s]+/gu, ' ').slice(0, 20);
-  const digest = answerDigest(item).slice(0, 38);
-  const shortAnswer = digest.slice(0, 14);
+  const digest = answerDigest(item);
+  const shortAnswer = digest.split('、')[0];
   const indirectMethodNote = item.id.startsWith('D') ? '間接法では備品勘定そのものを減額しません。' : '';
   return `【やさしい考え方】第${item.chapter}章・調査${item.caseNumber}の「${clue}」という条件から、${item.category}の答えは${digest}と確定します。\n` +
     `【試験のポイント】第${item.chapter}章・調査${item.caseNumber}の「${clue.slice(0, 24)}」では、${methodFor(item)}。第${item.chapter}章・調査${item.caseNumber}「${clue.slice(0, 8)}」の解答（${shortAnswer}）を元資料と対応させて検算します。\n` +

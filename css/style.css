@@ -488,12 +488,18 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .answer-comparison-table th { background: #eef2f5; white-space: nowrap; }
 .answer-comparison-table .comparison-row-mismatch { background: #fff4f2; }
 .answer-comparison-table .cell-mismatch { border: 2px solid #b42318; background: #ffe4df; font-weight: 700; }
-.worksheet-answer-comparison { width: max(100%, 1180px); }
-.worksheet-answer-comparison th, .worksheet-answer-comparison td { min-width: 12ch; text-align: right; white-space: nowrap; }
+.worksheet-answer-comparison { width: max-content; min-width: 1180px; }
+.worksheet-answer-comparison th, .worksheet-answer-comparison td { min-width: 14ch; text-align: right; white-space: nowrap; }
 .worksheet-answer-comparison th:first-child, .worksheet-answer-comparison td:first-child { position: sticky; left: 0; z-index: 1; text-align: left; background: #f8fafb; }
-.worksheet-comparison-pair { display: inline-grid; grid-template-columns: auto auto; gap: 8px; align-items: center; padding: 5px; border-radius: 5px; }
-.worksheet-comparison-pair .comparison-actual { color: #8f241b; }
-.worksheet-comparison-pair .comparison-expected { color: #176b3a; font-weight: 700; }
+.worksheet-comparison-pair { display: grid; grid-template-columns: minmax(9rem, auto) minmax(9rem, auto); gap: 6px; align-items: stretch; min-width: 18.5rem; padding: 5px; border-radius: 5px; }
+.worksheet-comparison-pair span { display: block; padding: 7px 8px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+.worksheet-comparison-pair .comparison-actual { color: #7d1d15; background: #fff0ed; }
+.worksheet-comparison-pair .comparison-expected { color: #0e5d2d; background: #e8f7ee; font-weight: 800; }
+@media (max-width: 480px) {
+  .answer-comparison { padding-right: 8px; padding-left: 8px; }
+  .answer-comparison-table-wrap { margin-right: -8px; padding-bottom: 8px; touch-action: pan-x pan-y; }
+  .worksheet-comparison-pair { grid-template-columns: 8.75rem 8.75rem; min-width: 18rem; }
+}
 .comparison-status { font-weight: 700; white-space: nowrap; }
 .comparison-status-match { color: #176b3a; }
 .comparison-status-mismatch { color: #9f1c12; }
