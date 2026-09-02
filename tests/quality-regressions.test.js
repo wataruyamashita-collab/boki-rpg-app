@@ -20,12 +20,25 @@ for (let n=2; n<=10; n += 1) {
 const viewSource = fs.readFileSync('js/view.js', 'utf8');
 assert(viewSource.includes("question.format === 'balance-sheet') this.renderBalanceSheet"));
 assert(viewSource.includes("[['資産', 2], ['負債・純資産', 2]]"), 'balance sheet has two side-by-side regions');
-assert(viewSource.includes("appendTotal('資産合計', 'assetsTotal')") && viewSource.includes("appendTotal('負債・純資産合計', 'liabilitiesEquityTotal')"));
+assert(viewSource.includes("question.table.rows.filter(row => row.section === '合計')") && viewSource.includes('totals[0]?.inputCellId') && viewSource.includes('totals[1]?.inputCellId'), 'B/S totals use declared mappings');
 assert(viewSource.includes("question.format === 'balance-sheet'") && viewSource.includes("this.renderBalanceSheet(question, {}, { user:userAnswer, score })"), 'wrong-answer comparison preserves balance sheet');
 const css = fs.readFileSync('css/style.css','utf8');
 assert(/\.balance-sheet-table\s*\{[^}]*min-width:\s*680px[^}]*table-layout:\s*fixed/s.test(css));
 assert(/\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css));
-assert(/\.journal-row\s*\{[^}]*grid-template-columns:\s*minmax\(180px, 3fr\).*minmax\(120px, 2fr\).*minmax\(180px, 3fr\).*minmax\(120px, 2fr\)/s.test(css));
+assert(/\.journal-row\s*\{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\).*minmax\(120px, 2fr\).*minmax\(240px, 3fr\).*minmax\(120px, 2fr\)/s.test(css));
 assert(!/\.journal-row select\s*\{[^}]*text-overflow:\s*ellipsis/s.test(css));
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-row select,\s*\.journal-row \.amount-input\s*\{[^}]*font-size:\s*16px/s.test(css));
 console.log('quality regression tests: ok');
+for (const id of Array.from({ length: 9 }, (_, index) => `F${String(index + 2).padStart(3, '0')}`)) {
+  const q = questions[id];
+  assert(q.table.rows.filter(row => row.amount === '入力').every(row => row.inputCellId && q.table.inputCells.includes(row.inputCellId)), `${id}: every editable B/S row declares its inputCellId`);
+  assert(q.explanation.includes('資産＝負債＋純資産') && /資産合計は.+＋.+＝/su.test(q.explanation), `${id}: B/S explanation shows question-specific arithmetic`);
+}
+assert(!viewSource.includes("row.account === '繰越利益剰余金'"), 'balance-sheet renderer must not infer input IDs from account names');
+assert(viewSource.includes('row.inputCellId'), 'balance-sheet renderer consumes declarative input cell mapping');
+assert(css.includes('minmax(240px, 3fr)'), 'account columns reserve enough width for 法人税、住民税及び事業税');
+{
+  const mutated = structuredClone(questions.F003);
+  delete mutated.table.rows.find(row => row.amount === '入力').inputCellId;
+  assert.strictEqual(mutated.table.rows.filter(row => row.amount === '入力').every(row => row.inputCellId && mutated.table.inputCells.includes(row.inputCellId)), false, 'B/S mapping mutation is detected');
+}

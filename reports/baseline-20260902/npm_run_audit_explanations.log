@@ -1,0 +1,28 @@
+### npm run audit:explanations
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> boki-rpg-app@1.0.0 audit:explanations
+> node scripts/audit-explanations.js
+
+{
+  "total": 300,
+  "duplicateIds": [],
+  "missingAnswerOrExplanation": [],
+  "nullishAnomalies": [],
+  "blacklistedPhrases": [],
+  "duplicateHeadings": [],
+  "lengthViolations": [],
+  "insufficientSpecificText": [],
+  "f002Issues": [],
+  "ledgerMismatch": [],
+  "duplicatePhrase": {
+    "phrase": "【金額確認】借方合計・貸方合計はいずれも280,000円です",
+    "ids": [
+      "J010",
+      "J021"
+    ]
+  },
+  "ok": true
+}
+
+exit_code=0

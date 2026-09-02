@@ -222,6 +222,8 @@ button.secondary-button:hover { color: #fff; }
 .balance-sheet-table thead tr:nth-child(2) th { background: #eef2f5; }
 .balance-sheet-table th:nth-child(3), .balance-sheet-table td:nth-child(3) { border-left: 3px double #566573; }
 .balance-sheet-table .balance-account { width: 29%; text-align: left; overflow-wrap: anywhere; }
+.balance-sheet-table .balance-section-label { display: block; margin: -8px -8px 7px; padding: 4px 8px; background: #e8eef2; color: #243746; font-weight: 800; }
+.balance-sheet-table .balance-section-start td:nth-child(n+3) { border-top: 3px solid #566573; }
 .balance-sheet-table .balance-amount { width: 21%; text-align: right; white-space: nowrap; }
 .balance-sheet-table tfoot td { border-top: 3px double #566573; font-weight: 800; background: #f3f8fb; }
 .balance-sheet-table .comparison-actual, .balance-sheet-table .comparison-expected { display: block; }
@@ -267,7 +269,7 @@ button.secondary-button:hover { color: #fff; }
 
 .journal-header {
   display: grid;
-  grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
+  grid-template-columns: minmax(240px, 3fr) minmax(120px, 2fr) minmax(240px, 3fr) minmax(120px, 2fr);
   gap: 4px;
   margin-bottom: 4px;
   color: #566573;
@@ -281,7 +283,7 @@ button.secondary-button:hover { color: #fff; }
 .correction-header,
 .correction-row {
   display: grid;
-  grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
+  grid-template-columns: minmax(240px, 3fr) minmax(120px, 2fr) minmax(240px, 3fr) minmax(120px, 2fr);
   gap: 4px;
   width: 100%;
   min-width: 0;
@@ -313,7 +315,7 @@ button.secondary-button:hover { color: #fff; }
 
 .journal-row {
   display: grid;
-  grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
+  grid-template-columns: minmax(240px, 3fr) minmax(120px, 2fr) minmax(240px, 3fr) minmax(120px, 2fr);
   align-items: center;
   gap: 4px;
   margin-bottom: 8px;
@@ -359,13 +361,13 @@ select, .amount-input {
 
   .journal-header,
   .journal-row {
-    grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
+    grid-template-columns: minmax(240px, 3fr) minmax(120px, 2fr) minmax(240px, 3fr) minmax(120px, 2fr);
     gap: 2px;
   }
 
   .correction-header,
   .correction-row {
-    grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
+    grid-template-columns: minmax(240px, 3fr) minmax(120px, 2fr) minmax(240px, 3fr) minmax(120px, 2fr);
     gap: 2px;
   }
 

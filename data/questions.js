@@ -14381,6 +14381,8 @@ for (let n = 1; n <= 10; n += 1) {
     totalRow.account = '資産合計';
     question.table.rows.push({ section: '合計', account: '負債・純資産合計', amount: '入力' });
   }
+  let inputIndex = 0;
+  for (const row of question?.table?.rows || []) if (row.amount === '入力') row.inputCellId = question.table.inputCells[inputIndex++];
 }
 
 // 第6次教材監査: 数字差替え型の既存問題を、公式区分の不足していた記帳行動へ置換する。
@@ -15283,11 +15285,12 @@ const ReaderFacingBeats = Object.freeze([
     ? `${arc.place}。最終報告に残った確認は、${item.category}です。${arc.requester}が報告書をあなたに託しました。${instruction}。この回答で、${arc.result}を確定します。`
     : `${arc.place}。${arc.result}を確定するまで、残る確認はわずかです。あなたは次の${item.category}の資料を受け取り、${instruction}。`
 ]);
-const yenText = value => typeof value === 'number' ? `${value.toLocaleString('ja-JP')}円` : String(value);
+const yenText = value => value == null ? '—' : typeof value === 'number' ? `${value.toLocaleString('ja-JP')}円` : String(value);
 const answerLabel = Object.freeze({
   debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額'
 });
 const answerFieldLabel = (item, key) => {
+  if (answerLabel[key]) return answerLabel[key];
   const metadata = item.table?.inputMetadata?.[key]?.label;
   if (metadata && metadata !== key) return String(metadata);
   const inputIndex = item.table?.inputCells?.indexOf(key) ?? -1; let cursor = -1;
@@ -15296,7 +15299,7 @@ const answerFieldLabel = (item, key) => {
     const columnLabel = { debit:'借方', credit:'貸方', amount:'金額', balance:'残高', adjustment:'修正額' }[column] || item.table?.columns?.[Object.keys(row).indexOf(column)] || '回答';
     return subject ? `${subject}の${columnLabel}` : `${item.category}の${columnLabel}`;
   }
-  return answerLabel[key] || `回答欄${inputIndex >= 0 ? inputIndex + 1 : ''}`;
+  return `回答欄${inputIndex >= 0 ? inputIndex + 1 : ''}`;
 };
 const answerDigest = item => {
   if (item.type === 'journal') {
@@ -15340,6 +15343,61 @@ const buildExplanation = item => {
     `【試験のポイント】第${item.chapter}章・調査${item.caseNumber}の「${clue.slice(0, 24)}」では、${methodFor(item)}。第${item.chapter}章・調査${item.caseNumber}「${clue.slice(0, 8)}」の解答（${shortAnswer}）を元資料と対応させて検算します。\n` +
     `【実務での使い方】【業務の結果】第${item.chapter}章・調査${item.caseNumber}の${item.category}で「${clue.slice(0, 14)}」を記録すると、${item.chapterArc.result}へ数値が進みます。${indirectMethodNote}答えを元資料へ戻せば転記違いも発見できます。`;
 };
+// Repeated drills keep the same accounting rule but present a distinct piece of
+// workplace evidence, rather than shipping byte-identical question/explanation pairs.
+QuestionData.J070.question = `月末に${QuestionData.J070.question}`;
+QuestionData.J080.question = `納付期限日に${QuestionData.J080.question}`;
+const ExplanationAccountTypes = Object.freeze({
+  asset:new Set(['現金','普通預金','当座預金','売掛金','受取手形','繰越商品','備品','電子記録債権','クレジット売掛金','未収入金','前払金','現金過不足','小口現金','仮払金','立替金','仮払消費税','前払保険料','受取商品券','差入保証金','未収利息','貯蔵品','貸付金']),
+  contraAsset:new Set(['貸倒引当金','減価償却累計額','備品減価償却累計額']),
+  liability:new Set(['買掛金','支払手形','借入金','当座借越','電子記録債務','未払金','前受金','所得税預り金','社会保険料預り金','仮受消費税','仮受金','前受家賃','未払利息','未払法人税等','未払消費税']),
+  equity:new Set(['資本金','繰越利益剰余金','損益']),
+  revenue:new Set(['売上','受取利息','受取家賃','固定資産売却益','償却債権取立益','雑益']),
+  expense:new Set(['仕入','発送費','消耗品費','減価償却費','固定資産売却損','支払手数料','通信費','水道光熱費','旅費交通費','支払利息','給料','法定福利費','租税公課','貸倒引当金繰入','保険料','法人税、住民税及び事業税','雑損'])
+});
+const explanationAccountType = account => Object.entries(ExplanationAccountTypes).find(([, accounts]) => accounts.has(account))?.[0] || '勘定';
+const explanationTypeLabel = Object.freeze({ asset:'資産', contraAsset:'資産の控除', liability:'負債', equity:'純資産', revenue:'収益', expense:'費用', '勘定':'勘定' });
+const normalSide = type => ['asset','expense'].includes(type) ? 'debit' : 'credit';
+const journalExplanation = item => {
+  const explain = (side, row) => {
+    const type = explanationAccountType(row.account); const normal = normalSide(type); const label = explanationTypeLabel[type];
+    const movement = side === normal ? '増加' : '減少'; const sideLabel = side === 'debit' ? '借方' : '貸方';
+    return `${row.account}は${label}で、この取引では${yenText(row.amount)}の${movement}です。${label}の${movement}は${sideLabel}に記録するため、${sideLabel}を${row.account}${yenText(row.amount)}とします。`;
+  };
+  const debit = item.answer.debit.map(row => explain('debit', row)).join('');
+  const credit = item.answer.credit.map(row => explain('credit', row)).join('');
+  const entry = `（借）${item.answer.debit.map(row => `${row.account} ${yenText(row.amount)}`).join('、')}／（貸）${item.answer.credit.map(row => `${row.account} ${yenText(row.amount)}`).join('、')}`;
+  return `【この問題への当てはめ】問題文「${String(item.question).replace(/\s+/gu, ' ')}」から、取引で増減する科目と金額を一つずつ拾います。${debit}${credit}\n【この問題の仕訳】${entry}。借方合計・貸方合計はいずれも${yenText(item.answer.debit.reduce((sum, row) => sum + row.amount, 0))}となり、貸借が一致します。`;
+};
+const sourceLine = item => {
+  const material = (item.materials || []).map(row => Object.values(row).map(yenText).join('・')).join('／');
+  const internalIds = new Set(item.table?.inputCells || []);
+  const fixed = (item.table?.rows || []).map(row => Object.values(row).filter(value => value !== '入力' && value !== '—' && !internalIds.has(value)).map(yenText).join('・')).filter(Boolean).join('／');
+  return [material, fixed].filter(Boolean).join('／');
+};
+const tableExplanation = item => {
+  const answers = Object.entries(item.answer?.cells || {}).map(([key, value]) => `${answerFieldLabel(item, key)}＝${yenText(value)}`).join('、');
+  const sources = sourceLine(item);
+  if (item.format === 'balance-sheet') {
+    const rows = item.table.rows; const terms = section => rows.filter(row => row.section === section && typeof row.amount === 'number');
+    const expression = section => terms(section).map(row => `${row.account}${yenText(row.amount)}`).join('＋');
+    const total = section => terms(section).reduce((sum, row) => sum + row.amount, 0);
+    const capital = rows.find(row => row.section === '純資産' && row.account === '資本金')?.amount || 0;
+    const retained = item.answer.cells.retainedEarnings;
+    return `【使用する資料】資産の部は${expression('資産')}、負債の部は${expression('負債')}、純資産の既知額は資本金${yenText(capital)}です。\n` +
+      `【計算と転記】資産合計は${terms('資産').map(row => yenText(row.amount)).join('＋')}＝${yenText(total('資産'))}です。負債合計は${terms('負債').map(row => yenText(row.amount)).join('＋')}＝${yenText(total('負債'))}です。資産＝負債＋純資産なので、繰越利益剰余金は${yenText(total('資産'))}－${yenText(total('負債'))}－${yenText(capital)}＝${yenText(retained)}です。\n` +
+      `【検算】負債${yenText(total('負債'))}＋資本金${yenText(capital)}＋繰越利益剰余金${yenText(retained)}＝負債・純資産合計${yenText(item.answer.cells.liabilitiesEquityTotal)}となり、資産合計${yenText(item.answer.cells.assetsTotal)}と一致します。`;
+  }
+  const typeGuide = {
+    ledger:'帳簿は前残に各増加を足し、各減少を引いて残高を求めます。日付・相手勘定などの文字欄も資料の該当取引から転記します',
+    trial_balance:'各勘定の残高を、資産・費用は借方、負債・純資産・収益は貸方へ集め、列ごとに加算します',
+    correction:'証憑が示す本来の記録から帳簿の誤記を差し引き、必要な訂正仕訳だけを記入します',
+    worksheet:'整理前残高に各決算整理の増減を反映し、整理後残高を損益計算書または貸借対照表へ振り分けます',
+    financial_statement:'表の各科目を資産・負債・純資産または収益・費用に分類し、同じ区分を加算して差額を求めます',
+    comprehensive:'資料を日付順に読み、現金の増減と収益・費用の発生を分けてから、各回答欄まで計算をつなぎます'
+  }[item.type];
+  return `【使用する資料】この問題では「${sources}」を使います。\n【計算と転記】${typeGuide}。資料の値を順に「前残・元データ → 増加または調整 → 減少または振替 → 最終値」と追うと、${answers}です。\n【検算】回答欄ごとに資料へ戻り、使用した科目・日付・金額と「${answers}」が対応していることを確認します。`;
+};
 Object.values(QuestionData).forEach((item, index) => {
   // Keep every month playable: 300 cases are divided into twelve equal
   // 25-case chapters instead of allowing the large trial-balance sets to
@@ -15381,6 +15439,12 @@ Object.values(QuestionData).forEach((item, index) => {
   // their own material. Append that reasoning without discarding authored text.
   if (item.type === 'correction' && !String(item.explanation).includes('帳簿には「')) {
     item.explanation += `\n${buildExplanation(item)}`;
+  }
+  // Authored prose remains first and unchanged.  Append a structurally derived,
+  // question-specific walkthrough so every runtime explanation contains the
+  // exact accounts, amounts, source rows and final answer needed for a retry.
+  if (!String(item.explanation).includes('【この問題への当てはめ】') && !String(item.explanation).includes('【使用する資料】')) {
+    item.explanation += `\n${item.type === 'journal' ? journalExplanation(item) : tableExplanation(item)}`;
   }
   item.npcDialogue = npc;
 });
