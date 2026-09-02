@@ -132,6 +132,7 @@ assert(html.includes('data-action="calc-insert"'), '電卓の表示金額を入�
 assert(controllerSource.includes("'calc-insert': () => this.insertCalculatorResult(false)"), '電卓の入力ボタンを転記処理へ接続する');
 assert(controllerSource.includes("else if (key === '＝') this.calculateEquals()"), 'イコールキーで計算結果を表示する');
 assert(controllerSource.includes("addEventListener('focusin'"), '選択した金額欄を電卓の転記先にする');
+assert(controllerSource.includes("querySelector('.calculator')"), '金額欄を選択したとき計算機を開く');
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
 browserSandbox.window.WrongAnswerFeedback = Feedback;
@@ -164,11 +165,11 @@ assert.strictEqual(calculatorElements['calculator-display'].value, '1,500', '電
 assert.strictEqual(calculatorController.saved, true, '電卓から転記した金額を下書きへ保存する');
 assert.strictEqual(browserSandbox.window.AppController.prototype.formatCalculatorExpression('1234567＋8900.5'), '1,234,567＋8,900.5', '計算途中の各数値にもカンマを表示する');
 const editableTarget = { value: '12,500', getAttribute() { return '貸方 1行目の金額'; }, classList: { toggle() {} } };
-const editableElements = { 'calculator-target': { textContent: '' }, 'calculator-display': { value: '' }, 'calculator-operator': { textContent: '' } };
+const editableElements = { calculator: { open: false, scrollIntoView(options) { this.scrollOptions = options; } }, 'calculator-target': { textContent: '' }, 'calculator-display': { value: '' }, 'calculator-operator': { textContent: '' } };
 const editableCalculator = {
   expression: '999', calculatorTarget: null,
   calculator: { accumulator: 999, operator: '＋', waitingForOperand: true, lastOperator: null, lastOperand: null },
-  document: { querySelectorAll: selector => selector === '.amount-input' ? [editableTarget] : [], getElementById: id => editableElements[id] },
+  document: { querySelector: selector => selector === '.calculator' ? editableElements.calculator : null, querySelectorAll: selector => selector === '.amount-input' ? [editableTarget] : [], getElementById: id => editableElements[id] },
   clearCalculator: browserSandbox.window.AppController.prototype.clearCalculator,
   updateCalculatorDisplay: browserSandbox.window.AppController.prototype.updateCalculatorDisplay,
   formatCalculatorExpression: browserSandbox.window.AppController.prototype.formatCalculatorExpression
@@ -178,6 +179,8 @@ assert.strictEqual(editableCalculator.expression, '12500', '入力済みの金�
 assert.strictEqual(editableElements['calculator-display'].value, '12,500', '入力欄の現在値を電卓上で確認して修正できる');
 assert.strictEqual(editableCalculator.calculator.operator, null, '別の入力欄を選んだときは以前の計算状態を引き継がない');
 assert.match(editableElements['calculator-target'].textContent, /現在値を修正できます/, '入力済み金額を修正できることを案内する');
+assert.strictEqual(editableElements.calculator.open, true, '金額欄をタッチすると閉じていた計算機を開く');
+assert.strictEqual(`${editableElements.calculator.scrollOptions.behavior}/${editableElements.calculator.scrollOptions.block}`, 'smooth/nearest', '開いた計算機が画面外なら見える位置へ移動する');
 const deskCalculator = {
   expression: '0',
   calculator: { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null },
@@ -193,14 +196,21 @@ assert.strictEqual(deskCalculator.expression, '0', 'Cは表示値だけを0に�
 deskCalculator.calcKey('AC');
 assert.deepStrictEqual([deskCalculator.expression, deskCalculator.calculator.accumulator, deskCalculator.calculator.operator], ['0', null, null], 'ACは計算状態をすべて消去する');
 const operatorIndicator={textContent:''}; const operatorButtons=['＋','−','×','÷'].map(value=>({dataset:{calc:value},classList:{toggle(_name,on){this.active=on;}},setAttribute(name,value){this[name]=value;}}));
-deskCalculator.document={getElementById:id=>id==='calculator-operator'?operatorIndicator:{value:'',textContent:''},querySelectorAll:()=>operatorButtons};
+const resetCalculatorPanel={open:true};
+deskCalculator.document={getElementById:id=>id==='calculator-operator'?operatorIndicator:{value:'',textContent:''},querySelectorAll:()=>operatorButtons,querySelector:selector=>selector==='.calculator'?resetCalculatorPanel:null};
 deskCalculator.calcKey('1'); deskCalculator.calcKey('2'); deskCalculator.calcKey('×');
 assert.strictEqual(operatorIndicator.textContent,'×','選択中の演算子を表示する');
 deskCalculator.calcKey('÷'); assert.strictEqual(operatorIndicator.textContent,'÷','演算子変更は表示と内部stateを同期する');
 deskCalculator.resetCalculator=browserSandbox.window.AppController.prototype.resetCalculator; deskCalculator.calculatorTarget={}; deskCalculator.resetCalculator();
 assert.deepStrictEqual([deskCalculator.expression,deskCalculator.calculator.operator,operatorIndicator.textContent,deskCalculator.calculatorTarget],['0',null,'',null],'問題遷移resetは表示・演算子・内部状態・転記先を消去する');
+assert.strictEqual(resetCalculatorPanel.open,false,'次の問題へ移るときは計算機を閉じる');
+assert(!/const firstAmount = .*selectCalculatorTarget\(firstAmount\)/.test(controllerSource), '問題を表示しただけでは金額欄を選択して計算機を開かない');
 const questionDataSource = fs.readFileSync('data/questions.js', 'utf8');
 vm.runInNewContext(`${questionDataSource}\nwindow.QuestionDataAudit = validateQuestionData();`, browserSandbox);
+const correctionExplanations = Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'correction').map(question => question.explanation);
+assert(correctionExplanations.every(explanation => !/(?:debit|credit)(?:Account|Amount)/i.test(explanation)), '訂正仕訳の解説に英語の回答項目名を混在させない');
+assert(correctionExplanations.every(explanation => /帳簿には「.+」と記録されていますが、証憑は「.+」/.test(explanation)), '訂正仕訳の解説に帳簿と証憑の具体的な比較を示す');
+assert(correctionExplanations.every(explanation => /訂正仕訳は「（借）.+円／（貸）.+円」です/.test(explanation)), '訂正仕訳を省略せず日本語で表示する');
 for (const [id, authored, mutated] of [['D019','insurance:160000','insurance:200000'],['F001','netIncome:180000','netIncome:220000']]) {
   const sourceMutationSandbox = { window:{} };
   const mutatedSource = questionDataSource.replace(authored, mutated);
@@ -237,6 +247,7 @@ assert.strictEqual(browserSandbox.window.QuestionData.J001.id, 'J001', '問題�
 const eightColumn = browserSandbox.window.QuestionData.D001;
 assert.strictEqual(eightColumn.format, 'eight-column-worksheet', 'WORKSHEET-01: D001を本物の8桁精算表として識別する');
 assert.strictEqual(eightColumn.table.columns.length, 9, 'WORKSHEET-01: 科目列と8つの借貸列を持つ');
+assert.match(eightColumn.question, /金額の桁数ではなく.+8つの金額欄/, 'WORKSHEET-GUIDE: 8桁精算表の名称の意味を問題文で説明する');
 const perfectWorksheet = Engine.grade(eightColumn, eightColumn.answer);
 assert.deepStrictEqual([perfectWorksheet.correct, perfectWorksheet.earned, perfectWorksheet.possible], [true, 18, 18], 'WORKSHEET-02: 元試算表とゼロ欄を固定し、意味のある18セルだけ採点する');
 const zeroWorksheet = Engine.grade(eightColumn, { cells: Object.fromEntries(eightColumn.table.inputCells.map(id => [id, 0])) });
@@ -421,6 +432,11 @@ for (const [type, id] of Object.entries(representativeIds)) {
   const container = comparisonElements['answer-comparison']; const rows = descendants(container, 'tr').slice(1);
   const wrongIndex = question.table.inputCells.indexOf(wrongCell); const matchingIndex = question.table.inputCells.indexOf(matchingCell);
   assert.strictEqual(container.hidden, false, `${id}の誤答時に比較欄を表示する`);
+  if (type === 'correction') {
+    assert.strictEqual(container.children[0].textContent, 'あなたの訂正仕訳（誤答）', 'E001の比較見出しを訂正仕訳として表示する');
+    assert.strictEqual(descendants(container, 'table')[0].className, 'journal-table', 'E001の誤答を借方・貸方の仕訳表で表示する');
+    continue;
+  }
   assert.strictEqual(rows.length, question.table.inputCells.length, `${id}をinputCells順で全行表示する`);
   assert.strictEqual(rows[wrongIndex].children[0].textContent, question.table.inputMetadata?.[wrongCell]?.label || tableComparisonView.cellLabel(question, wrongCell), `${id}に利用者向け項目名を表示する`);
   assert.strictEqual(rows[wrongIndex].children[1].textContent, '未入力', `${id}の空欄を未入力と表示する`);
@@ -574,7 +590,7 @@ assert(/\.journal-book-entry\s*\{[^}]*table-layout:\s*fixed/s.test(cssSource), '
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
 assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');
 assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');
-assert(viewSource.includes("heading.textContent = '正しい仕訳'"), '正しい仕訳の見出しを表示する');
+assert(viewSource.includes("'正しい訂正仕訳' : '正しい仕訳'"), '通常仕訳と訂正仕訳を区別した正解見出しを表示する');
 assert(html.includes('id="answer-comparison"'), '誤答した仕訳を正答と比較する表示領域を設ける');
 assert(/\.answer-comparison:empty\s*{[^}]*display:\s*none/s.test(cssSource), '空の誤答比較欄は赤枠ごと非表示にする');
 assert(/\.answer-comparison\[hidden\][\s\S]*?display:\s*none/s.test(cssSource), 'hidden属性でも誤答比較欄を確実に非表示にする');
@@ -584,6 +600,9 @@ assert(controllerSource.includes('writable = false'), 'QuotaExceededErrorの反�
 assert(viewSource.includes('confidence-feedback') && viewSource.includes('achievement-banner'), '確信度校正とレベル・役職解放を結果画面で強調する');
 assert(viewSource.includes("heading.textContent = 'あなたの仕訳（誤答）'"), '回答者が入力した誤答を表示する');
 assert(viewSource.includes("heading.textContent = '今回の解説'") && viewSource.includes('diagnostic.nextRule'), '誤答理由と次回の判別ポイントを一つの解説内に表示する');
+assert(viewSource.includes("solutionHeading.textContent = '解き方（この順番で考える）'") && viewSource.includes("correction:['帳簿に記録済みの仕訳"), '解説に問題形式別の具体的な解法手順を表示する');
+assert(viewSource.includes("heading.textContent = question.type === 'correction' ? '正しい訂正仕訳' : '正しい仕訳'"), '訂正問題の正解を借方・貸方の仕訳表で表示する');
+assert(viewSource.includes("heading.textContent = 'あなたの訂正仕訳（誤答）'") && viewSource.includes('this.journalTable(this.correctionJournal(userAnswer))'), '訂正問題の誤答も仕訳形式の表で比較する');
 assert(!viewSource.includes("heading.textContent = 'なぜ間違えた？'") && !viewSource.includes("heading.textContent = '詳しい解説'"), '意味が重なる二つの解説見出しを表示しない');
 Object.values(browserSandbox.window.QuestionData).forEach(question => {
   assert(/【やさしい考え方】/.test(question.explanation), `${question.id}に初心者向けの考え方がある`);
@@ -594,6 +613,13 @@ assert(viewSource.includes("this.byId('explanation').before(container)"), '古�
 assert(!/\.journal-header,\s*\.journal-row\s*{[^}]*min-width:\s*520px/s.test(cssSource), 'モバイルの仕訳欄を画面幅より広くしない');
 assert(/\.journal-entry-area\s*{[^}]*max-width:\s*100%[^}]*overflow-x:\s*clip/s.test(cssSource), '仕訳票自体を画面幅内に収めて横スクロールを発生させない');
 assert(/\.table-question-wrap\s*{[^}]*overflow-x:\s*auto/s.test(cssSource), '大きな表は小型画面で横スクロールできる');
+assert(viewSource.includes('2欄×4組＝8欄') && viewSource.includes("guide.className = 'worksheet-guide'"), '8桁精算表の構成と横スクロール操作を表の直前で説明する');
+assert(viewSource.includes("th.scope = 'colgroup'") && viewSource.includes("accountHead.rowSpan = 2"), '8欄精算表のヘッダーを4組と借方・貸方の二段構成にする');
+assert(/\.eight-column-worksheet \.worksheet-value-cell, \.answer-table \.amount-cell\s*{[^}]*white-space:\s*nowrap/s.test(cssSource), '精算表を含む表の金額を途中で折り返さない');
+assert(/\.eight-column-worksheet th:not\(:first-child\), \.eight-column-worksheet td:not\(:first-child\)\s*{[^}]*min-width:\s*13ch/s.test(cssSource), '8桁精算表の金額列に多桁の数値を表示できる幅を確保する');
+assert(/\.table-question-wrap\.worksheet-scroll\s*{[^}]*max-height:[^}]*overflow:\s*auto/s.test(cssSource), '8欄精算表を専用スクロール領域にしてヘッダーを表示内に固定する');
+assert(/\.eight-column-worksheet thead tr:nth-child\(2\) th\s*{[^}]*top:\s*44px/s.test(cssSource), '二段目の借方・貸方ヘッダーも固定する');
+assert(!/\.calculator\s*{[^}]*position:\s*sticky/s.test(cssSource), '計算機を入力欄へ重ねる固定配置にしない');
 assert(/\.answer-table th:first-child, \.answer-table td:first-child\s*{[^}]*position:\s*sticky[^}]*left:\s*0/s.test(cssSource), '横スクロール中も表の先頭列を固定する');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
 assert(/\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(0, 3fr\) minmax\(0, 2fr\) minmax\(0, 3fr\) minmax\(0, 2fr\)/s.test(cssSource), '仕訳は借方科目・借方金額・貸方科目・貸方金額の4列にする');
