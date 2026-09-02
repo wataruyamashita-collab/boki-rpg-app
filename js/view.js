@@ -176,21 +176,38 @@
     renderTable(question, draft = {}) {
       const wrap = this.byId('table-container'); wrap.replaceChildren();
       wrap.classList.toggle('worksheet-scroll', question.format === 'eight-column-worksheet');
+      if (question.format === 'eight-column-worksheet') {
+        const guide = this.document.createElement('aside'); guide.className = 'worksheet-guide';
+        const title = this.document.createElement('strong'); title.textContent = '「8桁」は、金額の桁数ではなく8つの金額欄という意味です';
+        const detail = this.document.createElement('p'); detail.textContent = '試算表・修正記入・損益計算書・貸借対照表に、それぞれ借方と貸方があるため、2欄×4組＝8欄です。表は横にスクロールして入力してください。';
+        guide.append(title, detail); wrap.append(guide);
+      }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
       if (question.format === 'eight-column-worksheet') table.setAttribute('role', 'grid');
-      const thead = table.createTHead(); const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); head.append(th); });
+      const thead = table.createTHead();
+      if (question.format === 'eight-column-worksheet') {
+        const groupHead = thead.insertRow();
+        const accountHead = this.document.createElement('th'); accountHead.textContent = '勘定科目'; accountHead.rowSpan = 2; accountHead.scope = 'col'; groupHead.append(accountHead);
+        ['試算表', '修正記入', '損益計算書', '貸借対照表'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.colSpan = 2; th.scope = 'colgroup'; groupHead.append(th); });
+        const sideHead = thead.insertRow();
+        for (let index = 0; index < 4; index += 1) ['借方', '貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; sideHead.append(th); });
+      } else {
+        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); th.scope = 'col'; head.append(th); });
+      }
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
-        const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach(value => {
+        const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
           const cell = row.insertCell();
           if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');
+          if (question.format === 'eight-column-worksheet' && columnIndex > 0) cell.classList.add('worksheet-value-cell');
           if (value === '入力') {
             const id = question.table.inputCells[inputIndex++]; const inputType = question.table.inputTypes?.[id] || 'amount';
             const metadata = question.table.inputMetadata?.[id]; const label = metadata?.label || this.cellLabel(question, id);
             const input = inputType === 'amount' ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[id] ?? '') : this.makeText('table-input', label, draft.cells?.[id] ?? '');
+            if (inputType === 'amount') cell.classList.add('amount-cell');
             input.dataset.cellId = id; input.dataset.inputType = inputType; cell.append(input);
           }
-          else cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value);
+          else { cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value); if (typeof value === 'number') cell.classList.add('amount-cell'); }
         });
       }); wrap.append(table);
     }
