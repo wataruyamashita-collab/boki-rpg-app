@@ -432,6 +432,11 @@ for (const [type, id] of Object.entries(representativeIds)) {
   const container = comparisonElements['answer-comparison']; const rows = descendants(container, 'tr').slice(1);
   const wrongIndex = question.table.inputCells.indexOf(wrongCell); const matchingIndex = question.table.inputCells.indexOf(matchingCell);
   assert.strictEqual(container.hidden, false, `${id}の誤答時に比較欄を表示する`);
+  if (type === 'correction') {
+    assert.strictEqual(container.children[0].textContent, 'あなたの訂正仕訳（誤答）', 'E001の比較見出しを訂正仕訳として表示する');
+    assert.strictEqual(descendants(container, 'table')[0].className, 'journal-table', 'E001の誤答を借方・貸方の仕訳表で表示する');
+    continue;
+  }
   assert.strictEqual(rows.length, question.table.inputCells.length, `${id}をinputCells順で全行表示する`);
   assert.strictEqual(rows[wrongIndex].children[0].textContent, question.table.inputMetadata?.[wrongCell]?.label || tableComparisonView.cellLabel(question, wrongCell), `${id}に利用者向け項目名を表示する`);
   assert.strictEqual(rows[wrongIndex].children[1].textContent, '未入力', `${id}の空欄を未入力と表示する`);
@@ -585,7 +590,7 @@ assert(/\.journal-book-entry\s*\{[^}]*table-layout:\s*fixed/s.test(cssSource), '
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
 assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');
 assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');
-assert(viewSource.includes("heading.textContent = '正しい仕訳'"), '正しい仕訳の見出しを表示する');
+assert(viewSource.includes("'正しい訂正仕訳' : '正しい仕訳'"), '通常仕訳と訂正仕訳を区別した正解見出しを表示する');
 assert(html.includes('id="answer-comparison"'), '誤答した仕訳を正答と比較する表示領域を設ける');
 assert(/\.answer-comparison:empty\s*{[^}]*display:\s*none/s.test(cssSource), '空の誤答比較欄は赤枠ごと非表示にする');
 assert(/\.answer-comparison\[hidden\][\s\S]*?display:\s*none/s.test(cssSource), 'hidden属性でも誤答比較欄を確実に非表示にする');
@@ -595,6 +600,9 @@ assert(controllerSource.includes('writable = false'), 'QuotaExceededErrorの反�
 assert(viewSource.includes('confidence-feedback') && viewSource.includes('achievement-banner'), '確信度校正とレベル・役職解放を結果画面で強調する');
 assert(viewSource.includes("heading.textContent = 'あなたの仕訳（誤答）'"), '回答者が入力した誤答を表示する');
 assert(viewSource.includes("heading.textContent = '今回の解説'") && viewSource.includes('diagnostic.nextRule'), '誤答理由と次回の判別ポイントを一つの解説内に表示する');
+assert(viewSource.includes("solutionHeading.textContent = '解き方（この順番で考える）'") && viewSource.includes("correction:['帳簿に記録済みの仕訳"), '解説に問題形式別の具体的な解法手順を表示する');
+assert(viewSource.includes("heading.textContent = question.type === 'correction' ? '正しい訂正仕訳' : '正しい仕訳'"), '訂正問題の正解を借方・貸方の仕訳表で表示する');
+assert(viewSource.includes("heading.textContent = 'あなたの訂正仕訳（誤答）'") && viewSource.includes('this.journalTable(this.correctionJournal(userAnswer))'), '訂正問題の誤答も仕訳形式の表で比較する');
 assert(!viewSource.includes("heading.textContent = 'なぜ間違えた？'") && !viewSource.includes("heading.textContent = '詳しい解説'"), '意味が重なる二つの解説見出しを表示しない');
 Object.values(browserSandbox.window.QuestionData).forEach(question => {
   assert(/【やさしい考え方】/.test(question.explanation), `${question.id}に初心者向けの考え方がある`);

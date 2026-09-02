@@ -492,6 +492,10 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .comparison-status-match { color: #176b3a; }
 .comparison-status-mismatch { color: #9f1c12; }
 .explanation-text { white-space: pre-wrap; }
+.solution-steps { margin: 12px 0; padding: 12px 14px; border: 2px solid #9dc9e2; border-radius: 8px; background: #eef8ff; }
+.solution-steps h4 { margin: 0 0 8px; color: #154c70; }
+.solution-steps ol { margin: 0; padding-left: 1.5rem; }
+.solution-steps li { margin: 5px 0; line-height: 1.55; }
 .account-with-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .account-badge { display: inline-block; padding: 2px 6px; border-radius: 999px; color: #fff; font-size: .68rem; font-weight: 700; line-height: 1.35; white-space: nowrap; }
 .account-badge-asset { background: #2471a3; }
