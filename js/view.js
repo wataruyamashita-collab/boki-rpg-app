@@ -75,6 +75,7 @@
       if (question.type === 'journal') this.renderJournal(question, draft, mode);
       else if (question.type === 'correction') this.renderCorrection(question, draft);
       else if (question.category === '仕訳帳' && question.table?.inputCells?.includes('d1Account')) this.renderJournalBook(question, draft);
+      else if (question.format === 'balance-sheet') this.renderBalanceSheet(question, draft);
       else this.renderTable(question, draft);
     }
     renderMaterials(question) {
@@ -211,6 +212,46 @@
         });
       }); wrap.append(table);
     }
+    renderBalanceSheet(question, draft = {}, comparison = null) {
+      const wrap = comparison ? this.document.createElement('div') : this.byId('table-container');
+      if (!comparison) wrap.replaceChildren();
+      wrap.classList.add(comparison ? 'balance-sheet-comparison-wrap' : 'balance-sheet-wrap');
+      const table = this.document.createElement('table'); table.className = 'balance-sheet-table';
+      table.setAttribute('aria-label', '貸借対照表');
+      const groups = table.createTHead().insertRow();
+      [['資産', 2], ['負債・純資産', 2]].forEach(([label, span]) => { const th = this.document.createElement('th'); th.textContent = label; th.colSpan = span; th.scope = 'colgroup'; groups.append(th); });
+      const columns = table.tHead.insertRow();
+      ['科目', '金額', '科目', '金額'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; columns.append(th); });
+      const sourceRows = question.table.rows.filter(row => row.section !== '合計');
+      const left = sourceRows.filter(row => row.section === '資産');
+      const right = sourceRows.filter(row => row.section === '負債' || row.section === '純資産');
+      const idFor = row => row.account === '繰越利益剰余金' ? 'retainedEarnings' : null;
+      const appendValue = (tr, row) => {
+        const account = tr.insertCell(); account.className = 'balance-account'; account.textContent = row?.account || '';
+        const amount = tr.insertCell(); amount.className = 'balance-amount';
+        if (!row) return;
+        const cellId = idFor(row);
+        if (row.amount !== '入力') { amount.textContent = typeof row.amount === 'number' ? yen(row.amount) : row.amount; return; }
+        if (comparison) {
+          const actual = this.document.createElement('span'); actual.className = 'comparison-actual'; actual.textContent = `入力 ${this.comparisonValue(question, cellId, comparison.user.cells?.[cellId])}`;
+          const expected = this.document.createElement('span'); expected.className = 'comparison-expected'; expected.textContent = `正解 ${this.comparisonValue(question, cellId, question.answer.cells[cellId])}`;
+          amount.append(actual, expected); return;
+        }
+        const input = this.makeAmount('table-input', `${row.account}（金額）`, draft.cells?.[cellId] ?? ''); input.dataset.cellId = cellId; input.dataset.inputType = 'amount'; amount.append(input);
+      };
+      const body = table.createTBody();
+      for (let index = 0; index < Math.max(left.length, right.length); index += 1) { const tr = body.insertRow(); appendValue(tr, left[index]); appendValue(tr, right[index]); }
+      const foot = table.createTFoot().insertRow();
+      const appendTotal = (label, cellId) => {
+        const name = foot.insertCell(); name.className = 'balance-total-label'; name.textContent = label;
+        const amount = foot.insertCell(); amount.className = 'balance-amount balance-total-amount';
+        if (comparison) {
+          amount.innerHTML = `<span class="comparison-actual">入力 ${this.comparisonValue(question, cellId, comparison.user.cells?.[cellId])}</span><span class="comparison-expected">正解 ${this.comparisonValue(question, cellId, question.answer.cells[cellId])}</span>`;
+        } else { const input = this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[cellId] ?? ''); input.dataset.cellId = cellId; input.dataset.inputType = 'amount'; amount.append(input); }
+      };
+      appendTotal('資産合計', 'assetsTotal'); appendTotal('負債・純資産合計', 'liabilitiesEquityTotal');
+      wrap.append(table); return wrap;
+    }
     readAnswer(question) {
       if (question.type !== 'journal') { const cells = {}; this.document.querySelectorAll('.table-input').forEach(input => { cells[input.dataset.cellId] = input.value; }); return { cells }; }
       const side = name => [...this.document.querySelectorAll(`.${name}-account`)].map((account, index) => {
@@ -333,6 +374,12 @@
         heading.textContent = '決算整理表で回答を比較';
         const note = this.document.createElement('p'); note.textContent = '問題と同じ行・列の中で、入力した値と正解を横に見比べましょう。';
         container.append(heading, note, this.worksheetAnswerComparison(question, score, userAnswer));
+        return;
+      }
+      if (question.format === 'balance-sheet') {
+        heading.textContent = '貸借対照表で回答を比較';
+        const note = this.document.createElement('p'); note.textContent = '資産と負債・純資産の左右を保ったまま、入力と正解を見比べましょう。';
+        container.append(heading, note, this.renderBalanceSheet(question, {}, { user:userAnswer, score }));
         return;
       }
       heading.textContent = 'あなたの解答と正しい解答';

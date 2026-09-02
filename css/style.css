@@ -209,11 +209,22 @@ button.secondary-button:hover { color: #fff; }
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  overflow-x: hidden;
-  overflow-x: clip;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .table-question-wrap { width: 100%; max-width: 100%; margin-bottom: 20px; overflow-x: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; border: 1px solid #d5dce0; }
 .table-question-wrap.worksheet-scroll { max-height: min(72vh, 720px); overflow: auto; }
+.balance-sheet-wrap, .balance-sheet-comparison-wrap { overflow-x: auto; }
+.balance-sheet-table { width: max(100%, 680px); min-width: 680px; border-collapse: collapse; table-layout: fixed; }
+.balance-sheet-table th, .balance-sheet-table td { padding: 8px; border: 1px solid #9aa5aa; background: #fff; }
+.balance-sheet-table thead tr:first-child th { color: #fff; background: #2c3e50; font-size: 1rem; }
+.balance-sheet-table thead tr:nth-child(2) th { background: #eef2f5; }
+.balance-sheet-table th:nth-child(3), .balance-sheet-table td:nth-child(3) { border-left: 3px double #566573; }
+.balance-sheet-table .balance-account { width: 29%; text-align: left; overflow-wrap: anywhere; }
+.balance-sheet-table .balance-amount { width: 21%; text-align: right; white-space: nowrap; }
+.balance-sheet-table tfoot td { border-top: 3px double #566573; font-weight: 800; background: #f3f8fb; }
+.balance-sheet-table .comparison-actual, .balance-sheet-table .comparison-expected { display: block; }
 .answer-table { width: max(100%, 600px); table-layout: auto; border-collapse: separate; border-spacing: 0; }
 .answer-table th, .answer-table td { min-width: 0; padding: 8px; overflow-wrap: anywhere; border-right: 1px solid #bdc3c7; border-bottom: 1px solid #bdc3c7; background: #fff; text-align: right; }
 .answer-table th { position: sticky; top: 0; z-index: 2; background: #eef2f5; text-align: center; }
@@ -256,21 +267,21 @@ button.secondary-button:hover { color: #fff; }
 
 .journal-header {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
   gap: 4px;
   margin-bottom: 4px;
   color: #566573;
   font-size: 0.8rem;
   font-weight: bold;
   text-align: center;
-  max-width: 100%;
+  min-width: 620px;
 }
 
-.correction-entry { width: 100%; min-width: 0; }
+.correction-entry { width: 100%; min-width: 620px; overflow-x: auto; }
 .correction-header,
 .correction-row {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
   gap: 4px;
   width: 100%;
   min-width: 0;
@@ -302,19 +313,18 @@ button.secondary-button:hover { color: #fff; }
 
 .journal-row {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
   align-items: center;
   gap: 4px;
   margin-bottom: 8px;
   padding-bottom: 8px;
   border-bottom: 1px dashed #ccc;
   width: 100%;
-  min-width: 0;
-  max-width: 100%;
+  min-width: 620px;
 }
 
 .journal-row > .credit-account { border-left-width: 2px; border-left-color: #7f8c8d; }
-.journal-row select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.journal-row select { overflow: visible; text-overflow: clip; white-space: nowrap; }
 .journal-row select:focus { text-overflow: clip; outline: 3px solid rgba(52, 152, 219, .25); outline-offset: 1px; }
 
 select, .amount-input {
@@ -349,13 +359,13 @@ select, .amount-input {
 
   .journal-header,
   .journal-row {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
     gap: 2px;
   }
 
   .correction-header,
   .correction-row {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: minmax(180px, 3fr) minmax(120px, 2fr) minmax(180px, 3fr) minmax(120px, 2fr);
     gap: 2px;
   }
 

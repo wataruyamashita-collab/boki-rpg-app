@@ -13063,7 +13063,7 @@ const QuestionData = {
         "liabilitiesEquityTotal": 1148000
       }
     },
-    "explanation": "資産合計は1,148,000円です。表に示した以外の項目はないため、繰越利益剰余金は1,148,000－負債496,000－資本金500,000＝152,000円と求められます。したがって負債・純資産合計も1,148,000円です。繰越利益剰余金は本来、利益の累積から形成される純資産であり、常に単なる差額科目として求めるものではありません。",
+    "explanation": "【やさしい考え方】まず資産側を見ると、普通預金456,000円＋売掛金278,000円＋繰越商品150,000円＋備品（純額）264,000円＝資産合計1,148,000円です。次に負債側は、買掛金212,000円＋未払給料34,000円＋借入金250,000円＝負債合計496,000円です。貸借対照表は「資産＝負債＋純資産」なので、繰越利益剰余金＝1,148,000円－496,000円－資本金500,000円＝152,000円となり、負債・純資産合計も1,148,000円になります。\n【試験のポイント】繰越利益剰余金は通常、利益の累積から形成される純資産です。今回は「表に示した項目以外はない」という問題条件があるため、貸借差額から逆算できます。資本金を負債へ含めたり、備品の純額をもう一度減価償却したりしないよう注意しましょう。",
     "learningRole": "transfer",
     "variantGroup": "financial_statement_3",
     "timelineRole": "main"
@@ -14375,6 +14375,7 @@ for (let n = 1; n <= 20; n += 1) {
 // 財務諸表問題では資産合計と負債・純資産合計を別々に回答できる行を用意する。
 for (let n = 1; n <= 10; n += 1) {
   const question = QuestionData[`F${String(n).padStart(3, '0')}`];
+  if (question?.category === '貸借対照表') question.format = 'balance-sheet';
   const totalRow = question?.table?.rows?.find(row => row.amount === '入力' && String(row.account).includes('資産合計／'));
   if (totalRow) {
     totalRow.account = '資産合計';
@@ -15372,7 +15373,15 @@ Object.values(QuestionData).forEach((item, index) => {
   item.bossCase = chapterPosition === 24;
   item.workResult = `${item.category}の処理結果`;
   item.story = `${ReaderFacingBeats[phase](arc, item, instruction, chapterPosition === 24)}〔調査 ${chapterPosition + 1}/25〕`;
-  item.explanation = buildExplanation(item);
+  // The prose stored with each question is reviewed teaching content.  Never
+  // replace it with the generic fallback merely because runtime metadata was
+  // added above; the fallback exists only for genuinely unauthored questions.
+  item.explanation ||= buildExplanation(item);
+  // Correction drills need the recorded/evidence comparison rendered from
+  // their own material. Append that reasoning without discarding authored text.
+  if (item.type === 'correction' && !String(item.explanation).includes('帳簿には「')) {
+    item.explanation += `\n${buildExplanation(item)}`;
+  }
   item.npcDialogue = npc;
 });
 
