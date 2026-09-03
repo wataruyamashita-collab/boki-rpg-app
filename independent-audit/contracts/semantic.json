@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "authority": "independent-audit",
+  "layers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "LEARNING",
+    "ADVERSARIAL"
+  ],
+  "passPolicy": "all-applicable-layers-must-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "semantic",
+  "requirements": [
+    "quantity=個; life=年; folio=no unit; amount=円",
+    "損益=closing account; 現金過不足=temporary account",
+    "raw internal identifiers visible=0"
+  ]
+}

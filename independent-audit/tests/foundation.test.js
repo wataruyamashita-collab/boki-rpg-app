@@ -1,0 +1,1 @@
+'use strict';const assert=require('assert'),c=require('../../scripts/qa/audit-core');assert.strictEqual(Object.keys(c.loadProduction().questions).length,300);assert.strictEqual(c.mutations().filter(x=>x.status==='SURVIVED').length,0);assert.strictEqual(c.lockCheck().ok,true);console.log('independent foundation tests: ok');

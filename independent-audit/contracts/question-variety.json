@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "authority": "independent-audit",
+  "layers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "LEARNING",
+    "ADVERSARIAL"
+  ],
+  "passPolicy": "all-applicable-layers-must-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "question-variety",
+  "requirements": [
+    "compare prompt, objective, answer fields, solution/source structure, numbers, conditions, learning objective",
+    "consecutive near duplicates without educational novelty => EXCESSIVE_REPETITION"
+  ]
+}

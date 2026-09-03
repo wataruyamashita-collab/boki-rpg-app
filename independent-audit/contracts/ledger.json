@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "authority": "independent-audit",
+  "layers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "LEARNING",
+    "ADVERSARIAL"
+  ],
+  "passPolicy": "all-applicable-layers-must-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "ledger",
+  "requirements": [
+    "fixed expected cells and semantic units",
+    "inventory method must match prompt"
+  ]
+}

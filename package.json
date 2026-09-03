@@ -14,7 +14,14 @@
     "audit:explanations": "node scripts/audit-explanations.js",
     "verify": "npm run audit:explanations && npm test && npm run typecheck",
     "audit:explanation-metrics": "node scripts/report-explanation-metrics.js",
-    "audit:auto-gate": "node scripts/qa/validate-auto-gate.js"
+    "audit:auto-gate": "node scripts/qa/validate-auto-gate.js",
+    "qa:integrity": "node scripts/qa/verify-audit-integrity.js",
+    "qa:gate": "node scripts/qa/run-independent-gate.js",
+    "qa:all": "node scripts/qa/run-all-gates.js",
+    "qa:story": "node scripts/qa/run-story-e2e.js",
+    "qa:mutations": "node scripts/qa/run-required-mutations.js",
+    "qa:evidence": "node scripts/qa/generate-evidence.js",
+    "qa:test": "node independent-audit/tests/foundation.test.js"
   },
   "engines": {
     "node": ">=18"

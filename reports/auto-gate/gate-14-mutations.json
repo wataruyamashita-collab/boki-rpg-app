@@ -1,0 +1,84 @@
+{
+  "status": "PASS",
+  "required": 19,
+  "killed": 19,
+  "survived": 0,
+  "results": [
+    {
+      "name": "FIFO_TO_MOVING_AVERAGE",
+      "status": "KILLED"
+    },
+    {
+      "name": "MOVING_AVERAGE_TO_FIFO",
+      "status": "KILLED"
+    },
+    {
+      "name": "QUANTITY_TO_YEN",
+      "status": "KILLED"
+    },
+    {
+      "name": "LIFE_TO_YEN",
+      "status": "KILLED"
+    },
+    {
+      "name": "FOLIO_TO_YEN",
+      "status": "KILLED"
+    },
+    {
+      "name": "AMOUNT_TO_MONTH",
+      "status": "KILLED"
+    },
+    {
+      "name": "PROFIT_TO_EQUITY",
+      "status": "KILLED"
+    },
+    {
+      "name": "CASH_OVER_SHORT_TO_ASSET",
+      "status": "KILLED"
+    },
+    {
+      "name": "RAW_INTERNAL_ID",
+      "status": "KILLED"
+    },
+    {
+      "name": "REMOVE_FORMULA",
+      "status": "KILLED"
+    },
+    {
+      "name": "REMOVE_CORRECT_ACCOUNT",
+      "status": "KILLED"
+    },
+    {
+      "name": "REMOVE_CORRECT_AMOUNT",
+      "status": "KILLED"
+    },
+    {
+      "name": "DUPLICATE_BS_SECTION",
+      "status": "KILLED"
+    },
+    {
+      "name": "FONT_SIZE_15PX",
+      "status": "KILLED"
+    },
+    {
+      "name": "STORY_ITEM_TO_EXAM_POOL",
+      "status": "KILLED"
+    },
+    {
+      "name": "NEXT_SELF_LOOP",
+      "status": "KILLED"
+    },
+    {
+      "name": "NEXT_NULL_AT_20",
+      "status": "KILLED"
+    },
+    {
+      "name": "DISPLAY_25_REACH_20",
+      "status": "KILLED"
+    },
+    {
+      "name": "C004_C010_IDENTICAL",
+      "status": "KILLED"
+    }
+  ]
+}

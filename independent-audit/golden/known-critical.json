@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "source": "fixed-independent-review",
+  "ids": ["J017","J045","J050","J100","J135","J149","L004","L005","L035","L040","L041","L049","T039","F002","F003","F010","C004","C005","C006","C007","C008","C009","C010"],
+  "facts": {
+    "J017": {"account":"現金過不足","classification":"temporary","forbiddenClassification":"asset"},
+    "J050": {"account":"損益","classification":"closing","forbiddenClassification":"equity"},
+    "L004": {"method":"FIFO","forbiddenMethod":"Moving Average","units":{"quantity":"個","unitPrice":"円","amount":"円"},"cells":{"r3_unitPrice":1200,"r3_amount":30000,"r4_amount":52800}},
+    "L040": {"semanticType":"amount","amounts":[60000,45000],"forbiddenUnit":"か月"},
+    "L041": {"field":"folio","unit":null,"facts":{"売掛金":113},"forbidden":"113円"},
+    "C004":{"endingCash":484000,"profit":44000},"C005":{"endingCash":275000,"profit":45000},"C006":{"endingCash":376000,"profit":46000},"C007":{"endingCash":417000,"profit":37000},"C008":{"endingCash":478000,"profit":48000},"C009":{"endingCash":399000,"profit":49000},"C010":{"endingCash":250000,"profit":30000}
+  },
+  "semanticRegressions":["44個 must not render as 44円","5年 must not render as 5円","元丁 must not use 円","60,000円 must not use か月","FIFO and Moving Average must not cross-contaminate","raw internal ID count must equal 0"]
+}

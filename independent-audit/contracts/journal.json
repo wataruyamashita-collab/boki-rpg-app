@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "authority": "independent-audit",
+  "layers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "LEARNING",
+    "ADVERSARIAL"
+  ],
+  "passPolicy": "all-applicable-layers-must-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "journal",
+  "requirements": [
+    "horizontal entry: debit account, debit amount, credit account, credit amount",
+    "accounts, increase/decrease, side reasons, formula and final entry required"
+  ]
+}

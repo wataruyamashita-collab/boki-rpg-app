@@ -1,52 +1,166 @@
 {
-  "schemaVersion": 1,
-  "status": "PASS",
-  "gates": {
-    "GATE-00": "PASS",
-    "GATE-01": "PASS",
-    "GATE-02": "PASS",
-    "GATE-03": "PASS",
-    "GATE-04": "PASS",
-    "GATE-05": "PASS",
-    "GATE-06": "PASS",
-    "GATE-07": "PASS",
-    "GATE-08": "PASS",
-    "GATE-09": "PASS",
-    "GATE-10": "PASS",
-    "GATE-11": "PASS",
-    "GATE-12": "PASS",
-    "GATE-13": "PASS"
+  "status": "FAIL",
+  "phase": "A",
+  "productionModified": false,
+  "auditHash": "edf9abe4b3765a06c19095479ffdd8a691bd66a7a5615f6a906f3493282bebbe",
+  "sourceHashes": {
+    "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
+    "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
+    "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
+    "data/questions.js": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+    "index.html": "5a20445189cbd9e7d1e9187cb91844254488a11080f480896e08bab8a17c93c0",
+    "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
+    "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
+    "js/controller.js": "55c1052eecdf296127ef77661b503b58b0dc2e8a36fdc7b0bd9ecf8d8377063b",
+    "js/engine.js": "a0f94eaa142ce19c07da284d3777a23a2c7af38c7b1eb6591e982ab48de50f78",
+    "js/feedback.js": "8c04b1847aca22a44d48b5f0dc636cec47519b4d6c6f454333e3113cd8710b5f",
+    "js/model.js": "3dd1763328d820e46a15c3bec9d14d5ccce2aefcd6d27762fd6c021bbe0091c7",
+    "js/rpg.js": "4b67a0a19fbe87c44146e1e1cdbffadb7384756e744e6fe8811901e3d9f83248",
+    "js/view.js": "62e1782066a5a06df56fefbb55d44a0af75cd90e1dde9237af3cdd5212671041",
+    "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
+    "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "questions": {
+  "coverage": {
     "total": 300,
-    "reviewed": 300,
-    "changed": 150,
-    "unchangedAfterReview": 150,
-    "pass": 300,
-    "fail": 0
+    "directlyTestable": 300,
+    "missing": 0,
+    "duplicateId": 0
   },
-  "knownDefects": {
-    "fifoMovingAverage": "FIXED",
-    "l040Semantic": "FIXED",
-    "internalKeyExposure": "FIXED",
-    "specialAccountUi": "FIXED",
-    "folioFormatting": "FIXED",
-    "fixedAssetCalculation": "FIXED"
+  "story": {
+    "expected": [
+      "C004",
+      "C005",
+      "C006",
+      "C007",
+      "C008",
+      "C009",
+      "C010"
+    ],
+    "actual": [
+      "C004",
+      "C005"
+    ],
+    "storyCount": 164,
+    "visitedCount": 164,
+    "premature": 5,
+    "unreachable": [
+      "C006",
+      "C007",
+      "C008",
+      "C009",
+      "C010"
+    ],
+    "loop": false
   },
-  "iphone": {
-    "widths": {
-      "320": "STATIC VERIFIED",
-      "375": "STATIC VERIFIED",
-      "390": "STATIC VERIFIED",
-      "430": "STATIC VERIFIED"
+  "mutations": {
+    "required": 19,
+    "killed": 19,
+    "survived": 0
+  },
+  "findings": [
+    {
+      "gate": "GATE-03",
+      "code": "SPECIAL_ACCOUNT_MISCLASSIFIED",
+      "id": "J050"
     },
-    "static": "VERIFIED",
-    "browser": "UNVERIFIED",
-    "device": "UNVERIFIED"
-  },
-  "remainingRisks": [
-    "実iPhone実機では未検証",
-    "実ブラウザによる視覚回帰は未検証"
+    {
+      "gate": "GATE-10",
+      "code": "UNREACHABLE_STORY_QUESTION",
+      "id": "C006"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "UNREACHABLE_STORY_QUESTION",
+      "id": "C007"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "UNREACHABLE_STORY_QUESTION",
+      "id": "C008"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "UNREACHABLE_STORY_QUESTION",
+      "id": "C009"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "UNREACHABLE_STORY_QUESTION",
+      "id": "C010"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "PREMATURE_STORY_TERMINATION",
+      "id": "C005",
+      "detail": "expected next C006"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "PREMATURE_STORY_TERMINATION",
+      "id": "C006",
+      "detail": "expected next C007"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "PREMATURE_STORY_TERMINATION",
+      "id": "C007",
+      "detail": "expected next C008"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "PREMATURE_STORY_TERMINATION",
+      "id": "C008",
+      "detail": "expected next C009"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "PREMATURE_STORY_TERMINATION",
+      "id": "C009",
+      "detail": "expected next C010"
+    },
+    {
+      "gate": "GATE-10",
+      "code": "PROGRESS_COUNT_MISMATCH",
+      "id": null,
+      "detail": 164
+    },
+    {
+      "gate": "GATE-11",
+      "code": "EXCESSIVE_REPETITION",
+      "id": "C004",
+      "detail": "C005"
+    },
+    {
+      "gate": "GATE-11",
+      "code": "EXCESSIVE_REPETITION",
+      "id": "C005",
+      "detail": "C006"
+    },
+    {
+      "gate": "GATE-11",
+      "code": "EXCESSIVE_REPETITION",
+      "id": "C006",
+      "detail": "C007"
+    },
+    {
+      "gate": "GATE-11",
+      "code": "EXCESSIVE_REPETITION",
+      "id": "C007",
+      "detail": "C008"
+    },
+    {
+      "gate": "GATE-11",
+      "code": "EXCESSIVE_REPETITION",
+      "id": "C008",
+      "detail": "C009"
+    },
+    {
+      "gate": "GATE-11",
+      "code": "EXCESSIVE_REPETITION",
+      "id": "C009",
+      "detail": "C010"
+    }
   ],
-  "generatedAt": "2026-09-03T00:33:28.931Z"
+  "startedAt": "2026-09-03T04:53:55.766Z",
+  "finishedAt": "2026-09-03T04:53:56.101Z"
 }

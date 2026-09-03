@@ -1,0 +1,8 @@
+{
+ "schemaVersion":1,"derivation":"independent-fixed-rules-only",
+ "prohibitedDependencies":["semanticTypeForLabel","ACCOUNT_TYPES","production formatter","production explanation generator","production renderer","production story selector","learningIds"],
+ "accountClasses":{"現金過不足":"temporary","損益":"closing"},
+ "normalSides":{"asset":{"increase":"debit","decrease":"credit"},"liability":{"increase":"credit","decrease":"debit"},"equity":{"increase":"credit","decrease":"debit"},"revenue":{"increase":"credit"},"expense":{"increase":"debit"}},
+ "explanationElements":["focus","account","accountReason","side","sideReason","amount","formula","trace","finalAnswer"],
+ "relation":"evidence -> judgment -> calculation -> answer"
+}

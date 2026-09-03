@@ -1,17 +1,30 @@
 {
-  "schemaVersion": 1,
   "gate": "GATE-12",
+  "name": "B/S UI",
   "status": "PASS",
-  "questionIds": [],
-  "reviewed": 0,
-  "changed": 0,
-  "pass": true,
-  "testCommands": [
-    "node tests/explanation-audit-regression.test.js",
-    "node tests/cross-layer-mutation.test.js"
-  ],
-  "exitCodes": [
-    0
-  ],
-  "remainingFailures": 0
+  "layers": {
+    "STRUCTURAL": "PASS",
+    "ACCOUNTING_SEMANTIC": "PASS",
+    "LEARNING": "PASS",
+    "ADVERSARIAL": "PASS"
+  },
+  "findings": [],
+  "sourceHashes": {
+    "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
+    "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
+    "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
+    "data/questions.js": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+    "index.html": "5a20445189cbd9e7d1e9187cb91844254488a11080f480896e08bab8a17c93c0",
+    "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
+    "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
+    "js/controller.js": "55c1052eecdf296127ef77661b503b58b0dc2e8a36fdc7b0bd9ecf8d8377063b",
+    "js/engine.js": "a0f94eaa142ce19c07da284d3777a23a2c7af38c7b1eb6591e982ab48de50f78",
+    "js/feedback.js": "8c04b1847aca22a44d48b5f0dc636cec47519b4d6c6f454333e3113cd8710b5f",
+    "js/model.js": "3dd1763328d820e46a15c3bec9d14d5ccce2aefcd6d27762fd6c021bbe0091c7",
+    "js/rpg.js": "4b67a0a19fbe87c44146e1e1cdbffadb7384756e744e6fe8811901e3d9f83248",
+    "js/view.js": "62e1782066a5a06df56fefbb55d44a0af75cd90e1dde9237af3cdd5212671041",
+    "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
+    "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
+  },
+  "measuredAt": "2026-09-03T04:53:55.979Z"
 }

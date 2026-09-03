@@ -1,0 +1,1 @@
+'use strict';const c=require('./audit-core');const lock=c.lockCheck();if(!lock.ok){console.error('AUDIT_LOCK_BROKEN');process.exit(1)}const r=c.mutations(),s=r.filter(x=>x.status==='SURVIVED');console.log(JSON.stringify({required:r.length,killed:r.length-s.length,survived:s.length,results:r},null,2));process.exit(s.length?1:0);

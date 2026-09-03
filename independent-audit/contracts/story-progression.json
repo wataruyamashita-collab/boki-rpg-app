@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "authority": "independent-audit",
+  "layers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "LEARNING",
+    "ADVERSARIAL"
+  ],
+  "passPolicy": "all-applicable-layers-must-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "story-progression",
+  "requirements": [
+    "drive production start-answer-complete-next transitions",
+    "25/25 sequential reachability; no termination, loop, unreachable item, or count mismatch",
+    "C004..C010 must be reachable with predecessor/successor and completable"
+  ]
+}
