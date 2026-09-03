@@ -1,18 +1,44 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "authority": "independent-audit",
-  "layers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING",
-    "ADVERSARIAL"
-  ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "user-facing",
+  "requiredCheckIds": [
+    "USER_FACING_INTERNAL_IDS",
+    "USER_FACING_EXPLANATION_RELATIONS"
+  ],
+  "requiredLayers": [
+    "LEARNING"
+  ],
+  "dependencies": [
+    {
+      "gateId": "GATE-01",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
+  "notApplicableLayers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "ADVERSARIAL"
+  ],
   "requirements": [
-    "no internal field names",
-    "authored explanation must remain concrete and question-specific"
-  ]
+    {
+      "requirementId": "REQ_USER_FACING_INTERNAL_IDS",
+      "requiredCheckId": "USER_FACING_INTERNAL_IDS",
+      "text": "internal identifiers are not user-visible"
+    },
+    {
+      "requirementId": "REQ_USER_FACING_EXPLANATION_RELATIONS",
+      "requiredCheckId": "USER_FACING_EXPLANATION_RELATIONS",
+      "text": "explanations connect evidence, reasoning, calculations, and answers"
+    }
+  ],
+  "checkLayers": {
+    "USER_FACING_INTERNAL_IDS": "LEARNING",
+    "USER_FACING_EXPLANATION_RELATIONS": "LEARNING"
+  }
 }

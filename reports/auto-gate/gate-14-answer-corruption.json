@@ -1,0 +1,71 @@
+{
+  "status": "PASS",
+  "required": 9,
+  "killed": 9,
+  "survived": 0,
+  "results": [
+    {
+      "mutationId": "JOURNAL_ACCOUNT",
+      "questionId": "J001",
+      "expectedFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "actualFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "status": "KILLED"
+    },
+    {
+      "mutationId": "JOURNAL_AMOUNT",
+      "questionId": "J001",
+      "expectedFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "actualFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "status": "KILLED"
+    },
+    {
+      "mutationId": "JOURNAL_ANSWER_EXPLANATION",
+      "questionId": "J001",
+      "expectedFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "actualFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "status": "KILLED"
+    },
+    {
+      "mutationId": "LEDGER_CELL",
+      "questionId": "L001",
+      "expectedFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "actualFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "status": "KILLED"
+    },
+    {
+      "mutationId": "TRIAL_BALANCE_BOTH_TOTALS",
+      "questionId": "T001",
+      "expectedFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "actualFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "status": "KILLED"
+    },
+    {
+      "mutationId": "CORRECTION_BOTH_SIDES",
+      "questionId": "E001",
+      "expectedFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "actualFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "status": "KILLED"
+    },
+    {
+      "mutationId": "WORKSHEET_VALUE",
+      "questionId": "D001",
+      "expectedFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "actualFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "status": "KILLED"
+    },
+    {
+      "mutationId": "FINANCIAL_STATEMENT_VALUE",
+      "questionId": "F001",
+      "expectedFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "actualFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "status": "KILLED"
+    },
+    {
+      "mutationId": "COMPREHENSIVE_VALUE",
+      "questionId": "C001",
+      "expectedFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "actualFailureCode": "INDEPENDENT_EXPECTED_ANSWER",
+      "status": "KILLED"
+    }
+  ]
+}

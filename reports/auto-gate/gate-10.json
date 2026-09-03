@@ -1,13 +1,75 @@
 {
   "gate": "GATE-10",
-  "name": "Story Progression",
   "status": "FAIL",
+  "requiredCheckIds": [
+    "STORY_DISPLAY_COUNT",
+    "STORY_POSITION_SEQUENCE",
+    "STORY_REACHABILITY"
+  ],
+  "executedCheckIds": [
+    "STORY_DISPLAY_COUNT",
+    "STORY_POSITION_SEQUENCE",
+    "STORY_REACHABILITY"
+  ],
+  "passedCheckIds": [],
+  "failedCheckIds": [
+    "STORY_DISPLAY_COUNT",
+    "STORY_POSITION_SEQUENCE",
+    "STORY_REACHABILITY"
+  ],
   "layers": {
-    "STRUCTURAL": "FAIL",
-    "ACCOUNTING_SEMANTIC": "FAIL",
-    "LEARNING": "FAIL",
-    "ADVERSARIAL": "PASS"
+    "STRUCTURAL": {
+      "requiredCheckIds": [],
+      "executedCheckIds": [],
+      "passedCheckIds": [],
+      "failedCheckIds": [],
+      "status": "N/A"
+    },
+    "ACCOUNTING_SEMANTIC": {
+      "requiredCheckIds": [],
+      "executedCheckIds": [],
+      "passedCheckIds": [],
+      "failedCheckIds": [],
+      "status": "N/A"
+    },
+    "LEARNING": {
+      "requiredCheckIds": [
+        "STORY_DISPLAY_COUNT",
+        "STORY_POSITION_SEQUENCE",
+        "STORY_REACHABILITY"
+      ],
+      "executedCheckIds": [
+        "STORY_DISPLAY_COUNT",
+        "STORY_POSITION_SEQUENCE",
+        "STORY_REACHABILITY"
+      ],
+      "passedCheckIds": [],
+      "failedCheckIds": [
+        "STORY_DISPLAY_COUNT",
+        "STORY_POSITION_SEQUENCE",
+        "STORY_REACHABILITY"
+      ],
+      "status": "FAIL"
+    },
+    "ADVERSARIAL": {
+      "requiredCheckIds": [],
+      "executedCheckIds": [],
+      "passedCheckIds": [],
+      "failedCheckIds": [],
+      "status": "N/A"
+    }
   },
+  "dependencyEvidence": [
+    {
+      "dependency": {
+        "gateId": "GATE-01",
+        "acceptedStatuses": [
+          "PASS"
+        ]
+      },
+      "satisfied": true
+    }
+  ],
   "findings": [
     {
       "gate": "GATE-10",
@@ -68,9 +130,13 @@
       "gate": "GATE-10",
       "code": "PROGRESS_COUNT_MISMATCH",
       "id": null,
-      "detail": 164
+      "detail": {
+        "expectedDisplayedCount": 25,
+        "actualStorySequenceCount": 164
+      }
     }
   ],
+  "contract": "story-progression",
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
@@ -88,5 +154,5 @@
     "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-03T04:53:55.979Z"
+  "measuredAt": "2026-09-03T08:07:03.979Z"
 }

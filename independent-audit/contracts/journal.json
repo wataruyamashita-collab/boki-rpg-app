@@ -1,18 +1,44 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "authority": "independent-audit",
-  "layers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING",
-    "ADVERSARIAL"
-  ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "journal",
+  "requiredCheckIds": [
+    "JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION",
+    "JOURNAL_HORIZONTAL_ENTRY"
+  ],
+  "requiredLayers": [
+    "ACCOUNTING_SEMANTIC"
+  ],
+  "dependencies": [
+    {
+      "gateId": "GATE-02",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
+  "notApplicableLayers": [
+    "STRUCTURAL",
+    "LEARNING",
+    "ADVERSARIAL"
+  ],
   "requirements": [
-    "horizontal entry: debit account, debit amount, credit account, credit amount",
-    "accounts, increase/decrease, side reasons, formula and final entry required"
-  ]
+    {
+      "requirementId": "REQ_JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION",
+      "requiredCheckId": "JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION",
+      "text": "special accounts use their correct classification"
+    },
+    {
+      "requirementId": "REQ_JOURNAL_HORIZONTAL_ENTRY",
+      "requiredCheckId": "JOURNAL_HORIZONTAL_ENTRY",
+      "text": "journal answers remain horizontal debit/credit entries"
+    }
+  ],
+  "checkLayers": {
+    "JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION": "ACCOUNTING_SEMANTIC",
+    "JOURNAL_HORIZONTAL_ENTRY": "ACCOUNTING_SEMANTIC"
+  }
 }

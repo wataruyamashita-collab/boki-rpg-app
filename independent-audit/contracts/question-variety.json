@@ -1,18 +1,37 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "authority": "independent-audit",
-  "layers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING",
-    "ADVERSARIAL"
-  ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "question-variety",
+  "requiredCheckIds": [
+    "QUESTION_VARIETY"
+  ],
+  "requiredLayers": [
+    "LEARNING"
+  ],
+  "dependencies": [
+    {
+      "gateId": "GATE-10",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
+  "notApplicableLayers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "ADVERSARIAL"
+  ],
   "requirements": [
-    "compare prompt, objective, answer fields, solution/source structure, numbers, conditions, learning objective",
-    "consecutive near duplicates without educational novelty => EXCESSIVE_REPETITION"
-  ]
+    {
+      "requirementId": "REQ_QUESTION_VARIETY",
+      "requiredCheckId": "QUESTION_VARIETY",
+      "text": "questions provide structural and educational variety"
+    }
+  ],
+  "checkLayers": {
+    "QUESTION_VARIETY": "LEARNING"
+  }
 }
