@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "authority": "independent-audit",
   "layers": [
     "STRUCTURAL",
@@ -7,12 +7,29 @@
     "LEARNING",
     "ADVERSARIAL"
   ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-and-layers-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "ledger",
   "requirements": [
     "fixed expected cells and semantic units",
     "inventory method must match prompt"
+  ],
+  "requiredCheckIds": [
+    "GATE-04.CONTRACT",
+    "GATE-04.AUDIT"
+  ],
+  "requiredLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "STRUCTURAL"
+  ],
+  "dependencies": [],
+  "checkLayers": {
+    "GATE-04.CONTRACT": "STRUCTURAL",
+    "GATE-04.AUDIT": "ACCOUNTING_SEMANTIC"
+  },
+  "notApplicableLayers": [
+    "LEARNING",
+    "ADVERSARIAL"
   ]
 }

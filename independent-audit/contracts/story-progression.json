@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "authority": "independent-audit",
   "layers": [
     "STRUCTURAL",
@@ -7,7 +7,7 @@
     "LEARNING",
     "ADVERSARIAL"
   ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-and-layers-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "story-progression",
@@ -15,5 +15,22 @@
     "drive production start-answer-complete-next transitions",
     "25/25 sequential reachability; no termination, loop, unreachable item, or count mismatch",
     "C004..C010 must be reachable with predecessor/successor and completable"
+  ],
+  "requiredCheckIds": [
+    "GATE-10.CONTRACT",
+    "GATE-10.AUDIT"
+  ],
+  "requiredLayers": [
+    "LEARNING",
+    "STRUCTURAL"
+  ],
+  "dependencies": [],
+  "checkLayers": {
+    "GATE-10.CONTRACT": "STRUCTURAL",
+    "GATE-10.AUDIT": "LEARNING"
+  },
+  "notApplicableLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "ADVERSARIAL"
   ]
 }

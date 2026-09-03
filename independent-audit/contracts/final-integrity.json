@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "authority": "independent-audit",
+  "id": "final-integrity",
+  "requiredCheckIds": [
+    "GATE-15.CONTRACT",
+    "GATE-15.INTEGRITY"
+  ],
+  "requiredLayers": [
+    "STRUCTURAL",
+    "ADVERSARIAL"
+  ],
+  "notApplicableLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "LEARNING"
+  ],
+  "dependencies": [
+    "GATE-01",
+    "GATE-14"
+  ],
+  "passPolicy": "all-required-checks-and-layers-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "checkLayers": {
+    "GATE-15.CONTRACT": "STRUCTURAL",
+    "GATE-15.INTEGRITY": "ADVERSARIAL"
+  },
+  "requirements": [
+    "audit lock is intact before and after execution"
+  ]
+}

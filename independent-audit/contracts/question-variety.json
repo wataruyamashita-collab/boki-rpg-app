@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "authority": "independent-audit",
   "layers": [
     "STRUCTURAL",
@@ -7,12 +7,29 @@
     "LEARNING",
     "ADVERSARIAL"
   ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-and-layers-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "question-variety",
   "requirements": [
     "compare prompt, objective, answer fields, solution/source structure, numbers, conditions, learning objective",
     "consecutive near duplicates without educational novelty => EXCESSIVE_REPETITION"
+  ],
+  "requiredCheckIds": [
+    "GATE-11.CONTRACT",
+    "GATE-11.AUDIT"
+  ],
+  "requiredLayers": [
+    "LEARNING",
+    "STRUCTURAL"
+  ],
+  "dependencies": [],
+  "checkLayers": {
+    "GATE-11.CONTRACT": "STRUCTURAL",
+    "GATE-11.AUDIT": "LEARNING"
+  },
+  "notApplicableLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "ADVERSARIAL"
   ]
 }

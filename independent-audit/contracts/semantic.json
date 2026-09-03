@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "authority": "independent-audit",
   "layers": [
     "STRUCTURAL",
@@ -7,7 +7,7 @@
     "LEARNING",
     "ADVERSARIAL"
   ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-and-layers-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "semantic",
@@ -15,5 +15,22 @@
     "quantity=個; life=年; folio=no unit; amount=円",
     "損益=closing account; 現金過不足=temporary account",
     "raw internal identifiers visible=0"
+  ],
+  "requiredCheckIds": [
+    "GATE-01.CONTRACT",
+    "GATE-01.AUDIT"
+  ],
+  "requiredLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "STRUCTURAL"
+  ],
+  "dependencies": [],
+  "checkLayers": {
+    "GATE-01.CONTRACT": "STRUCTURAL",
+    "GATE-01.AUDIT": "ACCOUNTING_SEMANTIC"
+  },
+  "notApplicableLayers": [
+    "LEARNING",
+    "ADVERSARIAL"
   ]
 }

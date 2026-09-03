@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "authority": "independent-audit",
   "layers": [
     "STRUCTURAL",
@@ -7,12 +7,29 @@
     "LEARNING",
     "ADVERSARIAL"
   ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-and-layers-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "journal",
   "requirements": [
     "horizontal entry: debit account, debit amount, credit account, credit amount",
     "accounts, increase/decrease, side reasons, formula and final entry required"
+  ],
+  "requiredCheckIds": [
+    "GATE-03.CONTRACT",
+    "GATE-03.AUDIT"
+  ],
+  "requiredLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "STRUCTURAL"
+  ],
+  "dependencies": [],
+  "checkLayers": {
+    "GATE-03.CONTRACT": "STRUCTURAL",
+    "GATE-03.AUDIT": "ACCOUNTING_SEMANTIC"
+  },
+  "notApplicableLayers": [
+    "LEARNING",
+    "ADVERSARIAL"
   ]
 }

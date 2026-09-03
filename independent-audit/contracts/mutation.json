@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "authority": "independent-audit",
+  "id": "mutation",
+  "requiredCheckIds": [
+    "GATE-14.CONTRACT",
+    "GATE-14.MUTATIONS"
+  ],
+  "requiredLayers": [
+    "STRUCTURAL",
+    "ADVERSARIAL"
+  ],
+  "notApplicableLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "LEARNING"
+  ],
+  "dependencies": [],
+  "passPolicy": "all-required-checks-and-layers-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "checkLayers": {
+    "GATE-14.CONTRACT": "STRUCTURAL",
+    "GATE-14.MUTATIONS": "ADVERSARIAL"
+  },
+  "requirements": [
+    "all declared mutations produce causal deltas"
+  ]
+}

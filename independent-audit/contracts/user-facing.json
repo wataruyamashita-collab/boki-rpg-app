@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "authority": "independent-audit",
   "layers": [
     "STRUCTURAL",
@@ -7,12 +7,29 @@
     "LEARNING",
     "ADVERSARIAL"
   ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-and-layers-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "user-facing",
   "requirements": [
     "no internal field names",
     "authored explanation must remain concrete and question-specific"
+  ],
+  "requiredCheckIds": [
+    "GATE-02.CONTRACT",
+    "GATE-02.AUDIT"
+  ],
+  "requiredLayers": [
+    "LEARNING",
+    "STRUCTURAL"
+  ],
+  "dependencies": [],
+  "checkLayers": {
+    "GATE-02.CONTRACT": "STRUCTURAL",
+    "GATE-02.AUDIT": "LEARNING"
+  },
+  "notApplicableLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "ADVERSARIAL"
   ]
 }

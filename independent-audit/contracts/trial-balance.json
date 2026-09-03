@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "authority": "independent-audit",
   "layers": [
     "STRUCTURAL",
@@ -7,11 +7,28 @@
     "LEARNING",
     "ADVERSARIAL"
   ],
-  "passPolicy": "all-applicable-layers-must-pass",
+  "passPolicy": "all-required-checks-and-layers-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "trial-balance",
   "requirements": [
     "independent debit and credit totals must agree"
+  ],
+  "requiredCheckIds": [
+    "GATE-05.CONTRACT",
+    "GATE-05.AUDIT"
+  ],
+  "requiredLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "STRUCTURAL"
+  ],
+  "dependencies": [],
+  "checkLayers": {
+    "GATE-05.CONTRACT": "STRUCTURAL",
+    "GATE-05.AUDIT": "ACCOUNTING_SEMANTIC"
+  },
+  "notApplicableLayers": [
+    "LEARNING",
+    "ADVERSARIAL"
   ]
 }

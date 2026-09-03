@@ -1,14 +1,63 @@
 {
   "gate": "GATE-04",
-  "name": "Ledger",
   "status": "PASS",
+  "requiredCheckIds": [
+    "GATE-04.CONTRACT",
+    "GATE-04.AUDIT"
+  ],
+  "executedCheckIds": [
+    "GATE-04.CONTRACT",
+    "GATE-04.AUDIT"
+  ],
+  "passedCheckIds": [
+    "GATE-04.CONTRACT",
+    "GATE-04.AUDIT"
+  ],
+  "failedCheckIds": [],
   "layers": {
-    "STRUCTURAL": "PASS",
-    "ACCOUNTING_SEMANTIC": "PASS",
-    "LEARNING": "PASS",
-    "ADVERSARIAL": "PASS"
+    "STRUCTURAL": {
+      "requiredCheckIds": [
+        "GATE-04.CONTRACT"
+      ],
+      "executedCheckIds": [
+        "GATE-04.CONTRACT"
+      ],
+      "passedCheckIds": [
+        "GATE-04.CONTRACT"
+      ],
+      "failedCheckIds": [],
+      "status": "PASS"
+    },
+    "ACCOUNTING_SEMANTIC": {
+      "requiredCheckIds": [
+        "GATE-04.AUDIT"
+      ],
+      "executedCheckIds": [
+        "GATE-04.AUDIT"
+      ],
+      "passedCheckIds": [
+        "GATE-04.AUDIT"
+      ],
+      "failedCheckIds": [],
+      "status": "PASS"
+    },
+    "LEARNING": {
+      "requiredCheckIds": [],
+      "executedCheckIds": [],
+      "passedCheckIds": [],
+      "failedCheckIds": [],
+      "status": "N/A"
+    },
+    "ADVERSARIAL": {
+      "requiredCheckIds": [],
+      "executedCheckIds": [],
+      "passedCheckIds": [],
+      "failedCheckIds": [],
+      "status": "N/A"
+    }
   },
   "findings": [],
+  "contract": "ledger",
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
@@ -26,5 +75,5 @@
     "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-03T04:53:55.979Z"
+  "measuredAt": "2026-09-03T07:05:21.154Z"
 }

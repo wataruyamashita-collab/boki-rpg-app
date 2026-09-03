@@ -1,11 +1,41 @@
 'use strict';
-const fs=require('fs'),path=require('path');const core=require('./audit-core');const out=path.join(core.ROOT,'reports/auto-gate');fs.mkdirSync(out,{recursive:true});
-const write=(n,x)=>fs.writeFileSync(path.join(out,n),JSON.stringify(x,null,2)+'\n');
-const startedAt=new Date().toISOString(),before=core.lockCheck();if(!before.ok){write('final.json',{status:'AUDIT_LOCK_BROKEN',errors:before.errors,startedAt,finishedAt:new Date().toISOString()});console.error('AUDIT_LOCK_BROKEN',before.errors);process.exit(1);}
-const sourceHashes=Object.fromEntries(core.productionFiles().map(p=>[p,core.sha(p)]));let result;try{result=core.audit(core.loadProduction());}catch(error){result={findings:[{gate:'GATE-15',code:'RUNNER_EXCEPTION',detail:error.stack}],story:{}};}
-const mutationResults=core.mutations(),survived=mutationResults.filter(x=>x.status==='SURVIVED');if(survived.length)result.findings.push({gate:'GATE-14',code:'MUTATION_SURVIVED',detail:survived.map(x=>x.name)});
-const gateNames=['Semantic / Domain','User-facing','Journal','Ledger','Trial Balance','Correction','Worksheet','Financial Statements','Comprehensive','Story Progression','Question Variety','B/S UI','Mobile Static','Adversarial Mutation','Final Integrity'];
-for(let i=1;i<=15;i++){const id=`GATE-${String(i).padStart(2,'0')}`,findings=result.findings.filter(x=>x.gate===id),status=findings.length?'FAIL':'PASS';write(`gate-${String(i).padStart(2,'0')}.json`,{gate:id,name:gateNames[i-1],status,layers:{STRUCTURAL:status,ACCOUNTING_SEMANTIC:status,LEARNING:status,ADVERSARIAL:i===14?(survived.length?'FAIL':'PASS'):'PASS'},findings,sourceHashes,measuredAt:new Date().toISOString()});}
-fs.writeFileSync(path.join(out,'question-review.jsonl'),Object.keys(core.loadProduction().questions).map(id=>JSON.stringify({id,status:result.findings.some(x=>x.id===id)?'FAIL':'PASS',findings:result.findings.filter(x=>x.id===id).map(x=>x.code),sourceHash:sourceHashes['data/questions.js']})).join('\n')+'\n');
-write('gate-14-mutations.json',{status:survived.length?'FAIL':'PASS',required:mutationResults.length,killed:mutationResults.length-survived.length,survived:survived.length,results:mutationResults});
-const after=core.lockCheck();if(!after.ok)result.findings.push({gate:'GATE-15',code:'AUDIT_LOCK_BROKEN',detail:after.errors});const status=!after.ok?'AUDIT_LOCK_BROKEN':result.findings.length?'FAIL':'PASS';const final={status,phase:'A',productionModified:false,auditHash:before.hash,sourceHashes,coverage:{total:Object.keys(core.loadProduction().questions).length,directlyTestable:300,missing:0,duplicateId:0},story:result.story,mutations:{required:mutationResults.length,killed:mutationResults.length-survived.length,survived:survived.length},findings:result.findings,startedAt,finishedAt:new Date().toISOString()};write('state.json',{status,lastRun:final.finishedAt,auditHash:before.hash,sourceHashes});write('final.json',final);console.log(`Independent gate: ${status}; findings=${result.findings.length}; mutations=${final.mutations.killed}/${final.mutations.required}`);process.exit(status==='PASS'?0:1);
+
+const fs=require('fs'),path=require('path');
+const core=require('./audit-core');
+const contracts=require('./contract-runner');
+const out=path.join(core.ROOT,'reports/auto-gate');
+fs.mkdirSync(out,{recursive:true});
+const write=(name,value)=>fs.writeFileSync(path.join(out,name),JSON.stringify(value,null,2)+'\n');
+const startedAt=new Date().toISOString();
+const before=core.lockCheck();
+if(!before.ok){
+  write('final.json',{status:'AUDIT_LOCK_BROKEN',errors:before.errors,startedAt,finishedAt:new Date().toISOString()});
+  console.error('AUDIT_LOCK_BROKEN',before.errors);
+  process.exit(1);
+}
+
+const production=core.loadProduction();
+const sourceHashes=Object.fromEntries(core.productionFiles().map(file=>[file,core.sha(file)]));
+let auditResult;
+try{auditResult=core.audit(production);}catch(error){auditResult={findings:[{gate:'GATE-15',code:'RUNNER_EXCEPTION',detail:error.stack}],story:{}};}
+const mutationResults=core.mutations();
+const survived=mutationResults.filter(x=>x.status==='SURVIVED');
+if(survived.length)auditResult.findings.push({gate:'GATE-14',code:'MUTATION_SURVIVED',detail:survived.map(x=>x.mutationId)});
+
+const evaluated=contracts.executeContracts(auditResult,mutationResults,before);
+for(const [gate,report] of Object.entries(evaluated.reports))write(`gate-${gate.slice(-2)}.json`,{...report,sourceHashes,measuredAt:new Date().toISOString()});
+const questionRecords=contracts.questionReview(production.questions,auditResult.findings);
+fs.writeFileSync(path.join(out,'question-review.jsonl'),questionRecords.map(record=>JSON.stringify(record)).join('\n')+'\n');
+const coverage=contracts.summarizeQuestions(questionRecords,production.questions);
+write('gate-14-mutations.json',{status:survived.length?'FAIL':'PASS',required:mutationResults.length,killed:mutationResults.length-survived.length,survived:survived.length,causalDeltaConfirmed:`${mutationResults.filter(x=>x.causalDeltaConfirmed).length}/${mutationResults.length}`,results:mutationResults});
+
+const after=core.lockCheck();
+const frameworkFindings=Object.values(evaluated.reports).flatMap(report=>report.findings.filter(f=>['GATE_UNIMPLEMENTED','REQUIRED_CHECK_NOT_EXECUTED','REQUIRED_LAYER_NOT_EXECUTED','CHECK_COUNT_ZERO'].includes(f.code)));
+if(!after.ok)auditResult.findings.push({gate:'GATE-15',code:'AUDIT_LOCK_BROKEN',detail:after.errors});
+const gateFailures=Object.values(evaluated.reports).filter(report=>report.status==='FAIL');
+const status=!after.ok?'AUDIT_LOCK_BROKEN':gateFailures.length?'FAIL':'PASS';
+const final={status,phase:'A',productionModified:false,auditHash:before.hash,sourceHashes,coverage,gateImplementation:{unimplemented:frameworkFindings.filter(x=>x.code==='GATE_UNIMPLEMENTED').length,requiredCheckNotExecuted:frameworkFindings.filter(x=>x.code==='REQUIRED_CHECK_NOT_EXECUTED').length,requiredLayerNotExecuted:frameworkFindings.filter(x=>x.code==='REQUIRED_LAYER_NOT_EXECUTED').length,checkCountZero:frameworkFindings.filter(x=>x.code==='CHECK_COUNT_ZERO').length},story:auditResult.story,mutations:{required:mutationResults.length,killed:mutationResults.length-survived.length,survived:survived.length,causalDeltaConfirmed:`${mutationResults.filter(x=>x.causalDeltaConfirmed).length}/${mutationResults.length}`},gateStatuses:Object.fromEntries(Object.entries(evaluated.reports).map(([gate,report])=>[gate,report.status])),findings:auditResult.findings,startedAt,finishedAt:new Date().toISOString()};
+write('state.json',{status,lastRun:final.finishedAt,auditHash:before.hash,sourceHashes});
+write('final.json',final);
+console.log(`Independent gate: ${status}; findings=${auditResult.findings.length}; mutations=${final.mutations.killed}/${final.mutations.required}; directly-tested=${coverage.DIRECTLY_TESTED}/${coverage.TOTAL}`);
+process.exit(status==='PASS'?0:1);
