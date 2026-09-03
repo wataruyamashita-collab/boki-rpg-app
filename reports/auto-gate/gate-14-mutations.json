@@ -5,79 +5,174 @@
   "survived": 0,
   "results": [
     {
-      "name": "FIFO_TO_MOVING_AVERAGE",
+      "mutationId": "FIFO_TO_MOVING_AVERAGE",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "a85199e337d574b3cdc3683373167a3499162ecb82d312ef85bdd821db6ca597",
+      "expectedFailureCode": "FIFO_METHOD",
+      "actualFailureCode": "FIFO_METHOD",
       "status": "KILLED"
     },
     {
-      "name": "MOVING_AVERAGE_TO_FIFO",
+      "mutationId": "MOVING_AVERAGE_TO_FIFO",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "93254a6b475c057539ed4d60aaf951dbfec128926c120c1297bd6826044c85ef",
+      "expectedFailureCode": "FIFO_CONTAMINATION",
+      "actualFailureCode": "FIFO_CONTAMINATION",
       "status": "KILLED"
     },
     {
-      "name": "QUANTITY_TO_YEN",
+      "mutationId": "QUANTITY_TO_YEN",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "b674e38ca091ff17d3f0c687565a93543a3d99decaaf0fdab6364024347d1a01",
+      "expectedFailureCode": "QUANTITY_AS_YEN",
+      "actualFailureCode": "QUANTITY_AS_YEN",
       "status": "KILLED"
     },
     {
-      "name": "LIFE_TO_YEN",
+      "mutationId": "LIFE_TO_YEN",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "387da2b6fe2d72a9b3e6f5f8987beaa142c64368d049178e13da791d1332790d",
+      "expectedFailureCode": "LIFE_AS_YEN",
+      "actualFailureCode": "LIFE_AS_YEN",
       "status": "KILLED"
     },
     {
-      "name": "FOLIO_TO_YEN",
+      "mutationId": "FOLIO_TO_YEN",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "ca2c18d9ec8dd48ef39d8b8ca92eacfc87f5ec78fb803c7652e9d16225f7e97c",
+      "expectedFailureCode": "FOLIO_AS_YEN",
+      "actualFailureCode": "FOLIO_AS_YEN",
       "status": "KILLED"
     },
     {
-      "name": "AMOUNT_TO_MONTH",
+      "mutationId": "AMOUNT_TO_MONTH",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "1be52dfaf132bdc168fb1b6d98c65a522a2b56fd6eeacbc9ef00ce548b7d10cc",
+      "expectedFailureCode": "AMOUNT_AS_MONTH",
+      "actualFailureCode": "AMOUNT_AS_MONTH",
       "status": "KILLED"
     },
     {
-      "name": "PROFIT_TO_EQUITY",
+      "mutationId": "PROFIT_TO_EQUITY",
+      "targetProductionFile": "data/accounting-domain.js",
+      "beforeHash": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
+      "afterHash": "7ce35f27939c956d85edd403c0e8511ba22b2cdee160887f24c037f605729191",
+      "expectedFailureCode": "PROFIT_CLASSIFICATION",
+      "actualFailureCode": "PROFIT_CLASSIFICATION",
       "status": "KILLED"
     },
     {
-      "name": "CASH_OVER_SHORT_TO_ASSET",
+      "mutationId": "CASH_OVER_SHORT_TO_ASSET",
+      "targetProductionFile": "data/accounting-domain.js",
+      "beforeHash": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
+      "afterHash": "30fb32da4986642ce9822f61d55147521aa511281f501202eb9a7fa22bc34cf2",
+      "expectedFailureCode": "CASH_OVER_SHORT_CLASSIFICATION",
+      "actualFailureCode": "CASH_OVER_SHORT_CLASSIFICATION",
       "status": "KILLED"
     },
     {
-      "name": "RAW_INTERNAL_ID",
+      "mutationId": "RAW_INTERNAL_ID",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "97973e6fd6d30f82a0bc51ac842f93b95ff21d6ed8d6b2cbc0bbdc5d67bb4a41",
+      "expectedFailureCode": "RAW_INTERNAL_ID",
+      "actualFailureCode": "RAW_INTERNAL_ID",
       "status": "KILLED"
     },
     {
-      "name": "REMOVE_FORMULA",
+      "mutationId": "REMOVE_FORMULA",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "63516c4e750bd272f13436d797d31bcb6efc5a33055e693025863cd18c52c6b7",
+      "expectedFailureCode": "EXPLANATION_RELATION_INCOMPLETE",
+      "actualFailureCode": "EXPLANATION_RELATION_INCOMPLETE",
       "status": "KILLED"
     },
     {
-      "name": "REMOVE_CORRECT_ACCOUNT",
+      "mutationId": "REMOVE_CORRECT_ACCOUNT",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "7916129c8078f0c7ce12bdb61cbe6926c41875e69d63800f17ac2c94c014d1b3",
+      "expectedFailureCode": "EXPLANATION_RELATION_INCOMPLETE",
+      "actualFailureCode": "EXPLANATION_RELATION_INCOMPLETE",
       "status": "KILLED"
     },
     {
-      "name": "REMOVE_CORRECT_AMOUNT",
+      "mutationId": "REMOVE_CORRECT_AMOUNT",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "84507894bf0193f6df0ddeafc86c20d8595acc9e476d413cb5b6279d15111e69",
+      "expectedFailureCode": "EXPLANATION_RELATION_INCOMPLETE",
+      "actualFailureCode": "EXPLANATION_RELATION_INCOMPLETE",
       "status": "KILLED"
     },
     {
-      "name": "DUPLICATE_BS_SECTION",
+      "mutationId": "DUPLICATE_BS_SECTION",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "6a39b75ba6e0afe55defd8a516becba43483109c5f6dd95b99e00b64e7c8418e",
+      "expectedFailureCode": "DUPLICATE_BS_SECTION",
+      "actualFailureCode": "DUPLICATE_BS_SECTION",
       "status": "KILLED"
     },
     {
-      "name": "FONT_SIZE_15PX",
+      "mutationId": "FONT_SIZE_15PX",
+      "targetProductionFile": "css/style.css",
+      "beforeHash": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
+      "afterHash": "141a90f6af71a8dea025fe000f26e339b148634756daa9df996b2ef3790c273f",
+      "expectedFailureCode": "MOBILE_FONT_TOO_SMALL",
+      "actualFailureCode": "MOBILE_FONT_TOO_SMALL",
       "status": "KILLED"
     },
     {
-      "name": "STORY_ITEM_TO_EXAM_POOL",
+      "mutationId": "STORY_ITEM_TO_EXAM_POOL",
+      "targetProductionFile": "js/controller.js",
+      "beforeHash": "55c1052eecdf296127ef77661b503b58b0dc2e8a36fdc7b0bd9ecf8d8377063b",
+      "afterHash": "382f1743973e0c82aaae3078193e1cfabee6a1f8944f1b04e2c458fa28866c67",
+      "expectedFailureCode": "UNREACHABLE_STORY_QUESTION",
+      "actualFailureCode": "UNREACHABLE_STORY_QUESTION",
       "status": "KILLED"
     },
     {
-      "name": "NEXT_SELF_LOOP",
+      "mutationId": "NEXT_SELF_LOOP",
+      "targetProductionFile": "js/controller.js",
+      "beforeHash": "55c1052eecdf296127ef77661b503b58b0dc2e8a36fdc7b0bd9ecf8d8377063b",
+      "afterHash": "11e8973bb0764205ae52e4a2501823ca97a835d1926bf7fede80bd9614ae0a14",
+      "expectedFailureCode": "UNEXPECTED_LOOP",
+      "actualFailureCode": "UNEXPECTED_LOOP",
       "status": "KILLED"
     },
     {
-      "name": "NEXT_NULL_AT_20",
+      "mutationId": "NEXT_NULL_AT_20",
+      "targetProductionFile": "js/controller.js",
+      "beforeHash": "55c1052eecdf296127ef77661b503b58b0dc2e8a36fdc7b0bd9ecf8d8377063b",
+      "afterHash": "e0e41705e9ec6226dbe3df02500136554e14a7cd5e26aa84e609e18887716a64",
+      "expectedFailureCode": "UNREACHABLE_STORY_QUESTION",
+      "actualFailureCode": "UNREACHABLE_STORY_QUESTION",
       "status": "KILLED"
     },
     {
-      "name": "DISPLAY_25_REACH_20",
+      "mutationId": "DISPLAY_25_REACH_20",
+      "targetProductionFile": "js/controller.js",
+      "beforeHash": "55c1052eecdf296127ef77661b503b58b0dc2e8a36fdc7b0bd9ecf8d8377063b",
+      "afterHash": "e0e41705e9ec6226dbe3df02500136554e14a7cd5e26aa84e609e18887716a64",
+      "expectedFailureCode": "PROGRESS_COUNT_MISMATCH",
+      "actualFailureCode": "PROGRESS_COUNT_MISMATCH",
       "status": "KILLED"
     },
     {
-      "name": "C004_C010_IDENTICAL",
+      "mutationId": "C004_C010_IDENTICAL",
+      "targetProductionFile": "data/questions.js",
+      "beforeHash": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
+      "afterHash": "239e739e06eb38c4b59a066942eb1a96d188baf9559089113e946ef2a1c43aa0",
+      "expectedFailureCode": "EXCESSIVE_REPETITION",
+      "actualFailureCode": "EXCESSIVE_REPETITION",
       "status": "KILLED"
     }
   ]
