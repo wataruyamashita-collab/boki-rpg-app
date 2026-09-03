@@ -1,1 +1,12 @@
-'use strict';const assert=require('assert'),c=require('../../scripts/qa/audit-core');assert.strictEqual(Object.keys(c.loadProduction().questions).length,300);assert.strictEqual(c.mutations().filter(x=>x.status==='SURVIVED').length,0);assert.strictEqual(c.lockCheck().ok,true);console.log('independent foundation tests: ok');
+'use strict';
+const assert=require('assert'),c=require('../../scripts/qa/audit-core');
+assert.strictEqual(Object.keys(c.loadProduction().questions).length,300);
+const preExisting=[{gate:'GATE-10',code:'UNREACHABLE_STORY_QUESTION',id:'C006'}];
+const noCausalChange=c.findingDelta(preExisting,structuredClone(preExisting),'UNREACHABLE_STORY_QUESTION');
+assert.strictEqual(noCausalChange.causalDeltaConfirmed,false,'a pre-existing failure code cannot kill a mutation without a new finding');
+const mutations=c.mutations();
+assert.strictEqual(mutations.length,19);
+assert.strictEqual(mutations.filter(x=>x.status==='SURVIVED').length,0);
+assert(mutations.every(x=>x.causalDeltaConfirmed===true),'every required mutation must have a causal finding delta');
+assert.strictEqual(c.lockCheck().ok,true);
+console.log('independent foundation tests: ok');

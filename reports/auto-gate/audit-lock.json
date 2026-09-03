@@ -20,15 +20,15 @@
     "independent-audit/manifest.json": "3bd95a6604530897ee3fd7a46da31be165ffdc2f32f8d86c4ba9a5ee6d2ca269",
     "independent-audit/mutations/required.json": "06e387648cc5135e711ad104cfcd45b527260c3791314bff2f3773453cd51136",
     "independent-audit/oracles/accounting-rules.json": "db713065f75865dee26d47aa39441a86aa53f56531d10132c33c42634b22f316",
-    "independent-audit/tests/foundation.test.js": "a30d478f713045c147bed544c7ceac1ee58edbc6eab6f9bddc3403053c9b788b",
-    "scripts/qa/audit-core.js": "000f074429f57b1673b05f4e0fc056d5cbedbccccb9c3073dbdd66a1ce573b15",
+    "independent-audit/tests/foundation.test.js": "84c108f2f62b7c0ab25456c20acbf8cf8437c00a7deb02826dc47e4f40fa401f",
+    "scripts/qa/audit-core.js": "b30b3c9a1f04984578492c24c1993fd32c19cee9f23c3e96232856942a09ff68",
     "scripts/qa/generate-evidence.js": "347acadab7b16c38a0abae4dbb20751550f426eba38e6d53ef673803910e33ad",
     "scripts/qa/run-all-gates.js": "347acadab7b16c38a0abae4dbb20751550f426eba38e6d53ef673803910e33ad",
     "scripts/qa/run-independent-gate.js": "d9c9bcfecfa94c33c94a27905f2e0464bb30adbdd6b3b5243534a6848d4131a7",
-    "scripts/qa/run-required-mutations.js": "99149f19b9a1ab04d8fee954ba4b054275ec19d98963c192a59265f0d5796a25",
+    "scripts/qa/run-required-mutations.js": "7fe4524da0937fafd6f19e114b174015d8553e3c2b08b2bdd29f56d33bc25f8a",
     "scripts/qa/run-story-e2e.js": "0df9293470dbc51b356642a6bb35072550768a1fbfc3d97a98d3e05f31ed6c02",
     "scripts/qa/validate-auto-gate.js": "afaf30a8ec001d4062939c4f0ed36134f84a3289626930e010e3dd23376a3fe7",
     "scripts/qa/verify-audit-integrity.js": "5c69ac671737114f2811ec394fadf6ffed634f06c95faab49f483d737ced7181"
   },
-  "auditHash": "edf9abe4b3765a06c19095479ffdd8a691bd66a7a5615f6a906f3493282bebbe"
+  "auditHash": "a63085c2fa490b6326b13aa304532d41902f29b261ebccb33dc68c2300c33a46"
 }
