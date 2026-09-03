@@ -35,6 +35,12 @@ assert.strictEqual(oneUnaudited.MISSING,1);
 for(const [type,checks] of Object.entries(runner.typeQuestionChecks)){const row=reviews.find(item=>item.questionType===type);assert(row,`missing direct audit record for ${type}`);assert(Object.keys(checks).every(id=>row.requiredCheckIds.includes(id)),`${type} must execute every type-specific check`);}
 assert(reviews.every(row=>row.requiredCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER')&&row.executedCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER')));
 assert.strictEqual(complete.INDEPENDENT_EXPECTED_CHECKED,300);
+const corruptedQuestions=structuredClone(c.loadProduction().questions);corruptedQuestions.J001.answer.debit[0].amount+=1;
+const corruptedReviews=runner.questionReview(corruptedQuestions),corruptedCoverage=runner.summarizeQuestions(corruptedReviews,corruptedQuestions),corruptedAudit=c.audit({...c.loadProduction(),questions:corruptedQuestions});
+const corruptedContracts=runner.executeContracts(corruptedAudit,mutations,runner.answerCorruptionMutations(),c.lockCheck(),{...c.loadProduction(),questions:corruptedQuestions},corruptedReviews,corruptedCoverage);
+assert.strictEqual(corruptedContracts.reports['GATE-15'].status,'FAIL','one answer corruption must make final integrity fail even when unrelated production RED already exists');
+assert(corruptedContracts.reports['GATE-15'].failedCheckIds.includes('DIRECT_AUDIT_ALL_PASS'));
+assert(corruptedContracts.reports['GATE-15'].failedCheckIds.includes('INDEPENDENT_EXPECTED_ALL_PASS'));
 const answerCorruptions=runner.answerCorruptionMutations();assert.strictEqual(answerCorruptions.length,9);assert(answerCorruptions.every(x=>x.status==='KILLED'),'every answer corruption, including coordinated answer/explanation corruption, must be killed');
 assert.strictEqual(runner.oracleSelfReferenceFindings().length,0);
 const oracleFile=path.join(c.ROOT,'independent-audit/oracles/expected-answer-oracle.js'),oracleSource=fs.readFileSync(oracleFile);try{fs.appendFileSync(oracleFile,'\nquestion.answer;\n');assert(runner.oracleSelfReferenceFindings().some(x=>x.code==='ORACLE_SELF_REFERENCE'));}finally{fs.writeFileSync(oracleFile,oracleSource);}
@@ -49,4 +55,10 @@ assert.notStrictEqual(relock.status,0,'an existing lock must never be regenerate
 assert.match(relock.stderr,/AUDIT_LOCK_CREATE_REFUSED/);
 assert.strictEqual(c.lockCheck().ok,true,'a rejected re-lock must not alter the existing lock');
 const lockPath=path.join(c.ROOT,'reports/auto-gate/audit-lock.json'),savedLock=fs.readFileSync(lockPath);try{fs.unlinkSync(lockPath);const deletedBootstrap=childProcess.spawnSync(process.execPath,[lockCreator,'--bootstrap'],{cwd:c.ROOT,encoding:'utf8'});assert.notStrictEqual(deletedBootstrap.status,0,'deleting a tracked lock must not restore bootstrap eligibility');assert.match(deletedBootstrap.stderr,/exists in Git history/);assert.strictEqual(fs.existsSync(lockPath),false,'rejected bootstrap must not create a replacement lock');}finally{fs.writeFileSync(lockPath,savedLock);}
+if(c.historicalFinalLock()){
+  const target=auditedFile,originalFile=fs.readFileSync(target),originalLock=fs.readFileSync(lockPath);
+  try{fs.appendFileSync(target,' ');const forged=JSON.parse(originalLock);forged.files[path.relative(c.ROOT,target)]=c.sha(path.relative(c.ROOT,target));forged.auditHash=require('crypto').createHash('sha256').update(JSON.stringify(forged.files)).digest('hex');fs.writeFileSync(lockPath,JSON.stringify(forged,null,2)+'\n');const result=c.lockCheck();assert.strictEqual(result.ok,false,'coordinated audit and current-lock tamper must fail against Git history');assert(result.errors.includes('current lock differs from historical baseline'));}finally{fs.writeFileSync(target,originalFile);fs.writeFileSync(lockPath,originalLock);}
+  try{const forged=JSON.parse(originalLock);forged.createdBy='repository-maintainer';forged.auditHash='0'.repeat(64);fs.writeFileSync(lockPath,JSON.stringify(forged,null,2)+'\n');assert.strictEqual(c.lockCheck().ok,false,'current lock metadata tamper must fail against Git history');}finally{fs.writeFileSync(lockPath,originalLock);}
+  try{fs.unlinkSync(lockPath);const finalizedBootstrap=childProcess.spawnSync(process.execPath,[lockCreator,'--bootstrap'],{cwd:c.ROOT,encoding:'utf8'});assert.notStrictEqual(finalizedBootstrap.status,0);assert.match(finalizedBootstrap.stderr,/final baseline already exists in Git history/);}finally{fs.writeFileSync(lockPath,originalLock);}
+}
 console.log('independent foundation tests: ok');

@@ -2,21 +2,34 @@
   "gate": "GATE-15",
   "status": "FAIL",
   "requiredCheckIds": [
+    "DIRECT_AUDIT_COMPLETE",
+    "DIRECT_AUDIT_ALL_PASS",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+    "INDEPENDENT_EXPECTED_ALL_PASS",
     "AUDIT_LOCK_INTACT",
     "AUDIT_RUNNER_COMPLETED",
     "ORACLE_NO_SELF_REFERENCE"
   ],
   "executedCheckIds": [
+    "DIRECT_AUDIT_COMPLETE",
+    "DIRECT_AUDIT_ALL_PASS",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+    "INDEPENDENT_EXPECTED_ALL_PASS",
     "AUDIT_LOCK_INTACT",
     "AUDIT_RUNNER_COMPLETED",
     "ORACLE_NO_SELF_REFERENCE"
   ],
   "passedCheckIds": [
+    "DIRECT_AUDIT_COMPLETE",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+    "INDEPENDENT_EXPECTED_ALL_PASS",
     "AUDIT_LOCK_INTACT",
     "AUDIT_RUNNER_COMPLETED",
     "ORACLE_NO_SELF_REFERENCE"
   ],
-  "failedCheckIds": [],
+  "failedCheckIds": [
+    "DIRECT_AUDIT_ALL_PASS"
+  ],
   "layers": {
     "STRUCTURAL": {
       "requiredCheckIds": [],
@@ -41,22 +54,35 @@
     },
     "ADVERSARIAL": {
       "requiredCheckIds": [
+        "DIRECT_AUDIT_COMPLETE",
+        "DIRECT_AUDIT_ALL_PASS",
+        "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+        "INDEPENDENT_EXPECTED_ALL_PASS",
         "AUDIT_LOCK_INTACT",
         "AUDIT_RUNNER_COMPLETED",
         "ORACLE_NO_SELF_REFERENCE"
       ],
       "executedCheckIds": [
+        "DIRECT_AUDIT_COMPLETE",
+        "DIRECT_AUDIT_ALL_PASS",
+        "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+        "INDEPENDENT_EXPECTED_ALL_PASS",
         "AUDIT_LOCK_INTACT",
         "AUDIT_RUNNER_COMPLETED",
         "ORACLE_NO_SELF_REFERENCE"
       ],
       "passedCheckIds": [
+        "DIRECT_AUDIT_COMPLETE",
+        "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+        "INDEPENDENT_EXPECTED_ALL_PASS",
         "AUDIT_LOCK_INTACT",
         "AUDIT_RUNNER_COMPLETED",
         "ORACLE_NO_SELF_REFERENCE"
       ],
-      "failedCheckIds": [],
-      "status": "PASS"
+      "failedCheckIds": [
+        "DIRECT_AUDIT_ALL_PASS"
+      ],
+      "status": "FAIL"
     }
   },
   "dependencyEvidence": [
@@ -123,5 +149,5 @@
     "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-03T08:07:03.980Z"
+  "measuredAt": "2026-09-03T23:21:54.417Z"
 }

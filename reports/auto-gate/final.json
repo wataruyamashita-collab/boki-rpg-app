@@ -2,7 +2,14 @@
   "status": "FAIL",
   "phase": "A",
   "productionModified": false,
-  "auditHash": "f9c90363a4fe018fd8180ef7edbce2fa278388d223441e662e348aeb77c53c3c",
+  "auditHash": "1318eb2419f74ecd97c56f48f6ae7b65f155a488d1761dd51200172eaeae1015",
+  "auditLock": {
+    "type": "GIT_HISTORY",
+    "phase": "A_FINAL_IMMUTABLE_BASELINE",
+    "commit": "8b491b5d6e3c2e3cf8e33bdb587302c517e28760",
+    "historicalBaselineValid": true,
+    "currentLockMatches": true
+  },
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
@@ -28,6 +35,325 @@
     "FAIL": 22,
     "MISSING": 0,
     "DUPLICATE": 0
+  },
+  "directAudit": {
+    "required": 300,
+    "executed": 300,
+    "pass": 278,
+    "fail": 22,
+    "uniqueQuestions": 300,
+    "failedQuestionIds": [
+      "D001",
+      "D002",
+      "D003",
+      "D004",
+      "D005",
+      "D006",
+      "D007",
+      "D008",
+      "D009",
+      "D010",
+      "D011",
+      "D012",
+      "D013",
+      "D014",
+      "D015",
+      "D016",
+      "D017",
+      "D018",
+      "D019",
+      "D020",
+      "C001",
+      "C003"
+    ],
+    "independentExpectedRequired": 300,
+    "independentExpectedExecuted": 300,
+    "independentExpectedFailed": 0,
+    "enforcementFailures": [
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D001",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D001",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D002",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D002",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D003",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D003",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D004",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D004",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D005",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D005",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D006",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D006",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D007",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D007",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D008",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D008",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D009",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D009",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D010",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D010",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D011",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D011",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D012",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D012",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D013",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D013",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D014",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D014",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D015",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D015",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D016",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D016",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D017",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D017",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D018",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D018",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D019",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D019",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "D020",
+        "failedCheckIds": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "D020",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "C001",
+        "failedCheckIds": [
+          "COMPREHENSIVE_JUDGMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "C001",
+        "status": "FAIL"
+      },
+      {
+        "code": "DIRECT_AUDIT_FAILED_CHECK",
+        "questionId": "C003",
+        "failedCheckIds": [
+          "COMPREHENSIVE_JUDGMENT"
+        ]
+      },
+      {
+        "code": "DIRECT_AUDIT_STATUS",
+        "questionId": "C003",
+        "status": "FAIL"
+      }
+    ]
   },
   "oracleSelfReference": 0,
   "gateImplementation": {
@@ -327,6 +653,6 @@
       }
     }
   ],
-  "startedAt": "2026-09-03T08:06:57.439Z",
-  "finishedAt": "2026-09-03T08:07:04.229Z"
+  "startedAt": "2026-09-03T23:21:47.093Z",
+  "finishedAt": "2026-09-03T23:21:54.603Z"
 }

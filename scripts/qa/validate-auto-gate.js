@@ -10,6 +10,7 @@ assert.strictEqual(new Set(rows.map(row=>row.questionId)).size,300);
 assert(rows.every(row=>row.questionType&&row.requiredCheckIds.length>3&&row.requiredCheckIds.every(id=>row.executedCheckIds.includes(id))));
 assert.strictEqual(final.coverage.TOTAL,300);assert.strictEqual(final.coverage.DIRECTLY_TESTED,300);assert.strictEqual(final.coverage.MISSING,0);assert.strictEqual(final.coverage.DUPLICATE,0);
 assert.strictEqual(final.coverage.INDEPENDENT_EXPECTED_CHECKED,300);assert.strictEqual(final.oracleSelfReference,0);
+assert.strictEqual(final.directAudit.required,300);assert.strictEqual(final.directAudit.executed,300);assert.strictEqual(final.directAudit.uniqueQuestions,300);assert.strictEqual(final.directAudit.pass+final.directAudit.fail,300);assert.strictEqual(final.directAudit.independentExpectedRequired,300);assert.strictEqual(final.directAudit.independentExpectedExecuted,300);assert.strictEqual(final.directAudit.independentExpectedFailed,0);assert.deepStrictEqual(final.directAudit.failedQuestionIds,['D001','D002','D003','D004','D005','D006','D007','D008','D009','D010','D011','D012','D013','D014','D015','D016','D017','D018','D019','D020','C001','C003']);assert.strictEqual(final.gateStatuses['GATE-15'],'FAIL','direct-audit failures must propagate to final integrity');
 assert.deepStrictEqual(final.gateImplementation,{unimplemented:0,requiredCheckNotExecuted:0,requiredLayerNotExecuted:0,checkCountZero:0,allRequirementsHaveExecutableCheck:true});
 assert.strictEqual(final.dependencies.deadMetadata,0);assert.strictEqual(final.dependencies.declared,final.dependencies.evaluated);assert(final.dependencies.declared>0);
 assert.strictEqual(final.status,'FAIL','known production defects must remain RED in Phase A');
@@ -19,4 +20,5 @@ assert.deepStrictEqual(final.answerCorruptionMutations,{required:9,killed:9,surv
 assert.strictEqual(final.story.ROUTING_INTEGRATION,'TESTED');
 assert.strictEqual(final.story.BROWSER_E2E,'UNVERIFIED');
 assert.strictEqual(core.lockCheck().ok,true);
+assert.strictEqual(final.auditLock.type,'GIT_HISTORY');assert.strictEqual(final.auditLock.historicalBaselineValid,true);assert.strictEqual(final.auditLock.currentLockMatches,true);
 console.log('auto-gate state validator: ok (fail-closed evidence valid; known production defects remain RED)');

@@ -3,6 +3,10 @@
   "authority": "independent-audit",
   "id": "final-integrity",
   "requiredCheckIds": [
+    "DIRECT_AUDIT_COMPLETE",
+    "DIRECT_AUDIT_ALL_PASS",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+    "INDEPENDENT_EXPECTED_ALL_PASS",
     "AUDIT_LOCK_INTACT",
     "AUDIT_RUNNER_COMPLETED",
     "ORACLE_NO_SELF_REFERENCE"
@@ -50,6 +54,26 @@
   "failurePolicy": "fail-closed",
   "requirements": [
     {
+      "requirementId": "REQ_DIRECT_AUDIT_COMPLETE",
+      "requiredCheckId": "DIRECT_AUDIT_COMPLETE",
+      "text": "all 300 unique questions have complete direct-audit coverage"
+    },
+    {
+      "requirementId": "REQ_DIRECT_AUDIT_ALL_PASS",
+      "requiredCheckId": "DIRECT_AUDIT_ALL_PASS",
+      "text": "every direct-audit record passes every required check"
+    },
+    {
+      "requirementId": "REQ_INDEPENDENT_EXPECTED_ALL_EXECUTED",
+      "requiredCheckId": "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+      "text": "independent expected-answer checking executes for all 300 questions"
+    },
+    {
+      "requirementId": "REQ_INDEPENDENT_EXPECTED_ALL_PASS",
+      "requiredCheckId": "INDEPENDENT_EXPECTED_ALL_PASS",
+      "text": "independent expected-answer checking passes for all 300 questions"
+    },
+    {
       "requirementId": "REQ_AUDIT_LOCK_INTACT",
       "requiredCheckId": "AUDIT_LOCK_INTACT",
       "text": "audit lock remains intact"
@@ -68,6 +92,10 @@
   "checkLayers": {
     "AUDIT_LOCK_INTACT": "ADVERSARIAL",
     "AUDIT_RUNNER_COMPLETED": "ADVERSARIAL",
-    "ORACLE_NO_SELF_REFERENCE": "ADVERSARIAL"
+    "ORACLE_NO_SELF_REFERENCE": "ADVERSARIAL",
+    "DIRECT_AUDIT_COMPLETE": "ADVERSARIAL",
+    "DIRECT_AUDIT_ALL_PASS": "ADVERSARIAL",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED": "ADVERSARIAL",
+    "INDEPENDENT_EXPECTED_ALL_PASS": "ADVERSARIAL"
   }
 }
