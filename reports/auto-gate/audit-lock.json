@@ -20,8 +20,8 @@
     "independent-audit/manifest.json": "3bd95a6604530897ee3fd7a46da31be165ffdc2f32f8d86c4ba9a5ee6d2ca269",
     "independent-audit/mutations/required.json": "06e387648cc5135e711ad104cfcd45b527260c3791314bff2f3773453cd51136",
     "independent-audit/oracles/accounting-rules.json": "db713065f75865dee26d47aa39441a86aa53f56531d10132c33c42634b22f316",
-    "independent-audit/tests/foundation.test.js": "a30d478f713045c147bed544c7ceac1ee58edbc6eab6f9bddc3403053c9b788b",
-    "scripts/qa/audit-core.js": "c9cbcd8c3644a0cf7c2dc7ed149804db9f99817200ab8db25c4034c50f806ce5",
+    "independent-audit/tests/foundation.test.js": "84c108f2f62b7c0ab25456c20acbf8cf8437c00a7deb02826dc47e4f40fa401f",
+    "scripts/qa/audit-core.js": "b30b3c9a1f04984578492c24c1993fd32c19cee9f23c3e96232856942a09ff68",
     "scripts/qa/generate-evidence.js": "347acadab7b16c38a0abae4dbb20751550f426eba38e6d53ef673803910e33ad",
     "scripts/qa/run-all-gates.js": "347acadab7b16c38a0abae4dbb20751550f426eba38e6d53ef673803910e33ad",
     "scripts/qa/run-independent-gate.js": "d9c9bcfecfa94c33c94a27905f2e0464bb30adbdd6b3b5243534a6848d4131a7",
@@ -30,5 +30,5 @@
     "scripts/qa/validate-auto-gate.js": "afaf30a8ec001d4062939c4f0ed36134f84a3289626930e010e3dd23376a3fe7",
     "scripts/qa/verify-audit-integrity.js": "5c69ac671737114f2811ec394fadf6ffed634f06c95faab49f483d737ced7181"
   },
-  "auditHash": "dbc833d59f1d65ed7dfd3f00d9b5ff0195afc66a7339d4afc1f0f5c86eddc71b"
+  "auditHash": "a63085c2fa490b6326b13aa304532d41902f29b261ebccb33dc68c2300c33a46"
 }
