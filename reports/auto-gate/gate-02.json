@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "gate": "GATE-02",
+  "status": "PASS",
+  "questionIds": [],
+  "reviewed": 0,
+  "changed": 0,
+  "pass": true,
+  "testCommands": [
+    "npm run audit:explanations"
+  ],
+  "exitCodes": [
+    0
+  ],
+  "remainingFailures": 0
+}

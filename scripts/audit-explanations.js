@@ -7,9 +7,13 @@ const HEADING = /【([^】]+)】/gu;
 const normalize = value => String(value ?? '').replace(/[\s,，円]/gu, '');
 const visibleLength = value => [...String(value ?? '').replace(/\s+/gu, '').replace(HEADING, '')].length;
 const semanticTypeForAudit = label => {
+  // The answer noun controls the value's unit; parenthetical source context
+  // such as "（6か月）の金額" does not turn a yen answer into a month count.
+  if (/単価/u.test(label)) return 'unitPrice';
+  if (/金額|償却費|帳簿価額|売却損益?/u.test(label)) return 'amount';
   if (/元丁/u.test(label)) return 'folio'; if (/数量|個数/u.test(label)) return 'quantity';
   if (/耐用年数|年数/u.test(label)) return 'years'; if (/月数|か月/u.test(label)) return 'months';
-  if (/率|％|%/u.test(label)) return 'rate'; if (/単価/u.test(label)) return 'unitPrice'; if (/件数/u.test(label)) return 'count';
+  if (/率|％|%/u.test(label)) return 'rate'; if (/件数/u.test(label)) return 'count';
   return null;
 };
 const significantTokens = question => {
@@ -88,6 +92,7 @@ const auditExplanations = questionMap => {
     if (/\b(?:undefined|null)\b/u.test(`${question.id}${question.question}${question.explanation}`)) result.nullishAnomalies.push(question.id);
     for (const phrase of BLACKLIST) if (String(question.explanation).includes(phrase)) result.blacklistedPhrases.push({ id:question.id, phrase });
     const text = String(question.explanation || '');
+    if (/(?:^|[^A-Za-z])(?:item|recorded|evidence|transaction|account|debit|credit|balance|tbDebit|tbCredit|before)\d*(?=[^A-Za-z]|$)/u.test(text)) result.semanticErrors.push({id:question.id, issue:'内部schemaキーが利用者向け解説に露出'});
     for (const phrase of ['unitPrice','currentDepreciation','closingBookValue']) if (text.includes(phrase)) result.semanticErrors.push({id:question.id, issue:`内部ID ${phrase}`});
     if (/損益は純資産|現金過不足は(?:資産|負債)/u.test(text)) result.semanticErrors.push({id:question.id, issue:'特殊勘定の固定分類'});
     if (/(?:数量|quantity)[0-9,]+円|(?:耐用年数|life)[0-9,]+円|元丁[0-9,]+円/u.test(text)) result.semanticErrors.push({id:question.id, issue:'意味型と単位が不一致'});

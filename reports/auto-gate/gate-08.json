@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "gate": "GATE-08",
+  "status": "PASS",
+  "questionIds": [
+    "F001",
+    "F002",
+    "F003",
+    "F004",
+    "F005",
+    "F006",
+    "F007",
+    "F008",
+    "F009",
+    "F010"
+  ],
+  "reviewed": 10,
+  "changed": 10,
+  "pass": 10,
+  "testCommands": [
+    "npm run audit:explanations"
+  ],
+  "exitCodes": [
+    0
+  ],
+  "remainingFailures": 0
+}

@@ -4,7 +4,7 @@
   "private": true,
   "description": "Dependency-free bookkeeping learning RPG",
   "scripts": {
-    "test": "node tests/explanation-audit-regression.test.js && node tests/quality-regressions.test.js && node tests/mobile-layout.test.js && node tests/app.test.js && node tests/service-worker.test.js && node tests/audit-engagement.test.js && node tests/true-oracle.test.js && node tests/audit-matrix.test.js && node scripts/audit-data.js && node scripts/audit-feedback.js && node scripts/audit-editorial.js && node scripts/audit-oracle.js && npm run audit:oracle-source && node scripts/audit-exam-readiness.js",
+    "test": "node tests/independent-quality-gate.test.js && node tests/cross-layer-mutation.test.js && node tests/explanation-audit-regression.test.js && node tests/quality-regressions.test.js && node tests/mobile-layout.test.js && node tests/app.test.js && node tests/service-worker.test.js && node tests/audit-engagement.test.js && node tests/true-oracle.test.js && node tests/audit-matrix.test.js && node scripts/audit-data.js && node scripts/audit-feedback.js && node scripts/audit-editorial.js && node scripts/audit-oracle.js && npm run audit:oracle-source && node scripts/audit-exam-readiness.js",
     "audit:exam": "node scripts/audit-exam-readiness.js",
     "typecheck": "tsc --noEmit",
     "audit:oracle": "node scripts/audit-oracle.js",
@@ -13,7 +13,8 @@
     "audit:editorial": "node scripts/audit-editorial.js",
     "audit:explanations": "node scripts/audit-explanations.js",
     "verify": "npm run audit:explanations && npm test && npm run typecheck",
-    "audit:explanation-metrics": "node scripts/report-explanation-metrics.js"
+    "audit:explanation-metrics": "node scripts/report-explanation-metrics.js",
+    "audit:auto-gate": "node scripts/qa/validate-auto-gate.js"
   },
   "engines": {
     "node": ">=18"

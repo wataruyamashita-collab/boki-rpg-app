@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "gates": {
+    "GATE-00": "PASS",
+    "GATE-01": "PASS",
+    "GATE-02": "PASS",
+    "GATE-03": "PASS",
+    "GATE-04": "PASS",
+    "GATE-05": "PASS",
+    "GATE-06": "PASS",
+    "GATE-07": "PASS",
+    "GATE-08": "PASS",
+    "GATE-09": "PASS",
+    "GATE-10": "PASS",
+    "GATE-11": "PASS",
+    "GATE-12": "PASS",
+    "GATE-13": "PASS"
+  },
+  "questions": {
+    "total": 300,
+    "reviewed": 300,
+    "changed": 150,
+    "unchangedAfterReview": 150,
+    "pass": 300,
+    "fail": 0
+  },
+  "knownDefects": {
+    "fifoMovingAverage": "FIXED",
+    "l040Semantic": "FIXED",
+    "internalKeyExposure": "FIXED",
+    "specialAccountUi": "FIXED",
+    "folioFormatting": "FIXED",
+    "fixedAssetCalculation": "FIXED"
+  },
+  "iphone": {
+    "widths": {
+      "320": "STATIC VERIFIED",
+      "375": "STATIC VERIFIED",
+      "390": "STATIC VERIFIED",
+      "430": "STATIC VERIFIED"
+    },
+    "static": "VERIFIED",
+    "browser": "UNVERIFIED",
+    "device": "UNVERIFIED"
+  },
+  "remainingRisks": [
+    "実iPhone実機では未検証",
+    "実ブラウザによる視覚回帰は未検証"
+  ],
+  "generatedAt": "2026-09-03T00:33:28.931Z"
+}
