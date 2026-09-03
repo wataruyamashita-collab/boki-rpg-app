@@ -1,34 +1,44 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "authority": "independent-audit",
-  "layers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING",
-    "ADVERSARIAL"
-  ],
-  "passPolicy": "all-required-checks-and-layers-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "correction",
-  "requirements": [
-    "original error, reversal and corrected entry must be traced"
-  ],
   "requiredCheckIds": [
-    "GATE-06.CONTRACT",
-    "GATE-06.AUDIT"
+    "CORRECTION_RECORDED_EVIDENCE",
+    "CORRECTION_ENTRY"
   ],
   "requiredLayers": [
-    "ACCOUNTING_SEMANTIC",
-    "STRUCTURAL"
+    "ACCOUNTING_SEMANTIC"
   ],
-  "dependencies": [],
-  "checkLayers": {
-    "GATE-06.CONTRACT": "STRUCTURAL",
-    "GATE-06.AUDIT": "ACCOUNTING_SEMANTIC"
-  },
+  "dependencies": [
+    {
+      "gateId": "GATE-05",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
   "notApplicableLayers": [
+    "STRUCTURAL",
     "LEARNING",
     "ADVERSARIAL"
-  ]
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_CORRECTION_RECORDED_EVIDENCE",
+      "requiredCheckId": "CORRECTION_RECORDED_EVIDENCE",
+      "text": "recorded error and source evidence are present"
+    },
+    {
+      "requirementId": "REQ_CORRECTION_ENTRY",
+      "requiredCheckId": "CORRECTION_ENTRY",
+      "text": "correction entry is complete"
+    }
+  ],
+  "checkLayers": {
+    "CORRECTION_RECORDED_EVIDENCE": "ACCOUNTING_SEMANTIC",
+    "CORRECTION_ENTRY": "ACCOUNTING_SEMANTIC"
+  }
 }

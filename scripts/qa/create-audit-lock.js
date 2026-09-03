@@ -1,6 +1,6 @@
 'use strict';
 
-const fs=require('fs'),crypto=require('crypto'),path=require('path');
+const fs=require('fs'),crypto=require('crypto'),path=require('path'),childProcess=require('child_process');
 const root=path.resolve(__dirname,'../..');
 const destination=path.join(root,'reports/auto-gate/audit-lock.json');
 if(process.argv[2]!=='--bootstrap'){
@@ -9,6 +9,12 @@ if(process.argv[2]!=='--bootstrap'){
 }
 if(fs.existsSync(destination)){
   console.error('AUDIT_LOCK_CREATE_REFUSED: an audit lock already exists and cannot be overwritten');
+  process.exit(1);
+}
+let trackedLockExists=false;
+try{trackedLockExists=childProcess.execFileSync('git',['log','--all','--format=%H','--','reports/auto-gate/audit-lock.json'],{cwd:root,encoding:'utf8'}).trim().length>0;}catch(_){/* A non-Git bootstrap environment has no historical lock. */}
+if(trackedLockExists){
+  console.error('AUDIT_LOCK_CREATE_REFUSED: the audit lock already exists in Git history');
   process.exit(1);
 }
 const walk=directory=>fs.readdirSync(path.join(root,directory),{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(`${directory}/${entry.name}`):[`${directory}/${entry.name}`]).sort();

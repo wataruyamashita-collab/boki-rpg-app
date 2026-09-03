@@ -1,45 +1,44 @@
 {
   "gate": "GATE-07",
-  "status": "PASS",
+  "status": "FAIL",
   "requiredCheckIds": [
-    "GATE-07.CONTRACT",
-    "GATE-07.AUDIT"
+    "WORKSHEET_COLUMNS",
+    "WORKSHEET_CLASSIFICATION"
   ],
   "executedCheckIds": [
-    "GATE-07.CONTRACT",
-    "GATE-07.AUDIT"
+    "WORKSHEET_COLUMNS",
+    "WORKSHEET_CLASSIFICATION"
   ],
   "passedCheckIds": [
-    "GATE-07.CONTRACT",
-    "GATE-07.AUDIT"
+    "WORKSHEET_CLASSIFICATION"
   ],
-  "failedCheckIds": [],
+  "failedCheckIds": [
+    "WORKSHEET_COLUMNS"
+  ],
   "layers": {
     "STRUCTURAL": {
-      "requiredCheckIds": [
-        "GATE-07.CONTRACT"
-      ],
-      "executedCheckIds": [
-        "GATE-07.CONTRACT"
-      ],
-      "passedCheckIds": [
-        "GATE-07.CONTRACT"
-      ],
+      "requiredCheckIds": [],
+      "executedCheckIds": [],
+      "passedCheckIds": [],
       "failedCheckIds": [],
-      "status": "PASS"
+      "status": "N/A"
     },
     "ACCOUNTING_SEMANTIC": {
       "requiredCheckIds": [
-        "GATE-07.AUDIT"
+        "WORKSHEET_COLUMNS",
+        "WORKSHEET_CLASSIFICATION"
       ],
       "executedCheckIds": [
-        "GATE-07.AUDIT"
+        "WORKSHEET_COLUMNS",
+        "WORKSHEET_CLASSIFICATION"
       ],
       "passedCheckIds": [
-        "GATE-07.AUDIT"
+        "WORKSHEET_CLASSIFICATION"
       ],
-      "failedCheckIds": [],
-      "status": "PASS"
+      "failedCheckIds": [
+        "WORKSHEET_COLUMNS"
+      ],
+      "status": "FAIL"
     },
     "LEARNING": {
       "requiredCheckIds": [],
@@ -56,6 +55,17 @@
       "status": "N/A"
     }
   },
+  "dependencyEvidence": [
+    {
+      "dependency": {
+        "gateId": "GATE-06",
+        "acceptedStatuses": [
+          "PASS"
+        ]
+      },
+      "satisfied": true
+    }
+  ],
   "findings": [],
   "contract": "worksheet",
   "sourceHashes": {
@@ -75,5 +85,5 @@
     "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-03T07:05:21.155Z"
+  "measuredAt": "2026-09-03T07:28:48.654Z"
 }

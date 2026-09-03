@@ -1,34 +1,37 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "authority": "independent-audit",
-  "layers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING",
-    "ADVERSARIAL"
-  ],
-  "passPolicy": "all-required-checks-and-layers-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "ui",
-  "requirements": [
-    "B/S sections must not duplicate"
-  ],
   "requiredCheckIds": [
-    "GATE-12.CONTRACT",
-    "GATE-12.AUDIT"
+    "UI_BALANCE_SHEET_SECTIONS"
   ],
   "requiredLayers": [
     "STRUCTURAL"
   ],
-  "dependencies": [],
-  "checkLayers": {
-    "GATE-12.CONTRACT": "STRUCTURAL",
-    "GATE-12.AUDIT": "STRUCTURAL"
-  },
+  "dependencies": [
+    {
+      "gateId": "GATE-11",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
   "notApplicableLayers": [
     "ACCOUNTING_SEMANTIC",
     "LEARNING",
     "ADVERSARIAL"
-  ]
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_UI_BALANCE_SHEET_SECTIONS",
+      "requiredCheckId": "UI_BALANCE_SHEET_SECTIONS",
+      "text": "balance-sheet sections are unique"
+    }
+  ],
+  "checkLayers": {
+    "UI_BALANCE_SHEET_SECTIONS": "STRUCTURAL"
+  }
 }

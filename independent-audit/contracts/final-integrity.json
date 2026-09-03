@@ -1,31 +1,66 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "authority": "independent-audit",
   "id": "final-integrity",
   "requiredCheckIds": [
-    "GATE-15.CONTRACT",
-    "GATE-15.INTEGRITY"
+    "AUDIT_LOCK_INTACT",
+    "AUDIT_RUNNER_COMPLETED"
   ],
   "requiredLayers": [
-    "STRUCTURAL",
     "ADVERSARIAL"
   ],
   "notApplicableLayers": [
+    "STRUCTURAL",
     "ACCOUNTING_SEMANTIC",
     "LEARNING"
   ],
   "dependencies": [
-    "GATE-01",
-    "GATE-14"
+    {
+      "gateId": "GATE-14",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    },
+    {
+      "gateId": "GATE-03",
+      "acceptedStatuses": [
+        "PASS",
+        "FAIL"
+      ],
+      "expectedRedCodes": [
+        "SPECIAL_ACCOUNT_MISCLASSIFIED"
+      ]
+    },
+    {
+      "gateId": "GATE-10",
+      "acceptedStatuses": [
+        "PASS",
+        "FAIL"
+      ],
+      "expectedRedCodes": [
+        "UNREACHABLE_STORY_QUESTION",
+        "PREMATURE_STORY_TERMINATION",
+        "PROGRESS_COUNT_MISMATCH"
+      ]
+    }
   ],
-  "passPolicy": "all-required-checks-and-layers-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
-  "checkLayers": {
-    "GATE-15.CONTRACT": "STRUCTURAL",
-    "GATE-15.INTEGRITY": "ADVERSARIAL"
-  },
   "requirements": [
-    "audit lock is intact before and after execution"
-  ]
+    {
+      "requirementId": "REQ_AUDIT_LOCK_INTACT",
+      "requiredCheckId": "AUDIT_LOCK_INTACT",
+      "text": "audit lock remains intact"
+    },
+    {
+      "requirementId": "REQ_AUDIT_RUNNER_COMPLETED",
+      "requiredCheckId": "AUDIT_RUNNER_COMPLETED",
+      "text": "audit runner completes without exception"
+    }
+  ],
+  "checkLayers": {
+    "AUDIT_LOCK_INTACT": "ADVERSARIAL",
+    "AUDIT_RUNNER_COMPLETED": "ADVERSARIAL"
+  }
 }

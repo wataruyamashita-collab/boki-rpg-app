@@ -1,36 +1,37 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "authority": "independent-audit",
-  "layers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING",
-    "ADVERSARIAL"
-  ],
-  "passPolicy": "all-required-checks-and-layers-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "semantic",
-  "requirements": [
-    "quantity=個; life=年; folio=no unit; amount=円",
-    "損益=closing account; 現金過不足=temporary account",
-    "raw internal identifiers visible=0"
-  ],
   "requiredCheckIds": [
-    "GATE-01.CONTRACT",
-    "GATE-01.AUDIT"
+    "SEMANTIC_VALUE_UNITS",
+    "SEMANTIC_QUESTION_COVERAGE"
   ],
   "requiredLayers": [
-    "ACCOUNTING_SEMANTIC",
-    "STRUCTURAL"
+    "ACCOUNTING_SEMANTIC"
   ],
   "dependencies": [],
-  "checkLayers": {
-    "GATE-01.CONTRACT": "STRUCTURAL",
-    "GATE-01.AUDIT": "ACCOUNTING_SEMANTIC"
-  },
   "notApplicableLayers": [
+    "STRUCTURAL",
     "LEARNING",
     "ADVERSARIAL"
-  ]
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_SEMANTIC_VALUE_UNITS",
+      "requiredCheckId": "SEMANTIC_VALUE_UNITS",
+      "text": "semantic units match visible values"
+    },
+    {
+      "requirementId": "REQ_SEMANTIC_QUESTION_COVERAGE",
+      "requiredCheckId": "SEMANTIC_QUESTION_COVERAGE",
+      "text": "question inventory is complete and unique"
+    }
+  ],
+  "checkLayers": {
+    "SEMANTIC_VALUE_UNITS": "ACCOUNTING_SEMANTIC",
+    "SEMANTIC_QUESTION_COVERAGE": "ACCOUNTING_SEMANTIC"
+  }
 }

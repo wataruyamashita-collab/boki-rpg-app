@@ -1,32 +1,26 @@
 {
   "gate": "GATE-12",
-  "status": "PASS",
+  "status": "FAIL",
   "requiredCheckIds": [
-    "GATE-12.CONTRACT",
-    "GATE-12.AUDIT"
+    "UI_BALANCE_SHEET_SECTIONS"
   ],
   "executedCheckIds": [
-    "GATE-12.CONTRACT",
-    "GATE-12.AUDIT"
+    "UI_BALANCE_SHEET_SECTIONS"
   ],
   "passedCheckIds": [
-    "GATE-12.CONTRACT",
-    "GATE-12.AUDIT"
+    "UI_BALANCE_SHEET_SECTIONS"
   ],
   "failedCheckIds": [],
   "layers": {
     "STRUCTURAL": {
       "requiredCheckIds": [
-        "GATE-12.CONTRACT",
-        "GATE-12.AUDIT"
+        "UI_BALANCE_SHEET_SECTIONS"
       ],
       "executedCheckIds": [
-        "GATE-12.CONTRACT",
-        "GATE-12.AUDIT"
+        "UI_BALANCE_SHEET_SECTIONS"
       ],
       "passedCheckIds": [
-        "GATE-12.CONTRACT",
-        "GATE-12.AUDIT"
+        "UI_BALANCE_SHEET_SECTIONS"
       ],
       "failedCheckIds": [],
       "status": "PASS"
@@ -53,7 +47,24 @@
       "status": "N/A"
     }
   },
-  "findings": [],
+  "dependencyEvidence": [
+    {
+      "dependency": {
+        "gateId": "GATE-11",
+        "acceptedStatuses": [
+          "PASS"
+        ]
+      },
+      "satisfied": false
+    }
+  ],
+  "findings": [
+    {
+      "gate": "GATE-12",
+      "code": "DEPENDENCY_NOT_SATISFIED",
+      "detail": "GATE-11"
+    }
+  ],
   "contract": "ui",
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
@@ -72,5 +83,5 @@
     "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-03T07:05:21.155Z"
+  "measuredAt": "2026-09-03T07:28:48.654Z"
 }

@@ -1,35 +1,58 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "authority": "independent-audit",
-  "layers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING",
-    "ADVERSARIAL"
-  ],
-  "passPolicy": "all-required-checks-and-layers-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "ledger",
-  "requirements": [
-    "fixed expected cells and semantic units",
-    "inventory method must match prompt"
-  ],
   "requiredCheckIds": [
-    "GATE-04.CONTRACT",
-    "GATE-04.AUDIT"
+    "LEDGER_METHOD_MATCH",
+    "LEDGER_EXPECTED_CELLS",
+    "LEDGER_UNIT_SEMANTICS",
+    "LEDGER_CALCULATION_TRACE"
   ],
   "requiredLayers": [
-    "ACCOUNTING_SEMANTIC",
-    "STRUCTURAL"
+    "ACCOUNTING_SEMANTIC"
   ],
-  "dependencies": [],
-  "checkLayers": {
-    "GATE-04.CONTRACT": "STRUCTURAL",
-    "GATE-04.AUDIT": "ACCOUNTING_SEMANTIC"
-  },
+  "dependencies": [
+    {
+      "gateId": "GATE-01",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
   "notApplicableLayers": [
+    "STRUCTURAL",
     "LEARNING",
     "ADVERSARIAL"
-  ]
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_LEDGER_METHOD_MATCH",
+      "requiredCheckId": "LEDGER_METHOD_MATCH",
+      "text": "ledger method matches the prompt"
+    },
+    {
+      "requirementId": "REQ_LEDGER_EXPECTED_CELLS",
+      "requiredCheckId": "LEDGER_EXPECTED_CELLS",
+      "text": "ledger expected cells are independently checked"
+    },
+    {
+      "requirementId": "REQ_LEDGER_UNIT_SEMANTICS",
+      "requiredCheckId": "LEDGER_UNIT_SEMANTICS",
+      "text": "ledger cells use correct semantic units"
+    },
+    {
+      "requirementId": "REQ_LEDGER_CALCULATION_TRACE",
+      "requiredCheckId": "LEDGER_CALCULATION_TRACE",
+      "text": "ledger answers are traced through calculations"
+    }
+  ],
+  "checkLayers": {
+    "LEDGER_METHOD_MATCH": "ACCOUNTING_SEMANTIC",
+    "LEDGER_EXPECTED_CELLS": "ACCOUNTING_SEMANTIC",
+    "LEDGER_UNIT_SEMANTICS": "ACCOUNTING_SEMANTIC",
+    "LEDGER_CALCULATION_TRACE": "ACCOUNTING_SEMANTIC"
+  }
 }

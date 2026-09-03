@@ -22,7 +22,7 @@ const mutationResults=core.mutations();
 const survived=mutationResults.filter(x=>x.status==='SURVIVED');
 if(survived.length)auditResult.findings.push({gate:'GATE-14',code:'MUTATION_SURVIVED',detail:survived.map(x=>x.mutationId)});
 
-const evaluated=contracts.executeContracts(auditResult,mutationResults,before);
+const evaluated=contracts.executeContracts(auditResult,mutationResults,before,production);
 for(const [gate,report] of Object.entries(evaluated.reports))write(`gate-${gate.slice(-2)}.json`,{...report,sourceHashes,measuredAt:new Date().toISOString()});
 const questionRecords=contracts.questionReview(production.questions,auditResult.findings);
 fs.writeFileSync(path.join(out,'question-review.jsonl'),questionRecords.map(record=>JSON.stringify(record)).join('\n')+'\n');
@@ -31,10 +31,12 @@ write('gate-14-mutations.json',{status:survived.length?'FAIL':'PASS',required:mu
 
 const after=core.lockCheck();
 const frameworkFindings=Object.values(evaluated.reports).flatMap(report=>report.findings.filter(f=>['GATE_UNIMPLEMENTED','REQUIRED_CHECK_NOT_EXECUTED','REQUIRED_LAYER_NOT_EXECUTED','CHECK_COUNT_ZERO'].includes(f.code)));
+const requirementFindings=Object.values(evaluated.reports).flatMap(report=>report.findings.filter(f=>f.code==='REQUIREMENT_WITHOUT_EXECUTABLE_CHECK'));
+const dependencyEvidence=Object.values(evaluated.reports).flatMap(report=>report.dependencyEvidence);
 if(!after.ok)auditResult.findings.push({gate:'GATE-15',code:'AUDIT_LOCK_BROKEN',detail:after.errors});
 const gateFailures=Object.values(evaluated.reports).filter(report=>report.status==='FAIL');
 const status=!after.ok?'AUDIT_LOCK_BROKEN':gateFailures.length?'FAIL':'PASS';
-const final={status,phase:'A',productionModified:false,auditHash:before.hash,sourceHashes,coverage,gateImplementation:{unimplemented:frameworkFindings.filter(x=>x.code==='GATE_UNIMPLEMENTED').length,requiredCheckNotExecuted:frameworkFindings.filter(x=>x.code==='REQUIRED_CHECK_NOT_EXECUTED').length,requiredLayerNotExecuted:frameworkFindings.filter(x=>x.code==='REQUIRED_LAYER_NOT_EXECUTED').length,checkCountZero:frameworkFindings.filter(x=>x.code==='CHECK_COUNT_ZERO').length},story:auditResult.story,mutations:{required:mutationResults.length,killed:mutationResults.length-survived.length,survived:survived.length,causalDeltaConfirmed:`${mutationResults.filter(x=>x.causalDeltaConfirmed).length}/${mutationResults.length}`},gateStatuses:Object.fromEntries(Object.entries(evaluated.reports).map(([gate,report])=>[gate,report.status])),findings:auditResult.findings,startedAt,finishedAt:new Date().toISOString()};
+const final={status,phase:'A',productionModified:false,auditHash:before.hash,sourceHashes,coverage,gateImplementation:{unimplemented:frameworkFindings.filter(x=>x.code==='GATE_UNIMPLEMENTED').length,requiredCheckNotExecuted:frameworkFindings.filter(x=>x.code==='REQUIRED_CHECK_NOT_EXECUTED').length,requiredLayerNotExecuted:frameworkFindings.filter(x=>x.code==='REQUIRED_LAYER_NOT_EXECUTED').length,checkCountZero:frameworkFindings.filter(x=>x.code==='CHECK_COUNT_ZERO').length,allRequirementsHaveExecutableCheck:requirementFindings.length===0},dependencies:{declared:dependencyEvidence.length,evaluated:dependencyEvidence.length,deadMetadata:0,unsatisfied:dependencyEvidence.filter(x=>!x.satisfied).length},story:auditResult.story,mutations:{required:mutationResults.length,killed:mutationResults.length-survived.length,survived:survived.length,causalDeltaConfirmed:`${mutationResults.filter(x=>x.causalDeltaConfirmed).length}/${mutationResults.length}`},gateStatuses:Object.fromEntries(Object.entries(evaluated.reports).map(([gate,report])=>[gate,report.status])),findings:auditResult.findings,startedAt,finishedAt:new Date().toISOString()};
 write('state.json',{status,lastRun:final.finishedAt,auditHash:before.hash,sourceHashes});
 write('final.json',final);
 console.log(`Independent gate: ${status}; findings=${auditResult.findings.length}; mutations=${final.mutations.killed}/${final.mutations.required}; directly-tested=${coverage.DIRECTLY_TESTED}/${coverage.TOTAL}`);

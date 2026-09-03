@@ -2,7 +2,7 @@
   "status": "FAIL",
   "phase": "A",
   "productionModified": false,
-  "auditHash": "5f3e72a18ad8bfbaf9fab922bb0f4f9ac5aa35245897943580b5423a98163ea9",
+  "auditHash": "30a62876dd725d874fb50a914f01f31d2f034f8d8ef45b2147d1d62e92eb40b7",
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
@@ -23,8 +23,8 @@
   "coverage": {
     "TOTAL": 300,
     "DIRECTLY_TESTED": 300,
-    "PASS": 293,
-    "FAIL": 7,
+    "PASS": 278,
+    "FAIL": 22,
     "MISSING": 0,
     "DUPLICATE": 0
   },
@@ -32,7 +32,14 @@
     "unimplemented": 0,
     "requiredCheckNotExecuted": 0,
     "requiredLayerNotExecuted": 0,
-    "checkCountZero": 0
+    "checkCountZero": 0,
+    "allRequirementsHaveExecutableCheck": true
+  },
+  "dependencies": {
+    "declared": 16,
+    "evaluated": 16,
+    "deadMetadata": 0,
+    "unsatisfied": 7
   },
   "story": {
     "expectedDisplayedCount": 25,
@@ -232,15 +239,15 @@
     "GATE-04": "PASS",
     "GATE-05": "PASS",
     "GATE-06": "PASS",
-    "GATE-07": "PASS",
-    "GATE-08": "PASS",
-    "GATE-09": "PASS",
+    "GATE-07": "FAIL",
+    "GATE-08": "FAIL",
+    "GATE-09": "FAIL",
     "GATE-10": "FAIL",
-    "GATE-11": "PASS",
-    "GATE-12": "PASS",
-    "GATE-13": "PASS",
-    "GATE-14": "PASS",
-    "GATE-15": "PASS"
+    "GATE-11": "FAIL",
+    "GATE-12": "FAIL",
+    "GATE-13": "FAIL",
+    "GATE-14": "FAIL",
+    "GATE-15": "FAIL"
   },
   "findings": [
     {
@@ -313,6 +320,6 @@
       }
     }
   ],
-  "startedAt": "2026-09-03T07:05:15.300Z",
-  "finishedAt": "2026-09-03T07:05:21.184Z"
+  "startedAt": "2026-09-03T07:28:43.305Z",
+  "finishedAt": "2026-09-03T07:28:48.690Z"
 }

@@ -2,32 +2,28 @@
   "gate": "GATE-10",
   "status": "FAIL",
   "requiredCheckIds": [
-    "GATE-10.CONTRACT",
-    "GATE-10.AUDIT"
+    "STORY_DISPLAY_COUNT",
+    "STORY_POSITION_SEQUENCE",
+    "STORY_REACHABILITY"
   ],
   "executedCheckIds": [
-    "GATE-10.CONTRACT",
-    "GATE-10.AUDIT"
+    "STORY_DISPLAY_COUNT",
+    "STORY_POSITION_SEQUENCE",
+    "STORY_REACHABILITY"
   ],
-  "passedCheckIds": [
-    "GATE-10.CONTRACT"
-  ],
+  "passedCheckIds": [],
   "failedCheckIds": [
-    "GATE-10.AUDIT"
+    "STORY_DISPLAY_COUNT",
+    "STORY_POSITION_SEQUENCE",
+    "STORY_REACHABILITY"
   ],
   "layers": {
     "STRUCTURAL": {
-      "requiredCheckIds": [
-        "GATE-10.CONTRACT"
-      ],
-      "executedCheckIds": [
-        "GATE-10.CONTRACT"
-      ],
-      "passedCheckIds": [
-        "GATE-10.CONTRACT"
-      ],
+      "requiredCheckIds": [],
+      "executedCheckIds": [],
+      "passedCheckIds": [],
       "failedCheckIds": [],
-      "status": "PASS"
+      "status": "N/A"
     },
     "ACCOUNTING_SEMANTIC": {
       "requiredCheckIds": [],
@@ -38,14 +34,20 @@
     },
     "LEARNING": {
       "requiredCheckIds": [
-        "GATE-10.AUDIT"
+        "STORY_DISPLAY_COUNT",
+        "STORY_POSITION_SEQUENCE",
+        "STORY_REACHABILITY"
       ],
       "executedCheckIds": [
-        "GATE-10.AUDIT"
+        "STORY_DISPLAY_COUNT",
+        "STORY_POSITION_SEQUENCE",
+        "STORY_REACHABILITY"
       ],
       "passedCheckIds": [],
       "failedCheckIds": [
-        "GATE-10.AUDIT"
+        "STORY_DISPLAY_COUNT",
+        "STORY_POSITION_SEQUENCE",
+        "STORY_REACHABILITY"
       ],
       "status": "FAIL"
     },
@@ -57,6 +59,17 @@
       "status": "N/A"
     }
   },
+  "dependencyEvidence": [
+    {
+      "dependency": {
+        "gateId": "GATE-01",
+        "acceptedStatuses": [
+          "PASS"
+        ]
+      },
+      "satisfied": true
+    }
+  ],
   "findings": [
     {
       "gate": "GATE-10",
@@ -141,5 +154,5 @@
     "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-03T07:05:21.155Z"
+  "measuredAt": "2026-09-03T07:28:48.654Z"
 }

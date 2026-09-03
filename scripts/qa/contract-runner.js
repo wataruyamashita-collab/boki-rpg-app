@@ -2,100 +2,63 @@
 
 const crypto=require('crypto');
 const core=require('./audit-core');
-
 const LAYERS=['STRUCTURAL','ACCOUNTING_SEMANTIC','LEARNING','ADVERSARIAL'];
-const gateContracts=[
-  ['GATE-01','semantic'],['GATE-02','user-facing'],['GATE-03','journal'],['GATE-04','ledger'],
-  ['GATE-05','trial-balance'],['GATE-06','correction'],['GATE-07','worksheet'],
-  ['GATE-08','financial-statements'],['GATE-09','comprehensive'],['GATE-10','story-progression'],
-  ['GATE-11','question-variety'],['GATE-12','ui'],['GATE-13','mobile'],
-  ['GATE-14','mutation'],['GATE-15','final-integrity']
-];
+const gateContracts=[['GATE-01','semantic'],['GATE-02','user-facing'],['GATE-03','journal'],['GATE-04','ledger'],['GATE-05','trial-balance'],['GATE-06','correction'],['GATE-07','worksheet'],['GATE-08','financial-statements'],['GATE-09','comprehensive'],['GATE-10','story-progression'],['GATE-11','question-variety'],['GATE-12','ui'],['GATE-13','mobile'],['GATE-14','mutation'],['GATE-15','final-integrity']];
+const findingCheck=(gate,codes)=>context=>context.auditResult.findings.filter(f=>f.gate===gate&&codes.includes(f.code));
+const executableChecks={
+  SEMANTIC_VALUE_UNITS:findingCheck('GATE-01',['QUANTITY_AS_YEN','LIFE_AS_YEN','FOLIO_AS_YEN','AMOUNT_AS_MONTH']),
+  SEMANTIC_QUESTION_COVERAGE:findingCheck('GATE-01',['COVERAGE_TOTAL','DUPLICATE_ID','MISSING_GOLDEN']),
+  USER_FACING_INTERNAL_IDS:findingCheck('GATE-02',['RAW_INTERNAL_ID']),
+  USER_FACING_EXPLANATION_RELATIONS:findingCheck('GATE-02',['EXPLANATION_RELATION_INCOMPLETE']),
+  JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION:findingCheck('GATE-03',['SPECIAL_ACCOUNT_MISCLASSIFIED','PROFIT_CLASSIFICATION','CASH_OVER_SHORT_CLASSIFICATION']),
+  JOURNAL_HORIZONTAL_ENTRY:context=>Object.values(context.production.questions).filter(q=>q.type==='journal'&&(!Array.isArray(q.answer?.debit)||!Array.isArray(q.answer?.credit))).map(q=>({code:'JOURNAL_HORIZONTAL_ENTRY',id:q.id})),
+  LEDGER_METHOD_MATCH:findingCheck('GATE-04',['FIFO_METHOD','FIFO_CONTAMINATION']),
+  LEDGER_EXPECTED_CELLS:findingCheck('GATE-04',['FIXED_EXPECTED','FOLIO_EXPECTED']),
+  LEDGER_UNIT_SEMANTICS:findingCheck('GATE-01',['QUANTITY_AS_YEN','LIFE_AS_YEN','FOLIO_AS_YEN','AMOUNT_AS_MONTH']),
+  LEDGER_CALCULATION_TRACE:context=>questionFailures(context,'ledger',q=>answerValues(q).every(value=>mentionsValue(q.explanation,value)),'LEDGER_CALCULATION_TRACE'),
+  TRIAL_BALANCE_DEBIT_TOTAL:context=>questionFailures(context,'trial_balance',q=>hasAnswerKey(q,/debit/i),'TRIAL_BALANCE_DEBIT_TOTAL'),
+  TRIAL_BALANCE_CREDIT_TOTAL:context=>questionFailures(context,'trial_balance',q=>hasAnswerKey(q,/credit/i),'TRIAL_BALANCE_CREDIT_TOTAL'),
+  TRIAL_BALANCE_TOTAL_EQUALITY:context=>questionFailures(context,'trial_balance',q=>trialBalanceTotals(q).debit===trialBalanceTotals(q).credit,'TRIAL_BALANCE_TOTAL_EQUALITY'),
+  CORRECTION_RECORDED_EVIDENCE:context=>questionFailures(context,'correction',q=>q.materials?.some(m=>m.recorded&&m.evidence),'CORRECTION_RECORDED_EVIDENCE'),
+  CORRECTION_ENTRY:context=>questionFailures(context,'correction',q=>['debitAccount','debitAmount','creditAccount','creditAmount'].every(key=>key in (q.answer?.cells||{})),'CORRECTION_ENTRY'),
+  WORKSHEET_COLUMNS:context=>questionFailures(context,'worksheet',q=>['tb','adj','pl','bs'].every(prefix=>Object.keys(q.answer?.cells||{}).some(key=>key.toLowerCase().startsWith(prefix))),'WORKSHEET_COLUMNS'),
+  WORKSHEET_CLASSIFICATION:context=>questionFailures(context,'worksheet',q=>/損益|P\/L/.test(q.explanation)&&/貸借|B\/S/.test(q.explanation),'WORKSHEET_CLASSIFICATION'),
+  FINANCIAL_STATEMENT_VALUES:findingCheck('GATE-08',['ACCOUNTING_EQUATION']),
+  FINANCIAL_STATEMENT_EQUATION:context=>questionFailures(context,'financial_statement',q=>answerValues(q).every(Number.isFinite),'FINANCIAL_STATEMENT_EQUATION'),
+  COMPREHENSIVE_RELATION_TRACE:context=>questionFailures(context,'comprehensive',q=>q.materials?.length>1&&answerValues(q).every(value=>mentionsValue(q.explanation,value)),'COMPREHENSIVE_RELATION_TRACE'),
+  STORY_DISPLAY_COUNT:findingCheck('GATE-10',['PROGRESS_COUNT_MISMATCH']),
+  STORY_POSITION_SEQUENCE:findingCheck('GATE-10',['STORY_POSITION_GAP','PREMATURE_STORY_TERMINATION']),
+  STORY_REACHABILITY:findingCheck('GATE-10',['UNREACHABLE_STORY_QUESTION','UNEXPECTED_LOOP']),
+  QUESTION_VARIETY:findingCheck('GATE-11',['EXCESSIVE_REPETITION']),
+  UI_BALANCE_SHEET_SECTIONS:findingCheck('GATE-12',['DUPLICATE_BS_SECTION']),
+  MOBILE_MINIMUM_FONT:findingCheck('GATE-13',['MOBILE_FONT_TOO_SMALL']),
+  MUTATION_ALL_KILLED:context=>context.mutationResults.filter(x=>x.status!=='KILLED'),
+  MUTATION_CAUSAL_DELTA:context=>context.mutationResults.filter(x=>!x.causalDeltaConfirmed),
+  AUDIT_LOCK_INTACT:context=>context.lockResult.ok?[]:context.lockResult.errors,
+  AUDIT_RUNNER_COMPLETED:context=>context.auditResult.findings.filter(f=>f.code==='RUNNER_EXCEPTION')
+};
 
-function loadContracts(){
-  return Object.fromEntries(gateContracts.map(([gate,name])=>[gate,core.json(`independent-audit/contracts/${name}.json`)]));
-}
+function answerValues(question){return Object.values(question.answer?.cells||{}).concat((question.answer?.debit||[]).map(x=>x.amount),(question.answer?.credit||[]).map(x=>x.amount)).filter(Number.isFinite);}
+function mentionsValue(text,value){return String(text||'').includes(value.toLocaleString('ja-JP'))||String(text||'').includes(String(value));}
+function questionFailures(context,type,predicate,code){return Object.values(context.production.questions).filter(q=>q.type===type&&!predicate(q)).map(q=>({code,id:q.id}));}
+function hasAnswerKey(question,pattern){return Object.keys(question.answer?.cells||{}).some(key=>pattern.test(key));}
+function trialBalanceTotals(question){const cells=question.answer?.cells||{},keys=Object.keys(cells);return {debit:cells[keys.find(k=>/debit/i.test(k))],credit:cells[keys.find(k=>/credit/i.test(k))]};}
+function loadContracts(){return Object.fromEntries(gateContracts.map(([gate,name])=>[gate,core.json(`independent-audit/contracts/${name}.json`)]));}
+function validateContract(contract){const errors=[];if(!Array.isArray(contract.requirements)||contract.requirements.length===0)errors.push('GATE_UNIMPLEMENTED');if(!Array.isArray(contract.requiredCheckIds)||contract.requiredCheckIds.length===0)errors.push('GATE_UNIMPLEMENTED');if(!Array.isArray(contract.requiredLayers)||contract.requiredLayers.length===0)errors.push('REQUIRED_LAYER_NOT_EXECUTED');if(!Array.isArray(contract.dependencies))errors.push('GATE_UNIMPLEMENTED');if(contract.passPolicy!=='all-required-checks-layers-and-dependencies-pass')errors.push('GATE_UNIMPLEMENTED');for(const requirement of contract.requirements||[])if(!requirement.requirementId||!requirement.requiredCheckId||!executableChecks[requirement.requiredCheckId])errors.push('REQUIREMENT_WITHOUT_EXECUTABLE_CHECK');for(const id of contract.requiredCheckIds||[])if(!executableChecks[id])errors.push('REQUIREMENT_WITHOUT_EXECUTABLE_CHECK');return [...new Set(errors)];}
+function dependencySatisfied(dependency,report){if(!report)return false;if((dependency.acceptedStatuses||['PASS']).includes(report.status)){if(report.status!=='FAIL')return true;const actual=new Set(report.findings.filter(f=>!['DEPENDENCY_NOT_SATISFIED'].includes(f.code)).map(f=>f.code));return actual.size>0&&(dependency.expectedRedCodes||[]).length>0&&[...actual].every(code=>dependency.expectedRedCodes.includes(code));}return false;}
+function evaluateContract(gate,contract,checks,auditFindings=[],priorReports={}){const required=contract.requiredCheckIds||[],executed=required.filter(id=>checks[id]),missing=required.filter(id=>!checks[id]),layers={};for(const layer of LAYERS){const layerRequired=required.filter(id=>contract.checkLayers?.[id]===layer),layerExecuted=layerRequired.filter(id=>checks[id]),passedCheckIds=layerExecuted.filter(id=>checks[id].status==='PASS'),failedCheckIds=layerExecuted.filter(id=>checks[id].status==='FAIL'),explicitNA=(contract.notApplicableLayers||[]).includes(layer);layers[layer]={requiredCheckIds:layerRequired,executedCheckIds:layerExecuted,passedCheckIds,failedCheckIds,status:explicitNA?'N/A':layerRequired.length===0||layerExecuted.length!==layerRequired.length||failedCheckIds.length?'FAIL':'PASS'};}const findings=[];if(required.length===0)findings.push({gate,code:'CHECK_COUNT_ZERO'});if(missing.length)findings.push({gate,code:'REQUIRED_CHECK_NOT_EXECUTED',detail:missing});for(const layer of contract.requiredLayers||[])if(layers[layer].executedCheckIds.length===0)findings.push({gate,code:'REQUIRED_LAYER_NOT_EXECUTED',detail:layer});for(const code of validateContract(contract))findings.push({gate,code});const dependencyEvidence=(contract.dependencies||[]).map(dependency=>({dependency,satisfied:dependencySatisfied(dependency,priorReports[dependency.gateId])}));for(const item of dependencyEvidence.filter(x=>!x.satisfied))findings.push({gate,code:'DEPENDENCY_NOT_SATISFIED',detail:item.dependency.gateId});const failed=executed.filter(id=>checks[id].status==='FAIL'),status=required.length>0&&missing.length===0&&findings.length===0&&failed.length===0&&(contract.requiredLayers||[]).every(layer=>layers[layer].status==='PASS')?'PASS':'FAIL';return {gate,status,requiredCheckIds:required,executedCheckIds:executed,passedCheckIds:executed.filter(id=>checks[id].status==='PASS'),failedCheckIds:failed,layers,dependencyEvidence,findings:[...auditFindings,...findings]};}
+function executeContracts(auditResult,mutationResults,lockResult,production){const contracts=loadContracts(),checks={},reports={},context={auditResult,mutationResults,lockResult,production};for(const [gate,name] of gateContracts){const contract=contracts[gate];for(const id of contract.requiredCheckIds||[]){if(!executableChecks[id])continue;let failures,error;try{failures=executableChecks[id](context)||[];}catch(reason){failures=[{code:'CHECK_EXCEPTION'}];error=reason.message;}checks[id]={id,layer:contract.checkLayers?.[id],status:failures.length?'FAIL':'PASS',failures,error};}reports[gate]={...evaluateContract(gate,contract,checks,auditResult.findings.filter(x=>x.gate===gate),reports),contract:name};}return {reports,checks};}
 
-function validateContract(contract){
-  const errors=[];
-  if(!Array.isArray(contract.requiredCheckIds)||contract.requiredCheckIds.length===0)errors.push('GATE_UNIMPLEMENTED');
-  if(!Array.isArray(contract.requiredLayers)||contract.requiredLayers.length===0)errors.push('REQUIRED_LAYER_NOT_EXECUTED');
-  if(!Array.isArray(contract.dependencies))errors.push('GATE_UNIMPLEMENTED');
-  if(contract.passPolicy!=='all-required-checks-and-layers-pass')errors.push('GATE_UNIMPLEMENTED');
-  for(const layer of contract.requiredLayers||[])if(!LAYERS.includes(layer))errors.push('REQUIRED_LAYER_NOT_EXECUTED');
-  return errors;
-}
-
-function evaluateContract(gate,contract,checks,auditFindings=[]){
-  const required=contract.requiredCheckIds||[],executed=required.filter(id=>checks[id]);
-  const missing=required.filter(id=>!checks[id]),layers={};
-  for(const layer of LAYERS){
-    const layerRequired=required.filter(id=>contract.checkLayers?.[id]===layer);
-    const layerExecuted=layerRequired.filter(id=>checks[id]);
-    const passedCheckIds=layerExecuted.filter(id=>checks[id].status==='PASS');
-    const failedCheckIds=layerExecuted.filter(id=>checks[id].status==='FAIL');
-    const explicitNA=(contract.notApplicableLayers||[]).includes(layer);
-    const status=explicitNA?'N/A':layerRequired.length===0?'FAIL':layerExecuted.length!==layerRequired.length||failedCheckIds.length?'FAIL':'PASS';
-    layers[layer]={requiredCheckIds:layerRequired,executedCheckIds:layerExecuted,passedCheckIds,failedCheckIds,status};
-  }
-  const frameworkFindings=[];
-  if(required.length===0)frameworkFindings.push({gate,code:'CHECK_COUNT_ZERO'});
-  if(missing.length)frameworkFindings.push({gate,code:'REQUIRED_CHECK_NOT_EXECUTED',detail:missing});
-  for(const layer of contract.requiredLayers||[])if(layers[layer].executedCheckIds.length===0)frameworkFindings.push({gate,code:'REQUIRED_LAYER_NOT_EXECUTED',detail:layer});
-  for(const code of validateContract(contract))frameworkFindings.push({gate,code});
-  const failed=executed.filter(id=>checks[id].status==='FAIL');
-  const status=required.length>0&&missing.length===0&&frameworkFindings.length===0&&failed.length===0&&(contract.requiredLayers||[]).every(x=>layers[x].status==='PASS')?'PASS':'FAIL';
-  return {gate,status,requiredCheckIds:required,executedCheckIds:executed,passedCheckIds:executed.filter(id=>checks[id].status==='PASS'),failedCheckIds:failed,layers,findings:[...auditFindings,...frameworkFindings]};
-}
-
-function executeContracts(auditResult,mutationResults,lockResult){
-  const contracts=loadContracts();
-  const checks={};
-  const run=(id,layer,test,failures=[])=>{
-    let passed=false,error=null;
-    try{passed=Boolean(test());}catch(reason){error=reason.message;}
-    checks[id]={id,layer,status:passed?'PASS':'FAIL',failures,error};
-  };
-  for(const [gate,name] of gateContracts){
-    const contract=contracts[gate];
-    const contractErrors=validateContract(contract);
-    run(`${gate}.CONTRACT`, 'STRUCTURAL',()=>contractErrors.length===0,contractErrors);
-    const gateFindings=auditResult.findings.filter(f=>f.gate===gate);
-    if(gate==='GATE-14')run(`${gate}.MUTATIONS`,'ADVERSARIAL',()=>mutationResults.length>0&&mutationResults.every(x=>x.status==='KILLED'&&x.causalDeltaConfirmed),mutationResults.filter(x=>x.status!=='KILLED'||!x.causalDeltaConfirmed).map(x=>x.mutationId));
-    else if(gate==='GATE-15')run(`${gate}.INTEGRITY`,'ADVERSARIAL',()=>lockResult.ok,lockResult.errors);
-    else run(`${gate}.AUDIT`,contract.requiredLayers.find(x=>x!=='STRUCTURAL')||'STRUCTURAL',()=>gateFindings.length===0,gateFindings.map(x=>x.code));
-  }
-  const reports={};
-  for(const [gate,name] of gateContracts){
-    reports[gate]={...evaluateContract(gate,contracts[gate],checks,auditResult.findings.filter(x=>x.gate===gate)),contract:name};
-  }
-  return {reports,checks};
-}
-
-function questionReview(questions,auditFindings){
-  const expected=core.json('independent-audit/golden/question-ids.json').ids;
-  const raw=core.read('data/questions.js');
-  const authoredIds=[...raw.matchAll(/^  "([A-Z]\d{3})": \{/gmu)].map(match=>match[1]);
-  const duplicates=new Set(authoredIds.filter((id,index)=>authoredIds.indexOf(id)!==index));
-  return expected.map(questionId=>{
-    const question=questions[questionId];
-    const requiredCheckIds=['QUESTION_PRESENT','QUESTION_STRUCTURE','QUESTION_EXPLANATION','QUESTION_GATE_FINDINGS'];
-    const results=[];
-    const check=(id,pass)=>results.push({id,pass:Boolean(pass)});
-    check('QUESTION_PRESENT',question&&!duplicates.has(questionId));
-    check('QUESTION_STRUCTURE',question&&typeof question.question==='string'&&question.answer&&typeof question.answer==='object');
-    check('QUESTION_EXPLANATION',question&&typeof question.explanation==='string'&&question.explanation.trim().length>0);
-    check('QUESTION_GATE_FINDINGS',question&&!auditFindings.some(f=>f.id===questionId));
-    const executedCheckIds=results.map(x=>x.id),passedCheckIds=results.filter(x=>x.pass).map(x=>x.id),failedCheckIds=results.filter(x=>!x.pass).map(x=>x.id);
-    const sourceHash=question?crypto.createHash('sha256').update(JSON.stringify(question)).digest('hex'):null;
-    return {questionId,requiredCheckIds,executedCheckIds,passedCheckIds,failedCheckIds,sourceHash,status:requiredCheckIds.every(id=>executedCheckIds.includes(id))&&failedCheckIds.length===0?'PASS':'FAIL'};
-  });
-}
-
-function summarizeQuestions(records,questions){
-  const expectedIds=core.json('independent-audit/golden/question-ids.json').ids,expected=new Set(expectedIds),reviewed=new Set(records.map(x=>x.questionId)),actual=Object.keys(questions);
-  const duplicates=actual.length-new Set(actual).size;
-  return {TOTAL:expectedIds.length,DIRECTLY_TESTED:records.filter(x=>x.requiredCheckIds.length>0&&x.requiredCheckIds.every(id=>x.executedCheckIds.includes(id))).length,PASS:records.filter(x=>x.status==='PASS').length,FAIL:records.filter(x=>x.status==='FAIL').length,MISSING:expectedIds.filter(id=>!reviewed.has(id)||!records.find(x=>x.questionId===id)?.sourceHash).length,DUPLICATE:duplicates+actual.filter(id=>!expected.has(id)).length};
-}
-
-module.exports={LAYERS,gateContracts,loadContracts,validateContract,evaluateContract,executeContracts,questionReview,summarizeQuestions};
+const commonQuestionChecks={QUESTION_PRESENT:q=>Boolean(q),QUESTION_STRUCTURE:q=>Boolean(q&&typeof q.question==='string'&&q.answer&&typeof q.answer==='object'),QUESTION_EXPLANATION:q=>Boolean(q?.explanation?.trim())};
+const typeQuestionChecks={
+ journal:{JOURNAL_CORRECT_ACCOUNTS:q=>[...(q.answer?.debit||[]),...(q.answer?.credit||[])].every(x=>x.account&&q.explanation.includes(x.account)),JOURNAL_DEBIT_CREDIT:q=>(q.answer?.debit?.length||0)>0&&(q.answer?.credit?.length||0)>0,JOURNAL_AMOUNTS:q=>answerValues(q).length>0&&answerValues(q).every(Number.isFinite),JOURNAL_SPECIFIC_REASON:q=>/増加|減少/.test(q.explanation)&&/借方/.test(q.explanation)&&/貸方/.test(q.explanation),JOURNAL_CALCULATION:q=>answerValues(q).every(v=>mentionsValue(q.explanation,v))},
+ ledger:{LEDGER_SUBTYPE:q=>Boolean(q.category&&q.table),LEDGER_CALCULATION_METHOD:q=>/残高|先入先出|移動平均|転記|計算/.test(q.question+q.explanation),LEDGER_EXPECTED_CELLS:q=>q.table.inputCells.every(key=>key in q.answer.cells),LEDGER_UNITS:q=>Object.values(q.table.inputMetadata||{}).every(meta=>meta.semanticType),LEDGER_CALCULATION_PROCESS:q=>answerValues(q).every(v=>mentionsValue(q.explanation,v))},
+ trial_balance:{TRIAL_BALANCE_DEBIT:q=>hasAnswerKey(q,/debit/i),TRIAL_BALANCE_CREDIT:q=>hasAnswerKey(q,/credit/i),TRIAL_BALANCE_EXPLICIT_ADDITION:q=>/\+|加え|合計/.test(q.explanation),TRIAL_BALANCE_EQUAL:q=>trialBalanceTotals(q).debit===trialBalanceTotals(q).credit},
+ correction:{CORRECTION_RECORDED:q=>q.materials?.some(m=>m.recorded),CORRECTION_EVIDENCE:q=>q.materials?.some(m=>m.evidence),CORRECTION_ENTRY:q=>['debitAccount','debitAmount','creditAccount','creditAmount'].every(key=>key in q.answer.cells)},
+ worksheet:{WORKSHEET_PRE_ADJUSTMENT:q=>Object.keys(q.answer.cells).some(k=>/^tb/i.test(k)),WORKSHEET_ADJUSTMENT:q=>Object.keys(q.answer.cells).some(k=>/^adj/i.test(k)),WORKSHEET_POST_ADJUSTMENT:q=>answerValues(q).length>0,WORKSHEET_PL_BS:q=>/損益|P\/L/.test(q.explanation)&&/貸借|B\/S/.test(q.explanation)},
+ financial_statement:{FINANCIAL_STATEMENT_SPECIFIC_VALUES:q=>answerValues(q).every(v=>mentionsValue(q.explanation,v)),FINANCIAL_STATEMENT_FORMULA:q=>/＝|=|差し引|合計/.test(q.explanation),FINANCIAL_STATEMENT_CONSISTENCY:q=>answerValues(q).every(Number.isFinite)},
+ comprehensive:{COMPREHENSIVE_CROSS_SOURCE:q=>q.materials?.length>1,COMPREHENSIVE_JUDGMENT:q=>/判断|ため|ので/.test(q.explanation),COMPREHENSIVE_CALCULATION:q=>/＝|=|計算|合計/.test(q.explanation),COMPREHENSIVE_FINAL_ANSWER:q=>answerValues(q).every(v=>mentionsValue(q.explanation,v))}
+};
+function questionReview(questions){const expected=core.json('independent-audit/golden/question-ids.json').ids,raw=core.read('data/questions.js'),authored=[...raw.matchAll(/^  "([A-Z]\d{3})": \{/gmu)].map(m=>m[1]),duplicates=new Set(authored.filter((id,index)=>authored.indexOf(id)!==index));return expected.map(questionId=>{const question=questions[questionId],specific=typeQuestionChecks[question?.type]||{},checks={...commonQuestionChecks,...specific},requiredCheckIds=Object.keys(checks),results=Object.entries(checks).map(([id,fn])=>({id,pass:Boolean(fn(question))&&(id!=='QUESTION_PRESENT'||!duplicates.has(questionId))})),executedCheckIds=results.map(x=>x.id),passedCheckIds=results.filter(x=>x.pass).map(x=>x.id),failedCheckIds=results.filter(x=>!x.pass).map(x=>x.id),sourceHash=question?crypto.createHash('sha256').update(JSON.stringify(question)).digest('hex'):null;return {questionId,questionType:question?.type||null,requiredCheckIds,executedCheckIds,passedCheckIds,failedCheckIds,sourceHash,status:requiredCheckIds.length>3&&requiredCheckIds.every(id=>executedCheckIds.includes(id))&&failedCheckIds.length===0?'PASS':'FAIL'};});}
+function summarizeQuestions(records,questions){const expectedIds=core.json('independent-audit/golden/question-ids.json').ids,expected=new Set(expectedIds),reviewed=new Set(records.map(x=>x.questionId)),actual=Object.keys(questions);return {TOTAL:expectedIds.length,DIRECTLY_TESTED:records.filter(x=>x.requiredCheckIds.length>3&&x.requiredCheckIds.every(id=>x.executedCheckIds.includes(id))).length,PASS:records.filter(x=>x.status==='PASS').length,FAIL:records.filter(x=>x.status==='FAIL').length,MISSING:expectedIds.filter(id=>!reviewed.has(id)||!records.find(x=>x.questionId===id)?.sourceHash).length,DUPLICATE:actual.length-new Set(actual).size+actual.filter(id=>!expected.has(id)).length};}
+module.exports={LAYERS,gateContracts,executableChecks,loadContracts,validateContract,dependencySatisfied,evaluateContract,executeContracts,typeQuestionChecks,questionReview,summarizeQuestions};

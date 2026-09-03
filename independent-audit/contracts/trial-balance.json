@@ -1,34 +1,51 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "authority": "independent-audit",
-  "layers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING",
-    "ADVERSARIAL"
-  ],
-  "passPolicy": "all-required-checks-and-layers-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "trial-balance",
-  "requirements": [
-    "independent debit and credit totals must agree"
-  ],
   "requiredCheckIds": [
-    "GATE-05.CONTRACT",
-    "GATE-05.AUDIT"
+    "TRIAL_BALANCE_DEBIT_TOTAL",
+    "TRIAL_BALANCE_CREDIT_TOTAL",
+    "TRIAL_BALANCE_TOTAL_EQUALITY"
   ],
   "requiredLayers": [
-    "ACCOUNTING_SEMANTIC",
-    "STRUCTURAL"
+    "ACCOUNTING_SEMANTIC"
   ],
-  "dependencies": [],
-  "checkLayers": {
-    "GATE-05.CONTRACT": "STRUCTURAL",
-    "GATE-05.AUDIT": "ACCOUNTING_SEMANTIC"
-  },
+  "dependencies": [
+    {
+      "gateId": "GATE-04",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
   "notApplicableLayers": [
+    "STRUCTURAL",
     "LEARNING",
     "ADVERSARIAL"
-  ]
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_TRIAL_BALANCE_DEBIT_TOTAL",
+      "requiredCheckId": "TRIAL_BALANCE_DEBIT_TOTAL",
+      "text": "debit total is measured"
+    },
+    {
+      "requirementId": "REQ_TRIAL_BALANCE_CREDIT_TOTAL",
+      "requiredCheckId": "TRIAL_BALANCE_CREDIT_TOTAL",
+      "text": "credit total is measured"
+    },
+    {
+      "requirementId": "REQ_TRIAL_BALANCE_TOTAL_EQUALITY",
+      "requiredCheckId": "TRIAL_BALANCE_TOTAL_EQUALITY",
+      "text": "debit and credit totals agree"
+    }
+  ],
+  "checkLayers": {
+    "TRIAL_BALANCE_DEBIT_TOTAL": "ACCOUNTING_SEMANTIC",
+    "TRIAL_BALANCE_CREDIT_TOTAL": "ACCOUNTING_SEMANTIC",
+    "TRIAL_BALANCE_TOTAL_EQUALITY": "ACCOUNTING_SEMANTIC"
+  }
 }

@@ -1,34 +1,44 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "authority": "independent-audit",
-  "layers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING",
-    "ADVERSARIAL"
-  ],
-  "passPolicy": "all-required-checks-and-layers-pass",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "id": "worksheet",
-  "requirements": [
-    "adjustment to statement column relation required"
-  ],
   "requiredCheckIds": [
-    "GATE-07.CONTRACT",
-    "GATE-07.AUDIT"
+    "WORKSHEET_COLUMNS",
+    "WORKSHEET_CLASSIFICATION"
   ],
   "requiredLayers": [
-    "ACCOUNTING_SEMANTIC",
-    "STRUCTURAL"
+    "ACCOUNTING_SEMANTIC"
   ],
-  "dependencies": [],
-  "checkLayers": {
-    "GATE-07.CONTRACT": "STRUCTURAL",
-    "GATE-07.AUDIT": "ACCOUNTING_SEMANTIC"
-  },
+  "dependencies": [
+    {
+      "gateId": "GATE-06",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
   "notApplicableLayers": [
+    "STRUCTURAL",
     "LEARNING",
     "ADVERSARIAL"
-  ]
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_WORKSHEET_COLUMNS",
+      "requiredCheckId": "WORKSHEET_COLUMNS",
+      "text": "pre-adjustment, adjustment, and final columns are present"
+    },
+    {
+      "requirementId": "REQ_WORKSHEET_CLASSIFICATION",
+      "requiredCheckId": "WORKSHEET_CLASSIFICATION",
+      "text": "P/L and B/S classifications are explained"
+    }
+  ],
+  "checkLayers": {
+    "WORKSHEET_COLUMNS": "ACCOUNTING_SEMANTIC",
+    "WORKSHEET_CLASSIFICATION": "ACCOUNTING_SEMANTIC"
+  }
 }

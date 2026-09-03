@@ -2,43 +2,41 @@
   "gate": "GATE-03",
   "status": "FAIL",
   "requiredCheckIds": [
-    "GATE-03.CONTRACT",
-    "GATE-03.AUDIT"
+    "JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION",
+    "JOURNAL_HORIZONTAL_ENTRY"
   ],
   "executedCheckIds": [
-    "GATE-03.CONTRACT",
-    "GATE-03.AUDIT"
+    "JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION",
+    "JOURNAL_HORIZONTAL_ENTRY"
   ],
   "passedCheckIds": [
-    "GATE-03.CONTRACT"
+    "JOURNAL_HORIZONTAL_ENTRY"
   ],
   "failedCheckIds": [
-    "GATE-03.AUDIT"
+    "JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION"
   ],
   "layers": {
     "STRUCTURAL": {
-      "requiredCheckIds": [
-        "GATE-03.CONTRACT"
-      ],
-      "executedCheckIds": [
-        "GATE-03.CONTRACT"
-      ],
-      "passedCheckIds": [
-        "GATE-03.CONTRACT"
-      ],
+      "requiredCheckIds": [],
+      "executedCheckIds": [],
+      "passedCheckIds": [],
       "failedCheckIds": [],
-      "status": "PASS"
+      "status": "N/A"
     },
     "ACCOUNTING_SEMANTIC": {
       "requiredCheckIds": [
-        "GATE-03.AUDIT"
+        "JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION",
+        "JOURNAL_HORIZONTAL_ENTRY"
       ],
       "executedCheckIds": [
-        "GATE-03.AUDIT"
+        "JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION",
+        "JOURNAL_HORIZONTAL_ENTRY"
       ],
-      "passedCheckIds": [],
+      "passedCheckIds": [
+        "JOURNAL_HORIZONTAL_ENTRY"
+      ],
       "failedCheckIds": [
-        "GATE-03.AUDIT"
+        "JOURNAL_SPECIAL_ACCOUNT_CLASSIFICATION"
       ],
       "status": "FAIL"
     },
@@ -57,6 +55,17 @@
       "status": "N/A"
     }
   },
+  "dependencyEvidence": [
+    {
+      "dependency": {
+        "gateId": "GATE-02",
+        "acceptedStatuses": [
+          "PASS"
+        ]
+      },
+      "satisfied": true
+    }
+  ],
   "findings": [
     {
       "gate": "GATE-03",
@@ -82,5 +91,5 @@
     "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-03T07:05:21.154Z"
+  "measuredAt": "2026-09-03T07:28:48.653Z"
 }

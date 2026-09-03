@@ -1,28 +1,44 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "authority": "independent-audit",
   "id": "mutation",
   "requiredCheckIds": [
-    "GATE-14.CONTRACT",
-    "GATE-14.MUTATIONS"
+    "MUTATION_ALL_KILLED",
+    "MUTATION_CAUSAL_DELTA"
   ],
   "requiredLayers": [
-    "STRUCTURAL",
     "ADVERSARIAL"
   ],
   "notApplicableLayers": [
+    "STRUCTURAL",
     "ACCOUNTING_SEMANTIC",
     "LEARNING"
   ],
-  "dependencies": [],
-  "passPolicy": "all-required-checks-and-layers-pass",
+  "dependencies": [
+    {
+      "gateId": "GATE-13",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
-  "checkLayers": {
-    "GATE-14.CONTRACT": "STRUCTURAL",
-    "GATE-14.MUTATIONS": "ADVERSARIAL"
-  },
   "requirements": [
-    "all declared mutations produce causal deltas"
-  ]
+    {
+      "requirementId": "REQ_MUTATION_ALL_KILLED",
+      "requiredCheckId": "MUTATION_ALL_KILLED",
+      "text": "all required mutations are killed"
+    },
+    {
+      "requirementId": "REQ_MUTATION_CAUSAL_DELTA",
+      "requiredCheckId": "MUTATION_CAUSAL_DELTA",
+      "text": "every mutation kill has a causal finding delta"
+    }
+  ],
+  "checkLayers": {
+    "MUTATION_ALL_KILLED": "ADVERSARIAL",
+    "MUTATION_CAUSAL_DELTA": "ADVERSARIAL"
+  }
 }
