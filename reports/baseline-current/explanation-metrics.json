@@ -15,8 +15,8 @@
   },
   "explanationLength": {
     "min": 268,
-    "max": 1525,
-    "mean": 434.9
+    "max": 1400,
+    "mean": 432.4
   },
   "specificity": {
     "threshold": 100,
@@ -60,7 +60,7 @@
       "fail": 0
     }
   },
-  "duplicateProseUnits": 192,
+  "duplicateProseUnits": 210,
   "pass": 300,
   "fail": 0,
   "ok": true

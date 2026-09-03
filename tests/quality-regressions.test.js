@@ -19,6 +19,8 @@ for (let n=2; n<=10; n += 1) {
 }
 const viewSource = fs.readFileSync('js/view.js', 'utf8');
 assert(viewSource.includes("question.format === 'balance-sheet') this.renderBalanceSheet"));
+assert(viewSource.includes('isSectionStart(left, index)') && viewSource.includes('isSectionStart(right, index)'), 'B/S section starts are computed independently for each side');
+assert(!viewSource.includes('right.indexOf(row)'), 'left-side rows are never looked up in the right-side array');
 assert(viewSource.includes("[['資産', 2], ['負債・純資産', 2]]"), 'balance sheet has two side-by-side regions');
 assert(viewSource.includes("question.table.rows.filter(row => row.section === '合計')") && viewSource.includes('totals[0]?.inputCellId') && viewSource.includes('totals[1]?.inputCellId'), 'B/S totals use declared mappings');
 assert(viewSource.includes("question.format === 'balance-sheet'") && viewSource.includes("this.renderBalanceSheet(question, {}, { user:userAnswer, score })"), 'wrong-answer comparison preserves balance sheet');
@@ -33,6 +35,14 @@ for (const id of Array.from({ length: 9 }, (_, index) => `F${String(index + 2).p
   const q = questions[id];
   assert(q.table.rows.filter(row => row.amount === '入力').every(row => row.inputCellId && q.table.inputCells.includes(row.inputCellId)), `${id}: every editable B/S row declares its inputCellId`);
   assert(q.explanation.includes('資産＝負債＋純資産') && /資産合計は.+＋.+＝/su.test(q.explanation), `${id}: B/S explanation shows question-specific arithmetic`);
+}
+{
+  const rows = questions.F002.table.rows.filter(row => row.section !== '合計');
+  const labels = ['資産','負債','純資産'].flatMap(section => {
+    const side = rows.filter(row => row.section === section);
+    return side.filter((row,index) => index === 0 || row.section !== side[index-1].section).map(row => `${row.section}の部`);
+  });
+  for (const label of ['資産の部','負債の部','純資産の部']) assert.strictEqual(labels.filter(value => value === label).length, 1, `F002 DOM section plan renders ${label} once`);
 }
 assert(!viewSource.includes("row.account === '繰越利益剰余金'"), 'balance-sheet renderer must not infer input IDs from account names');
 assert(viewSource.includes('row.inputCellId'), 'balance-sheet renderer consumes declarative input cell mapping');

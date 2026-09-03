@@ -1,0 +1,60 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> boki-rpg-app@1.0.0 audit:explanations
+> node scripts/audit-explanations.js
+
+{
+  "total": 300,
+  "duplicateIds": [],
+  "missingAnswerOrExplanation": [],
+  "nullishAnomalies": [],
+  "blacklistedPhrases": [],
+  "duplicateHeadings": [],
+  "duplicateExplanations": [],
+  "lengthViolations": [],
+  "insufficientSpecificText": [],
+  "journalQuality": [],
+  "tableQuality": [],
+  "ledgerMismatch": [],
+  "duplicatePhrases": {
+    "count": 210,
+    "samples": [
+      {
+        "phrase": "三分法では、商品の購入額を「仕入」（費用）として処理し、商品代金を後日支払う義務を「買掛金」として計上します",
+        "ids": [
+          "J004",
+          "J054"
+        ]
+      },
+      {
+        "phrase": "商品代金は掛け、引取運賃は現金払いですが、当店負担の仕入諸掛は商品の取得原価に含めるため、両者を「仕入」に集計します",
+        "ids": [
+          "J006",
+          "J056"
+        ]
+      },
+      {
+        "phrase": "信販会社への手数料は「支払手数料」（費用）、差引入金予定額は「クレジット売掛金」として処理します",
+        "ids": [
+          "J014",
+          "J064"
+        ]
+      },
+      {
+        "phrase": "商品を受け取る前の支払いであるため、仕入ではなく、後日商品を受け取る権利として「前払金」を計上します",
+        "ids": [
+          "J015",
+          "J065"
+        ]
+      },
+      {
+        "phrase": "使った14,000円と同額の小切手を振り出して小口現金を補充するため、当座預金を14,000円減らします",
+        "ids": [
+          "J020",
+          "J070"
+        ]
+      }
+    ]
+  },
+  "ok": true
+}

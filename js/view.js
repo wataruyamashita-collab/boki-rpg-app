@@ -225,11 +225,12 @@
       const sourceRows = question.table.rows.filter(row => row.section !== '合計');
       const left = sourceRows.filter(row => row.section === '資産');
       const right = sourceRows.filter(row => row.section === '負債' || row.section === '純資産');
-      const appendValue = (tr, row) => {
+      const isSectionStart = (rows, index) => index === 0 || rows[index]?.section !== rows[index - 1]?.section;
+      const appendValue = (tr, row, sectionStart) => {
         const account = tr.insertCell(); account.className = 'balance-account'; account.textContent = row?.account || '';
         const amount = tr.insertCell(); amount.className = 'balance-amount';
         if (!row) return;
-        if (row && (row === right[0] || row.section !== right[right.indexOf(row) - 1]?.section)) {
+        if (row && sectionStart) {
           const section = this.document.createElement('span'); section.className = 'balance-section-label'; section.textContent = `${row.section}の部`; account.prepend(section);
           tr.classList.add('balance-section-start');
         }
@@ -243,7 +244,7 @@
         const input = this.makeAmount('table-input', `${row.account}（金額）`, draft.cells?.[cellId] ?? ''); input.dataset.cellId = cellId; input.dataset.inputType = 'amount'; amount.append(input);
       };
       const body = table.createTBody();
-      for (let index = 0; index < Math.max(left.length, right.length); index += 1) { const tr = body.insertRow(); appendValue(tr, left[index]); appendValue(tr, right[index]); }
+      for (let index = 0; index < Math.max(left.length, right.length); index += 1) { const tr = body.insertRow(); appendValue(tr, left[index], isSectionStart(left, index)); appendValue(tr, right[index], isSectionStart(right, index)); }
       const foot = table.createTFoot().insertRow();
       const appendTotal = (label, cellId) => {
         const name = foot.insertCell(); name.className = 'balance-total-label'; name.textContent = label;
