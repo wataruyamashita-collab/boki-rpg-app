@@ -35,6 +35,16 @@ assert.strictEqual(oneUnaudited.MISSING,1);
 for(const [type,checks] of Object.entries(runner.typeQuestionChecks)){const row=reviews.find(item=>item.questionType===type);assert(row,`missing direct audit record for ${type}`);assert(Object.keys(checks).every(id=>row.requiredCheckIds.includes(id)),`${type} must execute every type-specific check`);}
 assert(reviews.every(row=>row.requiredCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER')&&row.executedCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER')));
 assert.strictEqual(complete.INDEPENDENT_EXPECTED_CHECKED,300);
+const baselineDirect=runner.summarizeDirectAudit(reviews,complete),baselineContext={directAudit:baselineDirect};
+assert.strictEqual(runner.executableChecks.INDEPENDENT_EXPECTED_ALL_PASS(baselineContext).length,0);
+const corruptedQuestions=structuredClone(c.loadProduction().questions),passId=reviews.find(row=>!row.failedCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER')).questionId;
+if(corruptedQuestions[passId].answer.cells){const key=Object.keys(corruptedQuestions[passId].answer.cells)[0];corruptedQuestions[passId].answer.cells[key]=`${corruptedQuestions[passId].answer.cells[key]}-corrupt`;}else corruptedQuestions[passId].answer.debit[0].amount+=1;
+const corruptedRecords=runner.questionReview(corruptedQuestions),corruptedDirect=runner.summarizeDirectAudit(corruptedRecords,runner.summarizeQuestions(corruptedRecords,corruptedQuestions));
+assert(corruptedRecords.find(row=>row.questionId===passId).failedCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER'));
+assert(runner.executableChecks.INDEPENDENT_EXPECTED_ALL_PASS({directAudit:corruptedDirect}).some(failure=>failure.questionId===passId),'independent expected check must causally transition PASS to FAIL');
+assert.strictEqual(runner.executableChecks.DIRECT_AUDIT_COMPLETE(baselineContext).length,0);
+const incompleteRecords=reviews.slice(1),incompleteDirect=runner.summarizeDirectAudit(incompleteRecords,runner.summarizeQuestions(incompleteRecords,c.loadProduction().questions));
+assert(runner.executableChecks.DIRECT_AUDIT_COMPLETE({directAudit:incompleteDirect}).length>0,'removing one record must causally transition direct-audit completeness PASS to FAIL');
 const answerCorruptions=runner.answerCorruptionMutations();assert.strictEqual(answerCorruptions.length,9);assert(answerCorruptions.every(x=>x.status==='KILLED'),'every answer corruption, including coordinated answer/explanation corruption, must be killed');
 assert.strictEqual(runner.oracleSelfReferenceFindings().length,0);
 const oracleFile=path.join(c.ROOT,'independent-audit/oracles/expected-answer-oracle.js'),oracleSource=fs.readFileSync(oracleFile);try{fs.appendFileSync(oracleFile,'\nquestion.answer;\n');assert(runner.oracleSelfReferenceFindings().some(x=>x.code==='ORACLE_SELF_REFERENCE'));}finally{fs.writeFileSync(oracleFile,oracleSource);}
@@ -48,5 +58,6 @@ const relock=childProcess.spawnSync(process.execPath,[lockCreator],{cwd:c.ROOT,e
 assert.notStrictEqual(relock.status,0,'an existing lock must never be regenerated');
 assert.match(relock.stderr,/AUDIT_LOCK_CREATE_REFUSED/);
 assert.strictEqual(c.lockCheck().ok,true,'a rejected re-lock must not alter the existing lock');
-const lockPath=path.join(c.ROOT,'reports/auto-gate/audit-lock.json'),savedLock=fs.readFileSync(lockPath);try{fs.unlinkSync(lockPath);const deletedBootstrap=childProcess.spawnSync(process.execPath,[lockCreator,'--bootstrap'],{cwd:c.ROOT,encoding:'utf8'});assert.notStrictEqual(deletedBootstrap.status,0,'deleting a tracked lock must not restore bootstrap eligibility');assert.match(deletedBootstrap.stderr,/exists in Git history/);assert.strictEqual(fs.existsSync(lockPath),false,'rejected bootstrap must not create a replacement lock');}finally{fs.writeFileSync(lockPath,savedLock);}
+const lockPath=path.join(c.ROOT,'reports/auto-gate/audit-lock.json'),savedLock=fs.readFileSync(lockPath);try{fs.unlinkSync(lockPath);const deletedBootstrap=childProcess.spawnSync(process.execPath,[lockCreator,'--bootstrap'],{cwd:c.ROOT,encoding:'utf8'});assert.notStrictEqual(deletedBootstrap.status,0,'deleting a tracked lock must not restore bootstrap eligibility');assert.match(deletedBootstrap.stderr,/AUDIT_LOCK_CREATE_REFUSED/);assert.strictEqual(fs.existsSync(lockPath),false,'rejected bootstrap must not create a replacement lock');}finally{fs.writeFileSync(lockPath,savedLock);}
 console.log('independent foundation tests: ok');
+require('./audit-lock-v2.test').run();

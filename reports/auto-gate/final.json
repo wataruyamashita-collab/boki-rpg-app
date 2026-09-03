@@ -2,7 +2,18 @@
   "status": "FAIL",
   "phase": "A",
   "productionModified": false,
-  "auditHash": "f9c90363a4fe018fd8180ef7edbce2fa278388d223441e662e348aeb77c53c3c",
+  "auditHash": "4eb3a8d05b90935d16f0644bcbf3c8484ab23abd17fa6caf21dd288f95e588dd",
+  "auditLock": {
+    "type": "GIT_ANCESTOR_BASELINE",
+    "historyScope": "HEAD_ANCESTRY",
+    "phase": "A_FINAL_IMMUTABLE_BASELINE",
+    "lockSchemaVersion": 2,
+    "baselineVersion": 1,
+    "baselineIdentity": "f8bce86968645b3a078bf96d8c68cb633b359050e6638be1e5f7309dab3defa5",
+    "auditHash": "4eb3a8d05b90935d16f0644bcbf3c8484ab23abd17fa6caf21dd288f95e588dd",
+    "historicalBaselineValid": true,
+    "currentLockMatches": true
+  },
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
@@ -28,6 +39,325 @@
     "FAIL": 22,
     "MISSING": 0,
     "DUPLICATE": 0
+  },
+  "directAudit": {
+    "required": 300,
+    "executed": 300,
+    "uniqueQuestions": 300,
+    "pass": 278,
+    "fail": 22,
+    "failedQuestionIds": [
+      "D001",
+      "D002",
+      "D003",
+      "D004",
+      "D005",
+      "D006",
+      "D007",
+      "D008",
+      "D009",
+      "D010",
+      "D011",
+      "D012",
+      "D013",
+      "D014",
+      "D015",
+      "D016",
+      "D017",
+      "D018",
+      "D019",
+      "D020",
+      "C001",
+      "C003"
+    ],
+    "independentExpectedRequired": 300,
+    "independentExpectedExecuted": 300,
+    "independentExpectedFailed": 0,
+    "enforcementFailures": [
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D001",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D001",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D002",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D002",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D003",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D003",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D004",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D004",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D005",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D005",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D006",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D006",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D007",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D007",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D008",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D008",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D009",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D009",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D010",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D010",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D011",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D011",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D012",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D012",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D013",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D013",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D014",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D014",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D015",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D015",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D016",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D016",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D017",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D017",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D018",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D018",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D019",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D019",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "D020",
+        "detail": [
+          "WORKSHEET_PRE_ADJUSTMENT",
+          "WORKSHEET_ADJUSTMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "D020",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "C001",
+        "detail": [
+          "COMPREHENSIVE_JUDGMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "C001",
+        "detail": "FAIL"
+      },
+      {
+        "code": "FAILED_CHECKS",
+        "questionId": "C003",
+        "detail": [
+          "COMPREHENSIVE_JUDGMENT"
+        ]
+      },
+      {
+        "code": "QUESTION_STATUS",
+        "questionId": "C003",
+        "detail": "FAIL"
+      }
+    ]
   },
   "oracleSelfReference": 0,
   "gateImplementation": {
@@ -327,6 +657,6 @@
       }
     }
   ],
-  "startedAt": "2026-09-03T08:06:57.439Z",
-  "finishedAt": "2026-09-03T08:07:04.229Z"
+  "startedAt": "2026-09-03T23:49:40.052Z",
+  "finishedAt": "2026-09-03T23:49:47.601Z"
 }

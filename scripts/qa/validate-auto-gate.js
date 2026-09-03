@@ -10,6 +10,8 @@ assert.strictEqual(new Set(rows.map(row=>row.questionId)).size,300);
 assert(rows.every(row=>row.questionType&&row.requiredCheckIds.length>3&&row.requiredCheckIds.every(id=>row.executedCheckIds.includes(id))));
 assert.strictEqual(final.coverage.TOTAL,300);assert.strictEqual(final.coverage.DIRECTLY_TESTED,300);assert.strictEqual(final.coverage.MISSING,0);assert.strictEqual(final.coverage.DUPLICATE,0);
 assert.strictEqual(final.coverage.INDEPENDENT_EXPECTED_CHECKED,300);assert.strictEqual(final.oracleSelfReference,0);
+assert.deepStrictEqual(final.directAudit,{...final.directAudit,required:300,executed:300,uniqueQuestions:300,independentExpectedRequired:300,independentExpectedExecuted:300});
+assert.strictEqual(final.auditLock.type,'GIT_ANCESTOR_BASELINE');assert.strictEqual(final.auditLock.historyScope,'HEAD_ANCESTRY');assert.strictEqual(final.auditLock.phase,'A_FINAL_IMMUTABLE_BASELINE');assert.strictEqual(final.auditLock.lockSchemaVersion,2);assert.strictEqual(final.auditLock.baselineVersion,1);assert.match(final.auditLock.baselineIdentity,/^[a-f0-9]{64}$/);assert.match(final.auditLock.auditHash,/^[a-f0-9]{64}$/);assert.strictEqual(final.auditLock.historicalBaselineValid,true);assert.strictEqual(final.auditLock.currentLockMatches,true);assert.strictEqual('commit' in final.auditLock,false);
 assert.deepStrictEqual(final.gateImplementation,{unimplemented:0,requiredCheckNotExecuted:0,requiredLayerNotExecuted:0,checkCountZero:0,allRequirementsHaveExecutableCheck:true});
 assert.strictEqual(final.dependencies.deadMetadata,0);assert.strictEqual(final.dependencies.declared,final.dependencies.evaluated);assert(final.dependencies.declared>0);
 assert.strictEqual(final.status,'FAIL','known production defects must remain RED in Phase A');
