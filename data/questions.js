@@ -15285,29 +15285,56 @@ const ReaderFacingBeats = Object.freeze([
     ? `${arc.place}。最終報告に残った確認は、${item.category}です。${arc.requester}が報告書をあなたに託しました。${instruction}。この回答で、${arc.result}を確定します。`
     : `${arc.place}。${arc.result}を確定するまで、残る確認はわずかです。あなたは次の${item.category}の資料を受け取り、${instruction}。`
 ]);
-const yenText = value => value == null ? '—' : typeof value === 'number' ? `${value.toLocaleString('ja-JP')}円` : String(value);
+const SEMANTIC_SUFFIX = Object.freeze({ amount:'円', quantity:'個', years:'年', months:'か月', rate:'%', folio:'', date:'', unitPrice:'円', count:'件', account:'', text:'' });
+const formatSemanticValue = (value, semanticType = 'text') => {
+  if (value == null) return '—';
+  const rendered = typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value);
+  return `${rendered}${SEMANTIC_SUFFIX[semanticType] ?? ''}`;
+};
+const yenText = value => formatSemanticValue(value, 'amount');
+const semanticTypeForLabel = (label, value) => {
+  if (/元丁/u.test(label)) return 'folio';
+  if (/数量|個数/u.test(label)) return 'quantity';
+  if (/耐用年数|年数/u.test(label)) return 'years';
+  if (/月数|か月/u.test(label)) return 'months';
+  if (/率|％|%/u.test(label)) return 'rate';
+  if (/単価/u.test(label)) return 'unitPrice';
+  if (/件数/u.test(label)) return 'count';
+  if (/日$|日付/u.test(label)) return 'date';
+  if (/科目/u.test(label)) return 'account';
+  return typeof value === 'number' ? 'amount' : 'text';
+};
 const answerLabel = Object.freeze({
-  debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額'
+  debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額',
+  unitPrice:'払出単価', currentDepreciation:'当期減価償却費', closingBookValue:'期末帳簿価額', answer:'答え',
+  quantity:'数量', life:'耐用年数', folio:'元丁', date:'日付', acquisitionCost:'取得原価', openingAccumulated:'期首減価償却累計額', amount:'金額', description:'摘要', asset:'固定資産'
 });
+const getDisplayLabel = field => {
+  const key = String(field);
+  const suffix = key.split('_').at(-1);
+  return answerLabel[key] || answerLabel[suffix] || ({ unitPrice:'払出単価', currentDepreciation:'当期減価償却費', closingBookValue:'期末帳簿価額' })[suffix] || key;
+};
 const answerFieldLabel = (item, key) => {
   if (answerLabel[key]) return answerLabel[key];
+  const keyLabel = getDisplayLabel(key);
   const metadata = item.table?.inputMetadata?.[key]?.label;
-  if (metadata && metadata !== key) return String(metadata);
+  if (metadata && metadata !== key && !/[A-Z_]|unitPrice|currentDepreciation|closingBookValue|answer/u.test(metadata)) return String(metadata);
   const inputIndex = item.table?.inputCells?.indexOf(key) ?? -1; let cursor = -1;
   for (const row of item.table?.rows || []) for (const [column, value] of Object.entries(row)) if (value === '入力' && ++cursor === inputIndex) {
     const subject = ['account','item','description'].map(name => row[name]).find(value => value && value !== '入力' && value !== '—');
-    const columnLabel = { debit:'借方', credit:'貸方', amount:'金額', balance:'残高', adjustment:'修正額' }[column] || item.table?.columns?.[Object.keys(row).indexOf(column)] || '回答';
+    const columnLabel = { debit:'借方', credit:'貸方', amount:'金額', balance:'残高', adjustment:'修正額' }[column] || getDisplayLabel(item.table?.columns?.[Object.keys(row).indexOf(column)]) || '回答';
     return subject ? `${subject}の${columnLabel}` : `${item.category}の${columnLabel}`;
   }
-  return `回答欄${inputIndex >= 0 ? inputIndex + 1 : ''}`;
+  return keyLabel !== key ? keyLabel : `回答欄${inputIndex >= 0 ? inputIndex + 1 : ''}`;
 };
+const answerSemanticType = (item, key, value) => item.table?.inputMetadata?.[key]?.semanticType || semanticTypeForLabel(answerFieldLabel(item, key), value);
 const answerDigest = item => {
   if (item.type === 'journal') {
     const side = name => (item.answer[name] || []).map(row => `${row.account}${yenText(row.amount)}`).join('・');
     return `借方を${side('debit')}、貸方を${side('credit')}`;
   }
   const cells = Object.entries(item.answer?.cells || item.answer || {}).slice(0, 4);
-  return cells.map(([key, value]) => `${answerFieldLabel(item, key)}は${yenText(value)}`).join('、');
+  return cells.map(([key, value]) => `${answerFieldLabel(item, key)}は${formatSemanticValue(value, answerSemanticType(item, key, value))}`).join('、');
 };
 const ledgerPurpose = category => {
   if (/現金出納帳/u.test(category)) return '現金の受払いと手許残高を日付順に追う帳簿';
@@ -15348,18 +15375,54 @@ const buildExplanation = item => {
 QuestionData.J070.question = `月末に${QuestionData.J070.question}`;
 QuestionData.J080.question = `納付期限日に${QuestionData.J080.question}`;
 const ExplanationAccountTypes = Object.freeze({
-  asset:new Set(['現金','普通預金','当座預金','売掛金','受取手形','繰越商品','備品','電子記録債権','クレジット売掛金','未収入金','前払金','現金過不足','小口現金','仮払金','立替金','仮払消費税','前払保険料','受取商品券','差入保証金','未収利息','貯蔵品','貸付金']),
+  asset:new Set(['現金','普通預金','当座預金','売掛金','受取手形','繰越商品','備品','電子記録債権','クレジット売掛金','未収入金','前払金','小口現金','仮払金','立替金','仮払消費税','前払保険料','受取商品券','差入保証金','未収利息','貯蔵品','貸付金']),
   contraAsset:new Set(['貸倒引当金','減価償却累計額','備品減価償却累計額']),
   liability:new Set(['買掛金','支払手形','借入金','当座借越','電子記録債務','未払金','前受金','所得税預り金','社会保険料預り金','仮受消費税','仮受金','前受家賃','未払利息','未払法人税等','未払消費税']),
-  equity:new Set(['資本金','繰越利益剰余金','損益']),
+  equity:new Set(['資本金','繰越利益剰余金']),
   revenue:new Set(['売上','受取利息','受取家賃','固定資産売却益','償却債権取立益','雑益']),
   expense:new Set(['仕入','発送費','消耗品費','減価償却費','固定資産売却損','支払手数料','通信費','水道光熱費','旅費交通費','支払利息','給料','法定福利費','租税公課','貸倒引当金繰入','保険料','法人税、住民税及び事業税','雑損'])
+});
+const SPECIAL_ACCOUNT_RULES = Object.freeze({
+  '損益':'決算時に収益と費用を集め、当期純利益または当期純損失を計算する一時的な決算勘定',
+  '現金過不足':'現金実査額と帳簿残高の差額を、原因判明まで記録する仮勘定',
+  '繰越利益剰余金':'過去から積み立てた利益のうち、会社内に留保された純資産の勘定',
+  '貸倒引当金':'売上債権の回収不能見込額を示す資産の評価勘定',
+  '減価償却累計額':'取得原価から控除して過去の償却累計を示す資産の評価勘定'
 });
 const explanationAccountType = account => Object.entries(ExplanationAccountTypes).find(([, accounts]) => accounts.has(account))?.[0] || '勘定';
 const explanationTypeLabel = Object.freeze({ asset:'資産', contraAsset:'資産の控除', liability:'負債', equity:'純資産', revenue:'収益', expense:'費用', '勘定':'勘定' });
 const normalSide = type => ['asset','expense'].includes(type) ? 'debit' : 'credit';
+const journalCalculationTrace = item => {
+  const numbers = [...String(item.question).matchAll(/([0-9][0-9,]*)円|([0-9]+)％/gu)].map(match => Number((match[1] || match[2]).replaceAll(',', '')));
+  if (/クレジット/u.test(item.category) && numbers.length >= 2) {
+    const [sale, rate] = numbers; const fee = sale * rate / 100;
+    return `【金額の計算】販売額${yenText(sale)}×${rate}%＝手数料${yenText(fee)}。${yenText(sale)}－${yenText(fee)}＝信販会社への債権${yenText(sale-fee)}です。`;
+  }
+  if (/貸倒引当金/u.test(item.category) && numbers.length >= 3) {
+    const [receivables, rate, existing] = numbers; const required = receivables * rate / 100;
+    return `【金額の計算】${yenText(receivables)}×${rate}%＝必要額${yenText(required)}。${yenText(required)}－既存貸方残高${yenText(existing)}＝差額補充額${yenText(required-existing)}です。`;
+  }
+  const depreciationInputs = String(item.question).match(/取得原価([0-9,]+)円[\s\S]*?耐用年数([0-9]+)年/u);
+  if (/減価償却/u.test(item.category) && depreciationInputs) {
+    const cost = Number(depreciationInputs[1].replaceAll(',', '')); const life = Number(depreciationInputs[2]);
+    return `【金額の計算】残存価額は0なので、${yenText(cost)}÷${life}年＝当期減価償却費${yenText(cost/life)}です。`;
+  }
+  if (/消費税/u.test(item.category) && numbers.length >= 2) {
+    const [paid, received] = numbers;
+    return `【金額の計算】仮受消費税${yenText(received)}－仮払消費税${yenText(paid)}＝未払消費税${yenText(received-paid)}です。`;
+  }
+  if (/固定資産売却|未収入金/u.test(item.category) && numbers.length >= 3) {
+    const [cost, accumulated, proceeds] = numbers; const book = cost - accumulated; const difference = Math.abs(proceeds-book);
+    return `【金額の計算】取得原価${yenText(cost)}－減価償却累計額${yenText(accumulated)}＝売却時帳簿価額${yenText(book)}。売却価額${yenText(proceeds)}との差額${yenText(difference)}を${proceeds >= book ? '固定資産売却益' : '固定資産売却損'}とします。`;
+  }
+  return '';
+};
 const journalExplanation = item => {
   const explain = (side, row) => {
+    if (SPECIAL_ACCOUNT_RULES[row.account]) {
+      const sideLabel = side === 'debit' ? '借方' : '貸方';
+      return `${row.account}は${SPECIAL_ACCOUNT_RULES[row.account]}です。${row.account}という特殊勘定の増加・減少を取引の目的に沿って処理するため、この問題では${sideLabel}に${yenText(row.amount)}を記録します。`;
+    }
     const type = explanationAccountType(row.account); const normal = normalSide(type); const label = explanationTypeLabel[type];
     const movement = side === normal ? '増加' : '減少'; const sideLabel = side === 'debit' ? '借方' : '貸方';
     return `${row.account}は${label}で、この取引では${yenText(row.amount)}の${movement}です。${label}の${movement}は${sideLabel}に記録するため、${sideLabel}を${row.account}${yenText(row.amount)}とします。`;
@@ -15367,16 +15430,17 @@ const journalExplanation = item => {
   const debit = item.answer.debit.map(row => explain('debit', row)).join('');
   const credit = item.answer.credit.map(row => explain('credit', row)).join('');
   const entry = `（借）${item.answer.debit.map(row => `${row.account} ${yenText(row.amount)}`).join('、')}／（貸）${item.answer.credit.map(row => `${row.account} ${yenText(row.amount)}`).join('、')}`;
-  return `【この問題への当てはめ】問題文「${String(item.question).replace(/\s+/gu, ' ')}」から、取引で増減する科目と金額を一つずつ拾います。${debit}${credit}\n【この問題の仕訳】${entry}。借方合計・貸方合計はいずれも${yenText(item.answer.debit.reduce((sum, row) => sum + row.amount, 0))}となり、貸借が一致します。`;
+  return `【この問題への当てはめ】問題文「${String(item.question).replace(/\s+/gu, ' ')}」から、取引で増減する科目と金額を一つずつ拾います。${debit}${credit}\n${journalCalculationTrace(item)}\n【この問題の仕訳】${entry}。借方合計・貸方合計はいずれも${yenText(item.answer.debit.reduce((sum, row) => sum + row.amount, 0))}となり、貸借が一致します。`;
 };
 const sourceLine = item => {
-  const material = (item.materials || []).map(row => Object.values(row).map(yenText).join('・')).join('／');
+  const materialLabels = { date:'日付', description:'摘要', quantity:'数量', unitPrice:'単価', amount:'金額', asset:'固定資産', acquisitionCost:'取得原価', life:'耐用年数', openingAccumulated:'期首減価償却累計額' };
+  const material = (item.materials || []).map(row => Object.entries(row).map(([label,value]) => { const display = materialLabels[String(label)] || getDisplayLabel(String(label)); return `${display}${formatSemanticValue(value, semanticTypeForLabel(display, value))}`; }).join('・')).join('／');
   const internalIds = new Set(item.table?.inputCells || []);
-  const fixed = (item.table?.rows || []).map(row => Object.values(row).filter(value => value !== '入力' && value !== '—' && !internalIds.has(value)).map(yenText).join('・')).filter(Boolean).join('／');
+  const fixed = (item.table?.rows || []).map(row => Object.entries(row).filter(([,value]) => value !== '入力' && value !== '—' && !internalIds.has(value)).map(([label,value]) => `${label}${formatSemanticValue(value, semanticTypeForLabel(label, value))}`).join('・')).filter(Boolean).join('／');
   return [material, fixed].filter(Boolean).join('／');
 };
 const tableExplanation = item => {
-  const answers = Object.entries(item.answer?.cells || {}).map(([key, value]) => `${answerFieldLabel(item, key)}＝${yenText(value)}`).join('、');
+  const answers = Object.entries(item.answer?.cells || {}).map(([key, value]) => `${answerFieldLabel(item, key)}＝${formatSemanticValue(value, answerSemanticType(item, key, value))}`).join('、');
   const sources = sourceLine(item);
   if (item.format === 'balance-sheet') {
     const rows = item.table.rows; const terms = section => rows.filter(row => row.section === section && typeof row.amount === 'number');
@@ -15388,8 +15452,25 @@ const tableExplanation = item => {
       `【計算と転記】資産合計は${terms('資産').map(row => yenText(row.amount)).join('＋')}＝${yenText(total('資産'))}です。負債合計は${terms('負債').map(row => yenText(row.amount)).join('＋')}＝${yenText(total('負債'))}です。資産＝負債＋純資産なので、繰越利益剰余金は${yenText(total('資産'))}－${yenText(total('負債'))}－${yenText(capital)}＝${yenText(retained)}です。\n` +
       `【検算】負債${yenText(total('負債'))}＋資本金${yenText(capital)}＋繰越利益剰余金${yenText(retained)}＝負債・純資産合計${yenText(item.answer.cells.liabilitiesEquityTotal)}となり、資産合計${yenText(item.answer.cells.assetsTotal)}と一致します。`;
   }
+  if (item.type === 'trial_balance') {
+    const rows = item.table?.rows || [];
+    const terms = side => rows.filter(row => typeof row[side] === 'number' && row.account !== '合計');
+    const trace = side => terms(side).map(row => `${row.account}${yenText(row[side])}`).join('＋');
+    const arithmetic = side => terms(side).map(row => row[side].toLocaleString('ja-JP')).join('＋');
+    const total = side => terms(side).reduce((sum,row) => sum + row[side], 0);
+    return `【使用する資料】借方は${trace('debit')}、貸方は${trace('credit')}です。\n` +
+      `【計算と転記】借方：${arithmetic('debit')}＝${yenText(total('debit'))}。貸方：${arithmetic('credit')}＝${yenText(total('credit'))}。\n` +
+      `【検算】借方合計${yenText(total('debit'))}と貸方合計${yenText(total('credit'))}が${total('debit') === total('credit') ? '一致' : '不一致'}します。`;
+  }
+  const ledgerGuide = /(受取|支払)手形記入帳/u.test(item.category) ? '資料の種類が約束手形かを判定し、小切手など対象外の資料を除いて、受取日・満期日・振出人または受取人・金額を転記します'
+    : /商品有高帳/u.test(item.category) ? '数量・単価・金額を分け、移動平均法では（旧在庫金額＋仕入金額）÷（旧数量＋仕入数量）で新平均単価を求め、払出数量と残数に掛けます'
+    : /固定資産台帳/u.test(item.category) ? '取得原価÷耐用年数で年額を求め、使用月数を月割した当期償却額を取得原価から差し引いて帳簿価額を求めます'
+    : /仕訳帳/u.test(item.category) ? '日付順に借方科目・貸方科目・金額を決め、各科目の元丁を転記先の番号として記入します'
+    : /伝票/u.test(item.category) ? '現金の受取は入金伝票、現金の支払は出金伝票、現金を伴わない取引は振替伝票へ記入します'
+    : /仕入帳|売上帳/u.test(item.category) ? '総額から返品額を差し引き、純仕入高または純売上高を求めます'
+    : '期首残高にその勘定の増加を加え、減少を差し引いて期末残高を求めます';
   const typeGuide = {
-    ledger:'帳簿は前残に各増加を足し、各減少を引いて残高を求めます。日付・相手勘定などの文字欄も資料の該当取引から転記します',
+    ledger:ledgerGuide,
     trial_balance:'各勘定の残高を、資産・費用は借方、負債・純資産・収益は貸方へ集め、列ごとに加算します',
     correction:'証憑が示す本来の記録から帳簿の誤記を差し引き、必要な訂正仕訳だけを記入します',
     worksheet:'整理前残高に各決算整理の増減を反映し、整理後残高を損益計算書または貸借対照表へ振り分けます',
@@ -15407,6 +15488,19 @@ Object.values(QuestionData).forEach((item, index) => {
   const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
   const chapterPosition = index % 25;
   item.caseNumber = chapterPosition + 1;
+  // Normalise legacy schemas centrally. A numeric input is not necessarily yen:
+  // its user-facing label determines whether it is a quantity, life, rate or folio.
+  if (item.table?.inputCells) {
+    item.table.inputMetadata ||= {};
+    item.table.inputTypes ||= {};
+    for (const key of item.table.inputCells) {
+      const value = item.answer?.cells?.[key];
+      const label = answerFieldLabel(item, key);
+      const semanticType = semanticTypeForLabel(label, value);
+      item.table.inputMetadata[key] = { ...item.table.inputMetadata[key], label, semanticType };
+      item.table.inputTypes[key] = typeof value === 'number' ? 'amount' : 'text';
+    }
+  }
   const phase = Math.min(4, Math.floor(chapterPosition / 5));
   const instruction = WorkInstructions[item.type] || WorkInstructions.comprehensive;
   const beats = [
@@ -15443,9 +15537,17 @@ Object.values(QuestionData).forEach((item, index) => {
   // Authored prose remains first and unchanged.  Append a structurally derived,
   // question-specific walkthrough so every runtime explanation contains the
   // exact accounts, amounts, source rows and final answer needed for a retry.
-  if (!String(item.explanation).includes('【この問題への当てはめ】') && !String(item.explanation).includes('【使用する資料】')) {
-    item.explanation += `\n${item.type === 'journal' ? journalExplanation(item) : tableExplanation(item)}`;
-  }
+  // Regenerate only the derived walkthrough. The reviewed prose before the
+  // first generated heading remains byte-for-byte intact.
+  const generatedAt = ['【この問題への当てはめ】','【使用する資料】'].map(marker => String(item.explanation).indexOf(marker)).filter(position => position >= 0);
+  if (generatedAt.length) item.explanation = String(item.explanation).slice(0, Math.min(...generatedAt)).trimEnd();
+  item.explanation += `\n${item.type === 'journal' ? journalExplanation(item) : tableExplanation(item)}`;
+  // Final presentation guard for legacy material keys that were authored in
+  // English. This operates only on generated prose, never on answer schemas.
+  item.explanation = item.explanation
+    .replaceAll('unitPrice', '単価').replaceAll('currentDepreciation', '当期減価償却費').replaceAll('closingBookValue', '期末帳簿価額')
+    .replace(/\bdate(?=\d)/gu, '日付').replaceAll('description', '摘要').replaceAll('acquisitionCost', '取得原価').replaceAll('openingAccumulated', '期首減価償却累計額').replaceAll('asset', '固定資産')
+    .replace(/quantity([0-9,]+)円/gu, '数量$1個').replace(/life([0-9,]+)円/gu, '耐用年数$1年').replaceAll('quantity', '数量').replaceAll('amount', '金額');
   item.npcDialogue = npc;
 });
 
