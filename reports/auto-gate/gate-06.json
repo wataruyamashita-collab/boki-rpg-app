@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "gate": "GATE-06",
+  "status": "PASS",
+  "questionIds": [
+    "E001",
+    "E002",
+    "E003",
+    "E004",
+    "E005",
+    "E006",
+    "E007",
+    "E008",
+    "E009",
+    "E010",
+    "E011",
+    "E012",
+    "E013",
+    "E014",
+    "E015",
+    "E016",
+    "E017",
+    "E018",
+    "E019",
+    "E020"
+  ],
+  "reviewed": 20,
+  "changed": 20,
+  "pass": 20,
+  "testCommands": [
+    "npm run audit:explanations"
+  ],
+  "exitCodes": [
+    0
+  ],
+  "remainingFailures": 0
+}

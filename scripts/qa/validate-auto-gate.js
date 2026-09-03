@@ -1,0 +1,16 @@
+'use strict';
+const assert = require('assert');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const root = path.resolve(__dirname, '../..');
+const report = name => JSON.parse(fs.readFileSync(path.join(root, 'reports/auto-gate', name), 'utf8'));
+const state = report('state.json');
+const rows = fs.readFileSync(path.join(root, 'reports/auto-gate/question-review.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
+assert.strictEqual(rows.length, 300); assert.strictEqual(new Set(rows.map(row => row.id)).size, 300);
+assert(rows.every(row => row.reviewed && row.status === 'PASS' && row.internalKeyExposure === false));
+assert.strictEqual(state.status, 'PASS'); assert.strictEqual(state.lastPassedGate, 'GATE-13');
+for (let gate = 0; gate <= 13; gate += 1) assert.strictEqual(report(`gate-${String(gate).padStart(2, '0')}.json`).status, 'PASS');
+const lock = report('audit-lock.json');
+for (const [file, expected] of Object.entries(lock.files)) assert.strictEqual(crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex'), expected, `${file} audit lock changed`);
+console.log('auto-gate state validator: ok (300 unique PASS records; audit lock intact)');

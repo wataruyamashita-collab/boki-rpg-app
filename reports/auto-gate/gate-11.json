@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "gate": "GATE-11",
+  "status": "PASS",
+  "questionIds": [],
+  "reviewed": 0,
+  "changed": 0,
+  "pass": true,
+  "testCommands": [
+    "node tests/mobile-layout.test.js",
+    "node tests/app.test.js"
+  ],
+  "exitCodes": [
+    0
+  ],
+  "remainingFailures": 0
+}

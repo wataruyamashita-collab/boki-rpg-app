@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> boki-rpg-app@1.0.0 audit:auto-gate
+> node scripts/qa/validate-auto-gate.js
+
+auto-gate state validator: ok (300 unique PASS records; audit lock intact)

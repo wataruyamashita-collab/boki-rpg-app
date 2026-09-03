@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "gate": "GATE-12",
+  "status": "PASS",
+  "questionIds": [],
+  "reviewed": 0,
+  "changed": 0,
+  "pass": true,
+  "testCommands": [
+    "node tests/explanation-audit-regression.test.js",
+    "node tests/cross-layer-mutation.test.js"
+  ],
+  "exitCodes": [
+    0
+  ],
+  "remainingFailures": 0
+}

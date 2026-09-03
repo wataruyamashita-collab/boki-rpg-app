@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256",
+  "files": {
+    "tests/independent-quality-gate.test.js": "6ed24e06fcff3e1f4d43b78f5286c86850947f699f8dce53084639f73d17cd84"
+  }
+}

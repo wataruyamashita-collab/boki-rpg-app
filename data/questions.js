@@ -14493,6 +14493,11 @@ QuestionData.L040 = practicalLedger('L040','固定資産台帳（月割・途中
   ['Aの年額減価償却費','Aの当期月割償却（6か月）','Aの売却時帳簿価額','Aの固定資産売却損','Bの当期月割償却（9か月）','Bの期末帳簿価額'],
   {annualA:120000,depreciationA:60000,bookA:540000,lossA:120000,depreciationB:45000,bookB:255000},
   'Aは年額120,000円、6か月分60,000円を償却し、帳簿価額540,000円と売却価額420,000円との差120,000円が売却損です。Bは年額60,000円の9か月分45,000円を償却し、帳簿価額は255,000円です。');
+QuestionData.L040.table.inputMetadata = {
+  ...QuestionData.L040.table.inputMetadata,
+  depreciationA: { label:'Aの当期月割償却（6か月）の金額', semanticType:'amount' },
+  depreciationB: { label:'Bの当期月割償却（9か月）の金額', semanticType:'amount' }
+};
 QuestionData.L041 = practicalLedger('L041','仕訳帳','取引資料を仕訳帳へ記帳しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。',
   [{日付:'4/3',取引:'商品90,000円を掛販売'},{日付:'4/8',取引:'通信費12,000円を現金払い'}],
   ['4/3 借方科目','4/3 借方元丁','4/3 借方金額','4/3 貸方科目','4/3 貸方元丁','4/3 貸方金額','4/8 借方科目','4/8 借方元丁','4/8 借方金額','4/8 貸方科目','4/8 貸方元丁','4/8 貸方金額'],
@@ -15307,12 +15312,14 @@ const semanticTypeForLabel = (label, value) => {
 const answerLabel = Object.freeze({
   debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額',
   unitPrice:'払出単価', currentDepreciation:'当期減価償却費', closingBookValue:'期末帳簿価額', answer:'答え',
-  quantity:'数量', life:'耐用年数', folio:'元丁', date:'日付', acquisitionCost:'取得原価', openingAccumulated:'期首減価償却累計額', amount:'金額', description:'摘要', asset:'固定資産'
+  quantity:'数量', life:'耐用年数', folio:'元丁', date:'日付', acquisitionCost:'取得原価', openingAccumulated:'期首減価償却累計額', amount:'金額', description:'摘要', asset:'固定資産',
+  item:'項目', recorded:'帳簿の記録', evidence:'証憑', transaction:'取引内容', account:'勘定科目', debit:'借方', credit:'貸方', balance:'残高', before:'整理前金額', tbDebit:'試算表借方', tbCredit:'試算表貸方'
 });
 const getDisplayLabel = field => {
   const key = String(field);
   const suffix = key.split('_').at(-1);
-  return answerLabel[key] || answerLabel[suffix] || ({ unitPrice:'払出単価', currentDepreciation:'当期減価償却費', closingBookValue:'期末帳簿価額' })[suffix] || key;
+  const base = key.match(/^(tbDebit|tbCredit|recorded|evidence|transaction|account|debit|credit|balance|before|item)(?:\d+)?$/u)?.[1];
+  return answerLabel[key] || answerLabel[base] || answerLabel[suffix] || ({ unitPrice:'払出単価', currentDepreciation:'当期減価償却費', closingBookValue:'期末帳簿価額' })[suffix] || key;
 };
 const answerFieldLabel = (item, key) => {
   if (answerLabel[key]) return answerLabel[key];
@@ -15374,13 +15381,14 @@ const buildExplanation = item => {
 // workplace evidence, rather than shipping byte-identical question/explanation pairs.
 QuestionData.J070.question = `月末に${QuestionData.J070.question}`;
 QuestionData.J080.question = `納付期限日に${QuestionData.J080.question}`;
-const ExplanationAccountTypes = Object.freeze({
+const ExplanationAccountTypes = globalThis.AccountingDomain?.accountTypes || Object.freeze({
   asset:new Set(['現金','普通預金','当座預金','売掛金','受取手形','繰越商品','備品','電子記録債権','クレジット売掛金','未収入金','前払金','小口現金','仮払金','立替金','仮払消費税','前払保険料','受取商品券','差入保証金','未収利息','貯蔵品','貸付金']),
   contraAsset:new Set(['貸倒引当金','減価償却累計額','備品減価償却累計額']),
   liability:new Set(['買掛金','支払手形','借入金','当座借越','電子記録債務','未払金','前受金','所得税預り金','社会保険料預り金','仮受消費税','仮受金','前受家賃','未払利息','未払法人税等','未払消費税']),
   equity:new Set(['資本金','繰越利益剰余金']),
   revenue:new Set(['売上','受取利息','受取家賃','固定資産売却益','償却債権取立益','雑益']),
-  expense:new Set(['仕入','発送費','消耗品費','減価償却費','固定資産売却損','支払手数料','通信費','水道光熱費','旅費交通費','支払利息','給料','法定福利費','租税公課','貸倒引当金繰入','保険料','法人税、住民税及び事業税','雑損'])
+  expense:new Set(['仕入','発送費','消耗品費','減価償却費','固定資産売却損','支払手数料','通信費','水道光熱費','旅費交通費','支払利息','給料','法定福利費','租税公課','貸倒引当金繰入','保険料','法人税、住民税及び事業税','雑損']),
+  temporary:new Set(['現金過不足']), closing:new Set(['損益'])
 });
 const SPECIAL_ACCOUNT_RULES = Object.freeze({
   '損益':'決算時に収益と費用を集め、当期純利益または当期純損失を計算する一時的な決算勘定',
@@ -15390,7 +15398,17 @@ const SPECIAL_ACCOUNT_RULES = Object.freeze({
   '減価償却累計額':'取得原価から控除して過去の償却累計を示す資産の評価勘定'
 });
 const explanationAccountType = account => Object.entries(ExplanationAccountTypes).find(([, accounts]) => accounts.has(account))?.[0] || '勘定';
-const explanationTypeLabel = Object.freeze({ asset:'資産', contraAsset:'資産の控除', liability:'負債', equity:'純資産', revenue:'収益', expense:'費用', '勘定':'勘定' });
+const explanationTypeLabel = Object.freeze({ ...(globalThis.AccountingDomain?.typeLabels || {}), asset:'資産', contraAsset:'資産の控除', liability:'負債', equity:'純資産', revenue:'収益', expense:'費用', temporary:'仮勘定', closing:'決算勘定', '勘定':'勘定' });
+// Standalone data/audit consumers do not execute index.html.  Publish the same
+// resolved domain object for the view rather than letting it maintain a second
+// classification table.  The browser application normally receives this from
+// accounting-domain.js before questions.js runs.
+globalThis.AccountingDomain ||= Object.freeze({
+  accountTypes: ExplanationAccountTypes,
+  typeLabels: explanationTypeLabel,
+  accountType: account => Object.entries(ExplanationAccountTypes).find(([, accounts]) => accounts.has(account))?.[0] || 'unknown'
+});
+if (typeof window !== 'undefined') window.AccountingDomain = globalThis.AccountingDomain;
 const normalSide = type => ['asset','expense'].includes(type) ? 'debit' : 'credit';
 const journalCalculationTrace = item => {
   const numbers = [...String(item.question).matchAll(/([0-9][0-9,]*)円|([0-9]+)％/gu)].map(match => Number((match[1] || match[2]).replaceAll(',', '')));
@@ -15436,7 +15454,7 @@ const sourceLine = item => {
   const materialLabels = { date:'日付', description:'摘要', quantity:'数量', unitPrice:'単価', amount:'金額', asset:'固定資産', acquisitionCost:'取得原価', life:'耐用年数', openingAccumulated:'期首減価償却累計額' };
   const material = (item.materials || []).map(row => Object.entries(row).map(([label,value]) => { const display = materialLabels[String(label)] || getDisplayLabel(String(label)); return `${display}${formatSemanticValue(value, semanticTypeForLabel(display, value))}`; }).join('・')).join('／');
   const internalIds = new Set(item.table?.inputCells || []);
-  const fixed = (item.table?.rows || []).map(row => Object.entries(row).filter(([,value]) => value !== '入力' && value !== '—' && !internalIds.has(value)).map(([label,value]) => `${label}${formatSemanticValue(value, semanticTypeForLabel(label, value))}`).join('・')).filter(Boolean).join('／');
+  const fixed = (item.table?.rows || []).map(row => Object.entries(row).filter(([,value]) => value !== '入力' && value !== '—' && !internalIds.has(value)).map(([label,value]) => { const display = getDisplayLabel(label); return `${display}${formatSemanticValue(value, semanticTypeForLabel(display, value))}`; }).join('・')).filter(Boolean).join('／');
   return [material, fixed].filter(Boolean).join('／');
 };
 const tableExplanation = item => {
@@ -15463,8 +15481,10 @@ const tableExplanation = item => {
       `【検算】借方合計${yenText(total('debit'))}と貸方合計${yenText(total('credit'))}が${total('debit') === total('credit') ? '一致' : '不一致'}します。`;
   }
   const ledgerGuide = /(受取|支払)手形記入帳/u.test(item.category) ? '資料の種類が約束手形かを判定し、小切手など対象外の資料を除いて、受取日・満期日・振出人または受取人・金額を転記します'
-    : /商品有高帳/u.test(item.category) ? '数量・単価・金額を分け、移動平均法では（旧在庫金額＋仕入金額）÷（旧数量＋仕入数量）で新平均単価を求め、払出数量と残数に掛けます'
-    : /固定資産台帳/u.test(item.category) ? '取得原価÷耐用年数で年額を求め、使用月数を月割した当期償却額を取得原価から差し引いて帳簿価額を求めます'
+    : /商品有高帳/u.test(item.category) && /先入先出法/u.test(`${item.question}${JSON.stringify(item.materials || [])}`) ? '先入先出法なので、古い在庫層から払出数量を割り当て、その単価を掛けて払出額を求めます。次に古い層の残数と新しい仕入層を単価別に残し、それぞれの金額を加えて期末残高を求めます'
+    : /商品有高帳/u.test(item.category) ? '移動平均法なので、（旧在庫金額＋仕入金額）÷（旧数量＋仕入数量）で新平均単価を求め、払出数量と残数に掛けます'
+    : /固定資産台帳/u.test(item.category) && item.table?.rows?.some(row => Object.hasOwn(row, 'openingAccumulated')) ? '取得原価÷耐用年数＝当期減価償却費を求め、取得原価－期首減価償却累計額－当期減価償却費＝期末帳簿価額の順に計算します'
+    : /固定資産台帳/u.test(item.category) ? '取得原価÷耐用年数で年額を求め、使用月数を掛けて当期減価償却費を求め、取得原価から当期までの償却額を差し引いて帳簿価額を求めます'
     : /仕訳帳/u.test(item.category) ? '日付順に借方科目・貸方科目・金額を決め、各科目の元丁を転記先の番号として記入します'
     : /伝票/u.test(item.category) ? '現金の受取は入金伝票、現金の支払は出金伝票、現金を伴わない取引は振替伝票へ記入します'
     : /仕入帳|売上帳/u.test(item.category) ? '総額から返品額を差し引き、純仕入高または純売上高を求めます'
@@ -15496,8 +15516,11 @@ Object.values(QuestionData).forEach((item, index) => {
     for (const key of item.table.inputCells) {
       const value = item.answer?.cells?.[key];
       const label = answerFieldLabel(item, key);
-      const semanticType = semanticTypeForLabel(label, value);
+      const explicitSemanticType = item.id === 'L040' && ['depreciationA', 'depreciationB'].includes(key) ? 'amount' : null;
+      const semanticType = explicitSemanticType || semanticTypeForLabel(label, value) || item.table.inputMetadata[key]?.semanticType;
       item.table.inputMetadata[key] = { ...item.table.inputMetadata[key], label, semanticType };
+      item.table.controlTypes ||= {};
+      item.table.controlTypes[key] = typeof value === 'number' ? 'numeric' : 'text';
       item.table.inputTypes[key] = typeof value === 'number' ? 'amount' : 'text';
     }
   }
