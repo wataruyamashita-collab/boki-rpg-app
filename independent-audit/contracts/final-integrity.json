@@ -4,7 +4,8 @@
   "id": "final-integrity",
   "requiredCheckIds": [
     "AUDIT_LOCK_INTACT",
-    "AUDIT_RUNNER_COMPLETED"
+    "AUDIT_RUNNER_COMPLETED",
+    "ORACLE_NO_SELF_REFERENCE"
   ],
   "requiredLayers": [
     "ADVERSARIAL"
@@ -57,10 +58,16 @@
       "requirementId": "REQ_AUDIT_RUNNER_COMPLETED",
       "requiredCheckId": "AUDIT_RUNNER_COMPLETED",
       "text": "audit runner completes without exception"
+    },
+    {
+      "requirementId": "REQ_ORACLE_NO_SELF_REFERENCE",
+      "requiredCheckId": "ORACLE_NO_SELF_REFERENCE",
+      "text": "independent expected generation never reads production answers or explanations"
     }
   ],
   "checkLayers": {
     "AUDIT_LOCK_INTACT": "ADVERSARIAL",
-    "AUDIT_RUNNER_COMPLETED": "ADVERSARIAL"
+    "AUDIT_RUNNER_COMPLETED": "ADVERSARIAL",
+    "ORACLE_NO_SELF_REFERENCE": "ADVERSARIAL"
   }
 }

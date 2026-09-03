@@ -33,6 +33,11 @@ assert.strictEqual(complete.DIRECTLY_TESTED,300);
 assert.strictEqual(oneUnaudited.DIRECTLY_TESTED,299,'coverage must be computed from review records, not a constant');
 assert.strictEqual(oneUnaudited.MISSING,1);
 for(const [type,checks] of Object.entries(runner.typeQuestionChecks)){const row=reviews.find(item=>item.questionType===type);assert(row,`missing direct audit record for ${type}`);assert(Object.keys(checks).every(id=>row.requiredCheckIds.includes(id)),`${type} must execute every type-specific check`);}
+assert(reviews.every(row=>row.requiredCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER')&&row.executedCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER')));
+assert.strictEqual(complete.INDEPENDENT_EXPECTED_CHECKED,300);
+const answerCorruptions=runner.answerCorruptionMutations();assert.strictEqual(answerCorruptions.length,9);assert(answerCorruptions.every(x=>x.status==='KILLED'),'every answer corruption, including coordinated answer/explanation corruption, must be killed');
+assert.strictEqual(runner.oracleSelfReferenceFindings().length,0);
+const oracleFile=path.join(c.ROOT,'independent-audit/oracles/expected-answer-oracle.js'),oracleSource=fs.readFileSync(oracleFile);try{fs.appendFileSync(oracleFile,'\nquestion.answer;\n');assert(runner.oracleSelfReferenceFindings().some(x=>x.code==='ORACLE_SELF_REFERENCE'));}finally{fs.writeFileSync(oracleFile,oracleSource);}
 
 for(const count of [50,20])assert.strictEqual(c.assessStoryMetrics(25,Array.from({length:count},(_,i)=>`Q${i+1}`),Array.from({length:count},(_,i)=>`Q${i+1}`)).displayCountMismatch,1);
 assert.strictEqual(c.assessStoryMetrics(3,['Q1','Q2','Q3','Q4'],['Q1','Q2','Q4']).positionGap,1);

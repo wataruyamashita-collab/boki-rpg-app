@@ -4,7 +4,8 @@
   "id": "mutation",
   "requiredCheckIds": [
     "MUTATION_ALL_KILLED",
-    "MUTATION_CAUSAL_DELTA"
+    "MUTATION_CAUSAL_DELTA",
+    "ANSWER_CORRUPTION_MUTATIONS"
   ],
   "requiredLayers": [
     "ADVERSARIAL"
@@ -35,10 +36,16 @@
       "requirementId": "REQ_MUTATION_CAUSAL_DELTA",
       "requiredCheckId": "MUTATION_CAUSAL_DELTA",
       "text": "every mutation kill has a causal finding delta"
+    },
+    {
+      "requirementId": "REQ_ANSWER_CORRUPTION_MUTATIONS",
+      "requiredCheckId": "ANSWER_CORRUPTION_MUTATIONS",
+      "text": "independent expected truth kills all required answer corruptions"
     }
   ],
   "checkLayers": {
     "MUTATION_ALL_KILLED": "ADVERSARIAL",
-    "MUTATION_CAUSAL_DELTA": "ADVERSARIAL"
+    "MUTATION_CAUSAL_DELTA": "ADVERSARIAL",
+    "ANSWER_CORRUPTION_MUTATIONS": "ADVERSARIAL"
   }
 }

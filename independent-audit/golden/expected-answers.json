@@ -1,0 +1,3415 @@
+{
+  "schemaVersion": 1,
+  "authority": "independent-audit-golden",
+  "answers": {
+    "J001": {
+      "debit": [
+        {
+          "account": "現金",
+          "amount": 3000000
+        }
+      ],
+      "credit": [
+        {
+          "account": "資本金",
+          "amount": 3000000
+        }
+      ]
+    },
+    "J002": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 180000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 180000
+        }
+      ]
+    },
+    "J003": {
+      "debit": [
+        {
+          "account": "当座預金",
+          "amount": 500000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 500000
+        }
+      ]
+    },
+    "J004": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 240000
+        }
+      ],
+      "credit": [
+        {
+          "account": "買掛金",
+          "amount": 240000
+        }
+      ]
+    },
+    "J005": {
+      "debit": [
+        {
+          "account": "売掛金",
+          "amount": 360000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 360000
+        }
+      ]
+    },
+    "J006": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 206000
+        }
+      ],
+      "credit": [
+        {
+          "account": "買掛金",
+          "amount": 200000
+        },
+        {
+          "account": "現金",
+          "amount": 6000
+        }
+      ]
+    },
+    "J007": {
+      "debit": [
+        {
+          "account": "売掛金",
+          "amount": 170000
+        },
+        {
+          "account": "発送費",
+          "amount": 5000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 170000
+        },
+        {
+          "account": "現金",
+          "amount": 5000
+        }
+      ]
+    },
+    "J008": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 30000
+        }
+      ],
+      "credit": [
+        {
+          "account": "仕入",
+          "amount": 30000
+        }
+      ]
+    },
+    "J009": {
+      "debit": [
+        {
+          "account": "売上",
+          "amount": 24000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 24000
+        }
+      ]
+    },
+    "J010": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 280000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 280000
+        }
+      ]
+    },
+    "J011": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 190000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 190000
+        }
+      ]
+    },
+    "J012": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 150000
+        }
+      ],
+      "credit": [
+        {
+          "account": "電子記録債務",
+          "amount": 150000
+        }
+      ]
+    },
+    "J013": {
+      "debit": [
+        {
+          "account": "電子記録債権",
+          "amount": 210000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 210000
+        }
+      ]
+    },
+    "J014": {
+      "debit": [
+        {
+          "account": "クレジット売掛金",
+          "amount": 122500
+        },
+        {
+          "account": "支払手数料",
+          "amount": 2500
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 125000
+        }
+      ]
+    },
+    "J015": {
+      "debit": [
+        {
+          "account": "前払金",
+          "amount": 50000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 50000
+        }
+      ]
+    },
+    "J016": {
+      "debit": [
+        {
+          "account": "現金",
+          "amount": 70000
+        }
+      ],
+      "credit": [
+        {
+          "account": "前受金",
+          "amount": 70000
+        }
+      ]
+    },
+    "J017": {
+      "debit": [
+        {
+          "account": "現金過不足",
+          "amount": 5000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 5000
+        }
+      ]
+    },
+    "J018": {
+      "debit": [
+        {
+          "account": "通信費",
+          "amount": 3000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金過不足",
+          "amount": 3000
+        }
+      ]
+    },
+    "J019": {
+      "debit": [
+        {
+          "account": "小口現金",
+          "amount": 40000
+        }
+      ],
+      "credit": [
+        {
+          "account": "当座預金",
+          "amount": 40000
+        }
+      ]
+    },
+    "J020": {
+      "debit": [
+        {
+          "account": "旅費交通費",
+          "amount": 4800
+        },
+        {
+          "account": "通信費",
+          "amount": 3200
+        },
+        {
+          "account": "消耗品費",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "当座預金",
+          "amount": 14000
+        }
+      ]
+    },
+    "J021": {
+      "debit": [
+        {
+          "account": "備品",
+          "amount": 280000
+        }
+      ],
+      "credit": [
+        {
+          "account": "未払金",
+          "amount": 280000
+        }
+      ]
+    },
+    "J022": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 100000
+        },
+        {
+          "account": "減価償却累計額",
+          "amount": 180000
+        },
+        {
+          "account": "固定資産売却損",
+          "amount": 20000
+        }
+      ],
+      "credit": [
+        {
+          "account": "備品",
+          "amount": 300000
+        }
+      ]
+    },
+    "J023": {
+      "debit": [
+        {
+          "account": "仮払金",
+          "amount": 60000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 60000
+        }
+      ]
+    },
+    "J024": {
+      "debit": [
+        {
+          "account": "旅費交通費",
+          "amount": 54000
+        },
+        {
+          "account": "現金",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "仮払金",
+          "amount": 60000
+        }
+      ]
+    },
+    "J025": {
+      "debit": [
+        {
+          "account": "立替金",
+          "amount": 18000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 18000
+        }
+      ]
+    },
+    "J026": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 1000000
+        }
+      ],
+      "credit": [
+        {
+          "account": "借入金",
+          "amount": 1000000
+        }
+      ]
+    },
+    "J027": {
+      "debit": [
+        {
+          "account": "借入金",
+          "amount": 200000
+        },
+        {
+          "account": "支払利息",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 206000
+        }
+      ]
+    },
+    "J028": {
+      "debit": [
+        {
+          "account": "給料",
+          "amount": 420000
+        }
+      ],
+      "credit": [
+        {
+          "account": "所得税預り金",
+          "amount": 20000
+        },
+        {
+          "account": "社会保険料預り金",
+          "amount": 50000
+        },
+        {
+          "account": "普通預金",
+          "amount": 350000
+        }
+      ]
+    },
+    "J029": {
+      "debit": [
+        {
+          "account": "所得税預り金",
+          "amount": 20000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 20000
+        }
+      ]
+    },
+    "J030": {
+      "debit": [
+        {
+          "account": "社会保険料預り金",
+          "amount": 50000
+        },
+        {
+          "account": "法定福利費",
+          "amount": 50000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 100000
+        }
+      ]
+    },
+    "J031": {
+      "debit": [
+        {
+          "account": "租税公課",
+          "amount": 48000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 48000
+        }
+      ]
+    },
+    "J032": {
+      "debit": [
+        {
+          "account": "租税公課",
+          "amount": 10000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 10000
+        }
+      ]
+    },
+    "J033": {
+      "debit": [
+        {
+          "account": "貸付金",
+          "amount": 300000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 300000
+        }
+      ]
+    },
+    "J034": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 9000
+        }
+      ],
+      "credit": [
+        {
+          "account": "受取利息",
+          "amount": 9000
+        }
+      ]
+    },
+    "J035": {
+      "debit": [
+        {
+          "account": "貯蔵品",
+          "amount": 5000
+        }
+      ],
+      "credit": [
+        {
+          "account": "租税公課",
+          "amount": 5000
+        }
+      ]
+    },
+    "J036": {
+      "debit": [
+        {
+          "account": "受取商品券",
+          "amount": 80000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 80000
+        }
+      ]
+    },
+    "J037": {
+      "debit": [
+        {
+          "account": "差入保証金",
+          "amount": 200000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 200000
+        }
+      ]
+    },
+    "J038": {
+      "debit": [
+        {
+          "account": "消耗品費",
+          "amount": 12000
+        }
+      ],
+      "credit": [
+        {
+          "account": "通信費",
+          "amount": 12000
+        }
+      ]
+    },
+    "J039": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 18000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 18000
+        }
+      ]
+    },
+    "J040": {
+      "debit": [
+        {
+          "account": "売掛金",
+          "amount": 140000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 140000
+        }
+      ]
+    },
+    "J041": {
+      "debit": [
+        {
+          "account": "前払保険料",
+          "amount": 30000
+        }
+      ],
+      "credit": [
+        {
+          "account": "保険料",
+          "amount": 30000
+        }
+      ]
+    },
+    "J042": {
+      "debit": [
+        {
+          "account": "支払利息",
+          "amount": 15000
+        }
+      ],
+      "credit": [
+        {
+          "account": "未払利息",
+          "amount": 15000
+        }
+      ]
+    },
+    "J043": {
+      "debit": [
+        {
+          "account": "受取家賃",
+          "amount": 30000
+        }
+      ],
+      "credit": [
+        {
+          "account": "前受家賃",
+          "amount": 30000
+        }
+      ]
+    },
+    "J044": {
+      "debit": [
+        {
+          "account": "未収利息",
+          "amount": 12000
+        }
+      ],
+      "credit": [
+        {
+          "account": "受取利息",
+          "amount": 12000
+        }
+      ]
+    },
+    "J045": {
+      "debit": [
+        {
+          "account": "貸倒引当金繰入",
+          "amount": 10000
+        }
+      ],
+      "credit": [
+        {
+          "account": "貸倒引当金",
+          "amount": 10000
+        }
+      ]
+    },
+    "J046": {
+      "debit": [
+        {
+          "account": "貸倒引当金",
+          "amount": 30000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 30000
+        }
+      ]
+    },
+    "J047": {
+      "debit": [
+        {
+          "account": "減価償却費",
+          "amount": 120000
+        }
+      ],
+      "credit": [
+        {
+          "account": "減価償却累計額",
+          "amount": 120000
+        }
+      ]
+    },
+    "J048": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 180000
+        },
+        {
+          "account": "繰越商品",
+          "amount": 230000
+        }
+      ],
+      "credit": [
+        {
+          "account": "繰越商品",
+          "amount": 180000
+        },
+        {
+          "account": "仕入",
+          "amount": 230000
+        }
+      ]
+    },
+    "J049": {
+      "debit": [
+        {
+          "account": "仮受消費税",
+          "amount": 132000
+        }
+      ],
+      "credit": [
+        {
+          "account": "仮払消費税",
+          "amount": 85000
+        },
+        {
+          "account": "未払消費税",
+          "amount": 47000
+        }
+      ]
+    },
+    "J050": {
+      "debit": [
+        {
+          "account": "損益",
+          "amount": 420000
+        }
+      ],
+      "credit": [
+        {
+          "account": "繰越利益剰余金",
+          "amount": 420000
+        }
+      ]
+    },
+    "J051": {
+      "debit": [
+        {
+          "account": "現金",
+          "amount": 3010000
+        }
+      ],
+      "credit": [
+        {
+          "account": "資本金",
+          "amount": 3010000
+        }
+      ]
+    },
+    "J052": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 190000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 190000
+        }
+      ]
+    },
+    "J053": {
+      "debit": [
+        {
+          "account": "当座預金",
+          "amount": 510000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 510000
+        }
+      ]
+    },
+    "J054": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 250000
+        }
+      ],
+      "credit": [
+        {
+          "account": "買掛金",
+          "amount": 250000
+        }
+      ]
+    },
+    "J055": {
+      "debit": [
+        {
+          "account": "売掛金",
+          "amount": 370000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 370000
+        }
+      ]
+    },
+    "J056": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 216000
+        }
+      ],
+      "credit": [
+        {
+          "account": "買掛金",
+          "amount": 210000
+        },
+        {
+          "account": "現金",
+          "amount": 6000
+        }
+      ]
+    },
+    "J057": {
+      "debit": [
+        {
+          "account": "売掛金",
+          "amount": 180000
+        },
+        {
+          "account": "発送費",
+          "amount": 5000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 180000
+        },
+        {
+          "account": "現金",
+          "amount": 5000
+        }
+      ]
+    },
+    "J058": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 40000
+        }
+      ],
+      "credit": [
+        {
+          "account": "仕入",
+          "amount": 40000
+        }
+      ]
+    },
+    "J059": {
+      "debit": [
+        {
+          "account": "売上",
+          "amount": 34000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 34000
+        }
+      ]
+    },
+    "J060": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 290000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 290000
+        }
+      ]
+    },
+    "J061": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 200000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 200000
+        }
+      ]
+    },
+    "J062": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 160000
+        }
+      ],
+      "credit": [
+        {
+          "account": "電子記録債務",
+          "amount": 160000
+        }
+      ]
+    },
+    "J063": {
+      "debit": [
+        {
+          "account": "電子記録債権",
+          "amount": 220000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 220000
+        }
+      ]
+    },
+    "J064": {
+      "debit": [
+        {
+          "account": "クレジット売掛金",
+          "amount": 132300
+        },
+        {
+          "account": "支払手数料",
+          "amount": 2700
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 135000
+        }
+      ]
+    },
+    "J065": {
+      "debit": [
+        {
+          "account": "前払金",
+          "amount": 60000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 60000
+        }
+      ]
+    },
+    "J066": {
+      "debit": [
+        {
+          "account": "現金",
+          "amount": 80000
+        }
+      ],
+      "credit": [
+        {
+          "account": "前受金",
+          "amount": 80000
+        }
+      ]
+    },
+    "J067": {
+      "debit": [
+        {
+          "account": "現金過不足",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 6000
+        }
+      ]
+    },
+    "J068": {
+      "debit": [
+        {
+          "account": "通信費",
+          "amount": 4000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金過不足",
+          "amount": 4000
+        }
+      ]
+    },
+    "J069": {
+      "debit": [
+        {
+          "account": "小口現金",
+          "amount": 50000
+        }
+      ],
+      "credit": [
+        {
+          "account": "当座預金",
+          "amount": 50000
+        }
+      ]
+    },
+    "J070": {
+      "debit": [
+        {
+          "account": "旅費交通費",
+          "amount": 4800
+        },
+        {
+          "account": "通信費",
+          "amount": 3200
+        },
+        {
+          "account": "消耗品費",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "当座預金",
+          "amount": 14000
+        }
+      ]
+    },
+    "J071": {
+      "debit": [
+        {
+          "account": "備品",
+          "amount": 290000
+        }
+      ],
+      "credit": [
+        {
+          "account": "未払金",
+          "amount": 290000
+        }
+      ]
+    },
+    "J072": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 105000
+        },
+        {
+          "account": "減価償却累計額",
+          "amount": 180000
+        },
+        {
+          "account": "固定資産売却損",
+          "amount": 15000
+        }
+      ],
+      "credit": [
+        {
+          "account": "備品",
+          "amount": 300000
+        }
+      ]
+    },
+    "J073": {
+      "debit": [
+        {
+          "account": "仮払金",
+          "amount": 70000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 70000
+        }
+      ]
+    },
+    "J074": {
+      "debit": [
+        {
+          "account": "旅費交通費",
+          "amount": 64000
+        },
+        {
+          "account": "現金",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "仮払金",
+          "amount": 70000
+        }
+      ]
+    },
+    "J075": {
+      "debit": [
+        {
+          "account": "立替金",
+          "amount": 28000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 28000
+        }
+      ]
+    },
+    "J076": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 1010000
+        }
+      ],
+      "credit": [
+        {
+          "account": "借入金",
+          "amount": 1010000
+        }
+      ]
+    },
+    "J077": {
+      "debit": [
+        {
+          "account": "借入金",
+          "amount": 210000
+        },
+        {
+          "account": "支払利息",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 216000
+        }
+      ]
+    },
+    "J078": {
+      "debit": [
+        {
+          "account": "給料",
+          "amount": 430000
+        }
+      ],
+      "credit": [
+        {
+          "account": "所得税預り金",
+          "amount": 20000
+        },
+        {
+          "account": "社会保険料預り金",
+          "amount": 50000
+        },
+        {
+          "account": "普通預金",
+          "amount": 360000
+        }
+      ]
+    },
+    "J079": {
+      "debit": [
+        {
+          "account": "所得税預り金",
+          "amount": 30000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 30000
+        }
+      ]
+    },
+    "J080": {
+      "debit": [
+        {
+          "account": "社会保険料預り金",
+          "amount": 50000
+        },
+        {
+          "account": "法定福利費",
+          "amount": 50000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 100000
+        }
+      ]
+    },
+    "J081": {
+      "debit": [
+        {
+          "account": "租税公課",
+          "amount": 48000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 48000
+        }
+      ]
+    },
+    "J082": {
+      "debit": [
+        {
+          "account": "租税公課",
+          "amount": 20000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 20000
+        }
+      ]
+    },
+    "J083": {
+      "debit": [
+        {
+          "account": "貸付金",
+          "amount": 310000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 310000
+        }
+      ]
+    },
+    "J084": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 19000
+        }
+      ],
+      "credit": [
+        {
+          "account": "受取利息",
+          "amount": 19000
+        }
+      ]
+    },
+    "J085": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 30000
+        }
+      ],
+      "credit": [
+        {
+          "account": "仮受金",
+          "amount": 30000
+        }
+      ]
+    },
+    "J086": {
+      "debit": [
+        {
+          "account": "受取商品券",
+          "amount": 90000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 90000
+        }
+      ]
+    },
+    "J087": {
+      "debit": [
+        {
+          "account": "差入保証金",
+          "amount": 210000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 210000
+        }
+      ]
+    },
+    "J088": {
+      "debit": [
+        {
+          "account": "消耗品費",
+          "amount": 22000
+        }
+      ],
+      "credit": [
+        {
+          "account": "通信費",
+          "amount": 22000
+        }
+      ]
+    },
+    "J089": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 18000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 18000
+        }
+      ]
+    },
+    "J090": {
+      "debit": [
+        {
+          "account": "売掛金",
+          "amount": 150000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 150000
+        }
+      ]
+    },
+    "J091": {
+      "debit": [
+        {
+          "account": "前払保険料",
+          "amount": 40000
+        }
+      ],
+      "credit": [
+        {
+          "account": "保険料",
+          "amount": 40000
+        }
+      ]
+    },
+    "J092": {
+      "debit": [
+        {
+          "account": "支払利息",
+          "amount": 25000
+        }
+      ],
+      "credit": [
+        {
+          "account": "未払利息",
+          "amount": 25000
+        }
+      ]
+    },
+    "J093": {
+      "debit": [
+        {
+          "account": "受取家賃",
+          "amount": 40000
+        }
+      ],
+      "credit": [
+        {
+          "account": "前受家賃",
+          "amount": 40000
+        }
+      ]
+    },
+    "J094": {
+      "debit": [
+        {
+          "account": "未収利息",
+          "amount": 22000
+        }
+      ],
+      "credit": [
+        {
+          "account": "受取利息",
+          "amount": 22000
+        }
+      ]
+    },
+    "J095": {
+      "debit": [
+        {
+          "account": "貸倒引当金繰入",
+          "amount": 10200
+        }
+      ],
+      "credit": [
+        {
+          "account": "貸倒引当金",
+          "amount": 10200
+        }
+      ]
+    },
+    "J096": {
+      "debit": [
+        {
+          "account": "貸倒引当金",
+          "amount": 40000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 40000
+        }
+      ]
+    },
+    "J097": {
+      "debit": [
+        {
+          "account": "減価償却費",
+          "amount": 122000
+        }
+      ],
+      "credit": [
+        {
+          "account": "減価償却累計額",
+          "amount": 122000
+        }
+      ]
+    },
+    "J098": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 190000
+        },
+        {
+          "account": "繰越商品",
+          "amount": 240000
+        }
+      ],
+      "credit": [
+        {
+          "account": "繰越商品",
+          "amount": 190000
+        },
+        {
+          "account": "仕入",
+          "amount": 240000
+        }
+      ]
+    },
+    "J099": {
+      "debit": [
+        {
+          "account": "仮受消費税",
+          "amount": 142000
+        }
+      ],
+      "credit": [
+        {
+          "account": "仮払消費税",
+          "amount": 95000
+        },
+        {
+          "account": "未払消費税",
+          "amount": 47000
+        }
+      ]
+    },
+    "J100": {
+      "debit": [
+        {
+          "account": "損益",
+          "amount": 430000
+        }
+      ],
+      "credit": [
+        {
+          "account": "繰越利益剰余金",
+          "amount": 430000
+        }
+      ]
+    },
+    "J101": {
+      "debit": [
+        {
+          "account": "現金",
+          "amount": 3020000
+        }
+      ],
+      "credit": [
+        {
+          "account": "資本金",
+          "amount": 3020000
+        }
+      ]
+    },
+    "J102": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 200000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 200000
+        }
+      ]
+    },
+    "J103": {
+      "debit": [
+        {
+          "account": "当座預金",
+          "amount": 520000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 520000
+        }
+      ]
+    },
+    "J104": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 260000
+        }
+      ],
+      "credit": [
+        {
+          "account": "買掛金",
+          "amount": 260000
+        }
+      ]
+    },
+    "J105": {
+      "debit": [
+        {
+          "account": "売掛金",
+          "amount": 380000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 380000
+        }
+      ]
+    },
+    "J106": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 226000
+        }
+      ],
+      "credit": [
+        {
+          "account": "買掛金",
+          "amount": 220000
+        },
+        {
+          "account": "現金",
+          "amount": 6000
+        }
+      ]
+    },
+    "J107": {
+      "debit": [
+        {
+          "account": "売掛金",
+          "amount": 190000
+        },
+        {
+          "account": "発送費",
+          "amount": 5000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 190000
+        },
+        {
+          "account": "現金",
+          "amount": 5000
+        }
+      ]
+    },
+    "J108": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 50000
+        }
+      ],
+      "credit": [
+        {
+          "account": "仕入",
+          "amount": 50000
+        }
+      ]
+    },
+    "J109": {
+      "debit": [
+        {
+          "account": "売上",
+          "amount": 44000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 44000
+        }
+      ]
+    },
+    "J110": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 300000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 300000
+        }
+      ]
+    },
+    "J111": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 210000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 210000
+        }
+      ]
+    },
+    "J112": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 170000
+        }
+      ],
+      "credit": [
+        {
+          "account": "電子記録債務",
+          "amount": 170000
+        }
+      ]
+    },
+    "J113": {
+      "debit": [
+        {
+          "account": "電子記録債権",
+          "amount": 230000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 230000
+        }
+      ]
+    },
+    "J114": {
+      "debit": [
+        {
+          "account": "クレジット売掛金",
+          "amount": 142100
+        },
+        {
+          "account": "支払手数料",
+          "amount": 2900
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 145000
+        }
+      ]
+    },
+    "J115": {
+      "debit": [
+        {
+          "account": "前払金",
+          "amount": 70000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 70000
+        }
+      ]
+    },
+    "J116": {
+      "debit": [
+        {
+          "account": "現金",
+          "amount": 90000
+        }
+      ],
+      "credit": [
+        {
+          "account": "前受金",
+          "amount": 90000
+        }
+      ]
+    },
+    "J117": {
+      "debit": [
+        {
+          "account": "現金過不足",
+          "amount": 7000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 7000
+        }
+      ]
+    },
+    "J118": {
+      "debit": [
+        {
+          "account": "通信費",
+          "amount": 5000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金過不足",
+          "amount": 5000
+        }
+      ]
+    },
+    "J119": {
+      "debit": [
+        {
+          "account": "小口現金",
+          "amount": 60000
+        }
+      ],
+      "credit": [
+        {
+          "account": "当座預金",
+          "amount": 60000
+        }
+      ]
+    },
+    "J120": {
+      "debit": [
+        {
+          "account": "旅費交通費",
+          "amount": 4800
+        },
+        {
+          "account": "通信費",
+          "amount": 3200
+        },
+        {
+          "account": "消耗品費",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "当座預金",
+          "amount": 14000
+        }
+      ]
+    },
+    "J121": {
+      "debit": [
+        {
+          "account": "備品",
+          "amount": 300000
+        }
+      ],
+      "credit": [
+        {
+          "account": "未払金",
+          "amount": 300000
+        }
+      ]
+    },
+    "J122": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 110000
+        },
+        {
+          "account": "減価償却累計額",
+          "amount": 180000
+        },
+        {
+          "account": "固定資産売却損",
+          "amount": 10000
+        }
+      ],
+      "credit": [
+        {
+          "account": "備品",
+          "amount": 300000
+        }
+      ]
+    },
+    "J123": {
+      "debit": [
+        {
+          "account": "仮払金",
+          "amount": 80000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 80000
+        }
+      ]
+    },
+    "J124": {
+      "debit": [
+        {
+          "account": "旅費交通費",
+          "amount": 74000
+        },
+        {
+          "account": "現金",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "仮払金",
+          "amount": 80000
+        }
+      ]
+    },
+    "J125": {
+      "debit": [
+        {
+          "account": "立替金",
+          "amount": 38000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 38000
+        }
+      ]
+    },
+    "J126": {
+      "debit": [
+        {
+          "account": "普通預金",
+          "amount": 1020000
+        }
+      ],
+      "credit": [
+        {
+          "account": "借入金",
+          "amount": 1020000
+        }
+      ]
+    },
+    "J127": {
+      "debit": [
+        {
+          "account": "借入金",
+          "amount": 220000
+        },
+        {
+          "account": "支払利息",
+          "amount": 6000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 226000
+        }
+      ]
+    },
+    "J128": {
+      "debit": [
+        {
+          "account": "給料",
+          "amount": 440000
+        }
+      ],
+      "credit": [
+        {
+          "account": "所得税預り金",
+          "amount": 20000
+        },
+        {
+          "account": "社会保険料預り金",
+          "amount": 50000
+        },
+        {
+          "account": "普通預金",
+          "amount": 370000
+        }
+      ]
+    },
+    "J129": {
+      "debit": [
+        {
+          "account": "所得税預り金",
+          "amount": 40000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 40000
+        }
+      ]
+    },
+    "J130": {
+      "debit": [
+        {
+          "account": "社会保険料預り金",
+          "amount": 50000
+        },
+        {
+          "account": "法定福利費",
+          "amount": 50000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 100000
+        }
+      ]
+    },
+    "J131": {
+      "debit": [
+        {
+          "account": "水道光熱費",
+          "amount": 68000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 68000
+        }
+      ]
+    },
+    "J132": {
+      "debit": [
+        {
+          "account": "租税公課",
+          "amount": 30000
+        }
+      ],
+      "credit": [
+        {
+          "account": "現金",
+          "amount": 30000
+        }
+      ]
+    },
+    "J133": {
+      "debit": [
+        {
+          "account": "貸付金",
+          "amount": 320000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 320000
+        }
+      ]
+    },
+    "J134": {
+      "debit": [
+        {
+          "account": "現金",
+          "amount": 29000
+        }
+      ],
+      "credit": [
+        {
+          "account": "償却債権取立益",
+          "amount": 29000
+        }
+      ]
+    },
+    "J135": {
+      "debit": [
+        {
+          "account": "法人税、住民税及び事業税",
+          "amount": 120000
+        }
+      ],
+      "credit": [
+        {
+          "account": "未払法人税等",
+          "amount": 120000
+        }
+      ]
+    },
+    "J136": {
+      "debit": [
+        {
+          "account": "受取商品券",
+          "amount": 100000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 100000
+        }
+      ]
+    },
+    "J137": {
+      "debit": [
+        {
+          "account": "未収入金",
+          "amount": 220000
+        },
+        {
+          "account": "減価償却累計額",
+          "amount": 120000
+        }
+      ],
+      "credit": [
+        {
+          "account": "備品",
+          "amount": 300000
+        },
+        {
+          "account": "固定資産売却益",
+          "amount": 40000
+        }
+      ]
+    },
+    "J138": {
+      "debit": [
+        {
+          "account": "消耗品費",
+          "amount": 32000
+        }
+      ],
+      "credit": [
+        {
+          "account": "通信費",
+          "amount": 32000
+        }
+      ]
+    },
+    "J139": {
+      "debit": [
+        {
+          "account": "買掛金",
+          "amount": 18000
+        }
+      ],
+      "credit": [
+        {
+          "account": "普通預金",
+          "amount": 18000
+        }
+      ]
+    },
+    "J140": {
+      "debit": [
+        {
+          "account": "売掛金",
+          "amount": 160000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 160000
+        }
+      ]
+    },
+    "J141": {
+      "debit": [
+        {
+          "account": "前払保険料",
+          "amount": 50000
+        }
+      ],
+      "credit": [
+        {
+          "account": "保険料",
+          "amount": 50000
+        }
+      ]
+    },
+    "J142": {
+      "debit": [
+        {
+          "account": "支払利息",
+          "amount": 35000
+        }
+      ],
+      "credit": [
+        {
+          "account": "未払利息",
+          "amount": 35000
+        }
+      ]
+    },
+    "J143": {
+      "debit": [
+        {
+          "account": "受取家賃",
+          "amount": 50000
+        }
+      ],
+      "credit": [
+        {
+          "account": "前受家賃",
+          "amount": 50000
+        }
+      ]
+    },
+    "J144": {
+      "debit": [
+        {
+          "account": "未収利息",
+          "amount": 32000
+        }
+      ],
+      "credit": [
+        {
+          "account": "受取利息",
+          "amount": 32000
+        }
+      ]
+    },
+    "J145": {
+      "debit": [
+        {
+          "account": "貸倒引当金繰入",
+          "amount": 10400
+        }
+      ],
+      "credit": [
+        {
+          "account": "貸倒引当金",
+          "amount": 10400
+        }
+      ]
+    },
+    "J146": {
+      "debit": [
+        {
+          "account": "貸倒引当金",
+          "amount": 50000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売掛金",
+          "amount": 50000
+        }
+      ]
+    },
+    "J147": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 80000
+        }
+      ],
+      "credit": [
+        {
+          "account": "当座預金",
+          "amount": 30000
+        },
+        {
+          "account": "当座借越",
+          "amount": 50000
+        }
+      ]
+    },
+    "J148": {
+      "debit": [
+        {
+          "account": "受取手形",
+          "amount": 80000
+        }
+      ],
+      "credit": [
+        {
+          "account": "売上",
+          "amount": 80000
+        }
+      ]
+    },
+    "J149": {
+      "debit": [
+        {
+          "account": "仕入",
+          "amount": 60000
+        }
+      ],
+      "credit": [
+        {
+          "account": "支払手形",
+          "amount": 60000
+        }
+      ]
+    },
+    "J150": {
+      "debit": [
+        {
+          "account": "当座預金",
+          "amount": 80000
+        },
+        {
+          "account": "支払手形",
+          "amount": 60000
+        }
+      ],
+      "credit": [
+        {
+          "account": "受取手形",
+          "amount": 80000
+        },
+        {
+          "account": "当座預金",
+          "amount": 60000
+        }
+      ]
+    },
+    "L001": {
+      "cells": {
+        "r2_balance": 358000,
+        "r3_balance": 331500
+      }
+    },
+    "L002": {
+      "cells": {
+        "r2_balance": 366000,
+        "r3_balance": 300000
+      }
+    },
+    "L003": {
+      "cells": {
+        "r2_balance": 374000,
+        "r3_balance": 344500
+      }
+    },
+    "L004": {
+      "cells": {
+        "r3_unitPrice": 1200,
+        "r3_amount": 30000,
+        "r4_amount": 52800
+      }
+    },
+    "L005": {
+      "cells": {
+        "r1_currentDepreciation": 85000,
+        "r1_closingBookValue": 255000
+      }
+    },
+    "L006": {
+      "cells": {
+        "r2_balance": 398000,
+        "r3_balance": 364000
+      }
+    },
+    "L007": {
+      "cells": {
+        "r2_balance": 406000,
+        "r3_balance": 325000
+      }
+    },
+    "L008": {
+      "cells": {
+        "r2_balance": 414000,
+        "r3_balance": 377000
+      }
+    },
+    "L009": {
+      "cells": {
+        "r3_unitPrice": 1200,
+        "r3_amount": 30000,
+        "r4_amount": 58800
+      }
+    },
+    "L010": {
+      "cells": {
+        "r1_currentDepreciation": 90000,
+        "r1_closingBookValue": 270000
+      }
+    },
+    "L011": {
+      "cells": {
+        "r2_balance": 438000,
+        "r3_balance": 396500
+      }
+    },
+    "L012": {
+      "cells": {
+        "r2_balance": 446000,
+        "r3_balance": 350000
+      }
+    },
+    "L013": {
+      "cells": {
+        "r2_balance": 454000,
+        "r3_balance": 409500
+      }
+    },
+    "L014": {
+      "cells": {
+        "r3_unitPrice": 1200,
+        "r3_amount": 30000,
+        "r4_amount": 64800
+      }
+    },
+    "L015": {
+      "cells": {
+        "r1_currentDepreciation": 95000,
+        "r1_closingBookValue": 285000
+      }
+    },
+    "L016": {
+      "cells": {
+        "r2_balance": 478000,
+        "r3_balance": 429000
+      }
+    },
+    "L017": {
+      "cells": {
+        "r2_balance": 486000,
+        "r3_balance": 375000
+      }
+    },
+    "L018": {
+      "cells": {
+        "r2_balance": 494000,
+        "r3_balance": 442000
+      }
+    },
+    "L019": {
+      "cells": {
+        "r3_unitPrice": 1200,
+        "r3_amount": 30000,
+        "r4_amount": 70800
+      }
+    },
+    "L020": {
+      "cells": {
+        "r1_currentDepreciation": 100000,
+        "r1_closingBookValue": 300000
+      }
+    },
+    "L021": {
+      "cells": {
+        "r2_balance": 518000,
+        "r3_balance": 461500
+      }
+    },
+    "L022": {
+      "cells": {
+        "r2_balance": 526000,
+        "r3_balance": 400000
+      }
+    },
+    "L023": {
+      "cells": {
+        "r2_balance": 534000,
+        "r3_balance": 474500
+      }
+    },
+    "L024": {
+      "cells": {
+        "r3_unitPrice": 1200,
+        "r3_amount": 30000,
+        "r4_amount": 76800
+      }
+    },
+    "L025": {
+      "cells": {
+        "r1_currentDepreciation": 105000,
+        "r1_closingBookValue": 315000
+      }
+    },
+    "L026": {
+      "cells": {
+        "r2_balance": 558000,
+        "r3_balance": 494000
+      }
+    },
+    "L027": {
+      "cells": {
+        "r2_balance": 566000,
+        "r3_balance": 425000
+      }
+    },
+    "L028": {
+      "cells": {
+        "r2_balance": 574000,
+        "r3_balance": 507000
+      }
+    },
+    "L029": {
+      "cells": {
+        "r3_unitPrice": 1200,
+        "r3_amount": 30000,
+        "r4_amount": 82800
+      }
+    },
+    "L030": {
+      "cells": {
+        "r1_currentDepreciation": 110000,
+        "r1_closingBookValue": 330000
+      }
+    },
+    "L031": {
+      "cells": {
+        "r2_balance": 598000,
+        "r3_balance": 526500
+      }
+    },
+    "L032": {
+      "cells": {
+        "r2_balance": 606000,
+        "r3_balance": 450000
+      }
+    },
+    "L033": {
+      "cells": {
+        "date": "7/1",
+        "cost": 360000,
+        "depreciation": 54000,
+        "bookValue": 306000
+      }
+    },
+    "L034": {
+      "cells": {
+        "date1": "8/2",
+        "summary1": "掛売上",
+        "folio1": "113・401",
+        "debitTotal": 102000,
+        "creditTotal": 102000
+      }
+    },
+    "L035": {
+      "cells": {
+        "received": "6/2",
+        "due": "10/31",
+        "drawer": "青空商店・森物産・星商会",
+        "total": 200000
+      }
+    },
+    "L036": {
+      "cells": {
+        "issued": "7/3",
+        "due": "11/30",
+        "payee": "若葉物産・山川商事",
+        "total": 200000
+      }
+    },
+    "L037": {
+      "cells": {
+        "date": "4/20",
+        "counterpart": "現金",
+        "side": "貸方",
+        "balance": 70000
+      }
+    },
+    "L038": {
+      "cells": {
+        "date": "5/27",
+        "counterpart": "仕入",
+        "balanceSide": "貸方",
+        "balance": 120000
+      }
+    },
+    "L039": {
+      "cells": {
+        "priorAccrual": 9000,
+        "reversal": 9000,
+        "annualPayment": 18000,
+        "currentAccrual": 9000,
+        "profitTransfer": 18000,
+        "nextBalance": 0
+      }
+    },
+    "L040": {
+      "cells": {
+        "annualA": 120000,
+        "depreciationA": 60000,
+        "bookA": 540000,
+        "lossA": 120000,
+        "depreciationB": 45000,
+        "bookB": 255000
+      }
+    },
+    "L041": {
+      "cells": {
+        "d1Account": "売掛金",
+        "d1Ref": 113,
+        "d1Amount": 90000,
+        "c1Account": "売上",
+        "c1Ref": 401,
+        "c1Amount": 90000,
+        "d2Account": "通信費",
+        "d2Ref": 521,
+        "d2Amount": 12000,
+        "c2Account": "現金",
+        "c2Ref": 101,
+        "c2Amount": 12000
+      }
+    },
+    "L042": {
+      "cells": {
+        "received1": "6/5",
+        "drawer1": "青空商店",
+        "drawn1": "6/4",
+        "due1": "8/31",
+        "bank1": "東都銀行",
+        "description1": "売掛金回収",
+        "amount1": 180000,
+        "received2": "6/20",
+        "drawer2": "港屋",
+        "drawn2": "6/20",
+        "due2": "9/30",
+        "bank2": "中央銀行",
+        "description2": "商品売上",
+        "amount2": 120000,
+        "total": 300000
+      }
+    },
+    "L043": {
+      "cells": {
+        "drawn1": "7/10",
+        "payee1": "若葉物産",
+        "due1": "10/31",
+        "bank1": "東都銀行",
+        "description1": "買掛金支払",
+        "amount1": 150000,
+        "drawn2": "7/25",
+        "payee2": "北星商事",
+        "due2": "11/30",
+        "bank2": "東都銀行",
+        "description2": "商品仕入",
+        "amount2": 90000,
+        "total": 240000
+      }
+    },
+    "L044": {
+      "cells": {
+        "value1": 50000,
+        "value2": 18000,
+        "value3": 32000
+      }
+    },
+    "L045": {
+      "cells": {
+        "value1": 300000,
+        "value2": 85000,
+        "value3": 215000
+      }
+    },
+    "L046": {
+      "cells": {
+        "value1": 4800,
+        "value2": 7200,
+        "value3": 12000
+      }
+    },
+    "L047": {
+      "cells": {
+        "value1": 120000,
+        "value2": 20000,
+        "value3": 100000
+      }
+    },
+    "L048": {
+      "cells": {
+        "value1": 180000,
+        "value2": 30000,
+        "value3": 150000
+      }
+    },
+    "L049": {
+      "cells": {
+        "value1": 1100,
+        "value2": 13200,
+        "value3": 8800
+      }
+    },
+    "L050": {
+      "cells": {
+        "value1": 50000,
+        "value2": 20000,
+        "value3": 30000
+      }
+    },
+    "T001": {
+      "cells": {
+        "total_debit": 1024000,
+        "total_credit": 1024000
+      }
+    },
+    "T002": {
+      "cells": {
+        "total_debit": 1048000,
+        "total_credit": 1048000
+      }
+    },
+    "T003": {
+      "cells": {
+        "total_debit": 1072000,
+        "total_credit": 1072000
+      }
+    },
+    "T004": {
+      "cells": {
+        "total_debit": 1096000,
+        "total_credit": 1096000
+      }
+    },
+    "T005": {
+      "cells": {
+        "total_debit": 1120000,
+        "total_credit": 1120000
+      }
+    },
+    "T006": {
+      "cells": {
+        "total_debit": 1144000,
+        "total_credit": 1144000
+      }
+    },
+    "T007": {
+      "cells": {
+        "total_debit": 1168000,
+        "total_credit": 1168000
+      }
+    },
+    "T008": {
+      "cells": {
+        "total_debit": 1192000,
+        "total_credit": 1192000
+      }
+    },
+    "T009": {
+      "cells": {
+        "total_debit": 1216000,
+        "total_credit": 1216000
+      }
+    },
+    "T010": {
+      "cells": {
+        "total_debit": 1240000,
+        "total_credit": 1240000
+      }
+    },
+    "T011": {
+      "cells": {
+        "total_debit": 1213000,
+        "total_credit": 1213000
+      }
+    },
+    "T012": {
+      "cells": {
+        "total_debit": 1236000,
+        "total_credit": 1236000
+      }
+    },
+    "T013": {
+      "cells": {
+        "total_debit": 1259000,
+        "total_credit": 1259000
+      }
+    },
+    "T014": {
+      "cells": {
+        "total_debit": 1282000,
+        "total_credit": 1282000
+      }
+    },
+    "T015": {
+      "cells": {
+        "total_debit": 1305000,
+        "total_credit": 1305000
+      }
+    },
+    "T016": {
+      "cells": {
+        "total_debit": 1328000,
+        "total_credit": 1328000
+      }
+    },
+    "T017": {
+      "cells": {
+        "total_debit": 1351000,
+        "total_credit": 1351000
+      }
+    },
+    "T018": {
+      "cells": {
+        "total_debit": 1374000,
+        "total_credit": 1374000
+      }
+    },
+    "T019": {
+      "cells": {
+        "total_debit": 1397000,
+        "total_credit": 1397000
+      }
+    },
+    "T020": {
+      "cells": {
+        "total_debit": 1420000,
+        "total_credit": 1420000
+      }
+    },
+    "T021": {
+      "cells": {
+        "total_debit": 1623000,
+        "total_credit": 1623000
+      }
+    },
+    "T022": {
+      "cells": {
+        "total_debit": 1646000,
+        "total_credit": 1646000
+      }
+    },
+    "T023": {
+      "cells": {
+        "total_debit": 1669000,
+        "total_credit": 1669000
+      }
+    },
+    "T024": {
+      "cells": {
+        "total_debit": 1692000,
+        "total_credit": 1692000
+      }
+    },
+    "T025": {
+      "cells": {
+        "total_debit": 1715000,
+        "total_credit": 1715000
+      }
+    },
+    "T026": {
+      "cells": {
+        "total_debit": 1738000,
+        "total_credit": 1738000
+      }
+    },
+    "T027": {
+      "cells": {
+        "total_debit": 1761000,
+        "total_credit": 1761000
+      }
+    },
+    "T028": {
+      "cells": {
+        "total_debit": 1784000,
+        "total_credit": 1784000
+      }
+    },
+    "T029": {
+      "cells": {
+        "total_debit": 1807000,
+        "total_credit": 1807000
+      }
+    },
+    "T030": {
+      "cells": {
+        "total_debit": 1830000,
+        "total_credit": 1830000
+      }
+    },
+    "T031": {
+      "cells": {
+        "total_debit": 1554000,
+        "total_credit": 1554000
+      }
+    },
+    "T032": {
+      "cells": {
+        "total_debit": 1578000,
+        "total_credit": 1578000
+      }
+    },
+    "T033": {
+      "cells": {
+        "total_debit": 1602000,
+        "total_credit": 1602000
+      }
+    },
+    "T034": {
+      "cells": {
+        "total_debit": 1626000,
+        "total_credit": 1626000
+      }
+    },
+    "T035": {
+      "cells": {
+        "total_debit": 1650000,
+        "total_credit": 1650000
+      }
+    },
+    "T036": {
+      "cells": {
+        "total_debit": 1674000,
+        "total_credit": 1674000
+      }
+    },
+    "T037": {
+      "cells": {
+        "total_debit": 1698000,
+        "total_credit": 1698000
+      }
+    },
+    "T038": {
+      "cells": {
+        "total_debit": 1722000,
+        "total_credit": 1722000
+      }
+    },
+    "T039": {
+      "cells": {
+        "total_debit": 1746000,
+        "total_credit": 1746000
+      }
+    },
+    "T040": {
+      "cells": {
+        "total_debit": 1770000,
+        "total_credit": 1770000
+      }
+    },
+    "E001": {
+      "cells": {
+        "debitAccount": "広告宣伝費",
+        "debitAmount": 22500,
+        "creditAccount": "備品",
+        "creditAmount": 22500
+      }
+    },
+    "E002": {
+      "cells": {
+        "debitAccount": "買掛金",
+        "debitAmount": 5000,
+        "creditAccount": "普通預金",
+        "creditAmount": 5000
+      }
+    },
+    "E003": {
+      "cells": {
+        "debitAccount": "消耗品費",
+        "debitAmount": 18000,
+        "creditAccount": "通信費",
+        "creditAmount": 18000
+      }
+    },
+    "E004": {
+      "cells": {
+        "debitAccount": "売上",
+        "debitAmount": 80000,
+        "creditAccount": "売掛金",
+        "creditAmount": 80000
+      }
+    },
+    "E005": {
+      "cells": {
+        "debitAccount": "備品",
+        "debitAmount": 120000,
+        "creditAccount": "消耗品費",
+        "creditAmount": 120000
+      }
+    },
+    "E006": {
+      "cells": {
+        "debitAccount": "現金",
+        "debitAmount": 60000,
+        "creditAccount": "普通預金",
+        "creditAmount": 60000
+      }
+    },
+    "E007": {
+      "cells": {
+        "debitAccount": "売掛金",
+        "debitAmount": 90000,
+        "creditAccount": "現金",
+        "creditAmount": 90000
+      }
+    },
+    "E008": {
+      "cells": {
+        "debitAccount": "売上",
+        "debitAmount": 12000,
+        "creditAccount": "受取利息",
+        "creditAmount": 12000
+      }
+    },
+    "E009": {
+      "cells": {
+        "debitAccount": "現金",
+        "debitAmount": 5000,
+        "creditAccount": "通信費",
+        "creditAmount": 5000
+      }
+    },
+    "E010": {
+      "cells": {
+        "debitAccount": "借入金",
+        "debitAmount": 100000,
+        "creditAccount": "買掛金",
+        "creditAmount": 100000
+      }
+    },
+    "E011": {
+      "cells": {
+        "debitAccount": "保険料",
+        "debitAmount": 24000,
+        "creditAccount": "支払家賃",
+        "creditAmount": 24000
+      }
+    },
+    "E012": {
+      "cells": {
+        "debitAccount": "売上",
+        "debitAmount": 50000,
+        "creditAccount": "前受金",
+        "creditAmount": 50000
+      }
+    },
+    "E013": {
+      "cells": {
+        "debitAccount": "前払金",
+        "debitAmount": 70000,
+        "creditAccount": "仕入",
+        "creditAmount": 70000
+      }
+    },
+    "E014": {
+      "cells": {
+        "debitAccount": "仮払金",
+        "debitAmount": 60000,
+        "creditAccount": "旅費交通費",
+        "creditAmount": 60000
+      }
+    },
+    "E015": {
+      "cells": {
+        "debitAccount": "立替金",
+        "debitAmount": 18000,
+        "creditAccount": "保険料",
+        "creditAmount": 18000
+      }
+    },
+    "E016": {
+      "cells": {
+        "debitAccount": "租税公課",
+        "debitAmount": 10000,
+        "creditAccount": "消耗品費",
+        "creditAmount": 10000
+      }
+    },
+    "E017": {
+      "cells": {
+        "debitAccount": "支払手数料",
+        "debitAmount": 3000,
+        "creditAccount": "支払利息",
+        "creditAmount": 3000
+      }
+    },
+    "E018": {
+      "cells": {
+        "debitAccount": "備品",
+        "debitAmount": 280000,
+        "creditAccount": "仕入",
+        "creditAmount": 280000
+      }
+    },
+    "E019": {
+      "cells": {
+        "debitAccount": "現金",
+        "debitAmount": 40000,
+        "creditAccount": "普通預金",
+        "creditAmount": 40000
+      }
+    },
+    "E020": {
+      "cells": {
+        "debitAccount": "普通預金",
+        "debitAmount": 30000,
+        "creditAccount": "給料",
+        "creditAmount": 30000
+      }
+    },
+    "D001": {
+      "cells": {
+        "bsDebit_1": 300000,
+        "bsDebit_2": 300000,
+        "bsDebit_3": 200000,
+        "bsDebit_4": 600000,
+        "bsCredit_5": 200000,
+        "bsCredit_6": 1000000,
+        "plCredit_7": 800000,
+        "plDebit_8": 400000,
+        "adjCredit_9": 40000,
+        "plDebit_9": 160000,
+        "adjDebit_10": 40000,
+        "bsDebit_10": 40000,
+        "adjDebit_11": 60000,
+        "plDebit_11": 60000,
+        "adjCredit_12": 60000,
+        "bsCredit_12": 60000,
+        "plDebit_13": 180000,
+        "bsCredit_13": 180000
+      }
+    },
+    "D002": {
+      "cells": {
+        "insurance_adjustment": 31500,
+        "insurance_expense_after": 94500,
+        "depreciation_expense": 63000,
+        "equipment_book_value_after": 189000
+      }
+    },
+    "D003": {
+      "cells": {
+        "insurance_adjustment": 32250,
+        "insurance_expense_after": 96750,
+        "depreciation_expense": 64500,
+        "equipment_book_value_after": 193500
+      }
+    },
+    "D004": {
+      "cells": {
+        "insurance_adjustment": 33000,
+        "insurance_expense_after": 99000,
+        "depreciation_expense": 66000,
+        "equipment_book_value_after": 198000
+      }
+    },
+    "D005": {
+      "cells": {
+        "insurance_adjustment": 33750,
+        "insurance_expense_after": 101250,
+        "depreciation_expense": 67500,
+        "equipment_book_value_after": 202500
+      }
+    },
+    "D006": {
+      "cells": {
+        "insurance_adjustment": 46000,
+        "insurance_expense_after": 92000,
+        "depreciation_expense": 55200,
+        "equipment_book_value_after": 220800
+      }
+    },
+    "D007": {
+      "cells": {
+        "insurance_adjustment": 47000,
+        "insurance_expense_after": 94000,
+        "depreciation_expense": 56400,
+        "equipment_book_value_after": 225600
+      }
+    },
+    "D008": {
+      "cells": {
+        "insurance_adjustment": 48000,
+        "insurance_expense_after": 96000,
+        "depreciation_expense": 57600,
+        "equipment_book_value_after": 230400
+      }
+    },
+    "D009": {
+      "cells": {
+        "insurance_adjustment": 49000,
+        "insurance_expense_after": 98000,
+        "depreciation_expense": 58800,
+        "equipment_book_value_after": 235200
+      }
+    },
+    "D010": {
+      "cells": {
+        "insurance_adjustment": 50000,
+        "insurance_expense_after": 100000,
+        "depreciation_expense": 60000,
+        "equipment_book_value_after": 240000
+      }
+    },
+    "D011": {
+      "cells": {
+        "insurance_adjustment": 25500,
+        "insurance_expense_after": 127500,
+        "depreciation_expense": 51000,
+        "equipment_book_value_after": 255000
+      }
+    },
+    "D012": {
+      "cells": {
+        "insurance_adjustment": 26000,
+        "insurance_expense_after": 130000,
+        "depreciation_expense": 52000,
+        "equipment_book_value_after": 260000
+      }
+    },
+    "D013": {
+      "cells": {
+        "insurance_adjustment": 26500,
+        "insurance_expense_after": 132500,
+        "depreciation_expense": 53000,
+        "equipment_book_value_after": 265000
+      }
+    },
+    "D014": {
+      "cells": {
+        "insurance_adjustment": 27000,
+        "insurance_expense_after": 135000,
+        "depreciation_expense": 54000,
+        "equipment_book_value_after": 270000
+      }
+    },
+    "D015": {
+      "cells": {
+        "insurance_adjustment": 27500,
+        "insurance_expense_after": 137500,
+        "depreciation_expense": 55000,
+        "equipment_book_value_after": 275000
+      }
+    },
+    "D016": {
+      "cells": {
+        "insurance_adjustment": 33600,
+        "insurance_expense_after": 134400,
+        "depreciation_expense": 112000,
+        "equipment_book_value_after": 224000
+      }
+    },
+    "D017": {
+      "cells": {
+        "insurance_adjustment": 34200,
+        "insurance_expense_after": 136800,
+        "depreciation_expense": 114000,
+        "equipment_book_value_after": 228000
+      }
+    },
+    "D018": {
+      "cells": {
+        "insurance_adjustment": 34800,
+        "insurance_expense_after": 139200,
+        "depreciation_expense": 116000,
+        "equipment_book_value_after": 232000
+      }
+    },
+    "D019": {
+      "cells": {
+        "cash": 240000,
+        "receivables": 200000,
+        "insurance": 160000,
+        "prepaid": 40000,
+        "equipment": 600000,
+        "depreciation": 60000,
+        "payables": 100000,
+        "accumulated": 60000,
+        "capital": 300000,
+        "retained": 40000,
+        "sales": 800000,
+        "debitTotal": 1300000,
+        "creditTotal": 1300000
+      }
+    },
+    "D020": {
+      "cells": {
+        "sales": 800000,
+        "purchases": 400000,
+        "insurance": 160000,
+        "depreciation": 60000,
+        "profit": 180000
+      }
+    },
+    "F001": {
+      "cells": {
+        "sales": 800000,
+        "costOfSales": 400000,
+        "expenses": 220000,
+        "netIncome": 180000
+      }
+    },
+    "F002": {
+      "cells": {
+        "retainedEarnings": 152000,
+        "assetsTotal": 1148000,
+        "liabilitiesEquityTotal": 1148000
+      }
+    },
+    "F003": {
+      "cells": {
+        "retainedEarnings": 316000,
+        "assetsTotal": 1061000,
+        "liabilitiesEquityTotal": 1061000
+      }
+    },
+    "F004": {
+      "cells": {
+        "retainedEarnings": 232000,
+        "assetsTotal": 1280000,
+        "liabilitiesEquityTotal": 1280000
+      }
+    },
+    "F005": {
+      "cells": {
+        "retainedEarnings": 260000,
+        "assetsTotal": 1280000,
+        "liabilitiesEquityTotal": 1280000
+      }
+    },
+    "F006": {
+      "cells": {
+        "retainedEarnings": 412000,
+        "assetsTotal": 1172000,
+        "liabilitiesEquityTotal": 1172000
+      }
+    },
+    "F007": {
+      "cells": {
+        "retainedEarnings": 346000,
+        "assetsTotal": 1415000,
+        "liabilitiesEquityTotal": 1415000
+      }
+    },
+    "F008": {
+      "cells": {
+        "retainedEarnings": 368000,
+        "assetsTotal": 1412000,
+        "liabilitiesEquityTotal": 1412000
+      }
+    },
+    "F009": {
+      "cells": {
+        "retainedEarnings": 508000,
+        "assetsTotal": 1283000,
+        "liabilitiesEquityTotal": 1283000
+      }
+    },
+    "F010": {
+      "cells": {
+        "retainedEarnings": 460000,
+        "assetsTotal": 1550000,
+        "liabilitiesEquityTotal": 1550000
+      }
+    },
+    "C001": {
+      "cells": {
+        "sales": 2520000,
+        "cost": 1420000,
+        "allowanceExpense": 6800,
+        "depreciation": 120000,
+        "insurance": 60000,
+        "accruedWages": 45000,
+        "tax": 150000,
+        "netIncome": 718200,
+        "totalAssets": 2227200,
+        "totalEquityLiabilities": 2227200
+      }
+    },
+    "C002": {
+      "cells": {
+        "cashAfter": 255000,
+        "cashShortage": 10000,
+        "sales": 1850000,
+        "purchases": 1050000,
+        "cost": 1790000,
+        "advertising": 30000,
+        "depreciation": 47000,
+        "vatPayable": 46000,
+        "accruedIncome": 10000,
+        "accruedWages": 25000,
+        "tax": 80000,
+        "netIncome": -382000
+      }
+    },
+    "C003": {
+      "cells": {
+        "allowanceExpense": 5000,
+        "interestExpense": 9000,
+        "interestPayable": 9000,
+        "rentRevenue": 80000,
+        "rentUnearned": 40000,
+        "newAssetDepreciation": 45000,
+        "oldAssetDepreciation": 80000,
+        "saleLoss": 0,
+        "interestReceivable": 12000,
+        "tax": 60000
+      }
+    },
+    "C004": {
+      "cells": {
+        "endingCash": 484000,
+        "profit": 44000
+      }
+    },
+    "C005": {
+      "cells": {
+        "endingCash": 275000,
+        "profit": 45000
+      }
+    },
+    "C006": {
+      "cells": {
+        "endingCash": 376000,
+        "profit": 46000
+      }
+    },
+    "C007": {
+      "cells": {
+        "endingCash": 417000,
+        "profit": 37000
+      }
+    },
+    "C008": {
+      "cells": {
+        "endingCash": 478000,
+        "profit": 48000
+      }
+    },
+    "C009": {
+      "cells": {
+        "endingCash": 399000,
+        "profit": 49000
+      }
+    },
+    "C010": {
+      "cells": {
+        "endingCash": 250000,
+        "profit": 30000
+      }
+    }
+  }
+}
