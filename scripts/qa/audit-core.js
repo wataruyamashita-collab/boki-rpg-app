@@ -1,5 +1,5 @@
 'use strict';
-const fs=require('fs'),path=require('path'),crypto=require('crypto'),os=require('os'),vm=require('vm');
+const fs=require('fs'),path=require('path'),crypto=require('crypto'),os=require('os'),vm=require('vm'),childProcess=require('child_process');
 const ROOT=path.resolve(__dirname,'../..');
 const read=p=>fs.readFileSync(path.join(ROOT,p),'utf8');
 const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT,p))).digest('hex');
@@ -7,7 +7,23 @@ const json=p=>JSON.parse(read(p));
 const walk=dir=>fs.readdirSync(path.join(ROOT,dir),{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(`${dir}/${e.name}`):[`${dir}/${e.name}`]).sort();
 const productionFiles=()=>['data','js','css','types'].flatMap(walk).concat(['index.html','service-worker.js']).sort();
 function loadProduction(root=ROOT){const source=p=>fs.readFileSync(path.join(root,p),'utf8');const window={};const context={window,console,Event:function(){},queueMicrotask};vm.runInNewContext(source('data/questions.js'),context,{filename:'data/questions.js'});vm.runInNewContext(source('data/accounting-domain.js'),context,{filename:'data/accounting-domain.js'});vm.runInNewContext(source('js/controller.js'),context,{filename:'js/controller.js'});return {questions:window.QuestionData,exam:window.ExamPoolDefinition,domain:window.AccountingDomain,Controller:window.AppController,root};}
-function lockCheck(){const file=path.join(ROOT,'reports/auto-gate/audit-lock.json');if(!fs.existsSync(file))return {ok:false,errors:['lock missing']};const lock=JSON.parse(fs.readFileSync(file));const errors=[];for(const [p,h] of Object.entries(lock.files)){if(!fs.existsSync(path.join(ROOT,p))||sha(p)!==h)errors.push(p);}const current=[...walk('independent-audit'),...walk('scripts/qa')];for(const p of current)if(!(p in lock.files))errors.push(`unlocked:${p}`);return {ok:errors.length===0,errors,hash:lock.auditHash};}
+function lockCheck(){
+ const file=path.join(ROOT,'reports/auto-gate/audit-lock.json');
+ if(!fs.existsSync(file))return {ok:false,errors:['lock missing']};
+ let lock;try{lock=JSON.parse(fs.readFileSync(file));}catch(_){return {ok:false,errors:['lock invalid JSON']};}
+ const errors=[];
+ for(const [p,h] of Object.entries(lock.files||{}))if(!fs.existsSync(path.join(ROOT,p))||sha(p)!==h)errors.push(p);
+ const current=[...walk('independent-audit'),...walk('scripts/qa')];for(const p of current)if(!(p in (lock.files||{})))errors.push(`unlocked:${p}`);
+ let versions=[];
+ if(lock.lockSchemaVersion===2){
+  if(lock.phase!=='A_FINAL_IMMUTABLE_BASELINE'||lock.baselineVersion!==1||lock.algorithm!=='sha256')errors.push('invalid Final V2 metadata');
+  const auditHash=crypto.createHash('sha256').update(JSON.stringify(lock.files)).digest('hex');if(lock.auditHash!==auditHash)errors.push('auditHash mismatch');
+  const productionHashes=Object.fromEntries(productionFiles().map(p=>[p,sha(p)])),baselineIdentity=crypto.createHash('sha256').update(JSON.stringify({auditHash,productionHashes})).digest('hex');if(lock.baselineIdentity!==baselineIdentity)errors.push('baselineIdentity mismatch');
+  try{const commits=childProcess.execFileSync('git',['log','--format=%H','--','reports/auto-gate/audit-lock.json'],{cwd:ROOT,encoding:'utf8'}).trim().split(/\s+/u).filter(Boolean);versions=commits.flatMap(commit=>{try{const value=JSON.parse(childProcess.execFileSync('git',['show',`${commit}:reports/auto-gate/audit-lock.json`],{cwd:ROOT,encoding:'utf8'}));return value.lockSchemaVersion===2?[{commit,value}]:[];}catch(_){return [];}});}catch(_){errors.push('git history unavailable');}
+  if(versions.length===0){if(process.env.AUDIT_LOCK_ALLOW_PENDING_BASELINE!=='1')errors.push('Final V2 is not committed');}else{if(versions.length!==1)errors.push(`reachable Final V2 count ${versions.length}`);if(JSON.stringify(versions.at(-1).value)!==JSON.stringify(lock))errors.push('current lock differs from immutable Final V2 authority');}
+ }
+ return {ok:errors.length===0,errors:[...new Set(errors)],hash:lock.auditHash,baselineIdentity:lock.baselineIdentity,reachableFinalV2:versions.length,lock};
+}
 function actualStoryRun(prod){const C=prod.Controller.prototype;const fake={questions:prod.questions,ids:Object.keys(prod.questions),currentId:null,examCandidateIds:C.examCandidateIds,learningIds:C.learningIds,storyIds:C.storyIds,modeIds:C.modeIds,model:{state:{mode:'story',answeredIds:[],reviewSchedule:{}},recommendedIds:()=>[]},start(id){this.currentId=id;this.visited.push(id);return true;},visited:[],renderModes(){this.terminated=true;},showMode(){this.terminated=true;}};const ids=C.storyIds.call(fake);if(ids[0])fake.start(ids[0]);const seen=new Set();while(fake.currentId&&!fake.terminated&&fake.visited.length<=ids.length+2){if(seen.has(fake.currentId))break;seen.add(fake.currentId);fake.model.state.answeredIds.push(fake.currentId);C.next.call(fake);}return {ids,visited:fake.visited,terminated:fake.terminated,loop:fake.visited.length!==new Set(fake.visited).size};}
 function assessStoryMetrics(expectedDisplayedCount,ids,visited){const visitedPositions=visited.map(id=>ids.indexOf(id)+1).filter(position=>position>0);let positionGap=0;for(let i=1;i<visitedPositions.length;i++)if(visitedPositions[i]!==visitedPositions[i-1]+1)positionGap++;return {expectedDisplayedCount,actualStorySequenceCount:ids.length,reachableCount:new Set(visited).size,visitedPositions,positionGap,prematureTermination:visited.length<ids.length?1:0,unexpectedLoop:visited.length===new Set(visited).size?0:1,unreachable:ids.filter(id=>!visited.includes(id)),displayCountMismatch:ids.length===expectedDisplayedCount?0:1};}
 function audit(prod){const q=prod.questions,g=json('independent-audit/golden/known-critical.json'),storySpec=json('independent-audit/golden/story-sequence.json');const findings=[];const add=(gate,code,id,detail)=>findings.push({gate,code,id,detail});

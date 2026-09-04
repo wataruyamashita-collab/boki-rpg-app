@@ -35,6 +35,16 @@ assert.strictEqual(oneUnaudited.MISSING,1);
 for(const [type,checks] of Object.entries(runner.typeQuestionChecks)){const row=reviews.find(item=>item.questionType===type);assert(row,`missing direct audit record for ${type}`);assert(Object.keys(checks).every(id=>row.requiredCheckIds.includes(id)),`${type} must execute every type-specific check`);}
 assert(reviews.every(row=>row.requiredCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER')&&row.executedCheckIds.includes('INDEPENDENT_EXPECTED_ANSWER')));
 assert.strictEqual(complete.INDEPENDENT_EXPECTED_CHECKED,300);
+const worksheetQuestions=Object.values(c.loadProduction().questions).filter(question=>question.type==='worksheet');
+assert.strictEqual(worksheetQuestions.length,20,'worksheet coverage must remain exactly 20 questions');
+assert.strictEqual(reviews.filter(row=>row.questionType==='worksheet'&&row.status==='PASS').length,20,'all normal worksheets must pass');
+const meaninglessWorksheet=structuredClone(c.loadProduction().questions);meaninglessWorksheet.D001.explanation='abc';
+const meaninglessRow=runner.questionReview(meaninglessWorksheet).find(row=>row.questionId==='D001');
+assert.strictEqual(meaninglessRow.status,'FAIL','a meaningless worksheet explanation must fail the question record');
+for(const id of Object.keys(runner.typeQuestionChecks.worksheet))assert(meaninglessRow.failedCheckIds.includes(id),`${id} must reject a meaningless explanation`);
+for(const invalidType of ['unknown',undefined,null,'','journla']){const invalid=structuredClone(c.loadProduction().questions);if(invalidType===undefined)delete invalid.J001.type;else invalid.J001.type=invalidType;const row=runner.questionReview(invalid).find(item=>item.questionId==='J001');assert.strictEqual(row.status,'FAIL',`${String(invalidType)} type must fail closed`);assert(row.failedCheckIds.includes('QUESTION_TYPE_RECOGNIZED'));assert.strictEqual(runner.directAuditRecordComplete(row,invalid.J001),false);}
+const journalRow=reviews.find(row=>row.questionId==='J001'),journalQuestion=c.loadProduction().questions.J001,journalCheck=Object.keys(runner.typeQuestionChecks.journal)[0];
+for(const field of ['requiredCheckIds','executedCheckIds','passedCheckIds']){const damaged=structuredClone(journalRow);damaged[field]=damaged[field].filter(id=>id!==journalCheck);if(field==='passedCheckIds')damaged.failedCheckIds.push(journalCheck);assert.strictEqual(runner.directAuditRecordComplete(damaged,journalQuestion),false,`${journalCheck} missing from ${field} must fail closed`);}
 const answerCorruptions=runner.answerCorruptionMutations();assert.strictEqual(answerCorruptions.length,9);assert(answerCorruptions.every(x=>x.status==='KILLED'),'every answer corruption, including coordinated answer/explanation corruption, must be killed');
 assert.strictEqual(runner.oracleSelfReferenceFindings().length,0);
 const oracleFile=path.join(c.ROOT,'independent-audit/oracles/expected-answer-oracle.js'),oracleSource=fs.readFileSync(oracleFile);try{fs.appendFileSync(oracleFile,'\nquestion.answer;\n');assert(runner.oracleSelfReferenceFindings().some(x=>x.code==='ORACLE_SELF_REFERENCE'));}finally{fs.writeFileSync(oracleFile,oracleSource);}

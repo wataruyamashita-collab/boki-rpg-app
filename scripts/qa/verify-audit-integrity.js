@@ -1,1 +1,1 @@
-'use strict';const c=require('./audit-core'),r=c.lockCheck();console.log(r.ok?`PASS ${r.hash}`:`AUDIT_LOCK_BROKEN ${r.errors.join(', ')}`);process.exit(r.ok?0:1);
+'use strict';const c=require('./audit-core'),r=c.lockCheck();console.log(r.ok?`PASS ${r.hash} baselineIdentity=${r.baselineIdentity||'legacy'} reachableFinalV2=${r.reachableFinalV2??0}`:`AUDIT_LOCK_BROKEN ${r.errors.join(', ')}`);process.exit(r.ok?0:1);

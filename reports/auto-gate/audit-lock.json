@@ -1,6 +1,10 @@
 {
+  "lockSchemaVersion": 2,
+  "phase": "A_FINAL_IMMUTABLE_BASELINE",
+  "baselineVersion": 1,
   "algorithm": "sha256",
-  "createdBy": "repository-maintainer",
+  "createdBy": "scripts/qa/create-audit-lock.js --finalize-v2",
+  "baselineIdentity": "d620bde1adddef1a788da7a319867e291279f8baba9137bcb58952b646011a4b",
   "files": {
     "independent-audit/contracts/comprehensive.json": "560297d658ac541f1bca16f4f33fadcc163d6edf08c69af9860be7151346448a",
     "independent-audit/contracts/correction.json": "399e9694a52765eff2f2d7d310a1fb1e02a4b51fcb786e2e78c30f68e5acad5e",
@@ -25,17 +29,18 @@
     "independent-audit/mutations/required.json": "06e387648cc5135e711ad104cfcd45b527260c3791314bff2f3773453cd51136",
     "independent-audit/oracles/accounting-rules.json": "db713065f75865dee26d47aa39441a86aa53f56531d10132c33c42634b22f316",
     "independent-audit/oracles/expected-answer-oracle.js": "c39c6d04d0e57b57c3dbaffc1e079a8bc87d7954be07ec08ec40fc53db619943",
-    "independent-audit/tests/foundation.test.js": "fd1d30571bd13a27f74831e766ec472adf40514907693d31c36377b74ca19eaf",
-    "scripts/qa/audit-core.js": "076fef6a0732487d4e03263f2888041e1118166333659d911febffd3d0c85180",
-    "scripts/qa/contract-runner.js": "4385c700048402d228b869945dd1edacc16a2ca775853e1f57bab76206121519",
-    "scripts/qa/create-audit-lock.js": "f523299b2ff7fe6c4ba6c3e64d27c9c4dc0567aa126ac9283da9cf6bcdf68fd3",
+    "independent-audit/tests/audit-lock-v2.test.js": "c66d6e3e7eadb1bc6110a53a4969c0beb90f0edbedf3bc9841dc06a02eccb5f6",
+    "independent-audit/tests/foundation.test.js": "cc2ff75c6daab625db9149e52c6490ebb8e5f2a9448de0555488efc971b5b799",
+    "scripts/qa/audit-core.js": "da18f09489176f16155529f816f8c3cd6c4ca73d7e994d03ecca0e8bee0130fa",
+    "scripts/qa/contract-runner.js": "2f95002443571f951c76356edb072ef3bba0f3e8ee0e981d3fd8c685e16d004f",
+    "scripts/qa/create-audit-lock.js": "56c30881700122dda3ad2db307ba29c1dcb34923ba94ca354c6b15509c26bd22",
     "scripts/qa/generate-evidence.js": "347acadab7b16c38a0abae4dbb20751550f426eba38e6d53ef673803910e33ad",
     "scripts/qa/run-all-gates.js": "347acadab7b16c38a0abae4dbb20751550f426eba38e6d53ef673803910e33ad",
     "scripts/qa/run-independent-gate.js": "6bba0fcd99311b16b79f30bc48b74e0265744c87745801dbef317b39f5184ec5",
     "scripts/qa/run-required-mutations.js": "7fe4524da0937fafd6f19e114b174015d8553e3c2b08b2bdd29f56d33bc25f8a",
     "scripts/qa/run-story-e2e.js": "0df9293470dbc51b356642a6bb35072550768a1fbfc3d97a98d3e05f31ed6c02",
     "scripts/qa/validate-auto-gate.js": "7e3b2d00d596f9a0ef65e889d69965d1dd337ab067c57d039d222a41e8c97f07",
-    "scripts/qa/verify-audit-integrity.js": "5c69ac671737114f2811ec394fadf6ffed634f06c95faab49f483d737ced7181"
+    "scripts/qa/verify-audit-integrity.js": "56732139e9d06fcddc335afc9f9299a6693f9ddd63a54fafe0a0a895d59fd1fa"
   },
-  "auditHash": "f9c90363a4fe018fd8180ef7edbce2fa278388d223441e662e348aeb77c53c3c"
+  "auditHash": "5070605faf6312d28168abba67407c8c6b1eafdeba4487453171236dd72d1d0f"
 }
