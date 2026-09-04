@@ -1,7 +1,7 @@
 {
   "status": "FAIL",
-  "lastRun": "2026-09-04T03:38:57.973Z",
-  "auditHash": "a4c92eec1e5ce171b569f64a1599a09113f8fd5ad1210128154893e183634ccb",
+  "lastRun": "2026-09-04T03:54:52.865Z",
+  "auditHash": "faf1faddc62f090d72d59535d5af8c367b9b211eec1da72ef887b1dd4d883eb2",
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",

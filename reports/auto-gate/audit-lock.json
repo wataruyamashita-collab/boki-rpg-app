@@ -3,7 +3,7 @@
   "phase": "A_FINAL_IMMUTABLE_BASELINE",
   "baselineVersion": 1,
   "algorithm": "sha256",
-  "baselineIdentity": "d397c8412090ad227c9ca4ccbf4c3d8a66baead9518d3a10441bd4569fc702b5",
+  "baselineIdentity": "cbc69b3b323ce22f6c603d7639eec7febd650c3513eb2a80cc335ffafbd9971c",
   "files": {
     "independent-audit/contracts/comprehensive.json": "560297d658ac541f1bca16f4f33fadcc163d6edf08c69af9860be7151346448a",
     "independent-audit/contracts/correction.json": "399e9694a52765eff2f2d7d310a1fb1e02a4b51fcb786e2e78c30f68e5acad5e",
@@ -28,10 +28,10 @@
     "independent-audit/mutations/required.json": "06e387648cc5135e711ad104cfcd45b527260c3791314bff2f3773453cd51136",
     "independent-audit/oracles/accounting-rules.json": "db713065f75865dee26d47aa39441a86aa53f56531d10132c33c42634b22f316",
     "independent-audit/oracles/expected-answer-oracle.js": "c39c6d04d0e57b57c3dbaffc1e079a8bc87d7954be07ec08ec40fc53db619943",
-    "independent-audit/tests/audit-lock-v2.test.js": "ebb0c211d0abef57c7c74809a246cd2edb009e1ab6cf367c369129554915216d",
+    "independent-audit/tests/audit-lock-v2.test.js": "e0efda598893b540c33e15dcda889f2753a76f9915df16567bfb80dce350e2ba",
     "independent-audit/tests/foundation.test.js": "4520af3a516394137a74dd8327e96d8a2e7be1dc9f978a2530edc981ad6261f8",
     "scripts/qa/audit-core.js": "1da40ab5f09746e50444e7c3a2da7e728b65ff1b69bdad6ebc86ad158309a69c",
-    "scripts/qa/audit-lock.js": "3b12f7fcdc28c62135960d95dc0de5dc99284247711af8aa6c13df5a37dc4e21",
+    "scripts/qa/audit-lock.js": "91fbd94e11d2f1b997a978a676ea750992ae942e90c0c9c9f557b83ba087395f",
     "scripts/qa/contract-runner.js": "ff231881c5027637acbd7c240ff6f53b81917cca4a4182faea57d301c6da85a9",
     "scripts/qa/create-audit-lock.js": "173399dd49126cbbd65be74c1087f98d72b6c19bd601db225755b904e74a8afc",
     "scripts/qa/generate-evidence.js": "347acadab7b16c38a0abae4dbb20751550f426eba38e6d53ef673803910e33ad",
@@ -42,5 +42,5 @@
     "scripts/qa/validate-auto-gate.js": "7e3b2d00d596f9a0ef65e889d69965d1dd337ab067c57d039d222a41e8c97f07",
     "scripts/qa/verify-audit-integrity.js": "c5adb6597e58519c00ebfca9367aca58fba1b172dde449660815b93ca7c866db"
   },
-  "auditHash": "a4c92eec1e5ce171b569f64a1599a09113f8fd5ad1210128154893e183634ccb"
+  "auditHash": "faf1faddc62f090d72d59535d5af8c367b9b211eec1da72ef887b1dd4d883eb2"
 }
