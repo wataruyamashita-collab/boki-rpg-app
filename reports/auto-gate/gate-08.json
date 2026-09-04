@@ -1,6 +1,6 @@
 {
   "gate": "GATE-08",
-  "status": "FAIL",
+  "status": "PASS",
   "requiredCheckIds": [
     "FINANCIAL_STATEMENT_VALUES",
     "FINANCIAL_STATEMENT_EQUATION"
@@ -61,16 +61,10 @@
           "PASS"
         ]
       },
-      "satisfied": false
+      "satisfied": true
     }
   ],
-  "findings": [
-    {
-      "gate": "GATE-08",
-      "code": "DEPENDENCY_NOT_SATISFIED",
-      "detail": "GATE-07"
-    }
-  ],
+  "findings": [],
   "contract": "financial-statements",
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
@@ -89,5 +83,5 @@
     "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-03T08:07:03.979Z"
+  "measuredAt": "2026-09-04T00:35:50.534Z"
 }

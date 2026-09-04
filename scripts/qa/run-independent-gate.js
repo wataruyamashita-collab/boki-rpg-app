@@ -29,6 +29,8 @@ for(const [gate,report] of Object.entries(evaluated.reports))write(`gate-${gate.
 const questionRecords=contracts.questionReview(production.questions,auditResult.findings);
 fs.writeFileSync(path.join(out,'question-review.jsonl'),questionRecords.map(record=>JSON.stringify(record)).join('\n')+'\n');
 const coverage=contracts.summarizeQuestions(questionRecords,production.questions);
+const worksheetSchemas=Object.values(production.questions).filter(question=>question.type==='worksheet').map(question=>({id:question.id,format:question.format||null,category:question.category,detectedSchema:require('./question-predicates').worksheetSchema(question),columns:question.table.columns,rowKeys:[...new Set(question.table.rows.flatMap(Object.keys))].sort(),inputCells:question.table.inputCells,answerKeys:Object.keys(question.answer.cells),status:questionRecords.find(record=>record.questionId===question.id).status}));
+write('worksheet-runtime-schemas.json',{total:worksheetSchemas.length,schemas:worksheetSchemas});
 write('gate-14-mutations.json',{status:survived.length?'FAIL':'PASS',required:mutationResults.length,killed:mutationResults.length-survived.length,survived:survived.length,causalDeltaConfirmed:`${mutationResults.filter(x=>x.causalDeltaConfirmed).length}/${mutationResults.length}`,results:mutationResults});
 write('gate-14-answer-corruption.json',{status:answerCorruptionSurvived.length?'FAIL':'PASS',required:answerCorruptionResults.length,killed:answerCorruptionResults.length-answerCorruptionSurvived.length,survived:answerCorruptionSurvived.length,results:answerCorruptionResults});
 

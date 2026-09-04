@@ -1,0 +1,677 @@
+{
+  "total": 20,
+  "schemas": [
+    {
+      "id": "D001",
+      "format": "eight-column-worksheet",
+      "category": "8欄精算表（8桁精算表）",
+      "detectedSchema": "eight-column-worksheet",
+      "columns": [
+        "勘定科目",
+        "試算表 借方",
+        "試算表 貸方",
+        "修正記入 借方",
+        "修正記入 貸方",
+        "損益計算書 借方",
+        "損益計算書 貸方",
+        "貸借対照表 借方",
+        "貸借対照表 貸方"
+      ],
+      "rowKeys": [
+        "account",
+        "adjCredit",
+        "adjDebit",
+        "bsCredit",
+        "bsDebit",
+        "plCredit",
+        "plDebit",
+        "tbCredit",
+        "tbDebit"
+      ],
+      "inputCells": [
+        "bsDebit_1",
+        "bsDebit_2",
+        "bsDebit_3",
+        "bsDebit_4",
+        "bsCredit_5",
+        "bsCredit_6",
+        "plCredit_7",
+        "plDebit_8",
+        "adjCredit_9",
+        "plDebit_9",
+        "adjDebit_10",
+        "bsDebit_10",
+        "adjDebit_11",
+        "plDebit_11",
+        "adjCredit_12",
+        "bsCredit_12",
+        "plDebit_13",
+        "bsCredit_13"
+      ],
+      "answerKeys": [
+        "bsDebit_1",
+        "bsDebit_2",
+        "bsDebit_3",
+        "bsDebit_4",
+        "bsCredit_5",
+        "bsCredit_6",
+        "plCredit_7",
+        "plDebit_8",
+        "adjCredit_9",
+        "plDebit_9",
+        "adjDebit_10",
+        "bsDebit_10",
+        "adjDebit_11",
+        "plDebit_11",
+        "adjCredit_12",
+        "bsCredit_12",
+        "plDebit_13",
+        "bsCredit_13"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D002",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D003",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D004",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D005",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D006",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D007",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D008",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D009",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D010",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D011",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D012",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D013",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D014",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D015",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D016",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D017",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D018",
+      "format": null,
+      "category": "決算整理・計算問題",
+      "detectedSchema": "adjustment-calculation",
+      "columns": [
+        "論点",
+        "計算基礎額",
+        "決算整理額",
+        "整理後金額"
+      ],
+      "rowKeys": [
+        "adjustment",
+        "after",
+        "before",
+        "item"
+      ],
+      "inputCells": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "answerKeys": [
+        "insurance_adjustment",
+        "insurance_expense_after",
+        "depreciation_expense",
+        "equipment_book_value_after"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D019",
+      "format": "adjusted-trial-balance",
+      "category": "決算整理後残高試算表",
+      "detectedSchema": "adjusted-trial-balance",
+      "columns": [
+        "勘定科目",
+        "整理後借方",
+        "整理後貸方"
+      ],
+      "rowKeys": [
+        "account",
+        "credit",
+        "debit"
+      ],
+      "inputCells": [
+        "cash",
+        "receivables",
+        "insurance",
+        "prepaid",
+        "equipment",
+        "depreciation",
+        "payables",
+        "accumulated",
+        "capital",
+        "retained",
+        "sales",
+        "debitTotal",
+        "creditTotal"
+      ],
+      "answerKeys": [
+        "cash",
+        "receivables",
+        "insurance",
+        "prepaid",
+        "equipment",
+        "depreciation",
+        "payables",
+        "accumulated",
+        "capital",
+        "retained",
+        "sales",
+        "debitTotal",
+        "creditTotal"
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "D020",
+      "format": "closing-entries",
+      "category": "帳簿締切",
+      "detectedSchema": "closing-entries",
+      "columns": [
+        "締切手続",
+        "金額"
+      ],
+      "rowKeys": [
+        "amount",
+        "item"
+      ],
+      "inputCells": [
+        "sales",
+        "purchases",
+        "insurance",
+        "depreciation",
+        "profit"
+      ],
+      "answerKeys": [
+        "sales",
+        "purchases",
+        "insurance",
+        "depreciation",
+        "profit"
+      ],
+      "status": "PASS"
+    }
+  ]
+}
