@@ -1,0 +1,23 @@
+'use strict';
+
+const assert=require('assert'),fs=require('fs'),os=require('os'),path=require('path'),cp=require('child_process');
+const lock=require('../../scripts/qa/audit-lock');
+const git=(root,...args)=>cp.execFileSync('git',args,{cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+function repo(){const root=fs.mkdtempSync(path.join(os.tmpdir(),'audit-lock-v2-'));fs.mkdirSync(path.join(root,'independent-audit'),{recursive:true});fs.mkdirSync(path.join(root,'scripts/qa'),{recursive:true});fs.writeFileSync(path.join(root,'independent-audit/a.txt'),'audited\n');fs.copyFileSync(path.join(__dirname,'../../scripts/qa/audit-lock.js'),path.join(root,'scripts/qa/audit-lock.js'));fs.copyFileSync(path.join(__dirname,'../../scripts/qa/create-audit-lock.js'),path.join(root,'scripts/qa/create-audit-lock.js'));git(root,'init','-q');git(root,'config','user.email','qa@example.test');git(root,'config','user.name','QA');git(root,'add','.');git(root,'commit','-qm','BASE');return root;}
+function finalize(root,message='FINAL'){lock.create(root,'--finalize-v2');git(root,'add','.');git(root,'commit','-qm',message);return JSON.parse(fs.readFileSync(path.join(root,lock.LOCK_PATH)));}
+function test(name,fn){fn();console.log(`TEST ${name}: PASS`);}
+const roots=[];const fresh=()=>{const root=repo();roots.push(root);return root;};
+try{
+  const base=fresh(),baseline=finalize(base);
+  test('1 audited file one-byte change',()=>{fs.appendFileSync(path.join(base,'independent-audit/a.txt'),'x');assert.strictEqual(lock.verify(base).ok,false);git(base,'checkout','--','independent-audit/a.txt');});
+  test('2 lock creator one-byte change',()=>{fs.appendFileSync(path.join(base,'scripts/qa/create-audit-lock.js'),' ');assert.strictEqual(lock.verify(base).ok,false);git(base,'checkout','--','scripts/qa/create-audit-lock.js');});
+  test('3 re-finalize refused',()=>assert.throws(()=>lock.create(base,'--finalize-v2'),/REFUSED/));
+  test('4 deleted baseline recreation refused',()=>{const root=fresh();finalize(root);fs.unlinkSync(path.join(root,lock.LOCK_PATH));git(root,'add','-u');git(root,'commit','-qm','delete baseline');assert.throws(()=>lock.create(root,'--finalize-v2'),/REFUSED/);});
+  test('5 coordinated lock tamper rejected historically',()=>{fs.appendFileSync(path.join(base,'independent-audit/a.txt'),'x');fs.writeFileSync(path.join(base,lock.LOCK_PATH),JSON.stringify(lock.makeLock(base),null,2)+'\n');assert(lock.verify(base).errors.includes('historical baseline mismatch'));git(base,'checkout','--','.');});
+  test('6 lock metadata change',()=>{const file=path.join(base,lock.LOCK_PATH),value=JSON.parse(fs.readFileSync(file));value.phase='changed';fs.writeFileSync(file,JSON.stringify(value));assert.strictEqual(lock.verify(base).ok,false);git(base,'checkout','--',lock.LOCK_PATH);});
+  test('7 unrelated side branch isolation',()=>{const root=fresh(),baseCommit=git(root,'rev-parse','HEAD');git(root,'switch','-qc','side');const side=finalize(root,'SIDE FINAL');git(root,'switch','-q','master');fs.writeFileSync(path.join(root,'independent-audit/a.txt'),'main snapshot\n');git(root,'add','.');git(root,'commit','-qm','main snapshot');const main=finalize(root,'MAIN FINAL');assert.notStrictEqual(main.baselineIdentity,side.baselineIdentity);assert.strictEqual(lock.verify(root).ok,true);assert(!lock.reachableLocks(root).some(item=>item.lock.baselineIdentity===side.baselineIdentity));assert(baseCommit);});
+  test('8 squash/rewrite resilience',()=>{const a=fresh(),b=fresh();const aLock=finalize(a);fs.writeFileSync(path.join(a,'evidence.txt'),'evidence\n');git(a,'add','.');git(a,'commit','-qm','EVIDENCE');lock.create;const bLock=finalize(b,'SQUASHED FINAL');assert.notStrictEqual(git(a,'rev-parse','HEAD'),git(b,'rev-parse','HEAD'));assert.strictEqual(aLock.baselineIdentity,bLock.baselineIdentity);assert.strictEqual(lock.verify(a).ok,true);assert.strictEqual(lock.verify(b).ok,true);});
+  test('9 HEAD is first final baseline',()=>{const root=fresh();finalize(root);assert.strictEqual(lock.reachableLocks(root).filter(item=>lock.isFinal(item.lock)).length,1);assert.strictEqual(lock.verify(root).ok,true);});
+  assert.strictEqual(lock.verify(base).baselineIdentity,baseline.baselineIdentity);
+}finally{for(const root of roots)fs.rmSync(root,{recursive:true,force:true});}
+console.log('audit lock v2 regression tests: 9/9');

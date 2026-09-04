@@ -1,1 +1,1 @@
-'use strict';const c=require('./audit-core'),r=c.lockCheck();console.log(r.ok?`PASS ${r.hash}`:`AUDIT_LOCK_BROKEN ${r.errors.join(', ')}`);process.exit(r.ok?0:1);
+'use strict';const path=require('path'),lock=require('./audit-lock'),root=process.env.BOKI_AUDIT_ROOT?path.resolve(process.env.BOKI_AUDIT_ROOT):path.resolve(__dirname,'../..'),r=lock.verify(root);console.log(r.ok?`PASS ${r.baselineIdentity}`:`AUDIT_LOCK_BROKEN ${r.errors.join(', ')}`);process.exit(r.ok?0:1);

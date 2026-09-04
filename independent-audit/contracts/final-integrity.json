@@ -5,7 +5,11 @@
   "requiredCheckIds": [
     "AUDIT_LOCK_INTACT",
     "AUDIT_RUNNER_COMPLETED",
-    "ORACLE_NO_SELF_REFERENCE"
+    "ORACLE_NO_SELF_REFERENCE",
+    "DIRECT_AUDIT_COMPLETE",
+    "DIRECT_AUDIT_ALL_PASS",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+    "INDEPENDENT_EXPECTED_ALL_PASS"
   ],
   "requiredLayers": [
     "ADVERSARIAL"
@@ -63,11 +67,35 @@
       "requirementId": "REQ_ORACLE_NO_SELF_REFERENCE",
       "requiredCheckId": "ORACLE_NO_SELF_REFERENCE",
       "text": "independent expected generation never reads production answers or explanations"
+    },
+    {
+      "requirementId": "REQ_DIRECT_AUDIT_COMPLETE",
+      "requiredCheckId": "DIRECT_AUDIT_COMPLETE",
+      "text": "all 300 unique production questions have complete direct-audit records"
+    },
+    {
+      "requirementId": "REQ_DIRECT_AUDIT_ALL_PASS",
+      "requiredCheckId": "DIRECT_AUDIT_ALL_PASS",
+      "text": "every direct-audit record executes every required check and passes"
+    },
+    {
+      "requirementId": "REQ_INDEPENDENT_EXPECTED_ALL_EXECUTED",
+      "requiredCheckId": "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+      "text": "the independent expected-answer check is required and executed for every question"
+    },
+    {
+      "requirementId": "REQ_INDEPENDENT_EXPECTED_ALL_PASS",
+      "requiredCheckId": "INDEPENDENT_EXPECTED_ALL_PASS",
+      "text": "the independent expected-answer check passes for every question"
     }
   ],
   "checkLayers": {
     "AUDIT_LOCK_INTACT": "ADVERSARIAL",
     "AUDIT_RUNNER_COMPLETED": "ADVERSARIAL",
-    "ORACLE_NO_SELF_REFERENCE": "ADVERSARIAL"
+    "ORACLE_NO_SELF_REFERENCE": "ADVERSARIAL",
+    "DIRECT_AUDIT_COMPLETE": "ADVERSARIAL",
+    "DIRECT_AUDIT_ALL_PASS": "ADVERSARIAL",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED": "ADVERSARIAL",
+    "INDEPENDENT_EXPECTED_ALL_PASS": "ADVERSARIAL"
   }
 }
