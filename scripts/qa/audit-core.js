@@ -10,7 +10,7 @@ function loadProduction(root=ROOT){const source=p=>fs.readFileSync(path.join(roo
 const LOCK_PATH='reports/auto-gate/audit-lock.json';
 function reachableFinalV2(){
  let commits=[];try{commits=require('child_process').execFileSync('git',['rev-list','HEAD','--',LOCK_PATH],{cwd:ROOT,encoding:'utf8'}).trim().split(/\s+/u).filter(Boolean);}catch(_){return [];}
- return commits.flatMap(commit=>{try{const lock=JSON.parse(require('child_process').execFileSync('git',['show',`${commit}:${LOCK_PATH}`],{cwd:ROOT,encoding:'utf8'}));return lock.schemaVersion===2&&lock.phase==='A_FINAL_IMMUTABLE_BASELINE'?[{commit,lock}]:[];}catch(_){return [];}});
+ return commits.flatMap(commit=>{try{const bytes=require('child_process').execFileSync('git',['show',`${commit}:${LOCK_PATH}`],{cwd:ROOT});const lock=JSON.parse(bytes.toString('utf8'));return lock.schemaVersion===2&&lock.phase==='A_FINAL_IMMUTABLE_BASELINE'?[{commit,lock,bytes}]:[];}catch(_){return [];}});
 }
 function lockCheck(){
  const history=reachableFinalV2(),errors=[];
@@ -19,7 +19,7 @@ function lockCheck(){
  if(history.length!==1){if(!(history.length===0&&process.env.AUDIT_LOCK_ALLOW_PENDING_BASELINE==='1'))errors.push(`reachable Final V2 count must be 1 (found ${history.length})`);}
  if(history.length>0&&lock.schemaVersion!==2)errors.push('current lock schema is not Final V2');
  const authority=history.length===1?history[0].lock:lock;
- if(history.length===1&&JSON.stringify(lock)!==JSON.stringify(authority))errors.push('current lock differs from historical Final V2 authority');
+ if(history.length===1&&!fs.readFileSync(path.join(ROOT,LOCK_PATH)).equals(history[0].bytes))errors.push('current lock raw bytes differ from historical Final V2 authority');
  if(authority.schemaVersion!==2||authority.phase!=='A_FINAL_IMMUTABLE_BASELINE'||authority.baselineVersion!==1||authority.algorithm!=='sha256'||typeof authority.baselineIdentity!=='string'||typeof authority.auditHash!=='string')errors.push('Final V2 metadata invalid');
  const files=authority.files&&typeof authority.files==='object'?authority.files:{};
  for(const [p,h] of Object.entries(files)){if(!fs.existsSync(path.join(ROOT,p))||sha(p)!==h)errors.push(p);}
