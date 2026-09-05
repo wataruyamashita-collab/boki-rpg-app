@@ -60,7 +60,7 @@
 
     <section id="view-question" class="view">
       <form id="question-form" autocomplete="off">
-        <p id="q-category" class="question-category"></p><section id="q-story" class="story-box" aria-labelledby="q-scene"><h2 id="q-scene"></h2><p id="q-context"></p><p id="q-task" class="story-task"></p></section><div id="q-text" class="question-text"></div><section id="question-materials" class="question-materials" hidden></section>
+        <p id="q-category" class="question-category"></p><section id="q-story" class="story-box" aria-labelledby="q-scene"><h2 id="q-scene"></h2><p id="q-context"></p><p id="q-task" class="story-task"></p></section><div id="q-text" class="question-text" tabindex="-1"></div><section id="question-materials" class="question-materials" hidden></section>
         <div id="journal-container" class="journal-entry-area"></div>
         <div id="table-container" class="table-question-wrap"></div>
         <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
@@ -78,7 +78,7 @@
         <div class="question-actions"><button class="confirm-button" type="submit">回答を確定する</button><button class="secondary-button save-button" type="button" data-action="save">ここまで保存する</button></div>
       </form>
     </section>
-    <section id="view-result" class="view"><div id="result-status" class="result-box" role="status" aria-live="polite"></div><div id="answer-comparison" class="answer-comparison"></div><div id="correct-journal" class="correct-journal"></div><div id="explanation" class="explanation-box"></div><div id="standard-result-actions"><button type="button" data-action="next">次へ進む</button></div><div id="exam-result-actions" class="result-actions" hidden><button type="button" data-action="exam-home">ホームへ戻る</button><button type="button" class="secondary-button" data-action="exam-review">結果を復習する</button><button type="button" class="secondary-button" data-action="exam-retry">もう一度総合演習</button></div></section>
+    <section id="view-result" class="view"><div id="result-status" class="result-box" role="status" aria-live="polite" tabindex="-1"></div><div id="answer-comparison" class="answer-comparison"></div><div id="correct-journal" class="correct-journal"></div><div id="explanation" class="explanation-box"></div><div id="standard-result-actions"><button type="button" data-action="next">次へ進む</button></div><div id="exam-result-actions" class="result-actions" hidden><button type="button" data-action="exam-home">ホームへ戻る</button><button type="button" class="secondary-button" data-action="exam-review">結果を復習する</button><button type="button" class="secondary-button" data-action="exam-retry">もう一度総合演習</button></div></section>
   </main>
   <dialog id="game-over-dialog" class="game-over-dialog"><h2>帳簿信頼度が0になりました</h2><p>水野先輩「まだ立て直せる。未解決伝票を緊急精算しよう」</p><button type="button" data-action="review-game-over">緊急精算（復習モード）へ</button><button type="button" data-action="retry-mode">最初の案件から再挑戦</button></dialog>
 </div>

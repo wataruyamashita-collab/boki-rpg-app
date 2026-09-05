@@ -3,6 +3,7 @@
   const normalizeNumber = value => String(value ?? '')
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
+  const validAmountText = value => value === '' || /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(value);
   const yen = value => Number(value).toLocaleString('ja-JP');
   // accounting-domain.js is the production source of truth.  The two special
   // values below only keep isolated view unit tests fail-safe when scripts are
@@ -87,9 +88,10 @@
       wrap.append(table); container.append(heading, wrap);
     }
     makeAmount(className, label, value = '') {
-      const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'none'); input.readOnly = true;
-      input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.setAttribute('pattern', '[0-9,]*');
-      input.setAttribute('title', '金額は計算機から入力してください'); input.maxLength = 24; input.value = value;
+      const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'numeric');
+      input.setAttribute('autocomplete', 'off'); input.setAttribute('enterkeyhint', 'done');
+      input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.setAttribute('pattern', '(?:[0-9０-９]+|[0-9０-９]{1,3}(?:[,，][0-9０-９]{3})+)');
+      input.setAttribute('title', '数字を直接入力できます。必要に応じて計算機も使えます'); input.maxLength = 24; input.value = value;
       return input;
     }
     makeText(className, label, value = '') {
@@ -101,19 +103,24 @@
     }
     renderJournal(question, draft = {}, mode = 'story') {
       const container = this.byId('journal-container'); container.replaceChildren();
+      if (mode === 'exam') {
+        const instruction = this.document.createElement('p'); instruction.className = 'journal-instruction';
+        instruction.textContent = '必要な行だけ入力し、不要な行は空欄のままにしてください。'; container.append(instruction);
+      }
       const header = this.document.createElement('div'); header.className = 'journal-header'; header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'; container.append(header);
-      const count = Math.max(question.answer.debit.length, question.answer.credit.length);
+      const count = mode === 'exam' ? 3 : Math.max(question.answer.debit.length, question.answer.credit.length);
       for (let index = 0; index < count; index += 1) {
         const row = this.document.createElement('div'); row.className = 'journal-row';
         ['debit', 'credit'].forEach(side => {
-          const answer = question.answer[side][index];
-          const select = this.document.createElement('select'); select.className = `${side}-account`; select.disabled = !answer;
-          select.innerHTML = `<option value="">${answer ? '--勘定科目--' : '--入力なし--'}</option>`;
-          if (answer) root.AppController.accountChoices(question, answer.account, mode).forEach(name => select.append(new Option(name, name)));
+          const answer = mode === 'exam' ? null : question.answer[side][index];
+          const enabled = mode === 'exam' || Boolean(answer);
+          const select = this.document.createElement('select'); select.className = `${side}-account`; select.disabled = !enabled;
+          select.innerHTML = `<option value="">${enabled ? '--勘定科目--' : '--入力なし--'}</option>`;
+          if (enabled) root.AppController.accountChoices(question, answer?.account, mode).forEach(name => select.append(new Option(name, name)));
           const saved = draft[side] && draft[side][index]; if (saved) select.value = saved.account;
           this.updateSelectTitle(select);
           const amount = this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : '');
-          if (!answer) amount.disabled = true;
+          if (!enabled) amount.disabled = true;
           row.append(select, amount);
         }); container.append(row);
       }
@@ -255,9 +262,10 @@
     readAnswer(question) {
       if (question.type !== 'journal') { const cells = {}; this.document.querySelectorAll('.table-input').forEach(input => { cells[input.dataset.cellId] = input.value; }); return { cells }; }
       const side = name => [...this.document.querySelectorAll(`.${name}-account`)].map((account, index) => {
-        const source = normalizeNumber(this.document.querySelectorAll(`.${name}-amount`)[index].value).replace(/,/g, '').trim();
-        return { account: account.value, amount: source === '' ? Number.NaN : Number(source) };
-      }).filter(item => item.account || Number.isFinite(item.amount));
+        const raw = this.document.querySelectorAll(`.${name}-amount`)[index].value.trim();
+        const source = normalizeNumber(raw);
+        return { account: account.value, amount: source === '' || !validAmountText(source) ? Number.NaN : Number(source.replace(/,/g, '')), attempted: Boolean(account.value || raw) };
+      }).filter(item => item.attempted).map(({ account, amount }) => ({ account, amount }));
       return { debit: side('debit'), credit: side('credit') };
     }
     result(question, score, userAnswer, confidence = 'unsure', achievement = {}) {

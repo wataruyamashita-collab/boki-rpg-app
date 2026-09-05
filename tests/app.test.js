@@ -126,13 +126,15 @@ assert(localAssets.length > 0 && localAssets.every(([, , query]) => query === `?
 const controllerSource = fs.readFileSync('js/controller.js', 'utf8');
 assert(controllerSource.includes("getElementById('question-form').addEventListener('submit'"), 'フォームのsubmitイベントを処理する');
 assert(controllerSource.includes('event.preventDefault()'), 'フォーム送信時のページ遷移を防ぐ');
-assert(controllerSource.includes('this.document.activeElement?.blur()'), '回答確定前にソフトウェアキーボードを閉じる');
+assert(!controllerSource.includes('this.document.activeElement?.blur()'), '回答確定前にフォーカスを喪失させない');
+assert(html.includes('id="q-text" class="question-text" tabindex="-1"'), '問題文を次問遷移後のプログラム的フォーカス対象にする');
+assert(html.includes('id="result-status" class="result-box" role="status" aria-live="polite" tabindex="-1"'), '結果通知をライブ領域のままプログラム的フォーカス対象にする');
 assert(controllerSource.includes('if (this.submitting || !this.currentId') && controllerSource.includes('this.submitting = true'), '連続submitによるHP・進捗の二重更新を防ぐ');
 assert(html.includes('data-action="calc-insert"'), '電卓の表示金額を入力するボタンを表示する');
 assert(controllerSource.includes("'calc-insert': () => this.insertCalculatorResult(false)"), '電卓の入力ボタンを転記処理へ接続する');
 assert(controllerSource.includes("else if (key === '＝') this.calculateEquals()"), 'イコールキーで計算結果を表示する');
 assert(controllerSource.includes("addEventListener('focusin'"), '選択した金額欄を電卓の転記先にする');
-assert(controllerSource.includes("querySelector('.calculator')"), '金額欄を選択したとき計算機を開く');
+assert(!/selectCalculatorTarget[\s\S]*?calculatorPanel\.open = true/.test(controllerSource), '金額欄のフォーカスだけでは計算機を開かない');
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
 browserSandbox.window.WrongAnswerFeedback = Feedback;
@@ -143,11 +145,16 @@ const submitAudit = {
   view: { readAnswer: () => ({}), updateRpg() {}, result() {}, show() {} },
   model: { state: { mode: 'story' }, record() { this.calls = (this.calls || 0) + 1; } },
   rpg: { state: { companyHP: 100 }, applyAnswer() { this.calls = (this.calls || 0) + 1; } },
-  document: { querySelector: () => null }
+  document: { querySelector: () => null, getElementById(id) { return id === 'result-status' ? { focus:()=>{ this.focused=id; } } : null; } }
 };
 browserSandbox.window.AppController.prototype.submit.call(submitAudit);
 browserSandbox.window.AppController.prototype.submit.call(submitAudit);
 assert.deepStrictEqual([submitAudit.model.calls, submitAudit.rpg.calls], [1, 1], '連続submitでも進捗とHPを一度だけ更新する');
+assert.strictEqual(submitAudit.document.focused,'result-status','通常回答の結果表示後に結果statusへフォーカスする');
+const startFocusEvents=[];
+const startFocusContext={questions:{J1:{id:'J1'}},model:{state:{mode:'story',drafts:{}},save(){}},rpg:{},reviewMappings:new Map(),resetCalculator(){},view:{renderQuestion(){startFocusEvents.push('render');},show(){startFocusEvents.push('show');}},document:{getElementById(id){if(id==='question-filters')return {hidden:false};if(id==='q-text')return {focus(){startFocusEvents.push('focus');}};return null;}}};
+browserSandbox.window.AppController.prototype.start.call(startFocusContext,'J1');
+assert.deepStrictEqual(startFocusEvents,['render','show','focus'],'次問は描画・表示の後で問題文へフォーカスする');
 const calculatorTarget = { value: '', getAttribute() { return '借方 1行目の金額'; }, setSelectionRange() {} };
 const calculatorElements = { 'calculator-target': { textContent: '' }, 'calculator-display': { value: '' } };
 const calculatorController = {
@@ -179,8 +186,16 @@ assert.strictEqual(editableCalculator.expression, '12500', '入力済みの金�
 assert.strictEqual(editableElements['calculator-display'].value, '12,500', '入力欄の現在値を電卓上で確認して修正できる');
 assert.strictEqual(editableCalculator.calculator.operator, null, '別の入力欄を選んだときは以前の計算状態を引き継がない');
 assert.match(editableElements['calculator-target'].textContent, /現在値を修正できます/, '入力済み金額を修正できることを案内する');
-assert.strictEqual(editableElements.calculator.open, true, '金額欄をタッチすると閉じていた計算機を開く');
-assert.strictEqual(`${editableElements.calculator.scrollOptions.behavior}/${editableElements.calculator.scrollOptions.block}`, 'smooth/nearest', '開いた計算機が画面外なら見える位置へ移動する');
+assert.strictEqual(editableElements.calculator.open, false, '金額欄のフォーカスだけでは閉じた計算機を開かない');
+assert.strictEqual(editableElements.calculator.scrollOptions, undefined, '金額欄のフォーカスだけでは計算機へスクロールしない');
+const formatDirectAmount = value => { const input={value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',validationMessage:'',setCustomValidity(message){this.validationMessage=message;},setSelectionRange(){}}; const valid=browserSandbox.window.AppController.prototype.formatAmount(input); return {input,valid}; };
+const validAmounts = new Map([['',''],['0','0'],['12','12'],['1234','1,234'],['1234567','1,234,567'],['1,234','1,234'],['12,345','12,345'],['123,456','123,456'],['1,234,567','1,234,567'],['１２３４','1,234'],['１，２３４','1,234'],['１２，３４５','12,345']]);
+for (const [raw,expected] of validAmounts) { const {input,valid}=formatDirectAmount(raw); assert.strictEqual(valid,true,`${raw||'空欄'}を有効な金額として受理する`); assert.strictEqual(input.value,expected,`${raw||'空欄'}を正規表示する`); assert.strictEqual(input.validationMessage,'',`${raw||'空欄'}のcustom validityを解除する`); }
+const invalidAmounts=[',',',123','123,','1,,2','12,34','1234,567','1,23,456','12a3','１，，２','１２，３４','，１２３'];
+for (const raw of invalidAmounts) { const {input,valid}=formatDirectAmount(raw); assert.strictEqual(valid,false,`${raw}を不正な金額として拒否する`); assert.strictEqual(input.value,raw,`${raw}を別の数値へ暗黙変換しない`); assert(input.validationMessage,`${raw}のcustom validityを設定する`); }
+const composingAmount={value:'１２３',setCustomValidity(){throw new Error('IME変換中にvalidityを変更しない');}};
+assert.strictEqual(browserSandbox.window.AppController.prototype.formatAmount(composingAmount,{isComposing:true}),true,'IME変換途中は書き換えない');
+assert.strictEqual(composingAmount.value,'１２３','IME変換途中の文字列を保持する');
 const deskCalculator = {
   expression: '0',
   calculator: { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null },
@@ -431,13 +446,35 @@ assert(!viewSource.includes("createElement('pre')"), 'IOS-REVIEW-03: 模試レ�
 assert(viewSource.includes("answerReviewBlock('自分の回答'") && viewSource.includes('this.journalTable(answer)'), 'IOS-REVIEW-02: 長い仕訳回答を意味のある仕訳表で表示する');
 vm.runInNewContext(viewSource, browserSandbox);
 class FakeElement {
-  constructor(tagName = 'div') { this.tagName = tagName; this.children = []; this.hidden = false; }
+  constructor(tagName = 'div') { this.tagName = tagName; this.children = []; this.hidden = false; this.disabled = false; this.selectedOptions = []; this.classList = { add() {}, remove() {}, toggle() {} }; }
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
   setAttribute(name, value) { this[name] = value; }
   createTHead() { const section = new FakeElement('thead'); section.insertRow = () => { const row = new FakeElement('tr'); section.append(row); return row; }; this.append(section); return section; }
   createTBody() { const section = new FakeElement('tbody'); section.insertRow = () => { const row = new FakeElement('tr'); row.insertCell = () => { const cell = new FakeElement('td'); row.append(cell); return cell; }; section.append(row); return row; }; this.append(section); return section; }
 }
+browserSandbox.Option = class Option { constructor(text, value) { this.textContent=text; this.value=value; } };
+const journalQuestions = Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal');
+assert.strictEqual(journalQuestions.length, 150, '現在の仕訳問題150問を固定容量監査の対象にする');
+assert(journalQuestions.every(question => question.answer.debit.length <= 3 && question.answer.credit.length <= 3), '全仕訳問題が模試の固定3行容量に収まる');
+const topologyContainer = new FakeElement('section');
+const topologyView = new browserSandbox.window.AppView({ getElementById: () => topologyContainer, createElement: tag => new FakeElement(tag) });
+const shapes = ['J001', 'J128', 'J120', 'J137'];
+const examTopologies = shapes.map(id => {
+  topologyView.renderJournal(browserSandbox.window.QuestionData[id], {}, 'exam');
+  const rows = topologyContainer.children.filter(child => child.className === 'journal-row');
+  return rows.map(row => row.children.map(control => ({ className:control.className, disabled:control.disabled, placeholder:control.innerHTML, choices:control.tagName === 'select' ? control.children.map(option => option.value) : [] })));
+});
+examTopologies.slice(1).forEach(topology => assert.deepStrictEqual(topology, examTopologies[0], '異なる正答形状でも空の模試仕訳DOMを同一にする'));
+assert.strictEqual(examTopologies[0].length, 3, '模試仕訳は常に3行を表示する');
+assert(examTopologies[0].every(row => row.length === 4 && row.every(control => !control.disabled)), '模試3行の借方・貸方科目・金額をすべて有効にする');
+topologyView.renderJournal(browserSandbox.window.QuestionData.J001, {}, 'story');
+assert.strictEqual(topologyContainer.children.filter(child => child.className === 'journal-row').length, 1, 'Storyは従来の正答形状に応じた行数を維持する');
+const maximum = browserSandbox.window.QuestionData.J128.answer;
+const maximumWithEmptyRows = { debit:[...maximum.debit], credit:[...maximum.credit] };
+assert.strictEqual(Engine.gradeJournalEntry(maximumWithEmptyRows, maximum), true, '最大3行の正答を採点できる');
+const partialExtra = { debit:[...maximum.debit, {account:'現金',amount:Number.NaN}], credit:[...maximum.credit] };
+assert.strictEqual(Engine.gradeJournalEntry(partialExtra, maximum), false, '部分入力された余分な行を正答として無視しない');
 const feedbackView = new browserSandbox.window.AppView({ createElement: tag => new FakeElement(tag) });
 const wrongJ001 = { debit:[{ account:'売上', amount:50000 }], credit:[{ account:'現金', amount:40000 }] };
 const feedbackDom = feedbackView.renderDiagnostics(browserSandbox.window.QuestionData.J001, wrongJ001, { correct:false });
@@ -459,6 +496,12 @@ const answerFields = {
 };
 const answerView = new browserSandbox.window.AppView({ querySelectorAll: selector => answerFields[selector] || [] });
 assert.deepStrictEqual(JSON.parse(JSON.stringify(answerView.readAnswer({ type: 'journal' }))), { debit: [{ account: '現金', amount: 1000 }], credit: [{ account: '売上', amount: 1000 }] }, '仕訳入力の全角数字を数値として読み取る');
+const readJournalRow=(account,amount)=>new browserSandbox.window.AppView({querySelectorAll:selector=>({'.debit-account':[{value:account}],'.debit-amount':[{value:amount}],'.credit-account':[],'.credit-amount':[]}[selector]||[])}).readAnswer({type:'journal'}).debit;
+assert.strictEqual(readJournalRow('','').length,0,'科目と金額がともに空の中立行だけを無視する');
+const partialJournalRows=[['仕入',''],['','100'],['','abc'],['','1,,2'],['仕入','abc']];
+for(const [account,amount] of partialJournalRows){const rows=readJournalRow(account,amount);assert.strictEqual(rows.length,1,`${account||'科目なし'}/${amount||'金額なし'}を部分入力行として保持する`);assert.strictEqual(Engine.gradeJournalEntry({debit:rows,credit:[{account:'買掛金',amount:100}]},{debit:[{account:'仕入',amount:100}],credit:[{account:'買掛金',amount:100}]}),false,`${account||'科目なし'}/${amount||'金額なし'}を正答にしない`);}
+const neutralAnswerView=new browserSandbox.window.AppView({querySelectorAll:selector=>({'.debit-account':[{value:'仕入'},{value:''}],'.debit-amount':[{value:'100'},{value:''}],'.credit-account':[{value:'買掛金'},{value:''}],'.credit-amount':[{value:'100'},{value:''}]}[selector]||[])});
+const neutralAnswer=neutralAnswerView.readAnswer({type:'journal'});assert.strictEqual(Engine.gradeJournalEntry(neutralAnswer,{debit:[{account:'仕入',amount:100}],credit:[{account:'買掛金',amount:100}]}),true,'余分な完全空欄の中立行は正答を妨げない');
 const comparison = { hidden: false, children: [], replaceChildren(...children) { this.children = children; }, append(...children) { this.children.push(...children); } };
 const comparisonDocument = { getElementById: () => comparison, createElement: tagName => ({ tagName, textContent: '' }) };
 const comparisonView = new browserSandbox.window.AppView(comparisonDocument);
@@ -565,14 +608,15 @@ assert.strictEqual(examPrototype.finishExam.call(incompleteExam, false, 2), fals
 assert(warned.includes('未回答が13問') && redirected === 'Q1', 'CASE 3: 未回答数を警告し最初の未回答へ移動する');
 const completeScores = Object.fromEntries(fifteenIds.map(id => [id, { correct: true, earned: 1, possible: 1, ratio: 1 }]));
 const completedSession = { ids: fifteenIds, startedAt: 1, endAt: 3600001, scores: completeScores };
-let resultScore; const completeExam = {
+let resultScore; let examResultFocused=false; const completeExam = {
   model: { state: { examSession: completedSession, examAttempt: 0 }, record() {}, save() {} },
   unansweredExamIds: examPrototype.unansweredExamIds, questions: Object.fromEntries(fifteenIds.map(id => [id, { category: id }])),
-  rpg: { recordMastery() {} }, stopExamTimer() {}, view: { examResult(review) { resultScore = { correct: review.passed, earned: review.points, possible: 100 }; }, show() {} }, document: { body: { classList: { remove() {} } } }
+  rpg: { recordMastery() {} }, stopExamTimer() {}, view: { examResult(review) { resultScore = { correct: review.passed, earned: review.points, possible: 100 }; }, show() {} }, document: { body: { classList: { remove() {} } }, getElementById(id){return id==='result-status'?{focus(){examResultFocused=true;}}:null;} }
 };
 browserSandbox.window.confirm = () => true;
 assert.strictEqual(examPrototype.finishExam.call(completeExam, false, 2), true, 'CASE 4: 全15問回答後に初めて正式採点する');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(resultScore)), { correct: true, earned: 100, possible: 100 }, '明示配点の合計を100点として採点する');
+assert.strictEqual(examResultFocused,true,'最終模試結果の表示後に結果statusへフォーカスする');
 const examIds = browserSandbox.window.AppController.prototype.buildExamIds.call(examAudit);
 const poolSeparation={...poolContext,model:{state:{mode:'training'}},reviewIds(){return[];},buildExamIds(){return examIds;},storyIds(){return[];}};
 const trainingIds=browserSandbox.window.AppController.prototype.modeIds.call(poolSeparation);
@@ -631,9 +675,9 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSecti
 ], '解説見出しを実務MEMO・試験POINTのカード構造へ正規化する');
 assert(viewSource.includes("score.correct ? '正解です！' : 'もう一歩です'"), '採点結果は従来どおり正解またはもう一歩と表示する');
 assert(!viewSource.includes('部分点'), 'ユーザー向けの採点結果に部分点を表示しない');
-assert(viewSource.includes("input.type = 'text'; input.setAttribute('inputmode', 'none'); input.readOnly = true"), '金額欄は読み取り専用にしてiPhoneの数字キーパッドを起動しない');
-assert(viewSource.includes("input.setAttribute('pattern', '[0-9,]*')"), '桁区切り済みの金額もフォームの入力書式として許可する');
-assert(viewSource.includes("input.setAttribute('title', '金額は計算機から入力してください')"), '金額欄が計算機専用であることを案内する');
+assert(viewSource.includes("input.type = 'text'; input.setAttribute('inputmode', 'numeric')") && !viewSource.includes('input.readOnly = true'), '金額欄は直接編集でき数字キーパッドを案内する');
+const amountPattern=viewSource.match(/input\.setAttribute\('pattern', '([^']+)'\)/)?.[1];assert(amountPattern,'金額欄にnative patternを設定する');const nativeAmountPattern=new RegExp(`^(?:${amountPattern})$`);for(const raw of validAmounts.keys())assert(raw===''||nativeAmountPattern.test(raw),`${raw||'空欄'}をnative patternで受理する`);for(const raw of invalidAmounts)assert(!nativeAmountPattern.test(raw),`${raw}をnative patternで拒否する`);
+assert(viewSource.includes('必要に応じて計算機も使えます'), '金額欄は直接入力と任意の計算機を案内する');
 assert(viewSource.includes('select.title = select.selectedOptions[0]?.textContent'), '選択中の勘定科目をtitleに反映する');
 const cssSource = fs.readFileSync('css/style.css', 'utf8');
 assert(viewSource.includes("else if (question.type === 'correction') this.renderCorrection(question, draft)"), '記帳訂正は通常の縦型表ではなく専用の仕訳入力欄で表示する');
@@ -855,4 +899,54 @@ const {evaluateRows,demonstratesTransfer}=require('../scripts/audit-exam-readine
 assert.strictEqual(evaluateRows([{type:'journal',category:'x',answer:{},difficulty:1}])[0].pass,false,'learnability Cは問題数だけでPASSしない');
 const transferPair=[{type:'ledger',question:'金額を記入',table:{columns:['金額'],inputCells:['a']},materials:[{金額:1}]},{type:'ledger',question:'台帳を完成',table:{columns:['日付','摘要'],inputCells:['a','b']},materials:[{日付:'4/1'}]}];
 assert.strictEqual(demonstratesTransfer(transferPair),true,'transfer metadataなしでも構造差から転移を評価する');
+browserSandbox.window.ProgressModel=ProgressModel; browserSandbox.window.RPGModel=RPGModel;
+const backupQuestions=browserSandbox.window.QuestionData;
+const canonicalProgress=new ProgressModel(backupQuestions,{getItem(){return null;},setItem(){}}).state;
+const canonicalCharacter=new RPGModel({getItem(){return null;},setItem(){}}).state;
+assert(ProgressModel.validateBackupState(canonicalProgress,backupQuestions)&&RPGModel.validateBackupState(canonicalCharacter),'現行exportBackupが出力する両stateを検証で受理する');
+const mandatoryV1ProgressKeys=['mode','currentQuestionId','answeredIds','correctIds','incorrectIds','mistakeCounts','reviewSchedule','reviewAssignments','attempts','drafts','completed','placement','examAttempt','examSession','examHistory','lastExamReview'];
+const historicalV1Progress={mode:'story',currentQuestionId:null,answeredIds:[],correctIds:[],incorrectIds:[],mistakeCounts:{},reviewSchedule:{},reviewAssignments:{},attempts:[],drafts:{},completed:false,placement:null,examAttempt:0,examSession:null,examHistory:[],lastExamReview:null};
+assert(ProgressModel.validateBackupState(historicalV1Progress,backupQuestions),'最初のversion 1 producerが出力した進捗shapeを受理する');
+const progressWithTopLevelDangerousKey=key=>JSON.parse(`${JSON.stringify(historicalV1Progress).slice(0,-1)},${JSON.stringify(key)}:{"polluted":true}}`);
+for(const key of ['__proto__','prototype','constructor'])assert.strictEqual(ProgressModel.validateBackupState(progressWithTopLevelDangerousKey(key),backupQuestions),false,`top-level own ${key} を拒否する`);
+const dangerousNested=()=>JSON.parse('{"__proto__":{"polluted":true}}');
+const dangerousLastReview={...historicalV1Progress,lastExamReview:dangerousNested()};assert.strictEqual(ProgressModel.validateBackupState(dangerousLastReview,backupQuestions),false,'lastExamReview内のdangerous keyを再帰的に拒否する');
+const dangerousAttempt={...historicalV1Progress,attempts:[{questionId:'J001',correct:true,responseMs:1,...dangerousNested()}]};assert(Object.hasOwn(dangerousAttempt.attempts[0],'__proto__'));assert.strictEqual(ProgressModel.validateBackupState(dangerousAttempt,backupQuestions),false,'attempt item内のdangerous keyを再帰的に拒否する');
+const dangerousHistory={...historicalV1Progress,examHistory:[{finishedAt:1,points:100,...dangerousNested()}]};assert(Object.hasOwn(dangerousHistory.examHistory[0],'__proto__'));assert.strictEqual(ProgressModel.validateBackupState(dangerousHistory,backupQuestions),false,'examHistory item内のdangerous keyを再帰的に拒否する');
+const dangerousSchedule={...historicalV1Progress,reviewSchedule:{J001:{stage:0,dueAt:1,...dangerousNested()}}};assert(Object.hasOwn(dangerousSchedule.reviewSchedule.J001,'__proto__'));assert.strictEqual(ProgressModel.validateBackupState(dangerousSchedule,backupQuestions),false,'keyed reviewSchedule item内のdangerous keyを再帰的に拒否する');
+assert.strictEqual(ProgressModel.validateBackupState({},backupQuestions),false,'空の進捗payloadを拒否する');
+assert.strictEqual(ProgressModel.validateBackupState({mode:'story'},backupQuestions),false,'modeだけの疎な進捗payloadを拒否する');
+assert.strictEqual(ProgressModel.validateBackupState({answeredIds:[],correctIds:[],incorrectIds:[]},backupQuestions),false,'ID配列だけの疎な進捗payloadを拒否する');
+for(const missing of mandatoryV1ProgressKeys){const candidate={...historicalV1Progress};delete candidate[missing];assert.strictEqual(ProgressModel.validateBackupState(candidate,backupQuestions),false,`必須v1進捗member ${missing} の欠落を拒否する`);}
+assert.strictEqual(ProgressModel.validateBackupState({...historicalV1Progress,mode:1},backupQuestions),false,'必須modeの不正型を拒否する');
+assert.strictEqual(ProgressModel.validateBackupState({...historicalV1Progress,answeredIds:['unknown']},backupQuestions),false,'必須ID配列の未知問題を拒否する');
+assert.strictEqual(ProgressModel.validateBackupState({...historicalV1Progress,drafts:{J001:{debit:'bad',credit:[]}}},backupQuestions),false,'不正なnested draftを拒否する');
+assert.strictEqual(ProgressModel.validateBackupState({...historicalV1Progress,reviewSchedule:{J001:{stage:-1,dueAt:0}}},backupQuestions),false,'不正なnested reviewを拒否する');
+assert.strictEqual(ProgressModel.validateBackupState({...historicalV1Progress,examSession:{}},backupQuestions),false,'不正なnested exam sessionを拒否する');
+assert(RPGModel.validateBackupState({xp:0,rewardedIds:[],mastery:{},companyHP:100,totalTransactionAmount:0}),'confidenceOutcomes追加前の正当なv1 characterを受理する');
+assert(!ProgressModel.validateBackupState({...canonicalProgress,answeredIds:['unknown']},backupQuestions),'sanitize可能でも未知IDを含む進捗backupを拒否する');
+assert(!RPGModel.validateBackupState({...canonicalCharacter,xp:'0'}),'sanitize可能でも不正型のcharacter backupを拒否する');
+const backupPayload=(progressValue=canonicalProgress,characterValue=canonicalCharacter)=>({format:'boki-rpg-backup',version:1,exportedAt:new Date().toISOString(),progress:progressValue,character:characterValue});
+const importRun=async ({payload=backupPayload(),failAt=0,mutateBeforeFailure=false,rollbackFail=false,readFail=false}={})=>{
+  const values={progress:'old-progress',character:'old-character'},writes=[],rollbacks=[];let normalWrites=0,reloads=0;
+  const storage={readItem(key){return readFail?{ok:false,value:null}:{ok:true,value:values[key]??null};},setItem(key,value){normalWrites++;writes.push(key);if(normalWrites===failAt){if(mutateBeforeFailure)values[key]=value;return false;}values[key]=value;return true;},restoreItem(key,value){rollbacks.push(key);if(rollbackFail)return false;if(value===null)delete values[key];else values[key]=value;return true;}};
+  const status={textContent:'',classList:{add(){},remove(){}}};
+  const context={questions:backupQuestions,model:{storage,key:'progress'},rpg:{storage,key:'character'},document:{getElementById(){return status;}},storageRead:browserSandbox.window.AppController.prototype.storageRead,storageWrite:browserSandbox.window.AppController.prototype.storageWrite,storageRestore:browserSandbox.window.AppController.prototype.storageRestore};
+  browserSandbox.window.location={reload(){reloads++;}};
+  const ok=await browserSandbox.window.AppController.prototype.importBackup.call(context,{text:async()=>JSON.stringify(payload)});
+  return {ok,values,writes,rollbacks,reloads,status};
+};
+(async()=>{
+  const success=await importRun(); assert.deepStrictEqual([success.ok,success.writes.join(','),success.reloads],[true,'progress,character',1],'有効backupは両方を書いて成功後だけ1回reloadする');
+  const malformed=await importRun({payload:{format:'bad'}}); assert.deepStrictEqual([malformed.ok,malformed.writes.length,malformed.reloads],[false,0,0],'不正envelopeは書き込まない');
+  const invalidProgress=await importRun({payload:backupPayload({...canonicalProgress,mode:'bad'})}); assert.strictEqual(invalidProgress.writes.length,0,'不正progressではcharacterも書き込まない');
+  const invalidCharacter=await importRun({payload:backupPayload(canonicalProgress,{...canonicalCharacter,xp:'bad'})}); assert.strictEqual(invalidCharacter.writes.length,0,'不正characterではprogressも書き込まない');
+  const emptyProgress=await importRun({payload:backupPayload({},canonicalCharacter)}); assert.deepStrictEqual([emptyProgress.writes.length,emptyProgress.reloads,emptyProgress.ok],[0,0,false],'空のprogressと正当なcharacterは書込・reloadせず失敗する'); assert.match(emptyProgress.status.textContent,/復元できません/,'空のprogressで失敗statusを通知する');
+  const sparseProgress=await importRun({payload:backupPayload({mode:'story'},canonicalCharacter)}); assert.deepStrictEqual([sparseProgress.writes.length,sparseProgress.reloads,sparseProgress.ok],[0,0,false],'疎なprogressと正当なcharacterは書込・reloadせず失敗する');
+  const dangerousProgress=await importRun({payload:backupPayload(progressWithTopLevelDangerousKey('__proto__'),canonicalCharacter)}); assert.deepStrictEqual([dangerousProgress.writes.length,dangerousProgress.reloads,dangerousProgress.ok],[0,0,false],'dangerous own keyを含むprogressと正当なcharacterは書込・reloadせず失敗する'); assert.match(dangerousProgress.status.textContent,/復元できません/,'dangerous progressで失敗statusを通知する');
+  const unreadable=await importRun({readFail:true}); assert.deepStrictEqual([unreadable.writes.length,unreadable.rollbacks.length,unreadable.reloads],[0,0,0],'snapshot読取失敗時は書込・rollback・reloadを行わない');
+  const first=await importRun({failAt:1,mutateBeforeFailure:true}); assert.deepStrictEqual([first.values.progress,first.values.character,first.writes.join(','),first.rollbacks.sort().join(','),first.reloads],['old-progress','old-character','progress','character,progress',0],'第1書込が変異後失敗しても両snapshotを復元する');
+  const second=await importRun({failAt:2}); assert.deepStrictEqual([second.values.progress,second.values.character,second.rollbacks.sort().join(','),second.reloads],['old-progress','old-character','character,progress',0],'第2書込失敗時に第1書込を含む両方を復元する');
+  const rollback=await importRun({failAt:2,rollbackFail:true}); assert.strictEqual(rollback.rollbacks.length,2,'rollback失敗時も両方の復元を試みる'); assert.match(rollback.status.textContent,/不整合/,'rollback不完全を通常失敗と区別して通知する'); assert.strictEqual(rollback.reloads,0,'rollback失敗時にreloadしない');
+})().catch(error=>{console.error(error);process.exitCode=1;});
 console.log('app tests: ok');
