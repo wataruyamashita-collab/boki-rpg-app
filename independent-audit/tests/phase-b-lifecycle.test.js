@@ -16,16 +16,16 @@ const savedRoot=fs.readFileSync(rootPath),savedProduction=fs.readFileSync(produc
 const digest=value=>crypto.createHash('sha256').update(value).digest('hex');
 let count=0;
 const test=(name,fn)=>{fn();count++;console.log(`ok ${count} - ${name}`);};
-const rejected=(candidate,options)=>assert.strictEqual(lifecycle.verifyCandidate(candidate,options).ok,false);
+const rejected=(candidate,options={generations:[]})=>assert.strictEqual(lifecycle.verifyCandidate(candidate,options).ok,false);
 const mutate=(value,path,valueAtPath)=>{const copy=structuredClone(value);let target=copy;for(const key of path.slice(0,-1))target=target[key];target[path.at(-1)]=valueAtPath;return copy;};
 
 try{
   fs.rmSync(unlockedPath,{force:true});
-  const candidate=lifecycle.createCandidate();
+  const candidate=lifecycle.createCandidate('B_GENERATION',[]);
   const authority=structuredClone(candidate);
   const successor=lifecycle.createCandidate('B_GENERATION',[authority]);
 
-  test('1. Phase A unchanged passes',()=>assert.strictEqual(lifecycle.verifyCandidate(candidate).ok,true));
+  test('1. Phase A unchanged passes',()=>assert.strictEqual(lifecycle.verifyCandidate(candidate,{generations:[]}).ok,true));
   test('2. Phase A trailing whitespace fails',()=>{fs.writeFileSync(rootPath,Buffer.concat([savedRoot,Buffer.from(' ')]));rejected(candidate);fs.writeFileSync(rootPath,savedRoot);});
   test('3. Phase A extra newline fails',()=>{fs.writeFileSync(rootPath,Buffer.concat([savedRoot,Buffer.from('\n')]));rejected(candidate);fs.writeFileSync(rootPath,savedRoot);});
   test('4. missing predecessor fails',()=>{const mutant=structuredClone(authority);delete mutant.predecessor;rejected(successor,{generations:[mutant]});});
