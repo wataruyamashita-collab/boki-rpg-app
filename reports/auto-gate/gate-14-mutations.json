@@ -541,8 +541,8 @@
     {
       "mutationId": "NEXT_SELF_LOOP",
       "targetProductionFile": "js/controller.js",
-      "beforeHash": "55c1052eecdf296127ef77661b503b58b0dc2e8a36fdc7b0bd9ecf8d8377063b",
-      "afterHash": "11e8973bb0764205ae52e4a2501823ca97a835d1926bf7fede80bd9614ae0a14",
+      "beforeHash": "e4f5f18c525a7891879aa6fe205b1b1a4521b358b8339ce1d2ac783d2395cc75",
+      "afterHash": "f0824e12c425c7efb57a3ddf6eddc452efb3be8c19d5a386a2a8e39331f2cad8",
       "expectedFailureCode": "UNEXPECTED_LOOP",
       "actualFailureCode": "UNEXPECTED_LOOP",
       "baselineFindings": [],
@@ -692,8 +692,8 @@
     {
       "mutationId": "NEXT_NULL_AT_20",
       "targetProductionFile": "js/controller.js",
-      "beforeHash": "55c1052eecdf296127ef77661b503b58b0dc2e8a36fdc7b0bd9ecf8d8377063b",
-      "afterHash": "e0e41705e9ec6226dbe3df02500136554e14a7cd5e26aa84e609e18887716a64",
+      "beforeHash": "e4f5f18c525a7891879aa6fe205b1b1a4521b358b8339ce1d2ac783d2395cc75",
+      "afterHash": "b510450291719370ad3422cbbd7e4d49ab80b324c5c06acdd1cd03cb60589fe0",
       "expectedFailureCode": "UNREACHABLE_STORY_QUESTION",
       "actualFailureCode": "UNREACHABLE_STORY_QUESTION",
       "baselineFindings": [],
