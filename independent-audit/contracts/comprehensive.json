@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 3,
+  "authority": "independent-audit",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "comprehensive",
+  "requiredCheckIds": [
+    "COMPREHENSIVE_RELATION_TRACE"
+  ],
+  "requiredLayers": [
+    "LEARNING"
+  ],
+  "dependencies": [
+    {
+      "gateId": "GATE-08",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
+  "notApplicableLayers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "ADVERSARIAL"
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_COMPREHENSIVE_RELATION_TRACE",
+      "requiredCheckId": "COMPREHENSIVE_RELATION_TRACE",
+      "text": "source-to-judgment-to-calculation-to-answer relations are traced"
+    }
+  ],
+  "checkLayers": {
+    "COMPREHENSIVE_RELATION_TRACE": "LEARNING"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 3,
+  "authority": "independent-audit",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "question-variety",
+  "requiredCheckIds": [
+    "QUESTION_VARIETY"
+  ],
+  "requiredLayers": [
+    "LEARNING"
+  ],
+  "dependencies": [
+    {
+      "gateId": "GATE-10",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
+  "notApplicableLayers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "ADVERSARIAL"
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_QUESTION_VARIETY",
+      "requiredCheckId": "QUESTION_VARIETY",
+      "text": "questions provide structural and educational variety"
+    }
+  ],
+  "checkLayers": {
+    "QUESTION_VARIETY": "LEARNING"
+  }
+}

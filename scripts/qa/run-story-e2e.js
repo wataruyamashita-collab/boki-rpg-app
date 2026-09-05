@@ -1,0 +1,1 @@
+'use strict';const c=require('./audit-core');const lock=c.lockCheck();if(!lock.ok){console.error('AUDIT_LOCK_BROKEN');process.exit(1)}const r=c.audit(c.loadProduction());console.log(JSON.stringify(r.story,null,2));process.exit(r.findings.some(x=>x.gate==='GATE-10')?1:0);

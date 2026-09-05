@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 3,
+  "authority": "independent-audit",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "correction",
+  "requiredCheckIds": [
+    "CORRECTION_RECORDED_EVIDENCE",
+    "CORRECTION_ENTRY"
+  ],
+  "requiredLayers": [
+    "ACCOUNTING_SEMANTIC"
+  ],
+  "dependencies": [
+    {
+      "gateId": "GATE-05",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
+  "notApplicableLayers": [
+    "STRUCTURAL",
+    "LEARNING",
+    "ADVERSARIAL"
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_CORRECTION_RECORDED_EVIDENCE",
+      "requiredCheckId": "CORRECTION_RECORDED_EVIDENCE",
+      "text": "recorded error and source evidence are present"
+    },
+    {
+      "requirementId": "REQ_CORRECTION_ENTRY",
+      "requiredCheckId": "CORRECTION_ENTRY",
+      "text": "correction entry is complete"
+    }
+  ],
+  "checkLayers": {
+    "CORRECTION_RECORDED_EVIDENCE": "ACCOUNTING_SEMANTIC",
+    "CORRECTION_ENTRY": "ACCOUNTING_SEMANTIC"
+  }
+}

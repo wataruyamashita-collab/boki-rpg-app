@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 3,
+  "authority": "independent-audit",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "semantic",
+  "requiredCheckIds": [
+    "SEMANTIC_VALUE_UNITS",
+    "SEMANTIC_QUESTION_COVERAGE"
+  ],
+  "requiredLayers": [
+    "ACCOUNTING_SEMANTIC"
+  ],
+  "dependencies": [],
+  "notApplicableLayers": [
+    "STRUCTURAL",
+    "LEARNING",
+    "ADVERSARIAL"
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_SEMANTIC_VALUE_UNITS",
+      "requiredCheckId": "SEMANTIC_VALUE_UNITS",
+      "text": "semantic units match visible values"
+    },
+    {
+      "requirementId": "REQ_SEMANTIC_QUESTION_COVERAGE",
+      "requiredCheckId": "SEMANTIC_QUESTION_COVERAGE",
+      "text": "question inventory is complete and unique"
+    }
+  ],
+  "checkLayers": {
+    "SEMANTIC_VALUE_UNITS": "ACCOUNTING_SEMANTIC",
+    "SEMANTIC_QUESTION_COVERAGE": "ACCOUNTING_SEMANTIC"
+  }
+}

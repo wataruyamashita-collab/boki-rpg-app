@@ -1,14 +1,32 @@
 {
-  "gate": "GATE-11",
+  "gate": "GATE-15",
   "status": "FAIL",
   "requiredCheckIds": [
-    "QUESTION_VARIETY"
+    "AUDIT_LOCK_INTACT",
+    "AUDIT_RUNNER_COMPLETED",
+    "ORACLE_NO_SELF_REFERENCE",
+    "DIRECT_AUDIT_COMPLETE",
+    "DIRECT_AUDIT_ALL_PASS",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+    "INDEPENDENT_EXPECTED_ALL_PASS"
   ],
   "executedCheckIds": [
-    "QUESTION_VARIETY"
+    "AUDIT_LOCK_INTACT",
+    "AUDIT_RUNNER_COMPLETED",
+    "ORACLE_NO_SELF_REFERENCE",
+    "DIRECT_AUDIT_COMPLETE",
+    "DIRECT_AUDIT_ALL_PASS",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+    "INDEPENDENT_EXPECTED_ALL_PASS"
   ],
   "passedCheckIds": [
-    "QUESTION_VARIETY"
+    "AUDIT_LOCK_INTACT",
+    "AUDIT_RUNNER_COMPLETED",
+    "ORACLE_NO_SELF_REFERENCE",
+    "DIRECT_AUDIT_COMPLETE",
+    "DIRECT_AUDIT_ALL_PASS",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+    "INDEPENDENT_EXPECTED_ALL_PASS"
   ],
   "failedCheckIds": [],
   "layers": {
@@ -27,45 +45,91 @@
       "status": "N/A"
     },
     "LEARNING": {
-      "requiredCheckIds": [
-        "QUESTION_VARIETY"
-      ],
-      "executedCheckIds": [
-        "QUESTION_VARIETY"
-      ],
-      "passedCheckIds": [
-        "QUESTION_VARIETY"
-      ],
-      "failedCheckIds": [],
-      "status": "PASS"
-    },
-    "ADVERSARIAL": {
       "requiredCheckIds": [],
       "executedCheckIds": [],
       "passedCheckIds": [],
       "failedCheckIds": [],
       "status": "N/A"
+    },
+    "ADVERSARIAL": {
+      "requiredCheckIds": [
+        "AUDIT_LOCK_INTACT",
+        "AUDIT_RUNNER_COMPLETED",
+        "ORACLE_NO_SELF_REFERENCE",
+        "DIRECT_AUDIT_COMPLETE",
+        "DIRECT_AUDIT_ALL_PASS",
+        "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+        "INDEPENDENT_EXPECTED_ALL_PASS"
+      ],
+      "executedCheckIds": [
+        "AUDIT_LOCK_INTACT",
+        "AUDIT_RUNNER_COMPLETED",
+        "ORACLE_NO_SELF_REFERENCE",
+        "DIRECT_AUDIT_COMPLETE",
+        "DIRECT_AUDIT_ALL_PASS",
+        "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+        "INDEPENDENT_EXPECTED_ALL_PASS"
+      ],
+      "passedCheckIds": [
+        "AUDIT_LOCK_INTACT",
+        "AUDIT_RUNNER_COMPLETED",
+        "ORACLE_NO_SELF_REFERENCE",
+        "DIRECT_AUDIT_COMPLETE",
+        "DIRECT_AUDIT_ALL_PASS",
+        "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+        "INDEPENDENT_EXPECTED_ALL_PASS"
+      ],
+      "failedCheckIds": [],
+      "status": "PASS"
     }
   },
   "dependencyEvidence": [
     {
       "dependency": {
-        "gateId": "GATE-10",
+        "gateId": "GATE-14",
         "acceptedStatuses": [
           "PASS"
         ]
       },
       "satisfied": false
+    },
+    {
+      "dependency": {
+        "gateId": "GATE-03",
+        "acceptedStatuses": [
+          "PASS",
+          "FAIL"
+        ],
+        "expectedRedCodes": [
+          "SPECIAL_ACCOUNT_MISCLASSIFIED"
+        ]
+      },
+      "satisfied": true
+    },
+    {
+      "dependency": {
+        "gateId": "GATE-10",
+        "acceptedStatuses": [
+          "PASS",
+          "FAIL"
+        ],
+        "expectedRedCodes": [
+          "UNREACHABLE_STORY_QUESTION",
+          "PREMATURE_STORY_TERMINATION",
+          "PROGRESS_COUNT_MISMATCH"
+        ]
+      },
+      "satisfied": true
     }
   ],
   "findings": [
     {
-      "gate": "GATE-11",
+      "gate": "GATE-15",
       "code": "DEPENDENCY_NOT_SATISFIED",
-      "detail": "GATE-10"
+      "detail": "GATE-14"
     }
   ],
-  "contract": "question-variety",
+  "contract": "final-integrity",
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",

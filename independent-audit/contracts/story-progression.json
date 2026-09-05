@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 3,
+  "authority": "independent-audit",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "story-progression",
+  "requiredCheckIds": [
+    "STORY_DISPLAY_COUNT",
+    "STORY_POSITION_SEQUENCE",
+    "STORY_REACHABILITY"
+  ],
+  "requiredLayers": [
+    "LEARNING"
+  ],
+  "dependencies": [
+    {
+      "gateId": "GATE-01",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
+  "notApplicableLayers": [
+    "STRUCTURAL",
+    "ACCOUNTING_SEMANTIC",
+    "ADVERSARIAL"
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_STORY_DISPLAY_COUNT",
+      "requiredCheckId": "STORY_DISPLAY_COUNT",
+      "text": "displayed count equals actual story count"
+    },
+    {
+      "requirementId": "REQ_STORY_POSITION_SEQUENCE",
+      "requiredCheckId": "STORY_POSITION_SEQUENCE",
+      "text": "story positions have no gaps or premature termination"
+    },
+    {
+      "requirementId": "REQ_STORY_REACHABILITY",
+      "requiredCheckId": "STORY_REACHABILITY",
+      "text": "all required story questions are reachable without loops"
+    }
+  ],
+  "checkLayers": {
+    "STORY_DISPLAY_COUNT": "LEARNING",
+    "STORY_POSITION_SEQUENCE": "LEARNING",
+    "STORY_REACHABILITY": "LEARNING"
+  }
+}

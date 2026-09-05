@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 3,
+  "authority": "independent-audit",
+  "passPolicy": "all-required-checks-layers-and-dependencies-pass",
+  "evidencePolicy": "runner-generated-only",
+  "failurePolicy": "fail-closed",
+  "id": "mobile",
+  "requiredCheckIds": [
+    "MOBILE_MINIMUM_FONT"
+  ],
+  "requiredLayers": [
+    "STRUCTURAL"
+  ],
+  "dependencies": [
+    {
+      "gateId": "GATE-12",
+      "acceptedStatuses": [
+        "PASS"
+      ]
+    }
+  ],
+  "notApplicableLayers": [
+    "ACCOUNTING_SEMANTIC",
+    "LEARNING",
+    "ADVERSARIAL"
+  ],
+  "requirements": [
+    {
+      "requirementId": "REQ_MOBILE_MINIMUM_FONT",
+      "requiredCheckId": "MOBILE_MINIMUM_FONT",
+      "text": "mobile production font is at least 16px"
+    }
+  ],
+  "checkLayers": {
+    "MOBILE_MINIMUM_FONT": "STRUCTURAL"
+  }
+}

@@ -1,29 +1,29 @@
 {
-  "gate": "GATE-13",
+  "gate": "GATE-14",
   "status": "FAIL",
   "requiredCheckIds": [
-    "MOBILE_MINIMUM_FONT"
+    "MUTATION_ALL_KILLED",
+    "MUTATION_CAUSAL_DELTA",
+    "ANSWER_CORRUPTION_MUTATIONS"
   ],
   "executedCheckIds": [
-    "MOBILE_MINIMUM_FONT"
+    "MUTATION_ALL_KILLED",
+    "MUTATION_CAUSAL_DELTA",
+    "ANSWER_CORRUPTION_MUTATIONS"
   ],
   "passedCheckIds": [
-    "MOBILE_MINIMUM_FONT"
+    "MUTATION_ALL_KILLED",
+    "MUTATION_CAUSAL_DELTA",
+    "ANSWER_CORRUPTION_MUTATIONS"
   ],
   "failedCheckIds": [],
   "layers": {
     "STRUCTURAL": {
-      "requiredCheckIds": [
-        "MOBILE_MINIMUM_FONT"
-      ],
-      "executedCheckIds": [
-        "MOBILE_MINIMUM_FONT"
-      ],
-      "passedCheckIds": [
-        "MOBILE_MINIMUM_FONT"
-      ],
+      "requiredCheckIds": [],
+      "executedCheckIds": [],
+      "passedCheckIds": [],
       "failedCheckIds": [],
-      "status": "PASS"
+      "status": "N/A"
     },
     "ACCOUNTING_SEMANTIC": {
       "requiredCheckIds": [],
@@ -40,17 +40,29 @@
       "status": "N/A"
     },
     "ADVERSARIAL": {
-      "requiredCheckIds": [],
-      "executedCheckIds": [],
-      "passedCheckIds": [],
+      "requiredCheckIds": [
+        "MUTATION_ALL_KILLED",
+        "MUTATION_CAUSAL_DELTA",
+        "ANSWER_CORRUPTION_MUTATIONS"
+      ],
+      "executedCheckIds": [
+        "MUTATION_ALL_KILLED",
+        "MUTATION_CAUSAL_DELTA",
+        "ANSWER_CORRUPTION_MUTATIONS"
+      ],
+      "passedCheckIds": [
+        "MUTATION_ALL_KILLED",
+        "MUTATION_CAUSAL_DELTA",
+        "ANSWER_CORRUPTION_MUTATIONS"
+      ],
       "failedCheckIds": [],
-      "status": "N/A"
+      "status": "PASS"
     }
   },
   "dependencyEvidence": [
     {
       "dependency": {
-        "gateId": "GATE-12",
+        "gateId": "GATE-13",
         "acceptedStatuses": [
           "PASS"
         ]
@@ -60,12 +72,12 @@
   ],
   "findings": [
     {
-      "gate": "GATE-13",
+      "gate": "GATE-14",
       "code": "DEPENDENCY_NOT_SATISFIED",
-      "detail": "GATE-12"
+      "detail": "GATE-13"
     }
   ],
-  "contract": "mobile",
+  "contract": "mutation",
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
