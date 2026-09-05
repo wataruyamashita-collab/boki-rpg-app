@@ -2244,11 +2244,7 @@
       "credit": [
         {
           "account": "当座預金",
-          "amount": 30000
-        },
-        {
-          "account": "当座借越",
-          "amount": 50000
+          "amount": 80000
         }
       ]
     },

@@ -1,6 +1,6 @@
 {
   "gate": "GATE-10",
-  "status": "FAIL",
+  "status": "PASS",
   "requiredCheckIds": [
     "STORY_DISPLAY_COUNT",
     "STORY_POSITION_SEQUENCE",
@@ -11,12 +11,12 @@
     "STORY_POSITION_SEQUENCE",
     "STORY_REACHABILITY"
   ],
-  "passedCheckIds": [],
-  "failedCheckIds": [
+  "passedCheckIds": [
     "STORY_DISPLAY_COUNT",
     "STORY_POSITION_SEQUENCE",
     "STORY_REACHABILITY"
   ],
+  "failedCheckIds": [],
   "layers": {
     "STRUCTURAL": {
       "requiredCheckIds": [],
@@ -43,13 +43,13 @@
         "STORY_POSITION_SEQUENCE",
         "STORY_REACHABILITY"
       ],
-      "passedCheckIds": [],
-      "failedCheckIds": [
+      "passedCheckIds": [
         "STORY_DISPLAY_COUNT",
         "STORY_POSITION_SEQUENCE",
         "STORY_REACHABILITY"
       ],
-      "status": "FAIL"
+      "failedCheckIds": [],
+      "status": "PASS"
     },
     "ADVERSARIAL": {
       "requiredCheckIds": [],
@@ -70,79 +70,14 @@
       "satisfied": true
     }
   ],
-  "findings": [
-    {
-      "gate": "GATE-10",
-      "code": "UNREACHABLE_STORY_QUESTION",
-      "id": "C006"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "UNREACHABLE_STORY_QUESTION",
-      "id": "C007"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "UNREACHABLE_STORY_QUESTION",
-      "id": "C008"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "UNREACHABLE_STORY_QUESTION",
-      "id": "C009"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "UNREACHABLE_STORY_QUESTION",
-      "id": "C010"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "PREMATURE_STORY_TERMINATION",
-      "id": "C005",
-      "detail": "expected next C006"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "PREMATURE_STORY_TERMINATION",
-      "id": "C006",
-      "detail": "expected next C007"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "PREMATURE_STORY_TERMINATION",
-      "id": "C007",
-      "detail": "expected next C008"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "PREMATURE_STORY_TERMINATION",
-      "id": "C008",
-      "detail": "expected next C009"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "PREMATURE_STORY_TERMINATION",
-      "id": "C009",
-      "detail": "expected next C010"
-    },
-    {
-      "gate": "GATE-10",
-      "code": "PROGRESS_COUNT_MISMATCH",
-      "id": null,
-      "detail": {
-        "expectedDisplayedCount": 25,
-        "actualStorySequenceCount": 164
-      }
-    }
-  ],
+  "findings": [],
   "contract": "story-progression",
   "sourceHashes": {
     "css/style.css": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
-    "data/questions.js": "36bb2a67ba307d6643ae26d4fc62a00c70f7fb14c7d84d4a5c4b3f49afd6d545",
-    "index.html": "5a20445189cbd9e7d1e9187cb91844254488a11080f480896e08bab8a17c93c0",
+    "data/questions.js": "a549e6cd40a81839a04aae4e5e4ee46cdf5bbae12be3ce30416aafc7554c230e",
+    "index.html": "dd8ab3e5daa44033e1814485c458c9898d8d68b6dbd4a9abf721fda8d1045d5d",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
     "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
     "js/controller.js": "55c1052eecdf296127ef77661b503b58b0dc2e8a36fdc7b0bd9ecf8d8377063b",
@@ -151,8 +86,10 @@
     "js/model.js": "3dd1763328d820e46a15c3bec9d14d5ccce2aefcd6d27762fd6c021bbe0091c7",
     "js/rpg.js": "4b67a0a19fbe87c44146e1e1cdbffadb7384756e744e6fe8811901e3d9f83248",
     "js/view.js": "62e1782066a5a06df56fefbb55d44a0af75cd90e1dde9237af3cdd5212671041",
-    "service-worker.js": "26707d5af69150f0d919c081add97c7272f5f8636d757c079f54371c99298d9d",
+    "manifest.webmanifest": "fcde227f0593c3fc7fd5e8adc89be13201f9a35f74d9ad6a4212b23d2a75bd72",
+    "pwa-release-manifest.json": "e95508612b487065180c9bbfb8cfaf8a3b671f5735c92ef7277b8b36c6cef436",
+    "service-worker.js": "f5b560a5f4eb6af3a27bcaf76628b557052246af927fe11c756e625c93e1797b",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-05T00:07:48.619Z"
+  "measuredAt": "2026-09-05T09:27:45.474Z"
 }
