@@ -8,7 +8,7 @@ const core=require('./audit-core');
 
 const ROOT_LOCK='reports/auto-gate/audit-lock.json';
 const GENERATION_DIRECTORY='reports/auto-gate/audit-locks';
-const GENERATION_PHASE_PATTERN=/^[A-Z]_GENERATION$/u;
+const GENERATION_PHASE='B_GENERATION';
 const gitArguments={rootHistory:['rev-list','HEAD','--',ROOT_LOCK],generationFiles:['ls-tree','-r','--name-only','HEAD','--',GENERATION_DIRECTORY]};
 const digest=value=>crypto.createHash('sha256').update(value).digest('hex');
 const canonicalize=value=>{
@@ -60,7 +60,7 @@ function identity(document){
 }
 
 function validateGenerationShape(document,errors,label){
-  if(document.schemaVersion!==3||!GENERATION_PHASE_PATTERN.test(document.phase||'')||!Number.isInteger(document.generation)||document.generation<2||document.algorithm!=='sha256')errors.push(`${label} generation metadata invalid or downgraded`);
+  if(document.schemaVersion!==3||document.phase!==GENERATION_PHASE||!Number.isInteger(document.generation)||document.generation<2||document.algorithm!=='sha256')errors.push(`${label} generation metadata invalid or downgraded`);
   if(!document.predecessor||typeof document.predecessor!=='object')errors.push(`${label} predecessor missing`);
   if(!document.files||typeof document.files!=='object'||!document.productionHashes||typeof document.productionHashes!=='object')errors.push(`${label} hash maps missing`);
   if(document.auditHash!==digest(JSON.stringify(document.files||{})))errors.push(`${label} auditHash mismatch`);
