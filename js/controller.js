@@ -3,6 +3,7 @@
   const normalizeNumber = value => String(value ?? '')
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
+  const validAmountText = value => value === '' || /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(value);
   const getStorage = () => {
     const reportFailure = () => root.dispatchEvent?.(new Event('boki-storage-error'));
     try {
@@ -11,12 +12,14 @@
       let writable = true;
       return {
         getItem(key) { try { return storage.getItem(key); } catch (_) { return null; } },
+        readItem(key) { try { return { ok:true, value:storage.getItem(key) }; } catch (_) { return { ok:false, value:null }; } },
         setItem(key, value) {
           if (!writable) return false;
           try { storage.setItem(key, value); return true; }
           catch (_) { writable = false; reportFailure(); return false; }
         },
-        removeItem(key) { try { storage.removeItem(key); return true; } catch (_) { return false; } }
+        removeItem(key) { try { storage.removeItem(key); return true; } catch (_) { return false; } },
+        restoreItem(key, value) { try { if (value === null) storage.removeItem(key); else storage.setItem(key, value); return true; } catch (_) { reportFailure(); return false; } }
       };
     } catch (_) { queueMicrotask(reportFailure); return null; }
   };
@@ -78,14 +81,13 @@
       const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
-      this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
+      this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target, event); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
       this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
       this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select, .correction-row select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
       this.document.getElementById('filter-query').addEventListener('input', event => { this.filters.query = event.target.value; this.renderModes(); });
       ['filter-account', 'filter-mistakes'].forEach(id => this.document.getElementById(id).addEventListener('change', event => { this.filters[id === 'filter-account' ? 'account' : 'mistakes'] = event.target.value; this.renderModes(); }));
       this.document.getElementById('question-form').addEventListener('submit', event => {
         event.preventDefault();
-        this.document.activeElement?.blur();
         this.submit();
       });
       this.document.getElementById('placement-form').addEventListener('submit', event => { event.preventDefault(); this.finishPlacement(); });
@@ -131,13 +133,26 @@
       const status = this.document.getElementById('backup-status');
       try {
         const payload = JSON.parse(await file.text());
-        if (payload?.format !== 'boki-rpg-backup' || payload.version !== 1 || !payload.progress || !payload.character) throw new Error('invalid');
-        const progressSaved = this.model.storage?.setItem?.(this.model.key, JSON.stringify(payload.progress));
-        const characterSaved = this.rpg.storage?.setItem?.(this.rpg.key, JSON.stringify(payload.character));
-        if (progressSaved === false || characterSaved === false) throw new Error('storage');
+        if (payload?.format !== 'boki-rpg-backup' || payload.version !== 1 || !root.ProgressModel.validateBackupState(payload.progress, this.questions) || !root.RPGModel.validateBackupState(payload.character)) throw new Error('invalid');
+        const progressValue = JSON.stringify(payload.progress); const characterValue = JSON.stringify(payload.character);
+        const progressSnapshot = this.storageRead(this.model.storage, this.model.key); const characterSnapshot = this.storageRead(this.rpg.storage, this.rpg.key);
+        if (!progressSnapshot.ok || !characterSnapshot.ok) throw new Error('storage-read');
+        let forwardFailed = false;
+        if (!this.storageWrite(this.model.storage, this.model.key, progressValue)) forwardFailed = true;
+        else if (!this.storageWrite(this.rpg.storage, this.rpg.key, characterValue)) forwardFailed = true;
+        if (forwardFailed) {
+          const progressRolledBack = this.storageRestore(this.model.storage, this.model.key, progressSnapshot.value);
+          const characterRolledBack = this.storageRestore(this.rpg.storage, this.rpg.key, characterSnapshot.value);
+          if (!progressRolledBack || !characterRolledBack) { const error = new Error('rollback'); error.rollbackFailed = true; throw error; }
+          throw new Error('storage');
+        }
+        status.classList.remove('storage-error');
         status.textContent = 'バックアップを復元しました。画面を再読み込みします。'; root.location?.reload?.(); return true;
-      } catch (_) { status.textContent = '復元できませんでした。BOKI RPGが書き出したJSONファイルを選んでください。'; status.classList.add('storage-error'); return false; }
+      } catch (error) { status.textContent = error.rollbackFailed ? '復元に失敗し、元の保存状態も完全には戻せませんでした。保存データが不整合な可能性があります。画面は再読み込みしていません。' : '復元できませんでした。BOKI RPGが書き出した有効なJSONファイルを選んでください。画面は再読み込みしていません。'; status.classList.add('storage-error'); return false; }
     }
+    storageRead(storage, key) { if (typeof storage?.readItem === 'function') return storage.readItem(key); try { return storage?.getItem ? { ok:true, value:storage.getItem(key) } : { ok:false, value:null }; } catch (_) { return { ok:false, value:null }; } }
+    storageWrite(storage, key, value) { try { return Boolean(storage?.setItem) && storage.setItem(key, value) !== false; } catch (_) { return false; } }
+    storageRestore(storage, key, value) { try { if (typeof storage?.restoreItem === 'function') return storage.restoreItem(key, value) !== false; return value === null ? Boolean(storage?.removeItem) && storage.removeItem(key) !== false : Boolean(storage?.setItem) && storage.setItem(key, value) !== false; } catch (_) { return false; } }
     showPlacement() { this.stopExamTimer(); this.document.body?.classList?.add('placement-active'); this.view.show('view-placement'); this.document.getElementById('question-filters').hidden = true; this.document.querySelector('.mode-nav').hidden = true; }
     skipPlacement() {
       const first = this.storyIds()[0] || this.ids[0];
@@ -305,7 +320,7 @@
       this.document?.body?.classList?.remove('exam-active');
       const achievement = { level:this.rpg.level > previousProgress.level ? this.rpg.level : null, role:this.rpg.role !== previousProgress.role ? this.rpg.role : null };
       this.view.examResult(review, this.questions, this.model.state.examHistory, achievement);
-      this.view.show('view-result'); return true;
+      this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); return true;
     }
     questionAccounts(question) { return question.type === 'journal' ? [...question.answer.debit, ...question.answer.credit].map(item => item.account) : []; }
     populateAccountFilter() {
@@ -343,7 +358,7 @@
       this.document.getElementById('resume-progress').textContent = `Chapter進捗 ${chapterIds.filter(id => this.model.state.answeredIds.includes(id)).length} / ${chapterIds.length}｜役職 ${this.rpg.role}`;
       this.document.getElementById('resume-button').dataset.questionId = nextId;
     }
-    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.resetCalculator(); this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; }
+    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.resetCalculator(); this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; this.document.getElementById?.('q-text')?.focus(); }
     saveDraft(message) { if (!this.currentId) return false; const saved = this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) { const status = this.document.getElementById('save-status'); status.textContent = saved ? '入力内容を保存しました。' : '端末へ保存できません。内容はこのセッション中のみ保持されます。'; status.classList.toggle('storage-error', !saved); } return saved; }
     submit() {
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
@@ -378,12 +393,15 @@
         level: this.rpg.level > previousProgress.level ? this.rpg.level : null,
         role: this.rpg.role !== previousProgress.role ? this.rpg.role : null
       };
-      this.view.updateRpg(this.rpg); this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result');
+      this.view.updateRpg(this.rpg); this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
       if (this.rpg.state.companyHP === 0) this.showGameOver();
     }
     next() { if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story'); if (this.model.state.mode === 'review') { const due = this.modeIds(); if (due.length) return this.start(due.find(id => id !== this.currentId) || due[0]); this.renderModes(); return this.showMode('review'); } if (this.model.state.mode !== 'exam') { const concept = this.questions[this.currentId]?.category; const adaptive = concept && this.model.recommendedIds(concept).find(id => id !== this.currentId && !this.model.state.answeredIds.includes(id) && !this.model.state.reviewSchedule[id]); if (adaptive) return this.start(adaptive); } const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
-    formatAmount(input) {
+    formatAmount(input, event = {}) {
+      if (event.isComposing) return true;
       const before = normalizeNumber(input.value);
+      if (!validAmountText(before)) { input.setCustomValidity?.('金額は数字、または正しい3桁区切りで入力してください。'); return false; }
+      input.setCustomValidity?.('');
       const selectionStart = input.selectionStart ?? before.length;
       const selectionEnd = input.selectionEnd ?? selectionStart;
       const selectionDirection = input.selectionDirection || 'none';
@@ -401,15 +419,11 @@
       };
       input.value = formatted;
       input.setSelectionRange?.(caretAt(digitOffset(selectionStart)), caretAt(digitOffset(selectionEnd)), selectionDirection);
+      return true;
     }
     selectCalculatorTarget(input) {
       this.document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
       this.calculatorTarget = input;
-      const calculatorPanel = this.document.querySelector('.calculator');
-      if (calculatorPanel) {
-        calculatorPanel.open = true;
-        calculatorPanel.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
-      }
       const currentAmount = normalizeNumber(input.value).replace(/,/g, '');
       this.clearCalculator();
       if (/^\d+(?:\.\d+)?$/.test(currentAmount)) this.expression = String(Number(currentAmount));

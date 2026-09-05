@@ -8,9 +8,9 @@ const expectedGates=Array.from({length:15},(_,index)=>`GATE-${String(index+1).pa
 
 function validateEvidence({authorities,final,rows,gateReports,integrity,currentSourceHashes}){
   const generations=authorities.map(item=>(item.document||item).generation);
-  assert(generations.length===1||generations.length===2,'supported successor authority count must be one or two');
-  assert.deepStrictEqual(generations,generations.length===1?[2]:[2,3],'supported successor sequence must be exactly [2] or [2,3]');
-  if(generations.length===2)assert.deepStrictEqual((authorities[1].document||authorities[1]).predecessor,lifecycle.identity(authorities[0].document||authorities[0]),'Generation 3 predecessor must be exact Generation 2 identity');
+  const legalSequences=[[2],[2,3],[2,3,4]];
+  assert(legalSequences.some(sequence=>stable(sequence)===stable(generations)),'supported successor sequence must be exactly [2], [2,3], or [2,3,4]');
+  for(let index=1;index<authorities.length;index+=1)assert.deepStrictEqual((authorities[index].document||authorities[index]).predecessor,lifecycle.identity(authorities[index-1].document||authorities[index-1]),`Generation ${generations[index]} predecessor must be exact Generation ${generations[index-1]} identity`);
   assert.strictEqual(rows.length,300);
   assert.strictEqual(new Set(rows.map(row=>row.questionId)).size,300);
   assert(rows.every(row=>row.questionType&&row.requiredCheckIds.length>3&&row.requiredCheckIds.every(id=>row.executedCheckIds.includes(id))));
@@ -28,7 +28,7 @@ function validateEvidence({authorities,final,rows,gateReports,integrity,currentS
   if(generations.length===1){
     assert.strictEqual(final.status,'FAIL','Generation 2 historical evidence must remain RED');
   }else{
-    assert.strictEqual(final.status,'PASS','Generation 3 evidence must be GREEN');
+    assert.strictEqual(final.status,'PASS','current successor evidence must be GREEN');
     assert.strictEqual(final.dependencies.unsatisfied,0);
     assert.deepStrictEqual(final.findings,[]);
     assert(rows.every(row=>row.requiredCheckIds.every(id=>row.passedCheckIds.includes(id))&&row.status==='PASS'),'all 300 direct reviews must pass every required check');

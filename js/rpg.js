@@ -8,6 +8,18 @@
     { level:1, name:'経理見習い', skills:[] }
   ];
   class RPGModel {
+    static validateBackupState(value) {
+      const plain = item => item && typeof item === 'object' && !Array.isArray(item);
+      const nonnegativeInteger = item => Number.isSafeInteger(item) && item >= 0;
+      if (!plain(value) || !nonnegativeInteger(value.xp) || !Array.isArray(value.rewardedIds) || value.rewardedIds.some(id => typeof id !== 'string') || !plain(value.mastery)) return false;
+      if (Object.values(value.mastery).some(item => !plain(item) || !Number.isFinite(item.earned) || item.earned < 0 || !Number.isFinite(item.possible) || item.possible < item.earned)) return false;
+      if (!Number.isFinite(value.companyHP) || value.companyHP < 0 || value.companyHP > 100 || !Number.isFinite(value.totalTransactionAmount) || value.totalTransactionAmount < 0) return false;
+      if (value.confidenceOutcomes !== undefined) {
+        if (!plain(value.confidenceOutcomes)) return false;
+        for (const key of ['sureCorrect', 'sureWrong', 'unsureCorrect', 'unsureWrong']) if (!nonnegativeInteger(value.confidenceOutcomes[key])) return false;
+      }
+      return true;
+    }
     constructor(storage, key = 'boki-rpg-character-v1') {
       this.storage = storage; this.key = key;
       this.state = { xp: 0, rewardedIds: [], mastery: {}, companyHP: 100, totalTransactionAmount: 0, confidenceOutcomes: { sureCorrect:0, sureWrong:0, unsureCorrect:0, unsureWrong:0 } };

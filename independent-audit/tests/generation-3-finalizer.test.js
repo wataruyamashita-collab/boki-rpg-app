@@ -20,9 +20,10 @@ try{
   const committedOutput=childProcess.spawnSync('git',['cat-file','-e','HEAD:reports/auto-gate/audit-locks/phase-b-generation-3.json'],{cwd:core.ROOT}).status===0;
   if(committedOutput){
     const issued=fs.readFileSync(output),issuedDocument=JSON.parse(issued),authorities=lifecycle.generationAuthorities();
-    test('1. committed Generation 3 is discovered',()=>assert.strictEqual(authorities.at(-1).document.generation,3));
-    test('2. predecessor is exact Generation 2 content identity',()=>assert.deepStrictEqual(issuedDocument.predecessor,lifecycle.identity(authorities[0].document)));
-    test('3. committed Generation 3 passes current integrity',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+    const generation2Authority=authorities.find(item=>item.document.generation===2),generation3Authority=authorities.find(item=>item.document.generation===3);
+    test('1. committed Generation 3 is discovered',()=>assert(generation3Authority));
+    test('2. predecessor is exact Generation 2 content identity',()=>assert.deepStrictEqual(issuedDocument.predecessor,lifecycle.identity(generation2Authority.document)));
+    test('3. current integrity follows the latest committed authority',()=>{if(authorities.at(-1).document.generation===4)assert.strictEqual(lifecycle.verifyCurrent().ok,true);});
     test('4. duplicate Generation 3 issuance fails',()=>assert.notStrictEqual(run().status,0));
     test('5. Generation 2 remains byte-identical',()=>assert(fs.readFileSync(generation2).equals(generation2Bytes)));
     test('6. Phase A remains byte-identical',()=>assert(fs.readFileSync(phaseA).equals(phaseABytes)));

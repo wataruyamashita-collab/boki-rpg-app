@@ -1,6 +1,44 @@
 (function (root) {
   'use strict';
   class ProgressModel {
+    static validateBackupState(value, questions = {}) {
+      const plain = item => item && typeof item === 'object' && !Array.isArray(item);
+      const finite = number => typeof number === 'number' && Number.isFinite(number);
+      const dangerousKeys = new Set(['__proto__', 'prototype', 'constructor']);
+      const safeValue = item => item === null || ['string', 'boolean'].includes(typeof item) || finite(item) ||
+        (Array.isArray(item) && item.every(safeValue)) || (plain(item) && Object.keys(item).every(key => !dangerousKeys.has(key) && safeValue(item[key])));
+      const knownId = id => typeof id === 'string' && Boolean(questions[id]);
+      const idList = item => Array.isArray(item) && item.every(knownId);
+      if (!plain(value) || !safeValue(value)) return false;
+      const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
+      if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
+      if (value.mode !== undefined && !['story', 'training', 'review', 'exam', 'desk'].includes(value.mode)) return false;
+      if (value.currentQuestionId !== undefined && value.currentQuestionId !== null && !knownId(value.currentQuestionId)) return false;
+      for (const key of ['answeredIds', 'correctIds', 'incorrectIds']) if (value[key] !== undefined && !idList(value[key])) return false;
+      if (value.completed !== undefined && typeof value.completed !== 'boolean') return false;
+      if (value.examAttempt !== undefined && !(Number.isSafeInteger(value.examAttempt) && value.examAttempt >= 0)) return false;
+      if (value.mistakeCounts !== undefined && (!plain(value.mistakeCounts) || Object.entries(value.mistakeCounts).some(([id, count]) => !knownId(id) || !Number.isSafeInteger(count) || count <= 0))) return false;
+      const validDraft = (id, draft) => {
+        if (!knownId(id) || !plain(draft)) return false;
+        if (questions[id].type === 'journal') {
+          const side = rows => Array.isArray(rows) && rows.every(row => plain(row) && typeof row.account === 'string' && (row.amount === null || finite(row.amount)));
+          return side(draft.debit) && side(draft.credit);
+        }
+        return plain(draft.cells) && Object.values(draft.cells).every(cell => typeof cell === 'string' || finite(cell) || cell === null);
+      };
+      if (value.drafts !== undefined && (!plain(value.drafts) || Object.entries(value.drafts).some(([id, draft]) => !validDraft(id, draft)))) return false;
+      if (value.reviewSchedule !== undefined && (!plain(value.reviewSchedule) || Object.entries(value.reviewSchedule).some(([id, item]) => !knownId(id) || !plain(item) || !Number.isSafeInteger(item.stage) || item.stage < 0 || item.stage > 4 || !finite(item.dueAt) || item.dueAt < 0))) return false;
+      if (value.reviewAssignments !== undefined && (!plain(value.reviewAssignments) || Object.entries(value.reviewAssignments).some(([id, item]) => !knownId(id) || !plain(item) || item.sourceQuestionId !== id || !knownId(item.reviewQuestionId) || typeof item.conceptId !== 'string' || !Number.isSafeInteger(item.stage) || item.stage < 0 || item.stage > 4 || !finite(item.dueAt) || !finite(item.assignedAt) || !['assigned', 'completed'].includes(item.status)))) return false;
+      if (value.attempts !== undefined && (!Array.isArray(value.attempts) || value.attempts.some(item => !plain(item) || !knownId(item.questionId || item.id) || typeof item.correct !== 'boolean' || !finite(item.responseMs) || item.responseMs < 0))) return false;
+      if (value.placement !== undefined && value.placement !== null && (!plain(value.placement) || value.placement.completed !== true || !knownId(value.placement.startQuestionId) || !finite(value.placement.foundation) || !finite(value.placement.closing))) return false;
+      if (value.examSession !== undefined && value.examSession !== null) {
+        const probe = Object.create(ProgressModel.prototype); probe.questions = questions;
+        if (!probe.validExamSession(value.examSession)) return false;
+      }
+      if (value.examHistory !== undefined && (!Array.isArray(value.examHistory) || value.examHistory.some(item => !plain(item) || !finite(item.finishedAt) || !finite(item.points)))) return false;
+      if (value.lastExamReview !== undefined && value.lastExamReview !== null && !plain(value.lastExamReview)) return false;
+      return true;
+    }
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
       this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
