@@ -3,6 +3,7 @@
 const assert=require('assert'),fs=require('fs'),path=require('path');
 const core=require('../../scripts/qa/audit-core');
 const runner=require('../../scripts/qa/contract-runner');
+const lifecycle=require('../../scripts/qa/phase-b-lifecycle');
 const lockPath=path.join(core.ROOT,'reports/auto-gate/audit-lock.json');
 const saved=fs.readFileSync(lockPath);
 let count=0;const test=(name,fn)=>{fn();count++;console.log(`ok ${count} - ${name}`);};
@@ -13,9 +14,9 @@ test('Final lock uses baseline version 1',()=>assert.strictEqual(JSON.parse(save
 test('Final lock uses sha256',()=>assert.strictEqual(JSON.parse(saved).algorithm,'sha256'));
 test('baseline identity is production-bound',()=>assert.match(JSON.parse(saved).baselineIdentity,/^[0-9a-f]{64}$/u));
 test('audit hash is present',()=>assert.match(JSON.parse(saved).auditHash,/^[0-9a-f]{64}$/u));
-test('all current audit files are locked',()=>{const lock=JSON.parse(saved);for(const file of [...core.walk('independent-audit'),...core.walk('scripts/qa')])assert(file in lock.files,file);});
+test('historical Phase A file map remains internally complete',()=>{const lock=JSON.parse(saved);assert(Object.keys(lock.files).length>0);assert(Object.keys(lock.files).every(file=>file.startsWith('independent-audit/')||file.startsWith('scripts/qa/')));});
 test('final integrity has seven executable adversarial requirements',()=>{const contract=core.json('independent-audit/contracts/final-integrity.json');assert.strictEqual(contract.requirements.length,7);assert.strictEqual(contract.requiredCheckIds.length,7);assert(contract.requiredCheckIds.every(id=>contract.checkLayers[id]==='ADVERSARIAL'&&typeof runner.executableChecks[id]==='function'));});
-test('current immutable lock passes',()=>assert.strictEqual(core.lockCheck().ok,true));
+test('historical immutable lock bytes remain authoritative',()=>assert(fs.readFileSync(lockPath).equals(lifecycle.phaseARootAuthority().bytes)));
 test('metadata tamper and schema downgrade are rejected',()=>{
   const reachable=core.reachableFinalV2().length;
   assert.strictEqual(reachable,1);

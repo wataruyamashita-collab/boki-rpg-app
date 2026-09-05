@@ -18,6 +18,7 @@ const canonicalize=value=>{
 };
 const canonicalDocumentHash=document=>digest(canonicalize(document));
 const runGit=args=>childProcess.execFileSync('git',args,{cwd:core.ROOT,encoding:'utf8'}).trim();
+const generationFilesInWorktree=()=>fs.existsSync(path.join(core.ROOT,GENERATION_DIRECTORY))?core.walk(GENERATION_DIRECTORY).filter(file=>file.endsWith('.json')):[];
 
 function phaseARootAuthority(){
   const commits=runGit(gitArguments.rootHistory).split(/\s+/u).filter(Boolean);
@@ -37,8 +38,11 @@ function generationAuthorities(){
   let output='';
   try{output=runGit(gitArguments.generationFiles);}catch(_){return [];}
   return output.split(/\n/u).filter(Boolean).map(file=>{
-    const raw=childProcess.execFileSync('git',['show',`HEAD:${file}`],{cwd:core.ROOT,encoding:'utf8'});
-    return {file,document:JSON.parse(raw)};
+    const commits=runGit(['rev-list','--reverse','HEAD','--',file]).split(/\s+/u).filter(Boolean);
+    const authorityCommit=commits.find(commit=>{try{childProcess.execFileSync('git',['cat-file','-e',`${commit}:${file}`],{cwd:core.ROOT});return true;}catch(_){return false;}});
+    if(!authorityCommit)throw new Error(`generation authority missing for ${file}`);
+    const bytes=childProcess.execFileSync('git',['show',`${authorityCommit}:${file}`],{cwd:core.ROOT});
+    return {file,commit:authorityCommit,bytes,document:JSON.parse(bytes.toString('utf8'))};
   });
 }
 
@@ -118,4 +122,25 @@ function verifyCandidate(candidate,{generations=generationAuthorities()}={}){
   return {ok:errors.length===0,errors:[...new Set(errors)]};
 }
 
-module.exports={ROOT_LOCK,canonicalDocumentHash,createCandidate,generationAuthorities,gitArguments,identity,phaseARootAuthority,verifyCandidate};
+function verifyCurrent(){
+  const errors=[],root=validateRoot(errors);
+  if(!root)return {ok:false,errors};
+  let generations=[];
+  try{generations=generationAuthorities();}catch(error){errors.push(error.message);}
+  const committedFiles=new Set(generations.map(item=>item.file));
+  for(const file of generationFilesInWorktree())if(!committedFiles.has(file))errors.push(`uncommitted generation authority: ${file}`);
+  for(const item of generations){
+    const currentPath=path.join(core.ROOT,item.file);
+    if(!fs.existsSync(currentPath)||!fs.readFileSync(currentPath).equals(item.bytes))errors.push(`${item.file} raw bytes differ from immutable historical authority`);
+  }
+  const tip=resolveTip(root.document,generations,errors),hashes=currentHashes();
+  const expectedProduction=tip.productionHashes||root.document.productionHashes||{};
+  const expectedFiles=tip.files||{};
+  for(const file of new Set([...Object.keys(expectedFiles),...Object.keys(hashes.files)]))if(expectedFiles[file]!==hashes.files[file])errors.push(file);
+  if(JSON.stringify(expectedFiles)!==JSON.stringify(hashes.files)||tip.auditHash!==hashes.auditHash)errors.push('current audit hashes differ from current authority');
+  for(const file of new Set([...Object.keys(expectedProduction),...Object.keys(hashes.productionHashes)]))if(expectedProduction[file]!==hashes.productionHashes[file])errors.push(file);
+  if(JSON.stringify(expectedProduction)!==JSON.stringify(hashes.productionHashes)||tip.baselineIdentity!==hashes.baselineIdentity)errors.push('current Production hashes differ from current authority');
+  return {ok:errors.length===0,errors:[...new Set(errors)],hash:tip.auditHash,baselineIdentity:tip.baselineIdentity,generation:tip.generation??tip.baselineVersion,phase:tip.phase,reachableFinalV2:1};
+}
+
+module.exports={ROOT_LOCK,canonicalDocumentHash,createCandidate,generationAuthorities,gitArguments,identity,phaseARootAuthority,verifyCandidate,verifyCurrent};

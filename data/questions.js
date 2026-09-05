@@ -15566,7 +15566,7 @@ Object.values(QuestionData).forEach((item, index) => {
   item.jobUnlock = isStoryEligible && chapterPosition === storyCount - 1 ? `第${item.chapter}章 Boss Case 完了` : '経理実務の調査権限';
   item.bossCase = isStoryEligible && chapterPosition === storyCount - 1;
   item.workResult = `${item.category}の処理結果`;
-  item.story = `${ReaderFacingBeats[phase](arc, item, instruction, item.bossCase)}${isStoryEligible ? `〔調査 ${chapterPosition + 1}/${storyCount}〕` : ''}`;
+  item.story = `${ReaderFacingBeats[phase](arc, item, instruction, item.bossCase)}${isStoryEligible ? `〔調査 ${chapterPosition + 1}/${storyCount}〕` : `〔評価資料 ${item.caseNumber}〕`}`;
   // The prose stored with each question is reviewed teaching content.  Never
   // replace it with the generic fallback merely because runtime metadata was
   // added above; the fallback exists only for genuinely unauthored questions.
