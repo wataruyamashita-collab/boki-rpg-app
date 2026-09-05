@@ -16,12 +16,14 @@
     "audit:explanation-metrics": "node scripts/report-explanation-metrics.js",
     "audit:auto-gate": "node scripts/qa/validate-auto-gate.js",
     "qa:integrity": "node scripts/qa/verify-audit-integrity.js",
+    "qa:integrity:candidate": "node scripts/qa/verify-audit-candidate.js",
     "qa:gate": "node scripts/qa/run-independent-gate.js",
     "qa:all": "node scripts/qa/run-all-gates.js",
     "qa:story": "node scripts/qa/run-story-e2e.js",
     "qa:mutations": "node scripts/qa/run-required-mutations.js",
     "qa:evidence": "node scripts/qa/generate-evidence.js",
-    "qa:test": "node independent-audit/tests/foundation.test.js && node independent-audit/tests/audit-lock-v2.test.js"
+    "qa:test": "node independent-audit/tests/foundation.test.js && node independent-audit/tests/audit-lock-v2.test.js && node independent-audit/tests/phase-b-lifecycle.test.js && node independent-audit/tests/generation-immutability.test.js",
+    "qa:finalize:phase-b": "node scripts/qa/finalize-phase-b-generation.js"
   },
   "engines": {
     "node": ">=18"

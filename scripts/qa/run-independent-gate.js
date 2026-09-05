@@ -7,7 +7,7 @@ const out=path.join(core.ROOT,'reports/auto-gate');
 fs.mkdirSync(out,{recursive:true});
 const write=(name,value)=>fs.writeFileSync(path.join(out,name),JSON.stringify(value,null,2)+'\n');
 const startedAt=new Date().toISOString();
-const before=core.lockCheck();
+const before=core.currentIntegrityCheck();
 if(!before.ok){
   write('final.json',{status:'AUDIT_LOCK_BROKEN',errors:before.errors,startedAt,finishedAt:new Date().toISOString()});
   console.error('AUDIT_LOCK_BROKEN',before.errors);
@@ -32,7 +32,7 @@ const coverage=contracts.summarizeQuestions(questionRecords,production.questions
 write('gate-14-mutations.json',{status:survived.length?'FAIL':'PASS',required:mutationResults.length,killed:mutationResults.length-survived.length,survived:survived.length,causalDeltaConfirmed:`${mutationResults.filter(x=>x.causalDeltaConfirmed).length}/${mutationResults.length}`,results:mutationResults});
 write('gate-14-answer-corruption.json',{status:answerCorruptionSurvived.length?'FAIL':'PASS',required:answerCorruptionResults.length,killed:answerCorruptionResults.length-answerCorruptionSurvived.length,survived:answerCorruptionSurvived.length,results:answerCorruptionResults});
 
-const after=core.lockCheck();
+const after=core.currentIntegrityCheck();
 const frameworkFindings=Object.values(evaluated.reports).flatMap(report=>report.findings.filter(f=>['GATE_UNIMPLEMENTED','REQUIRED_CHECK_NOT_EXECUTED','REQUIRED_LAYER_NOT_EXECUTED','CHECK_COUNT_ZERO'].includes(f.code)));
 const requirementFindings=Object.values(evaluated.reports).flatMap(report=>report.findings.filter(f=>f.code==='REQUIREMENT_WITHOUT_EXECUTABLE_CHECK'));
 const dependencyEvidence=Object.values(evaluated.reports).flatMap(report=>report.dependencyEvidence);

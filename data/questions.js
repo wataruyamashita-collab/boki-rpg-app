@@ -15499,6 +15499,21 @@ const tableExplanation = item => {
   }[item.type];
   return `【使用する資料】この問題では「${sources}」を使います。\n【計算と転記】${typeGuide}。資料の値を順に「前残・元データ → 増加または調整 → 減少または振替 → 最終値」と追うと、${answers}です。\n【検算】回答欄ごとに資料へ戻り、使用した科目・日付・金額と「${answers}」が対応していることを確認します。`;
 };
+const ExamPoolDefinition = Object.freeze([
+  ...Array.from({length:20},(_,i)=>`J${String(128+i).padStart(3,'0')}`),
+  ...Array.from({length:18},(_,i)=>`L${String(33+i).padStart(3,'0')}`),
+  ...Array.from({length:8},(_,i)=>`T${String(33+i).padStart(3,'0')}`),
+  ...Array.from({length:6},(_,i)=>`E${String(15+i).padStart(3,'0')}`),
+  ...Array.from({length:8},(_,i)=>`D${String(13+i).padStart(3,'0')}`),
+  'F001','F002','F003','F008','F009','F010',
+  'C001','C002','C003','C006','C007','C008','C009','C010'
+]);
+const ExamPoolIds = new Set(ExamPoolDefinition);
+const StoryChapterIds = Object.values(QuestionData).reduce((chapters, item, index) => {
+  const chapter = Math.floor(index / 25) + 1;
+  if (item.learningRole !== 'review' && !ExamPoolIds.has(item.id)) (chapters[chapter] ||= []).push(item.id);
+  return chapters;
+}, {});
 Object.values(QuestionData).forEach((item, index) => {
   // Keep every month playable: 300 cases are divided into twelve equal
   // 25-case chapters instead of allowing the large trial-balance sets to
@@ -15506,8 +15521,12 @@ Object.values(QuestionData).forEach((item, index) => {
   item.chapter = Math.floor(index / 25) + 1;
   const arc = ChapterDrama[item.chapter] || ChapterDrama[12];
   const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
-  const chapterPosition = index % 25;
-  item.caseNumber = chapterPosition + 1;
+  const authoredChapterPosition = index % 25;
+  const storyChapterIds = StoryChapterIds[item.chapter] || [];
+  const chapterPosition = storyChapterIds.indexOf(item.id);
+  const storyCount = storyChapterIds.length;
+  const isStoryEligible = chapterPosition >= 0;
+  item.caseNumber = isStoryEligible ? chapterPosition + 1 : authoredChapterPosition + 1;
   // Normalise legacy schemas centrally. A numeric input is not necessarily yen:
   // its user-facing label determines whether it is a quantity, life, rate or folio.
   if (item.table?.inputCells) {
@@ -15524,14 +15543,14 @@ Object.values(QuestionData).forEach((item, index) => {
       item.table.inputTypes[key] = typeof value === 'number' ? 'amount' : 'text';
     }
   }
-  const phase = Math.min(4, Math.floor(chapterPosition / 5));
+  const phase = Math.min(4, Math.floor((isStoryEligible ? chapterPosition : authoredChapterPosition) / 5));
   const instruction = WorkInstructions[item.type] || WorkInstructions.comprehensive;
   const beats = [
     `水野先輩が資料を一枚だけ抜き出した。「まず事実を固定しよう」`,
     `照合を進めるほど、最初の説明ではつじつまが合わなくなる。${arc.stakes}。`,
     `別々に見えた記録が、同じ残高へつながり始めた。鍵は「${item.category}」だ。`,
     `締切が迫る。ここでの判断が、章末報告の数字を直接動かす。`,
-    chapterPosition === 24 ? `最後の資料がそろった。水野先輩は黙って報告書を差し出した。` : `残る資料はあと${25 - chapterPosition}件。矛盾の中心が見えてきた。`
+    isStoryEligible && chapterPosition === storyCount - 1 ? `最後の資料がそろった。水野先輩は黙って報告書を差し出した。` : isStoryEligible ? `残る資料はあと${storyCount - chapterPosition - 1}件。矛盾の中心が見えてきた。` : `評価用の資料を確認する。`
   ];
   const npc = phase === 0 ? '水野先輩「結論より先に、証憑が示す事実を読んで。」' : phase === 4 ? '水野先輩「ここからは、あなたの数字で決着をつけて。」' : '';
   const surprise = `${arc.theme}の手掛かりは、${item.category}の記録にある`;
@@ -15541,13 +15560,13 @@ Object.values(QuestionData).forEach((item, index) => {
   item.accountingSurprise = surprise;
   item.missionId = `chapter-${item.chapter}`;
   item.mission = `${arc.goal}：証憑から${item.category}の真相を示す`;
-  item.nextHook = chapterPosition === 24 && item.chapter < 12
+  item.nextHook = isStoryEligible && chapterPosition === storyCount - 1 && item.chapter < 12
     ? `報告は通った。だが次の机には「${nextArc.theme}」の資料が置かれていた。`
-    : chapterPosition === 24 ? '一年分の数字が、ついに一つの報告書になった。' : '次は、確定した金額と次の資料を照合します。';
-  item.jobUnlock = chapterPosition === 24 ? `第${item.chapter}章 Boss Case 完了` : '経理実務の調査権限';
-  item.bossCase = chapterPosition === 24;
+    : isStoryEligible && chapterPosition === storyCount - 1 ? '一年分の数字が、ついに一つの報告書になった。' : '次は、確定した金額と次の資料を照合します。';
+  item.jobUnlock = isStoryEligible && chapterPosition === storyCount - 1 ? `第${item.chapter}章 Boss Case 完了` : '経理実務の調査権限';
+  item.bossCase = isStoryEligible && chapterPosition === storyCount - 1;
   item.workResult = `${item.category}の処理結果`;
-  item.story = `${ReaderFacingBeats[phase](arc, item, instruction, chapterPosition === 24)}〔調査 ${chapterPosition + 1}/25〕`;
+  item.story = `${ReaderFacingBeats[phase](arc, item, instruction, item.bossCase)}${isStoryEligible ? `〔調査 ${chapterPosition + 1}/${storyCount}〕` : `〔評価資料 ${item.caseNumber}〕`}`;
   // The prose stored with each question is reviewed teaching content.  Never
   // replace it with the generic fallback merely because runtime metadata was
   // added above; the fallback exists only for genuinely unauthored questions.
@@ -15579,15 +15598,7 @@ Object.values(QuestionData).forEach((item, index) => {
 if (typeof window !== 'undefined') {
   // The exam pool is an explicit assessment contract. It is intentionally independent
   // of object insertion order and is consumed by both Controller and the audits.
-  window.ExamPoolDefinition = Object.freeze([
-    ...Array.from({length:20},(_,i)=>`J${String(128+i).padStart(3,'0')}`),
-    ...Array.from({length:18},(_,i)=>`L${String(33+i).padStart(3,'0')}`),
-    ...Array.from({length:8},(_,i)=>`T${String(33+i).padStart(3,'0')}`),
-    ...Array.from({length:6},(_,i)=>`E${String(15+i).padStart(3,'0')}`),
-    ...Array.from({length:8},(_,i)=>`D${String(13+i).padStart(3,'0')}`),
-    'F001','F002','F003','F008','F009','F010',
-    'C001','C002','C003','C006','C007','C008','C009','C010'
-  ]);
+  window.ExamPoolDefinition = ExamPoolDefinition;
   window.QuestionData = QuestionData;
   window.validateQuestionData = validateQuestionData;
   window.validateSemanticQuestionData = validateSemanticQuestionData;

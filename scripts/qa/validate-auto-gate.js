@@ -18,5 +18,5 @@ assert.deepStrictEqual(final.mutations,{required:19,killed:19,survived:0,causalD
 assert.deepStrictEqual(final.answerCorruptionMutations,{required:9,killed:9,survived:0});
 assert.strictEqual(final.story.ROUTING_INTEGRATION,'TESTED');
 assert.strictEqual(final.story.BROWSER_E2E,'UNVERIFIED');
-assert.strictEqual(core.lockCheck().ok,true);
+assert.strictEqual(core.currentIntegrityCheck().ok,true);
 console.log('auto-gate state validator: ok (fail-closed evidence valid; known production defects remain RED)');

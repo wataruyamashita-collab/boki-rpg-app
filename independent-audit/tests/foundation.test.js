@@ -9,7 +9,7 @@ const mutations=c.mutations();
 assert.strictEqual(mutations.length,19);
 assert.strictEqual(mutations.filter(x=>x.status==='SURVIVED').length,0);
 assert(mutations.every(x=>x.causalDeltaConfirmed===true),'every required mutation must have a causal finding delta');
-assert.strictEqual(c.lockCheck().ok,true);
+assert.strictEqual(c.currentIntegrityCheck().ok,true);
 for(const contract of Object.values(runner.loadContracts())){const requirementIds=contract.requirements.map(x=>x.requirementId),checkIds=contract.requirements.map(x=>x.requiredCheckId);assert.strictEqual(new Set(requirementIds).size,requirementIds.length,`${contract.id} requirement IDs must be unique`);assert.strictEqual(new Set(checkIds).size,checkIds.length,`${contract.id} requirements must map one-to-one to checks`);assert.deepStrictEqual(new Set(checkIds),new Set(contract.requiredCheckIds));assert(checkIds.every(id=>typeof runner.executableChecks[id]==='function'),`${contract.id} requirements must all be executable`);}
 
 const baseContract={requirements:[{requirementId:'R1',requiredCheckId:'SEMANTIC_VALUE_UNITS'},{requirementId:'R2',requiredCheckId:'USER_FACING_EXPLANATION_RELATIONS'}],requiredCheckIds:['SEMANTIC_VALUE_UNITS','USER_FACING_EXPLANATION_RELATIONS'],requiredLayers:['ACCOUNTING_SEMANTIC','LEARNING'],notApplicableLayers:['STRUCTURAL','ADVERSARIAL'],dependencies:[],passPolicy:'all-required-checks-layers-and-dependencies-pass',checkLayers:{SEMANTIC_VALUE_UNITS:'ACCOUNTING_SEMANTIC',USER_FACING_EXPLANATION_RELATIONS:'LEARNING'}};
@@ -43,9 +43,9 @@ for(const count of [50,20])assert.strictEqual(c.assessStoryMetrics(25,Array.from
 assert.strictEqual(c.assessStoryMetrics(3,['Q1','Q2','Q3','Q4'],['Q1','Q2','Q4']).positionGap,1);
 
 const auditedFile=path.join(c.ROOT,'independent-audit/contracts/semantic.json'),lockCreator=path.join(c.ROOT,'scripts/qa/create-audit-lock.js');
-for(const target of [auditedFile,lockCreator]){const original=fs.readFileSync(target);try{fs.appendFileSync(target,' ');assert.strictEqual(c.lockCheck().ok,false);assert(c.lockCheck().errors.some(error=>error===path.relative(c.ROOT,target)),'one-byte audit tamper must identify the changed file');}finally{fs.writeFileSync(target,original);}}
+for(const target of [auditedFile,lockCreator]){const original=fs.readFileSync(target);try{fs.appendFileSync(target,' ');assert.strictEqual(c.currentIntegrityCheck().ok,false);assert(c.currentIntegrityCheck().errors.some(error=>error===path.relative(c.ROOT,target)),'one-byte audit tamper must identify the changed file');}finally{fs.writeFileSync(target,original);}}
 const relock=childProcess.spawnSync(process.execPath,[lockCreator],{cwd:c.ROOT,encoding:'utf8'});
 assert.notStrictEqual(relock.status,0,'an existing lock must never be regenerated');
 assert.match(relock.stderr,/AUDIT_LOCK_CREATE_REFUSED/);
-assert.strictEqual(c.lockCheck().ok,true,'a rejected re-lock must not alter the existing lock');
+assert.strictEqual(c.currentIntegrityCheck().ok,true,'a rejected re-lock must not alter the existing lock');
 console.log('independent foundation tests: ok');
