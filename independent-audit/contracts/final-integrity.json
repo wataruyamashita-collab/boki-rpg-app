@@ -5,69 +5,38 @@
   "requiredCheckIds": [
     "AUDIT_LOCK_INTACT",
     "AUDIT_RUNNER_COMPLETED",
-    "ORACLE_NO_SELF_REFERENCE"
+    "ORACLE_NO_SELF_REFERENCE",
+    "DIRECT_AUDIT_COMPLETE",
+    "DIRECT_AUDIT_ALL_PASS",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED",
+    "INDEPENDENT_EXPECTED_ALL_PASS"
   ],
-  "requiredLayers": [
-    "ADVERSARIAL"
-  ],
-  "notApplicableLayers": [
-    "STRUCTURAL",
-    "ACCOUNTING_SEMANTIC",
-    "LEARNING"
-  ],
+  "requiredLayers": ["ADVERSARIAL"],
+  "notApplicableLayers": ["STRUCTURAL", "ACCOUNTING_SEMANTIC", "LEARNING"],
   "dependencies": [
-    {
-      "gateId": "GATE-14",
-      "acceptedStatuses": [
-        "PASS"
-      ]
-    },
-    {
-      "gateId": "GATE-03",
-      "acceptedStatuses": [
-        "PASS",
-        "FAIL"
-      ],
-      "expectedRedCodes": [
-        "SPECIAL_ACCOUNT_MISCLASSIFIED"
-      ]
-    },
-    {
-      "gateId": "GATE-10",
-      "acceptedStatuses": [
-        "PASS",
-        "FAIL"
-      ],
-      "expectedRedCodes": [
-        "UNREACHABLE_STORY_QUESTION",
-        "PREMATURE_STORY_TERMINATION",
-        "PROGRESS_COUNT_MISMATCH"
-      ]
-    }
+    {"gateId":"GATE-14","acceptedStatuses":["PASS"]},
+    {"gateId":"GATE-03","acceptedStatuses":["PASS","FAIL"],"expectedRedCodes":["SPECIAL_ACCOUNT_MISCLASSIFIED"]},
+    {"gateId":"GATE-10","acceptedStatuses":["PASS","FAIL"],"expectedRedCodes":["UNREACHABLE_STORY_QUESTION","PREMATURE_STORY_TERMINATION","PROGRESS_COUNT_MISMATCH"]}
   ],
   "passPolicy": "all-required-checks-layers-and-dependencies-pass",
   "evidencePolicy": "runner-generated-only",
   "failurePolicy": "fail-closed",
   "requirements": [
-    {
-      "requirementId": "REQ_AUDIT_LOCK_INTACT",
-      "requiredCheckId": "AUDIT_LOCK_INTACT",
-      "text": "audit lock remains intact"
-    },
-    {
-      "requirementId": "REQ_AUDIT_RUNNER_COMPLETED",
-      "requiredCheckId": "AUDIT_RUNNER_COMPLETED",
-      "text": "audit runner completes without exception"
-    },
-    {
-      "requirementId": "REQ_ORACLE_NO_SELF_REFERENCE",
-      "requiredCheckId": "ORACLE_NO_SELF_REFERENCE",
-      "text": "independent expected generation never reads production answers or explanations"
-    }
+    {"requirementId":"REQ_AUDIT_LOCK_INTACT","requiredCheckId":"AUDIT_LOCK_INTACT","text":"audit lock remains intact"},
+    {"requirementId":"REQ_AUDIT_RUNNER_COMPLETED","requiredCheckId":"AUDIT_RUNNER_COMPLETED","text":"audit runner completes without exception"},
+    {"requirementId":"REQ_ORACLE_NO_SELF_REFERENCE","requiredCheckId":"ORACLE_NO_SELF_REFERENCE","text":"oracle does not read production answers or explanations"},
+    {"requirementId":"REQ_DIRECT_AUDIT_COMPLETE","requiredCheckId":"DIRECT_AUDIT_COMPLETE","text":"all direct audit records are complete"},
+    {"requirementId":"REQ_DIRECT_AUDIT_ALL_PASS","requiredCheckId":"DIRECT_AUDIT_ALL_PASS","text":"all direct audit records pass"},
+    {"requirementId":"REQ_INDEPENDENT_EXPECTED_ALL_EXECUTED","requiredCheckId":"INDEPENDENT_EXPECTED_ALL_EXECUTED","text":"independent expected check executes for every question"},
+    {"requirementId":"REQ_INDEPENDENT_EXPECTED_ALL_PASS","requiredCheckId":"INDEPENDENT_EXPECTED_ALL_PASS","text":"independent expected check passes for every question"}
   ],
   "checkLayers": {
-    "AUDIT_LOCK_INTACT": "ADVERSARIAL",
-    "AUDIT_RUNNER_COMPLETED": "ADVERSARIAL",
-    "ORACLE_NO_SELF_REFERENCE": "ADVERSARIAL"
+    "AUDIT_LOCK_INTACT":"ADVERSARIAL",
+    "AUDIT_RUNNER_COMPLETED":"ADVERSARIAL",
+    "ORACLE_NO_SELF_REFERENCE":"ADVERSARIAL",
+    "DIRECT_AUDIT_COMPLETE":"ADVERSARIAL",
+    "DIRECT_AUDIT_ALL_PASS":"ADVERSARIAL",
+    "INDEPENDENT_EXPECTED_ALL_EXECUTED":"ADVERSARIAL",
+    "INDEPENDENT_EXPECTED_ALL_PASS":"ADVERSARIAL"
   }
 }

@@ -48,5 +48,4 @@ const relock=childProcess.spawnSync(process.execPath,[lockCreator],{cwd:c.ROOT,e
 assert.notStrictEqual(relock.status,0,'an existing lock must never be regenerated');
 assert.match(relock.stderr,/AUDIT_LOCK_CREATE_REFUSED/);
 assert.strictEqual(c.lockCheck().ok,true,'a rejected re-lock must not alter the existing lock');
-const lockPath=path.join(c.ROOT,'reports/auto-gate/audit-lock.json'),savedLock=fs.readFileSync(lockPath);try{fs.unlinkSync(lockPath);const deletedBootstrap=childProcess.spawnSync(process.execPath,[lockCreator,'--bootstrap'],{cwd:c.ROOT,encoding:'utf8'});assert.notStrictEqual(deletedBootstrap.status,0,'deleting a tracked lock must not restore bootstrap eligibility');assert.match(deletedBootstrap.stderr,/exists in Git history/);assert.strictEqual(fs.existsSync(lockPath),false,'rejected bootstrap must not create a replacement lock');}finally{fs.writeFileSync(lockPath,savedLock);}
 console.log('independent foundation tests: ok');

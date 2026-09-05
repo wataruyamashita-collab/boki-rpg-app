@@ -21,7 +21,7 @@
     "qa:story": "node scripts/qa/run-story-e2e.js",
     "qa:mutations": "node scripts/qa/run-required-mutations.js",
     "qa:evidence": "node scripts/qa/generate-evidence.js",
-    "qa:test": "node independent-audit/tests/foundation.test.js"
+    "qa:test": "node independent-audit/tests/foundation.test.js && node independent-audit/tests/audit-lock-v2.test.js"
   },
   "engines": {
     "node": ">=18"
