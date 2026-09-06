@@ -1,8 +1,8 @@
 {
-  "release": "20260906-78",
-  "previousRelease": "20260905-77",
+  "release": "20260906-79",
+  "previousRelease": "20260906-78",
   "assets": {
-    "css/style.css": "f8c25430dc11bee238c3819a94bacb24dbd25b631f77e3416d30be9defc99380",
+    "css/style.css": "9c3e6deb1732efa817b5b874bdfce00b9c9a91499fcceeaff0a90d40308d16ac",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
     "data/questions.js": "a549e6cd40a81839a04aae4e5e4ee46cdf5bbae12be3ce30416aafc7554c230e",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
@@ -11,7 +11,7 @@
     "js/rpg.js": "fcc89d34b4a6773ecf33c3004997482a12e5444062e2e41b2b1f31d7c4742410",
     "js/engine.js": "a0f94eaa142ce19c07da284d3777a23a2c7af38c7b1eb6591e982ab48de50f78",
     "js/feedback.js": "8c04b1847aca22a44d48b5f0dc636cec47519b4d6c6f454333e3113cd8710b5f",
-    "js/view.js": "68631d9d6a5d40c776ff1736d8758f4c311fe06a5ec94a595004d932224f9c45",
+    "js/view.js": "60558033db77b428c5274ffbea5ce45866bc03891f58278892faf74c46d047f7",
     "js/controller.js": "e313c99aec17686ba58ec1672624ea994c4bfd390e48264c0fcd2a14f0c4710f",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b"
   }
