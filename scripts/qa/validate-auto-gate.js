@@ -8,8 +8,8 @@ const expectedGates=Array.from({length:15},(_,index)=>`GATE-${String(index+1).pa
 
 function validateEvidence({authorities,final,rows,gateReports,integrity,currentSourceHashes}){
   const generations=authorities.map(item=>(item.document||item).generation);
-  const legalSequences=[[2],[2,3],[2,3,4],[2,3,4,5],[2,3,4,5,6],[2,3,4,5,6,7]];
-  assert(legalSequences.some(sequence=>stable(sequence)===stable(generations)),'supported successor sequence must be exactly [2], [2,3], [2,3,4], [2,3,4,5], or [2,3,4,5,6], or [2,3,4,5,6,7]');
+  const legalSequences=[[2],[2,3],[2,3,4],[2,3,4,5],[2,3,4,5,6],[2,3,4,5,6,7],[2,3,4,5,6,7,8]];
+  assert(legalSequences.some(sequence=>stable(sequence)===stable(generations)),'supported successor sequence must be exactly [2], [2,3], [2,3,4], [2,3,4,5], [2,3,4,5,6], [2,3,4,5,6,7], or [2,3,4,5,6,7,8]');
   for(let index=1;index<authorities.length;index+=1)assert.deepStrictEqual((authorities[index].document||authorities[index]).predecessor,lifecycle.identity(authorities[index-1].document||authorities[index-1]),`Generation ${generations[index]} predecessor must be exact Generation ${generations[index-1]} identity`);
   assert.strictEqual(rows.length,300);
   assert.strictEqual(new Set(rows.map(row=>row.questionId)).size,300);
