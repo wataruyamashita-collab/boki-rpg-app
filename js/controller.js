@@ -43,6 +43,7 @@
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
       this.filters = { query: '', account: '', mistakes: 'all' };
       this.submitting = false;
+      this.learningFlow = null;
       // 問題データは起動中不変なので、300問の監査は初期化時に一度だけ行う。
       this.semanticAudit = root.validateSemanticQuestionData(this.questions);
     }
@@ -78,7 +79,7 @@
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-      const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
+      const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'hint-1': () => this.showHint(1), 'hint-2': () => this.showHint(2), 'coaching-retry': () => this.beginCoachingRetry(), 'reveal-answer': () => this.revealAnswer(), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target, event); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
@@ -358,15 +359,25 @@
       this.document.getElementById('resume-progress').textContent = `Chapter進捗 ${chapterIds.filter(id => this.model.state.answeredIds.includes(id)).length} / ${chapterIds.length}｜役職 ${this.rpg.role}`;
       this.document.getElementById('resume-button').dataset.questionId = nextId;
     }
-    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.resetCalculator(); this.submitting = false; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; this.document.getElementById?.('q-text')?.focus(); }
-    saveDraft(message) { if (!this.currentId) return false; const saved = this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) { const status = this.document.getElementById('save-status'); status.textContent = saved ? '入力内容を保存しました。' : '端末へ保存できません。内容はこのセッション中のみ保持されます。'; status.classList.toggle('storage-error', !saved); } return saved; }
+    start(id) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; this.resetCalculator(); this.submitting = false; this.learningFlow = this.model.state.mode === 'exam' ? null : { questionId:id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false }; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.resetLearningSurfaces?.(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.setAnswerMode?.('initial'); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; this.document.getElementById?.('q-text')?.focus(); }
+    saveDraft(message) {
+      if (!this.currentId) return false;
+      if (this.model.state.mode !== 'exam' && ['W','R'].includes(this.learningFlow?.phase)) {
+        this.learningFlow.coachingAnswer = this.view.readAnswer(this.questions[this.currentId]);
+        if (message) { const status = this.document.getElementById('save-status'); status.textContent = '練習中の入力はこの画面だけで保持され、端末には保存されません。'; status.classList.remove('storage-error'); }
+        return false;
+      }
+      const saved = this.model.setDraft(this.currentId, this.view.readAnswer(this.questions[this.currentId])); if (message) { const status = this.document.getElementById('save-status'); status.textContent = saved ? '入力内容を保存しました。' : '端末へ保存できません。内容はこのセッション中のみ保持されます。'; status.classList.toggle('storage-error', !saved); } return saved;
+    }
     submit() {
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
       if (this.model.state.mode === 'exam' && this.isExamExpired()) { const session = this.model.state.examSession; if (session) session.status = 'EXPIRED'; this.finishExam(true); return; }
+      if (this.model.state.mode !== 'exam' && !['I','R'].includes(this.learningFlow?.phase)) return false;
       this.submitting = true;
       const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question);
       if (this.model.state.mode === 'exam' && this.isExamExpired()) { this.model.state.examSession.status = 'EXPIRED'; this.finishExam(true); return; }
       const score = root.GradingEngine.grade(question, answer);
+      if (this.model.state.mode !== 'exam' && this.learningFlow?.phase === 'R') return this.finishCoachingRetry(question, answer, score);
       const answeredAt = Date.now(); const responseMs = Math.max(0, answeredAt - (Number.isFinite(this.questionStartedAt) ? this.questionStartedAt : answeredAt));
       const reviewStage = this.reviewSourceId ? this.model.state.reviewSchedule[this.reviewSourceId]?.stage ?? null : null;
       const wrongType = score.correct ? '' : (score.details?.find(detail => !detail.correct)?.cellId || (question.type === 'journal' ? 'journal-entry' : 'table-cell'));
@@ -393,10 +404,76 @@
         level: this.rpg.level > previousProgress.level ? this.rpg.level : null,
         role: this.rpg.role !== previousProgress.role ? this.rpg.role : null
       };
-      this.view.updateRpg(this.rpg); this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
-      if (this.rpg.state.companyHP === 0) this.showGameOver();
+      this.learningFlow ||= { questionId:question.id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false };
+      this.learningFlow.authoritativeAnswer = answer; this.learningFlow.authoritativeScore = score; this.learningFlow.confidence = confidence; this.learningFlow.achievement = achievement;
+      this.view.updateRpg(this.rpg);
+      if (!score.correct) {
+        this.learningFlow.phase = 'W'; this.learningFlow.gameOverPending = this.rpg.state.companyHP === 0;
+        this.view.setAnswerMode?.('protected'); this.view.protectedResult(confidence, false); this.view.show('view-question');
+        return;
+      }
+      this.learningFlow.phase = 'C'; this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
     }
-    next() { if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story'); if (this.model.state.mode === 'review') { const due = this.modeIds(); if (due.length) return this.start(due.find(id => id !== this.currentId) || due[0]); this.renderModes(); return this.showMode('review'); } if (this.model.state.mode !== 'exam') { const concept = this.questions[this.currentId]?.category; const adaptive = concept && this.model.recommendedIds(concept).find(id => id !== this.currentId && !this.model.state.answeredIds.includes(id) && !this.model.state.reviewSchedule[id]); if (adaptive) return this.start(adaptive); } const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1]; if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); } }
+    static journalRetryDraft(answer, expected) {
+      const matchSide = side => { const remaining = [...(expected?.[side] || [])]; return (answer?.[side] || []).map(item => { const amount = Number(item?.amount); const index = remaining.findIndex(row => row.account === item?.account && Number.isFinite(amount) && row.amount === amount); if (index < 0) return { account:'', amount:'' }; remaining.splice(index, 1); return { account:item.account, amount:item.amount }; }); };
+      return { debit:matchSide('debit'), credit:matchSide('credit') };
+    }
+    static tableRetryDraft(answer, details) {
+      const detailMap = new Map((details || []).map(detail => [detail.cellId, detail])); const cells = {};
+      Object.entries(answer?.cells || {}).forEach(([cellId, value]) => { cells[cellId] = detailMap.get(cellId)?.correct === true ? value : ''; });
+      return { cells };
+    }
+    hintContext(question, stage) {
+      return { id:question.id, type:question.type, format:question.format, question:question.question, scene:question.scene, story:question.story, table:question.table ? { columns:question.table.columns, rows:question.table.rows, inputMetadata:question.table.inputMetadata } : null, stage };
+    }
+    static hintText(context, stage) {
+      const prompt = [context.question, context.story, context.scene].find(value => typeof value === 'string' && value.trim())?.trim() || '表示されている問題文';
+      const evidence = prompt.length > 80 ? `${prompt.slice(0, 77)}…` : prompt;
+      if (stage === 1) return `「${evidence}」に注目し、何が増えたか・減ったか、またはどの期間や区分かを整理しましょう。`;
+      const procedure = context.type === 'journal' ? '各項目の増減を決め、資産・費用の増加は借方、負債・純資産・収益の増加は貸方という原則で左右を確認' : '表示された行・列・期間を特定し、問題中の数値だけで式を立てて入力欄の単位を確認';
+      return `「${evidence}」を根拠に、①条件と数値を拾う ②${procedure}する ③自分の入力を問題文へ戻って検算しましょう。`;
+    }
+    showHint(stage) {
+      const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase) || stage < 1 || stage > 2 || stage > flow.hintStage + 1) return false;
+      const context = this.hintContext(this.questions[this.currentId], stage); flow.hintStage = stage;
+      const text = Controller.hintText(context, stage);
+      this.view.renderHint(stage, text, context); return true;
+    }
+    beginCoachingRetry() {
+      const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase)) return false;
+      const question = this.questions[this.currentId];
+      const draft = flow.coachingAnswer || (question.type === 'journal' ? Controller.journalRetryDraft(flow.authoritativeAnswer, question.answer) : Controller.tableRetryDraft(flow.authoritativeAnswer, flow.authoritativeScore?.details));
+      flow.phase = 'R'; flow.coachingAnswer = draft; this.submitting = false; this.view.applyRetryDraft(question, draft); this.view.setAnswerMode?.('coaching'); this.view.protectedResult(flow.confidence, true); this.view.show('view-question');
+      const first = [...this.document.querySelectorAll('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)')].find(input => !input.value) || this.document.querySelector('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)'); first?.focus?.(); return true;
+    }
+    finishCoachingRetry(question, answer, score) {
+      const flow = this.learningFlow; flow.retryCount += 1; this.submitting = false;
+      if (!score.correct) {
+        flow.coachingAnswer = question.type === 'journal' ? Controller.journalRetryDraft(answer, question.answer) : Controller.tableRetryDraft(answer, score.details);
+        flow.phase = 'W'; this.view.applyRetryDraft(question, flow.coachingAnswer); this.view.setAnswerMode?.('protected'); this.view.protectedResult(flow.confidence, true); return false;
+      }
+      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement); const status = this.document.getElementById('result-status');
+      const note = this.document.createElement('span'); note.className = 'coaching-success'; note.textContent = '練習で修正できました。最初の回答は誤答として記録されています。'; status?.append(note); this.view.show('view-result'); status?.focus?.(); this.dispatchPendingGameOver(); return true;
+    }
+    revealAnswer() {
+      const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase)) return false;
+      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(this.questions[this.currentId], flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); this.dispatchPendingGameOver(); return true;
+    }
+    dispatchPendingGameOver() { const flow = this.learningFlow; if (flow?.gameOverPending && !flow.gameOverDispatched) { flow.gameOverDispatched = true; this.showGameOver(); } }
+    next() {
+      const lifecycleManaged = Object.prototype.hasOwnProperty.call(this, 'learningFlow');
+      if (this.model.state.mode !== 'exam' && lifecycleManaged) {
+        const flow = this.learningFlow;
+        if (!flow || !['C','D'].includes(flow.phase) || flow.nextConsumed) return false;
+        flow.nextConsumed = true;
+      }
+      if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story');
+      if (this.model.state.mode === 'review') { const due = this.modeIds(); if (due.length) return this.start(due.find(id => id !== this.currentId) || due[0]); this.renderModes(); return this.showMode('review'); }
+      if (this.model.state.mode !== 'exam') { const concept = this.questions[this.currentId]?.category; const adaptive = concept && this.model.recommendedIds(concept).find(id => id !== this.currentId && !this.model.state.answeredIds.includes(id) && !this.model.state.reviewSchedule[id]); if (adaptive) return this.start(adaptive); }
+      const ids = this.modeIds(); const next = ids[ids.indexOf(this.currentId) + 1];
+      if (next) this.start(next); else { this.renderModes(); this.showMode(this.model.state.mode); }
+      return true;
+    }
     formatAmount(input, event = {}) {
       if (event.isComposing) return true;
       const before = normalizeNumber(input.value);

@@ -271,6 +271,7 @@
     result(question, score, userAnswer, confidence = 'unsure', achievement = {}) {
       const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
       if (standardActions) standardActions.hidden = false; if (examActions) examActions.hidden = true;
+      const topActions = this.byId('top-result-actions'); if (topActions) topActions.hidden = false;
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
       const calibration = confidence === 'sure'
         ? (score.correct ? '自信と理解が一致しました。この判断軸を次の仕事でも再現しましょう。' : '強い思い込みを発見できました。今ここで直せば、次の正解がより確かな力になります。')
@@ -283,6 +284,54 @@
       this.renderAnswerComparison(question, score, userAnswer);
       this.renderCorrectJournal(question);
       this.renderExplanation(question, score, userAnswer);
+    }
+    protectedResult(confidence = 'unsure', retry = false) {
+      const panel = this.byId('protected-learning'); const status = this.byId('protected-status');
+      panel.hidden = false;
+      status.replaceChildren();
+      const headline = this.document.createElement('strong'); headline.className = 'result-headline'; headline.textContent = retry ? '練習の回答はまだ要確認です' : '最初の回答はもう一歩です';
+      const guidance = this.document.createElement('span'); guidance.className = 'confidence-feedback'; guidance.textContent = confidence === 'sure' ? '自信ありとして記録しました。根拠を順に確認しましょう。' : 'まだ自信なしとして記録しました。ヒントを使って確認できます。';
+      status.append(headline, guidance); status.focus?.();
+    }
+    applyRetryDraft(question, draft = {}) {
+      if (question.type === 'journal') {
+        ['debit','credit'].forEach(side => {
+          const accounts = this.document.querySelectorAll(`.${side}-account`); const amounts = this.document.querySelectorAll(`.${side}-amount`);
+          accounts.forEach((account, index) => { const row = draft[side]?.[index]; account.value = row?.account || ''; if (amounts[index]) amounts[index].value = row?.amount ?? ''; this.updateSelectTitle(account); });
+        });
+        return;
+      }
+      this.document.querySelectorAll('.table-input').forEach(input => { input.value = draft.cells?.[input.dataset.cellId] ?? ''; if (input.tagName === 'SELECT') this.updateSelectTitle(input); });
+    }
+    setAnswerMode(mode) {
+      const form = this.byId('question-form'); const locked = mode === 'protected';
+      form?.querySelectorAll('input, select, textarea').forEach(field => {
+        if (locked && !field.disabled) { field.dataset.flowLocked = 'true'; field.disabled = true; }
+        else if (!locked && field.dataset.flowLocked === 'true') { field.disabled = false; delete field.dataset.flowLocked; }
+      });
+      const actions = form?.querySelector('.question-actions'); if (actions) actions.hidden = locked;
+      const submit = form?.querySelector('button[type="submit"]'); if (submit) submit.textContent = mode === 'coaching' ? '練習回答を確認する' : '回答を確定する';
+      form?.setAttribute('data-answer-mode', mode);
+    }
+    resetLearningSurfaces() {
+      const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = true;
+      const protectedStatus = this.byId('protected-status'); protectedStatus?.replaceChildren();
+      const hintPanel = this.byId('hint-panel'); if (hintPanel) hintPanel.hidden = true;
+      const heading = this.byId('hint-heading'); if (heading) heading.textContent = '';
+      const text = this.byId('hint-text'); if (text) text.textContent = '';
+      const first = this.document.querySelector('[data-action="hint-1"]'); if (first) { first.hidden = false; first.disabled = false; }
+      const second = this.document.querySelector('[data-action="hint-2"]'); if (second) { second.hidden = true; second.disabled = false; }
+      ['result-status','answer-comparison','correct-journal','explanation'].forEach(id => this.byId(id)?.replaceChildren());
+      const top = this.byId('top-result-actions'); if (top) top.hidden = true;
+    }
+    hideProtectedResult() { const panel = this.byId('protected-learning'); if (panel) panel.hidden = true; }
+    renderHint(stage, text) {
+      const panel = this.byId('hint-panel'); const heading = this.byId('hint-heading');
+      panel.hidden = false; heading.textContent = `ヒント ${stage}`; this.byId('hint-text').textContent = text;
+      const second = this.document.querySelector('[data-action="hint-2"]'); if (second) second.hidden = stage < 1;
+      const first = this.document.querySelector('[data-action="hint-1"]'); if (first) first.hidden = stage >= 1;
+      if (second && stage >= 2) second.hidden = true;
+      heading.focus?.();
     }
     renderAchievement(anchor, achievement = {}) {
       let banner = this.byId('achievement-banner');

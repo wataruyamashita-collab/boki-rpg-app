@@ -1,0 +1,49 @@
+'use strict';
+const childProcess=require('child_process');
+const crypto=require('crypto');
+const fs=require('fs');
+const path=require('path');
+const core=require('./audit-core');
+const lifecycle=require('./phase-b-lifecycle');
+
+const output=path.join(core.ROOT,'reports/auto-gate/audit-locks/phase-b-generation-5.json');
+const authorityPaths=[lifecycle.ROOT_LOCK,...[2,3,4].map(generation=>`reports/auto-gate/audit-locks/phase-b-generation-${generation}.json`)].map(file=>path.join(core.ROOT,file));
+const expectedAuthoritySha256=['daae6937fcada78f974115cf1c0ded4682a5d7df7fd8f74fd7bf874ad0623544','cae19421e81cc63a2bc4254ea5dce6bf629f3cc6fc97d067f4ef14dae3010813','ac622dc4b1c8db35c83f2573f1f0f77af828c2f20256887b454a2d0b85c1f2cd','c46aa8c3ee2b9a895e4afe818ea902995b8b9045f8bd4444254d6f5261066fe7'];
+const approvedHead='1f54f4a564034bdd4a11edd64df29d53520fd209';
+const approvedTree='0b97c43ee620da2d3e91556484be0d382eb9117f';
+const approvedBlobs={'index.html':'79f0c46b78d20dfbf78f031d1128adf4f87b4231','css/style.css':'80f97e94b09f402b90eb9e01f8ab4ed3c2bc9919','js/controller.js':'2f1b19f8769abeee7302422b394e679f30453be1','js/view.js':'d24aaf95fbd4e2c42382cbdbf62c16c8685f1e2b','tests/app.test.js':'3ffa31a6297b04f7c4c40625d9a40199f319e3fc'};
+const requiredDirty=new Set(['index.html','service-worker.js','pwa-release-manifest.json','package.json','scripts/qa/finalize-phase-b-generation-5.js','scripts/qa/validate-auto-gate.js','independent-audit/tests/generation-5-finalizer.test.js','independent-audit/tests/generation-immutability.test.js']);
+const NEW_RELEASE='20260906-78',PREVIOUS_RELEASE='20260905-77';
+const fail=message=>{console.error(`PHASE_B_GENERATION_5_FINALIZATION_REFUSED: ${message}`);process.exitCode=1;return false;};
+const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const git=args=>childProcess.execFileSync('git',args,{cwd:core.ROOT,encoding:'utf8'}).trim();
+const changedFiles=()=>git(['status','--porcelain','--untracked-files=all']).split(/\n/u).filter(Boolean).map(line=>line.slice(2).trim());
+function validateRelease(){
+  const manifest=JSON.parse(fs.readFileSync(path.join(core.ROOT,'pwa-release-manifest.json'),'utf8'));
+  if(manifest.release!==NEW_RELEASE||manifest.previousRelease!==PREVIOUS_RELEASE)throw new Error('release manifest version mismatch');
+  const worker=fs.readFileSync(path.join(core.ROOT,'service-worker.js'),'utf8'),index=fs.readFileSync(path.join(core.ROOT,'index.html'),'utf8');
+  if(!worker.includes(`const RELEASE = '${NEW_RELEASE}';`))throw new Error('service worker release mismatch');
+  if(index.includes(`?v=${PREVIOUS_RELEASE}`)||(index.match(new RegExp(`\\?v=${NEW_RELEASE}`,'g'))||[]).length!==12)throw new Error('index release tokens mismatch');
+  const workerAssets=[...worker.matchAll(/'\.\/([^']+)'/g)].map(match=>match[1]).filter(file=>Object.hasOwn(manifest.assets,file));
+  if(JSON.stringify([...new Set(workerAssets)].sort())!==JSON.stringify(Object.keys(manifest.assets).sort()))throw new Error('release asset key set mismatch');
+  for(const [file,sha] of Object.entries(manifest.assets))if(core.sha(file)!==sha)throw new Error(`release asset hash mismatch: ${file}`);
+}
+function finalize(){
+  if(fs.existsSync(output)||lifecycle.generationAuthorities().some(item=>item.document.generation===5))return fail('Generation 5 already exists');
+  if(authorityPaths.some((file,index)=>!fs.existsSync(file)||digest(fs.readFileSync(file))!==expectedAuthoritySha256[index]))return fail('historical authority raw bytes changed');
+  if(git(['rev-parse','HEAD'])!==approvedHead||git(['rev-parse','HEAD^{tree}'])!==approvedTree)return fail('approved D2 closure identity mismatch');
+  for(const [file,blob] of Object.entries(approvedBlobs))if(git(['rev-parse',`HEAD:${file}`])!==blob)return fail(`approved D2 blob changed: ${file}`);
+  const dirty=changedFiles();if(dirty.length!==requiredDirty.size||dirty.some(file=>!requiredDirty.has(file))||[...requiredDirty].some(file=>!dirty.includes(file)))return fail(`dirty scope mismatch: ${dirty.join(', ')}`);
+  const production=git(['diff','--name-only','HEAD','--','data','js','css','types','index.html','manifest.webmanifest','pwa-release-manifest.json','service-worker.js']).split(/\n/u).filter(Boolean).sort();
+  if(JSON.stringify(production)!==JSON.stringify(['index.html','pwa-release-manifest.json','service-worker.js']))return fail(`unexpected Production drift: ${production.join(', ')}`);
+  const expectedIndex=childProcess.execFileSync('git',['show','HEAD:index.html'],{cwd:core.ROOT,encoding:'utf8'}).replaceAll(`?v=${PREVIOUS_RELEASE}`,`?v=${NEW_RELEASE}`);
+  if(fs.readFileSync(path.join(core.ROOT,'index.html'),'utf8')!==expectedIndex)return fail('index contains changes beyond release tokens');
+  try{validateRelease();}catch(error){return fail(error.message);}
+  const authorities=lifecycle.generationAuthorities();if(JSON.stringify(authorities.map(item=>item.document.generation))!==JSON.stringify([2,3,4]))return fail('authority sequence must be exactly [2,3,4]');
+  let candidate;try{candidate=lifecycle.createCandidate();}catch(error){return fail(error.message);}
+  if(candidate.generation!==5||JSON.stringify(candidate.predecessor)!==JSON.stringify(lifecycle.identity(authorities[2].document)))return fail('candidate predecessor or generation mismatch');
+  const verification=lifecycle.verifyCandidate(candidate);if(!verification.ok)return fail(verification.errors.join(', '));
+  fs.writeFileSync(output,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});console.log(`FINALIZED ${path.relative(core.ROOT,output)}`);return true;
+}
+if(require.main===module){if(!finalize())process.exit(1);}
+module.exports={NEW_RELEASE,PREVIOUS_RELEASE,approvedBlobs,approvedHead,approvedTree,authorityPaths,expectedAuthoritySha256,finalize,output,validateRelease};
