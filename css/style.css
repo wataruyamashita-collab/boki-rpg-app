@@ -227,7 +227,7 @@ button.secondary-button:hover { color: #fff; }
 .balance-sheet-table .balance-amount { width: 21%; text-align: right; white-space: nowrap; }
 .balance-sheet-table tfoot td { border-top: 3px double #566573; font-weight: 800; background: #f3f8fb; }
 .balance-sheet-table .comparison-actual, .balance-sheet-table .comparison-expected { display: block; }
-.answer-table { width: max(100%, 600px); table-layout: auto; border-collapse: separate; border-spacing: 0; }
+.answer-table { width: 100%; table-layout: auto; border-collapse: separate; border-spacing: 0; }
 .answer-table th, .answer-table td { min-width: 0; padding: 8px; overflow-wrap: anywhere; border-right: 1px solid #bdc3c7; border-bottom: 1px solid #bdc3c7; background: #fff; text-align: right; }
 .answer-table th { position: sticky; top: 0; z-index: 2; background: #eef2f5; text-align: center; }
 .answer-table th:first-child, .answer-table td:first-child { position: sticky; left: 0; z-index: 1; min-width: 110px; text-align: left; background: #f8fafb; box-shadow: 2px 0 3px rgba(0,0,0,.12); }
@@ -247,7 +247,13 @@ button.secondary-button:hover { color: #fff; }
 .eight-column-worksheet .table-input { width: 100%; min-width: 11ch; font-size: 16px; }
 .table-input { min-width: 0; }
 .table-text-input { width: 100%; min-width: 120px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; }
-.answer-table:not(.eight-column-worksheet) [data-column-key="date"] { width: 11ch; min-width: 11ch; max-width: 11ch; }
+.answer-table:not(.eight-column-worksheet) [data-column-key="date"] { box-sizing: border-box; width: calc(4em + 17px); min-width: calc(4em + 17px); max-width: calc(4em + 17px); white-space: nowrap; }
+.answer-table:not(.eight-column-worksheet) [data-column-key="description"] { min-width: 7em; word-break: normal; overflow-wrap: break-word; }
+.answer-table:not(.eight-column-worksheet) [data-column-key="quantity"] { box-sizing: border-box; width: calc(2em + 17px); min-width: calc(2em + 17px); white-space: nowrap; }
+.answer-table:not(.eight-column-worksheet) [data-column-key="unitPrice"] { min-width: calc(7ch + 26px); white-space: nowrap; }
+.answer-table:not(.eight-column-worksheet) [data-column-key="amount"] { min-width: calc(11ch + 26px); white-space: nowrap; }
+.answer-table:not(.eight-column-worksheet) [data-column-key="unitPrice"] .table-input,
+.answer-table:not(.eight-column-worksheet) [data-column-key="amount"] .table-input { width: 100%; min-width: 0; font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet) [data-column-key="balance"] { width: 16ch; min-width: 16ch; max-width: 16ch; }
 .answer-table:not(.eight-column-worksheet) td[data-column-key="date"] .table-input,
 .answer-table:not(.eight-column-worksheet) td[data-column-key="balance"] .table-input { box-sizing: border-box; width: 100%; min-width: 0; }
@@ -350,8 +356,6 @@ select, .amount-input {
 
 @media (max-width: 480px) {
   .answer-table:not(.eight-column-worksheet) { width: 100%; min-width: 0; }
-  .answer-table:not(.eight-column-worksheet) [data-column-key="date"] { width: 10ch; min-width: 10ch; max-width: 10ch; }
-  .answer-table:not(.eight-column-worksheet) [data-column-key="description"] { min-width: 7em; }
   .answer-table:not(.eight-column-worksheet) [data-column-key="balance"] { width: 13ch; min-width: 13ch; max-width: 13ch; }
   .settings-button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .player-status { grid-template-columns: repeat(3, 1fr); }

@@ -134,7 +134,8 @@ assert(html.includes('data-action="calc-insert"'), '電卓の表示金額を入�
 assert(controllerSource.includes("'calc-insert': () => this.insertCalculatorResult(false)"), '電卓の入力ボタンを転記処理へ接続する');
 assert(controllerSource.includes("else if (key === '＝') this.calculateEquals()"), 'イコールキーで計算結果を表示する');
 assert(controllerSource.includes("addEventListener('focusin'"), '選択した金額欄を電卓の転記先にする');
-assert(!/selectCalculatorTarget[\s\S]*?calculatorPanel\.open = true/.test(controllerSource), '金額欄のフォーカスだけでは計算機を開かない');
+assert(controllerSource.includes("addEventListener('pointerdown'") && controllerSource.includes(".amount-input[readonly]:not(:disabled)"), 'calculator-first端末のtapでフォーカス前に転記先を選ぶ');
+assert(/input\.readOnly && calculatorPanel[\s\S]*?calculatorPanel\.open = true/.test(controllerSource), 'calculator-first金額欄だけは選択時に計算機を開く');
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
 browserSandbox.window.WrongAnswerFeedback = Feedback;
@@ -171,7 +172,7 @@ assert.strictEqual(calculatorTarget.value, '1,500', '電卓の計算結果を選
 assert.strictEqual(calculatorElements['calculator-display'].value, '1,500', '電卓の計算結果にも3桁区切りのカンマを表示する');
 assert.strictEqual(calculatorController.saved, true, '電卓から転記した金額を下書きへ保存する');
 assert.strictEqual(browserSandbox.window.AppController.prototype.formatCalculatorExpression('1234567＋8900.5'), '1,234,567＋8,900.5', '計算途中の各数値にもカンマを表示する');
-const editableTarget = { value: '12,500', getAttribute() { return '貸方 1行目の金額'; }, classList: { toggle() {} } };
+const editableTarget = { value: '12,500', readOnly:false, getAttribute() { return '貸方 1行目の金額'; }, classList: { toggle() {} } };
 const editableElements = { calculator: { open: false, scrollIntoView(options) { this.scrollOptions = options; } }, 'calculator-target': { textContent: '' }, 'calculator-display': { value: '' }, 'calculator-operator': { textContent: '' } };
 const editableCalculator = {
   expression: '999', calculatorTarget: null,
@@ -188,6 +189,9 @@ assert.strictEqual(editableCalculator.calculator.operator, null, '別の入力�
 assert.match(editableElements['calculator-target'].textContent, /現在値を修正できます/, '入力済み金額を修正できることを案内する');
 assert.strictEqual(editableElements.calculator.open, false, '金額欄のフォーカスだけでは閉じた計算機を開かない');
 assert.strictEqual(editableElements.calculator.scrollOptions, undefined, '金額欄のフォーカスだけでは計算機へスクロールしない');
+editableTarget.readOnly = true;
+browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(editableCalculator, editableTarget);
+assert.strictEqual(editableElements.calculator.open, true, 'calculator-first金額欄のtapは既存のアプリ内計算機を開く');
 const formatDirectAmount = value => { const input={value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',validationMessage:'',setCustomValidity(message){this.validationMessage=message;},setSelectionRange(){}}; const valid=browserSandbox.window.AppController.prototype.formatAmount(input); return {input,valid}; };
 const validAmounts = new Map([['',''],['0','0'],['12','12'],['1234','1,234'],['1234567','1,234,567'],['1,234','1,234'],['12,345','12,345'],['123,456','123,456'],['1,234,567','1,234,567'],['１２３４','1,234'],['１，２３４','1,234'],['１２，３４５','12,345']]);
 for (const [raw,expected] of validAmounts) { const {input,valid}=formatDirectAmount(raw); assert.strictEqual(valid,true,`${raw||'空欄'}を有効な金額として受理する`); assert.strictEqual(input.value,expected,`${raw||'空欄'}を正規表示する`); assert.strictEqual(input.validationMessage,'',`${raw||'空欄'}のcustom validityを解除する`); }
@@ -675,7 +679,16 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSecti
 ], '解説見出しを実務MEMO・試験POINTのカード構造へ正規化する');
 assert(viewSource.includes("score.correct ? '正解です！' : 'もう一歩です'"), '採点結果は従来どおり正解またはもう一歩と表示する');
 assert(!viewSource.includes('部分点'), 'ユーザー向けの採点結果に部分点を表示しない');
-assert(viewSource.includes("input.type = 'text'; input.setAttribute('inputmode', 'numeric')") && !viewSource.includes('input.readOnly = true'), '金額欄は直接編集でき数字キーパッドを案内する');
+assert.strictEqual(browserSandbox.window.AppView.prefersCalculatorFirst({ matchMedia:()=>({ matches:true }) }), true, 'coarse touch primary inputはcalculator-firstにする');
+assert.strictEqual(browserSandbox.window.AppView.prefersCalculatorFirst({ matchMedia:()=>({ matches:false }) }), false, 'fine pointerまたはhybrid primary inputはdesktop direct-entryを保つ');
+const policyElement = () => new FakeElement('input');
+const mobileAmountView = new browserSandbox.window.AppView({ createElement:policyElement }); mobileAmountView.calculatorFirstInput = true;
+const mobileAmount = mobileAmountView.makeAmount('table-input', '金額', '58,800');
+assert.deepStrictEqual([mobileAmount.readOnly,mobileAmount.inputmode,mobileAmount.value],[true,'none','58,800'],'calculator-first金額欄は値とfocusabilityを保ちnative software keyboardを抑止する');
+assert.strictEqual(mobileAmount['aria-label'],'金額','readonlyでもscreen reader向け金額ラベルを保つ');
+const desktopAmountView = new browserSandbox.window.AppView({ createElement:policyElement }); desktopAmountView.calculatorFirstInput = false;
+const desktopAmount = desktopAmountView.makeAmount('table-input', '金額', '30,000');
+assert.deepStrictEqual([desktopAmount.readOnly,desktopAmount.inputmode,desktopAmount.value],[false,'numeric','30,000'],'desktopでは直接キーボード入力と既存値を保つ');
 const amountPattern=viewSource.match(/input\.setAttribute\('pattern', '([^']+)'\)/)?.[1];assert(amountPattern,'金額欄にnative patternを設定する');const nativeAmountPattern=new RegExp(`^(?:${amountPattern})$`);for(const raw of validAmounts.keys())assert(raw===''||nativeAmountPattern.test(raw),`${raw||'空欄'}をnative patternで受理する`);for(const raw of invalidAmounts)assert(!nativeAmountPattern.test(raw),`${raw}をnative patternで拒否する`);
 assert(viewSource.includes('必要に応じて計算機も使えます'), '金額欄は直接入力と任意の計算機を案内する');
 assert(viewSource.includes('select.title = select.selectedOptions[0]?.textContent'), '選択中の勘定科目をtitleに反映する');
