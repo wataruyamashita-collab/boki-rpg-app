@@ -195,12 +195,13 @@
         const sideHead = thead.insertRow();
         for (let index = 0; index < 4; index += 1) ['借方', '貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; sideHead.append(th); });
       } else {
-        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); th.scope = 'col'; head.append(th); });
+        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); th.scope = 'col'; th.dataset.columnKey = column; head.append(th); });
       }
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
         const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
           const cell = row.insertCell();
+          if (question.format !== 'eight-column-worksheet') cell.dataset.columnKey = question.table.columns[columnIndex];
           if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');
           if (question.format === 'eight-column-worksheet' && columnIndex > 0) cell.classList.add('worksheet-value-cell');
           if (value === '入力') {
