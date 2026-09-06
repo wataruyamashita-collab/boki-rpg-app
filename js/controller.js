@@ -83,6 +83,7 @@
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target, event); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
+      this.document.addEventListener('pointerdown', event => { if (event.target.matches('.amount-input[readonly]:not(:disabled)')) this.selectCalculatorTarget(event.target); });
       this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
       this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select, .correction-row select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
       this.document.getElementById('filter-query').addEventListener('input', event => { this.filters.query = event.target.value; this.renderModes(); });
@@ -501,6 +502,8 @@
     selectCalculatorTarget(input) {
       this.document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
       this.calculatorTarget = input;
+      const calculatorPanel = this.document.querySelector('.calculator');
+      if (input.readOnly && calculatorPanel) calculatorPanel.open = true;
       const currentAmount = normalizeNumber(input.value).replace(/,/g, '');
       this.clearCalculator();
       if (/^\d+(?:\.\d+)?$/.test(currentAmount)) this.expression = String(Number(currentAmount));

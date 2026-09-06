@@ -18,7 +18,10 @@
     creditAccount: '貸方科目', creditAmount: '貸方金額'
   };
   class AppView {
-    constructor(document) { this.document = document; }
+    constructor(document) { this.document = document; this.calculatorFirstInput = AppView.prefersCalculatorFirst(root); }
+    static prefersCalculatorFirst(environment) {
+      return environment.matchMedia?.('(hover: none) and (pointer: coarse)').matches === true;
+    }
     byId(id) { return this.document.getElementById(id); }
     tableLabel(value) { return TABLE_LABELS[value] || value; }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
@@ -88,10 +91,11 @@
       wrap.append(table); container.append(heading, wrap);
     }
     makeAmount(className, label, value = '') {
-      const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', 'numeric');
+      const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', this.calculatorFirstInput ? 'none' : 'numeric');
       input.setAttribute('autocomplete', 'off'); input.setAttribute('enterkeyhint', 'done');
       input.className = `${className} amount-input`; input.setAttribute('aria-label', label); input.setAttribute('pattern', '(?:[0-9０-９]+|[0-9０-９]{1,3}(?:[,，][0-9０-９]{3})+)');
-      input.setAttribute('title', '数字を直接入力できます。必要に応じて計算機も使えます'); input.maxLength = 24; input.value = value;
+      input.readOnly = this.calculatorFirstInput;
+      input.setAttribute('title', this.calculatorFirstInput ? '金額欄を選び、アプリ内計算機で入力します' : '数字を直接入力できます。必要に応じて計算機も使えます'); input.maxLength = 24; input.value = value;
       return input;
     }
     makeText(className, label, value = '') {
