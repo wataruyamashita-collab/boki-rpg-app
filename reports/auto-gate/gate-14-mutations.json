@@ -473,8 +473,8 @@
     {
       "mutationId": "FONT_SIZE_15PX",
       "targetProductionFile": "css/style.css",
-      "beforeHash": "0904c32cb9d139d9794380e21cab7e8fd4f0c2e0ab43009f5a5c8ff741cfe24e",
-      "afterHash": "141a90f6af71a8dea025fe000f26e339b148634756daa9df996b2ef3790c273f",
+      "beforeHash": "f8c25430dc11bee238c3819a94bacb24dbd25b631f77e3416d30be9defc99380",
+      "afterHash": "54296ae62ed8895476471d9b1c5e2fa08a4454b2dd425d0899f4b652819d2d90",
       "expectedFailureCode": "MOBILE_FONT_TOO_SMALL",
       "actualFailureCode": "MOBILE_FONT_TOO_SMALL",
       "baselineFindings": [],
@@ -541,8 +541,8 @@
     {
       "mutationId": "NEXT_SELF_LOOP",
       "targetProductionFile": "js/controller.js",
-      "beforeHash": "e4f5f18c525a7891879aa6fe205b1b1a4521b358b8339ce1d2ac783d2395cc75",
-      "afterHash": "f0824e12c425c7efb57a3ddf6eddc452efb3be8c19d5a386a2a8e39331f2cad8",
+      "beforeHash": "e313c99aec17686ba58ec1672624ea994c4bfd390e48264c0fcd2a14f0c4710f",
+      "afterHash": "fd9c8deb377e8f1ff126c18a2057e8278f612f9477864a84c7c95ba88898e881",
       "expectedFailureCode": "UNEXPECTED_LOOP",
       "actualFailureCode": "UNEXPECTED_LOOP",
       "baselineFindings": [],
@@ -692,8 +692,8 @@
     {
       "mutationId": "NEXT_NULL_AT_20",
       "targetProductionFile": "js/controller.js",
-      "beforeHash": "e4f5f18c525a7891879aa6fe205b1b1a4521b358b8339ce1d2ac783d2395cc75",
-      "afterHash": "b510450291719370ad3422cbbd7e4d49ab80b324c5c06acdd1cd03cb60589fe0",
+      "beforeHash": "e313c99aec17686ba58ec1672624ea994c4bfd390e48264c0fcd2a14f0c4710f",
+      "afterHash": "aa11f8d9dead778a32af54f744ab398984f39d43d9305561b48e77c636b26af6",
       "expectedFailureCode": "UNREACHABLE_STORY_QUESTION",
       "actualFailureCode": "UNREACHABLE_STORY_QUESTION",
       "baselineFindings": [],

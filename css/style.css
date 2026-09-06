@@ -420,6 +420,11 @@ select, .amount-input {
 
 .result-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .result-actions[hidden] { display: none; }
+.protected-learning { margin-top: 18px; }
+.protected-learning[hidden], .protected-actions [hidden], #top-result-actions[hidden] { display: none; }
+.protected-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.hint-panel { border-left: 4px solid var(--accent, #2563eb); margin: 14px 0; padding: 10px 14px; background: #f5f8ff; }
+#top-result-actions { margin: 12px 0 18px; }
 @media (max-width: 480px) { .result-actions { grid-template-columns: 1fr; } }
 
 button {
