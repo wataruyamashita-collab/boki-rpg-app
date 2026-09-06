@@ -349,6 +349,9 @@ select, .amount-input {
 .amount-input.calculator-selected { border-color: var(--accent-color); outline: 3px solid rgba(52, 152, 219, .2); }
 
 @media (max-width: 480px) {
+  .answer-table:not(.eight-column-worksheet) { width: 100%; min-width: 0; }
+  .answer-table:not(.eight-column-worksheet) [data-column-key="date"] { width: 10ch; min-width: 10ch; max-width: 10ch; }
+  .answer-table:not(.eight-column-worksheet) [data-column-key="balance"] { width: 13ch; min-width: 13ch; max-width: 13ch; }
   .settings-button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .player-status { grid-template-columns: repeat(3, 1fr); }
   .header-controls { width: 100%; align-items: stretch; }
