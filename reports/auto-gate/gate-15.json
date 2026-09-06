@@ -125,11 +125,11 @@
   "findings": [],
   "contract": "final-integrity",
   "sourceHashes": {
-    "css/style.css": "9c3e6deb1732efa817b5b874bdfce00b9c9a91499fcceeaff0a90d40308d16ac",
+    "css/style.css": "d91f0a238f3e2a345ebc7eaad2febf9bc5b24e69e5fb3bd99afd732309315e6c",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
     "data/questions.js": "a549e6cd40a81839a04aae4e5e4ee46cdf5bbae12be3ce30416aafc7554c230e",
-    "index.html": "f72b8c69f2a2cd0817ffaa9cdc45a534208bd01bf61402a178e452a63aec41ae",
+    "index.html": "36398fbaa9d85f1e0b9967c5b8d5cf037fcc87dfd23d16a5360e1dfe66563316",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
     "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
     "js/controller.js": "e313c99aec17686ba58ec1672624ea994c4bfd390e48264c0fcd2a14f0c4710f",
@@ -139,9 +139,9 @@
     "js/rpg.js": "fcc89d34b4a6773ecf33c3004997482a12e5444062e2e41b2b1f31d7c4742410",
     "js/view.js": "60558033db77b428c5274ffbea5ce45866bc03891f58278892faf74c46d047f7",
     "manifest.webmanifest": "fcde227f0593c3fc7fd5e8adc89be13201f9a35f74d9ad6a4212b23d2a75bd72",
-    "pwa-release-manifest.json": "8145d064e76f30cbdda906bac6e9e463b839245a0b4362dfbd1f7d16e8474279",
-    "service-worker.js": "8b176fa953fb4f569610ea3cc19604de24b70e66dbb6a040ec45794a3f081930",
+    "pwa-release-manifest.json": "2823b3d28285f71db87f10057c36ad08ce2d8c2aa76936462f0eee4283c0cb53",
+    "service-worker.js": "2d7cd64a92c3055f4d4e725fba8d658210fb89409b7aed5a488994bc504357f4",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-06T09:02:50.827Z"
+  "measuredAt": "2026-09-06T09:23:32.847Z"
 }

@@ -7,10 +7,21 @@ assert(/\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'journal r
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-row select,\s*\.journal-row \.amount-input\s*\{[^}]*font-size:\s*16px/s.test(css), 'mobile controls remain at least 16px');
 const dateRule = css.match(/\.answer-table:not\(\.eight-column-worksheet\) \[data-column-key="date"\]\s*\{([^}]*)\}/);
 const balanceRule = css.match(/\.answer-table:not\(\.eight-column-worksheet\) \[data-column-key="balance"\]\s*\{([^}]*)\}/);
+const mobileOrdinaryRule = css.match(/@media \(max-width: 480px\)[\s\S]*?\.answer-table:not\(\.eight-column-worksheet\)\s*\{([^}]*)\}/);
+const mobileDateRule = css.match(/@media \(max-width: 480px\)[\s\S]*?\.answer-table:not\(\.eight-column-worksheet\) \[data-column-key="date"\]\s*\{([^}]*)\}/);
+const mobileBalanceRule = css.match(/@media \(max-width: 480px\)[\s\S]*?\.answer-table:not\(\.eight-column-worksheet\) \[data-column-key="balance"\]\s*\{([^}]*)\}/);
 assert(view.includes('th.dataset.columnKey = column'), 'ordinary table headers expose their semantic column key');
 assert(view.includes('cell.dataset.columnKey = question.table.columns[columnIndex]'), 'ordinary table cells expose their semantic column key');
 assert(dateRule && /width:\s*11ch/.test(dateRule[1]) && /min-width:\s*11ch/.test(dateRule[1]), 'date columns have a compact content-oriented width');
 assert(balanceRule && /width:\s*16ch/.test(balanceRule[1]) && /min-width:\s*16ch/.test(balanceRule[1]), 'balance columns have a compact content-oriented width');
+assert(mobileOrdinaryRule && /width:\s*100%/.test(mobileOrdinaryRule[1]) && /min-width:\s*0/.test(mobileOrdinaryRule[1]) && !/600px/.test(mobileOrdinaryRule[1]), 'ordinary mobile tables remove the arbitrary 600px floor');
+assert(mobileDateRule && /width:\s*10ch/.test(mobileDateRule[1]) && /min-width:\s*10ch/.test(mobileDateRule[1]), 'mobile date width safely fits the longest six-character authored date');
+assert(mobileBalanceRule && /width:\s*13ch/.test(mobileBalanceRule[1]) && /min-width:\s*13ch/.test(mobileBalanceRule[1]), 'mobile balance width safely fits seven-character comma-formatted balances');
+const mobileDateWidth = Number(mobileDateRule[1].match(/(?:^|;)\s*width:\s*(\d+)ch/)?.[1]);
+const mobileBalanceWidth = Number(mobileBalanceRule[1].match(/(?:^|;)\s*width:\s*(\d+)ch/)?.[1]);
+assert(mobileDateWidth <= 11 && mobileBalanceWidth < 16 && mobileDateWidth < mobileBalanceWidth, 'mobile semantic widths shrink safely and date remains narrower than balance');
+assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their intentional wide canvas');
+assert(/\.answer-table th:first-child,\s*\.answer-table td:first-child\s*\{[^}]*position:\s*sticky[^}]*left:\s*0[^}]*min-width:\s*110px/s.test(css), 'sticky first-column behavior and generic content minimum remain present');
 assert(/\.table-text-input\s*\{[^}]*min-width:\s*120px/.test(css), 'ordinary free-text inputs retain their established minimum width');
 assert(11 < 16, 'date is intentionally narrower than balance');
 assert(/td\[data-column-key="date"\][\s\S]*td\[data-column-key="balance"\][^{]*\{[^}]*width:\s*100%[^}]*min-width:\s*0/.test(css), 'compact column inputs fill their cells without imposing the generic text minimum');
@@ -20,6 +31,7 @@ assert(view.includes('this.updateSelectTitle(select)'), 'selected account is als
 assert(view.includes("input.setAttribute('inputmode', 'numeric')") && !view.includes('input.readOnly = true'), 'amount inputs remain editable and request a numeric mobile keyboard');
 assert(view.includes("const count = mode === 'exam' ? 3"), 'exam journals use the fixed neutral three-row capacity');
 for (const viewport of [320, 375, 390, 430]) {
+  assert(viewport <= 480 && mobileOrdinaryRule, `${viewport}px receives the compact ordinary-table policy without disabling intrinsic overflow`);
   const minimumRowWidth = accountWidth * 2 + 120 * 2;
   assert(minimumRowWidth > viewport, `${viewport}px deliberately uses horizontal scrolling instead of shrinking four fields`);
 }
