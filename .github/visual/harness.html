@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Production visual audit harness</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body><main class="container">
+  <p id="q-category"></p><section id="q-story"><h2 id="q-scene"></h2><p id="q-context"></p><p id="q-task"></p></section>
+  <div id="q-text" class="question-text"></div><section id="question-materials"></section>
+  <div id="journal-container" class="journal-entry-area"></div><div id="table-container" class="table-question-wrap"></div>
+</main>
+<script src="/data/accounting-domain.js"></script><script src="/data/questions.js"></script><script src="/js/view.js"></script><script src="/js/controller.js"></script>
+<script>
+(() => {
+  const questions = Object.values(window.QuestionData);
+  const hasColumns = (...keys) => question => keys.every(key => question.table?.columns?.includes(key));
+  const selectors = {
+    'fixed-asset': hasColumns('asset','acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'),
+    inventory: hasColumns('date','description','quantity','unitPrice','amount'),
+    ledger: question => question.table && /元帳/u.test(question.category || '') && question.format !== 'eight-column-worksheet',
+    journal: question => question.type === 'journal',
+    worksheet: question => question.format === 'eight-column-worksheet'
+  };
+  window.visualHarness = {
+    cases:Object.keys(selectors),
+    assertDependencies() {
+      const required = {
+        QuestionData:window.QuestionData,
+        AccountingDomain:window.AccountingDomain,
+        AppView:window.AppView,
+        AppController:window.AppController,
+        'AppController.accountChoices':window.AppController?.accountChoices
+      };
+      const missing = Object.entries(required).filter(([name, value]) => name === 'AppController.accountChoices' ? typeof value !== 'function' : !value).map(([name]) => name);
+      if (missing.length) throw new Error(`HARNESS_DEPENDENCY_MISSING: ${missing.join(', ')}`);
+      return Object.keys(required);
+    },
+    render(name) {
+      const question = questions.find(selectors[name]);
+      if (!question) throw new Error(`canonical representative not found: ${name}`);
+      new window.AppView(document).renderQuestion(question, {}, 'training');
+      document.body.dataset.case = name; document.body.dataset.questionId = question.id;
+      return { id:question.id, category:question.category, columns:question.table?.columns || [] };
+    },
+    canonicalColumn(key) {
+      const values = [];
+      let editable = false;
+      for (const question of questions) {
+        if (!question.table?.columns?.includes(key)) continue;
+        let inputIndex = 0;
+        for (const row of question.table.rows || []) Object.values(row).forEach((value, index) => {
+          if (value === '入力') { if (question.table.columns[index] === key) editable = true; inputIndex += 1; }
+          else if (question.table.columns[index] === key) values.push(value);
+        });
+      }
+      return { values, editable };
+    }
+  };
+})();
+</script></body></html>

@@ -1,0 +1,36 @@
+name: browser visual gate
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/visual/**'
+      - '.github/workflows/visual-gate.yml'
+      - 'css/**'
+      - 'data/**'
+      - 'js/**'
+      - 'index.html'
+jobs:
+  generation-10-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Gate evaluator self-tests
+        run: node .github/visual/gate-core.test.js && node .github/visual/harness-source.test.js
+      - name: Install pinned CI-only Playwright
+        run: npm install --no-save --package-lock=false playwright@1.55.0
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Observe Generation 10 in real browsers
+        run: node .github/visual/run-visual.js audit
+      - name: Upload screenshots and DOM metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generation-10-visual-audit
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
