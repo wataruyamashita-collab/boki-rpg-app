@@ -73,11 +73,11 @@
   "findings": [],
   "contract": "trial-balance",
   "sourceHashes": {
-    "css/style.css": "761da1445e230dacb51d582516f37fe74eef15124fc94e44ec3b37b66c69a943",
+    "css/style.css": "d81288e58692b0630c5031c5737db51aa937cb68fb5364cfc3fe2f0e5814878b",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
     "data/questions.js": "a549e6cd40a81839a04aae4e5e4ee46cdf5bbae12be3ce30416aafc7554c230e",
-    "index.html": "147d89a9181289992d6d9137906c0fde1dfbe12e53fe1707eb48875196cbb153",
+    "index.html": "0560d84a1e9446ed7c1a2f523f09f3237dca6b9bd0db8cb54e3930c1b707f759",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
     "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
     "js/controller.js": "4b2b79ce216cb2d78709f72835a1983efb9d4bfe8920584f840a24dd8b1a2894",
@@ -85,11 +85,11 @@
     "js/feedback.js": "8c04b1847aca22a44d48b5f0dc636cec47519b4d6c6f454333e3113cd8710b5f",
     "js/model.js": "513ec85bbc0514d1c0e5bda35a0266dfe1ddb03878f1fbaa028597e8ff3eaa7b",
     "js/rpg.js": "fcc89d34b4a6773ecf33c3004997482a12e5444062e2e41b2b1f31d7c4742410",
-    "js/view.js": "961cdab07fe32b0063811a7fa0d4490fcb8825ae161e5c8e2b36677a59955830",
+    "js/view.js": "c2edc7526692e9bd99dc1d473e577f3d6e9461f854be4509b2c9ac28c53031a3",
     "manifest.webmanifest": "fcde227f0593c3fc7fd5e8adc89be13201f9a35f74d9ad6a4212b23d2a75bd72",
-    "pwa-release-manifest.json": "f0a72d69c596ec3f0ed5e9b924daa2e4a675326710467f30843d66d3013debe7",
-    "service-worker.js": "154217674a423ccc141cb2e4b62689b5f21771bffa8de72c18b509f36b9e18c0",
+    "pwa-release-manifest.json": "566158b006a59d8211b6e47714cca3be3cbed833e883d970602e97b47d78b68c",
+    "service-worker.js": "c0e7b7ee1cd4c38dc92ee5bda547efb3f2e02f52fabd504fc17b344582766a91",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-07T00:12:46.535Z"
+  "measuredAt": "2026-09-07T08:44:28.323Z"
 }

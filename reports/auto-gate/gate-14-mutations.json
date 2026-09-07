@@ -473,8 +473,8 @@
     {
       "mutationId": "FONT_SIZE_15PX",
       "targetProductionFile": "css/style.css",
-      "beforeHash": "761da1445e230dacb51d582516f37fe74eef15124fc94e44ec3b37b66c69a943",
-      "afterHash": "18e0b23248d38b324c019a7956297aeeb2c984bc13bf0b35464409a16f740920",
+      "beforeHash": "d81288e58692b0630c5031c5737db51aa937cb68fb5364cfc3fe2f0e5814878b",
+      "afterHash": "d05f46f28f86dbb84b6c53dd0328730448939aa4cca1eae21b9f2cd5a9075a12",
       "expectedFailureCode": "MOBILE_FONT_TOO_SMALL",
       "actualFailureCode": "MOBILE_FONT_TOO_SMALL",
       "baselineFindings": [],
