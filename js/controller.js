@@ -79,7 +79,7 @@
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-      const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'hint-1': () => this.showHint(1), 'hint-2': () => this.showHint(2), 'coaching-retry': () => this.beginCoachingRetry(), 'reveal-answer': () => this.revealAnswer(), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
+      const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'hint-1': () => this.showHint(1), 'hint-2': () => this.showHint(2), 'coaching-retry': () => this.beginCoachingRetry(), 'coaching-retry-result': () => this.beginCoachingRetry(), 'reveal-answer': () => this.revealAnswer(), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target, event); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
@@ -410,7 +410,7 @@
       this.view.updateRpg(this.rpg);
       if (!score.correct) {
         this.learningFlow.phase = 'W'; this.learningFlow.gameOverPending = this.rpg.state.companyHP === 0;
-        this.view.setAnswerMode?.('protected'); this.view.protectedResult(confidence, false); this.view.show('view-question');
+        this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
         return;
       }
       this.learningFlow.phase = 'C'; this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
@@ -435,7 +435,7 @@
       return `「${evidence}」を根拠に、①条件と数値を拾う ②${procedure}する ③自分の入力を問題文へ戻って検算しましょう。`;
     }
     showHint(stage) {
-      const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase) || stage < 1 || stage > 2 || stage > flow.hintStage + 1) return false;
+      const flow = this.learningFlow; if (!flow || flow.phase !== 'I' || stage < 1 || stage > 2 || stage > flow.hintStage + 1) return false;
       const context = this.hintContext(this.questions[this.currentId], stage); flow.hintStage = stage;
       const text = Controller.hintText(context, stage);
       this.view.renderHint(stage, text, context); return true;
@@ -451,7 +451,7 @@
       const flow = this.learningFlow; flow.retryCount += 1; this.submitting = false;
       if (!score.correct) {
         flow.coachingAnswer = question.type === 'journal' ? Controller.journalRetryDraft(answer, question.answer) : Controller.tableRetryDraft(answer, score.details);
-        flow.phase = 'W'; this.view.applyRetryDraft(question, flow.coachingAnswer); this.view.setAnswerMode?.('protected'); this.view.protectedResult(flow.confidence, true); return false;
+        flow.phase = 'W'; this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement); this.view.show('view-result'); this.document?.getElementById?.('result-status')?.focus(); return false;
       }
       flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement); const status = this.document.getElementById('result-status');
       const note = this.document.createElement('span'); note.className = 'coaching-success'; note.textContent = '練習で修正できました。最初の回答は誤答として記録されています。'; status?.append(note); this.view.show('view-result'); status?.focus?.(); this.dispatchPendingGameOver(); return true;
@@ -465,7 +465,7 @@
       const lifecycleManaged = Object.prototype.hasOwnProperty.call(this, 'learningFlow');
       if (this.model.state.mode !== 'exam' && lifecycleManaged) {
         const flow = this.learningFlow;
-        if (!flow || !['C','D'].includes(flow.phase) || flow.nextConsumed) return false;
+        if (!flow || !['W','C','D'].includes(flow.phase) || flow.nextConsumed) return false;
         flow.nextConsumed = true;
       }
       if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story');

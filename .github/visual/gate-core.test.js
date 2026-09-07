@@ -18,4 +18,8 @@ fixture = base(); fixture.columns.value.headerLineCount = 5; fixture.columns.val
 const known = { columns:{ life:{ classification:'numeric',computedMinWidth:'114px',canonicalValues:[5,5,5,5,5,5],contentMax:5,contentLength:1,editable:false },acquisitionCost:{ classification:'numeric',computedMinWidth:'114px' } } };
 assert.strictEqual(detectGeneration10KnownViolation(known),true,'Generation 10 shared numeric floor is detected');
 known.columns.life.computedMinWidth = '70px'; assert.strictEqual(detectGeneration10KnownViolation(known),false,'a separate life floor is not mislabeled as the known defect');
-console.log('visual gate self-tests: normal, narrow, wide, tall, clipping, overflow, wrapping: ok');
+const fixed = base(); fixed.case = 'fixed-asset'; fixed.viewport = { width:390 }; fixed.columns = { life:{ width:70,requiredWidth:68,clipped:false,headerLineCount:1,headerGlyphStacked:false },acquisitionCost:{ width:120,requiredWidth:110,clipped:false,headerLineCount:1,headerGlyphStacked:false },currentDepreciation:{ width:150,requiredWidth:140,clipped:false,headerLineCount:1,headerGlyphStacked:false } }; fixed.rows = { headerRowHeight:40,normalRowHeight:46,editableRowHeight:48,inputVisualHeight:44 };
+assert.deepStrictEqual(codes(fixed), [], 'mobile fixed asset semantic width and density contract passes');
+fixture = structuredClone(fixed); fixture.columns.life.width = 120; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'));
+fixture = structuredClone(fixed); fixture.rows.editableRowHeight = 52; assert(codes(fixture).includes('COMPACT_TABLE_DENSITY_FAILURE'));
+console.log('visual gate self-tests: normal, semantic years, compact density, narrow, wide, tall, clipping, overflow, wrapping: ok');

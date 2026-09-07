@@ -65,7 +65,7 @@ async function measure(page) {
       questionId:document.body.dataset.questionId,
       table:{ ...dimensions(table),wrapper:dimensions(wrapper),horizontalOverflow:Math.max(0,(table?.scrollWidth || 0)-(wrapper?.clientWidth || 0)),requiresHorizontalScroll:(table?.scrollWidth || 0)>(wrapper?.clientWidth || 0),horizontalScrollAvailable:getComputedStyle(wrapper).overflowX !== 'visible',clipped:(wrapper?.scrollWidth || 0) < (table?.scrollWidth || 0) },
       columns,
-      rows:{ headerRowHeight:rect(table?.tHead?.rows[0])?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,inputVisualHeight:rect(editableRow?.querySelector('input,select'))?.height || 0,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null }
+      rows:{ headerRowHeight:rect(table?.tHead?.rows[0])?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,inputVisualHeight:rect(editableRow?.querySelector('input,select'))?.height || 0,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,totalTableHeight:rect(table)?.height || 0 }
     };
   });
 }
@@ -101,7 +101,7 @@ async function run() {
               const metrics = { browser:browserName,viewport,case:caseName,representative,...await measure(page) };
               metrics.violations = evaluateVisualMetrics(metrics); metrics.knownGeneration10Violation = caseName === 'fixed-asset' && detectGeneration10KnownViolation(metrics);
               evidence.reports.push(metrics);
-              if (caseName === 'fixed-asset' && !metrics.knownGeneration10Violation) evidence.failures.push(`${browserName}/${viewport.width}: Generation 10 life-width violation not detected`);
+              if (mode === 'audit' && caseName === 'fixed-asset' && !metrics.knownGeneration10Violation) evidence.failures.push(`${browserName}/${viewport.width}: Generation 10 life-width violation not detected`);
               if (mode === 'strict' && metrics.violations.length) evidence.failures.push(`${browserName}/${caseName}/${viewport.width}: ${metrics.violations.map(item => item.code).join(',')}`);
               writeEvidence();
             } finally { await page.close(); }

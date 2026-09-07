@@ -248,6 +248,7 @@ button.secondary-button:hover { color: #fff; }
 .table-input { min-width: 0; }
 .table-text-input { width: 100%; min-width: 120px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="numeric"] { min-width: calc(11ch + 26px); overflow-wrap: normal; word-break: keep-all; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="years"] { box-sizing: border-box; width: calc(4em + 14px); min-width: calc(4em + 14px); max-width: calc(4em + 14px); overflow-wrap: normal; word-break: keep-all; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td[data-column-type="numeric"] .table-input { box-sizing: border-box; width: 100%; min-width: 11ch; font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="account"] { min-width: 8em; word-break: keep-all; overflow-wrap: normal; }
 .answer-table:not(.eight-column-worksheet) [data-column-key="date"] { box-sizing: border-box; width: calc(4em + 17px); min-width: calc(4em + 17px); max-width: calc(4em + 17px); white-space: nowrap; }
@@ -409,8 +410,9 @@ select, .amount-input {
     font-size: 0.75rem;
   }
 
-  .answer-table th, .answer-table td { padding: 7px 6px; font-size: .85rem; }
-  .table-input { padding: 6px 1px; font-size: 16px; }
+  .answer-table:not(.eight-column-worksheet) th,
+  .answer-table:not(.eight-column-worksheet) td { padding: 2px 6px; font-size: .85rem; }
+  .answer-table:not(.eight-column-worksheet) .table-input { min-height: 44px; padding: 2px 1px; font-size: 16px; }
 
   .toc-questions { grid-template-columns: 1fr; }
   .toc-chapter-title { font-size: .88rem; }
@@ -433,6 +435,7 @@ select, .amount-input {
 .result-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .result-actions[hidden] { display: none; }
 .protected-learning { margin-top: 18px; }
+.hint-support-heading { margin: 0 0 8px; font-size: 1rem; }
 .protected-learning[hidden], .protected-actions [hidden], #top-result-actions[hidden] { display: none; }
 .protected-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .hint-panel { border-left: 4px solid var(--accent, #2563eb); margin: 14px 0; padding: 10px 14px; background: #f5f8ff; }

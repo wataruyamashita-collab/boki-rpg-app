@@ -64,6 +64,7 @@
       }));
     }
     renderQuestion(question, draft, mode = 'story') {
+      const hintSupport = this.byId('protected-learning'); if (hintSupport) hintSupport.hidden = mode === 'exam';
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;
       const story = this.byId('q-story'); story.hidden = mode !== 'story';
       if (!story.hidden) { this.byId('q-scene').textContent = question.scene; this.byId('q-context').textContent = question.story; this.byId('q-task').textContent = `今回の仕事：${question.category}`; }
@@ -201,7 +202,8 @@
           } else if (typeof value === 'number' && columnTypes.get(column) === 'text') columnTypes.set(column, 'numeric');
         });
         for (const column of question.table.columns || []) {
-          if (column === 'date') columnTypes.set(column, 'date');
+          if (column === 'life') columnTypes.set(column, 'years');
+          else if (column === 'date') columnTypes.set(column, 'date');
           else if (/account/i.test(column) || column === 'account') columnTypes.set(column, 'account');
         }
         table.dataset.sizing = 'semantic-content';
@@ -292,6 +294,8 @@
     result(question, score, userAnswer, confidence = 'unsure', achievement = {}) {
       const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
       if (standardActions) standardActions.hidden = false; if (examActions) examActions.hidden = true;
+      const retryAction = this.document.querySelector('[data-action="coaching-retry-result"]');
+      if (retryAction) retryAction.hidden = score.correct;
       const topActions = this.byId('top-result-actions'); if (topActions) topActions.hidden = false;
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
       const calibration = confidence === 'sure'
@@ -335,7 +339,7 @@
       form?.setAttribute('data-answer-mode', mode);
     }
     resetLearningSurfaces() {
-      const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = true;
+      const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = false;
       const protectedStatus = this.byId('protected-status'); protectedStatus?.replaceChildren();
       const hintPanel = this.byId('hint-panel'); if (hintPanel) hintPanel.hidden = true;
       const heading = this.byId('hint-heading'); if (heading) heading.textContent = '';

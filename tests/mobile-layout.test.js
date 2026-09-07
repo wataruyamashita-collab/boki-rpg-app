@@ -36,6 +36,7 @@ const fixed = ordinary.find(question => fixedKeys.every(key => question.table.co
 assert(fixed, 'a canonical fixed-asset register contains all six semantic columns');
 assert.deepStrictEqual(fixedKeys.map(label), ['固定資産','取得原価','耐用年数','期首減価償却累計額','当期減価償却額','期末帳簿価額']);
 for (const key of ['currentDepreciation','closingBookValue']) assert(audit.get(key).editable.some(item => item.type === 'amount'), `${key}: fixed-asset amount is editable and included in width budgeting`);
+assert(audit.get('life').visible.every(item => Number.isInteger(item.value) && item.value >= 1 && item.value <= 99), 'canonical useful-life values fit the one-to-two digit years contract');
 
 const tableRule = css.match(/\.answer-table\s*\{([^}]*)\}/)?.[1] || '';
 const headRule = css.match(/\.answer-table th\s*\{([^}]*)\}/)?.[1] || '';
@@ -45,9 +46,11 @@ assert(/width:\s*max-content/.test(tableRule) && /min-width:\s*100%/.test(tableR
 assert(/overflow-wrap:\s*normal/.test(headRule) && /word-break:\s*keep-all/.test(headRule) && /white-space:\s*nowrap/.test(headRule), 'complete Japanese headers cannot clip, ellipsize, or stack one glyph per line');
 assert(!/(?:overflow:\s*hidden|text-overflow:\s*ellipsis)/.test(headRule), 'semantic headers never conceal authored labels');
 assert(/min-width:\s*calc\(11ch \+ 26px\)/.test(numericRule) && /white-space:\s*nowrap/.test(numericRule), 'numeric cells budget nine formatted digits plus caret, input chrome, and cell padding');
+assert(/\[data-column-type="years"\]\s*\{[^}]*width:\s*calc\(4em \+ 14px\)[^}]*max-width:\s*calc\(4em \+ 14px\)/s.test(css), 'years use a dedicated four-glyph header plus cell-chrome width instead of the money floor');
 assert(/width:\s*100%/.test(numericInputRule) && /min-width:\s*11ch/.test(numericInputRule) && /font-variant-numeric:\s*tabular-nums/.test(numericInputRule), 'editable numeric controls expose the entire safe digit budget');
 assert(glyphs(String(maximumEditable.answer)) <= 11 && glyphs(formatted(maximumEditable.answer)) <= 11, 'raw and comma-formatted canonical maxima fit the numeric content budget');
 assert(view.includes("table.dataset.sizing = 'semantic-content'") && view.includes('th.dataset.columnType = columnTypes.get(column)') && view.includes('cell.dataset.columnType = columnTypes.get(question.table.columns[columnIndex])'), 'renderer exposes content-derived semantic types on ordinary headers and cells');
+assert(view.includes("if (column === 'life') columnTypes.set(column, 'years')"), 'life receives the years semantic type before generic numeric sizing');
 assert(view.includes('th.dataset.columnKey = column') && view.includes('cell.dataset.columnKey = question.table.columns[columnIndex]'), 'semantic column keys remain the selector authority');
 assert(!/answer-table[^\n{]*:nth-child[^\n{]*(?:date|description|quantity|unitPrice|amount|openingAccumulated|currentDepreciation|closingBookValue)/.test(css), 'ordinary sizing never guesses meaning from column position');
 assert(/\.table-question-wrap\s*\{[^}]*overflow-x:\s*auto/.test(css), 'the existing single wrapper scrolls content-required wide tables');
