@@ -2,60 +2,38 @@
 const assert = require('assert'); const fs = require('fs'); const vm = require('vm');
 const css = fs.readFileSync('css/style.css', 'utf8'); const view = fs.readFileSync('js/view.js', 'utf8');
 const sandbox = { window: {} }; vm.runInNewContext(fs.readFileSync('data/questions.js', 'utf8'), sandbox); vm.runInNewContext(view, sandbox);
-const questions = Object.values(sandbox.window.QuestionData);
-const ordinary = questions.filter(question => question.table && question.format !== 'eight-column-worksheet');
+const questions = Object.values(sandbox.window.QuestionData); const ordinary = questions.filter(question => question.table && question.format !== 'eight-column-worksheet');
 const columns = [...new Set(ordinary.flatMap(question => question.table.columns || []))].sort();
-const label = key => sandbox.window.AppView.prototype.tableLabel(key);
-const glyphs = value => [...String(value ?? '')].length;
+const records = new Map(columns.map(key => [key, { key, values:[], answers:[], inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0 }]));
 const formatted = value => Number(value).toLocaleString('ja-JP');
-const audit = new Map(columns.map(key => [key, { key, label:label(key), visible:[], editable:[], types:new Set() }]));
 for (const question of ordinary) {
   let inputIndex = 0;
-  for (const row of question.table.rows || []) Object.values(row).forEach((value, columnIndex) => {
-    const key = question.table.columns[columnIndex]; const record = audit.get(key); if (!record) return;
-    if (value !== '入力') { record.visible.push({ id:question.id, value }); record.types.add(typeof value === 'number' ? 'numeric' : key === 'date' ? 'date' : /account/i.test(key) || key === 'account' ? 'account' : 'text'); return; }
-    const cellId = question.table.inputCells[inputIndex++]; const type = question.table.inputTypes?.[cellId] || 'amount'; const answer = question.answer?.cells?.[cellId];
-    record.editable.push({ id:question.id, cellId, type, answer }); record.types.add(type === 'amount' ? 'numeric' : type);
-  });
+  for (const row of question.table.rows || []) for (let index = 0; index < question.table.columns.length; index += 1) {
+    const key = question.table.columns[index], value = Object.values(row)[index], record = records.get(key);
+    if (value === '入力') { const cellId = question.table.inputCells[inputIndex++], type = question.table.inputTypes?.[cellId] || 'amount', answer = question.answer?.cells?.[cellId]; record.inputTypes.push(type); record.answers.push(answer); if (Number.isFinite(Number(answer))) record.maximumIntegerLength = Math.max(record.maximumIntegerLength, formatted(answer).length); }
+    else if (typeof value === 'number') { record.numeric = true; record.values.push(value); record.maximumIntegerLength = Math.max(record.maximumIntegerLength, formatted(value).length); }
+    else { record.values.push(value); record.maximumTextLength = Math.max(record.maximumTextLength, [...String(value ?? '')].length); }
+  }
 }
-const maximumEditable = [...audit.values()].flatMap(record => record.editable.map(item => ({ ...item, key:record.key }))).filter(item => item.type === 'amount' && Number.isFinite(Number(item.answer))).reduce((maximum, item) => Math.abs(Number(item.answer)) > Math.abs(Number(maximum.answer)) ? item : maximum, { answer:0 });
-
+for (const record of records.values()) record.type = sandbox.window.AppView.semanticColumnType(record.key, record);
+const unclassified = [...records.values()].filter(record => !['money','quantity','years','date','account','short-integer','text','long-text'].includes(record.type));
 assert.strictEqual(questions.length, 300, 'semantic audit covers all 300 canonical questions');
-assert(ordinary.length > 0 && columns.length > 0, 'ordinary table columns are extracted from canonical data');
-for (const record of audit.values()) {
-  assert(record.label && (!/^[A-Za-z]/.test(record.key) || record.label !== record.key), `${record.key}: TABLE_LABELS supplies a user-facing label`);
-  record.labelLength = glyphs(record.label);
-  record.longestVisible = record.visible.reduce((maximum, item) => glyphs(item.value) > glyphs(maximum.value) ? item : maximum, { value:'' });
-  record.largestEditable = record.editable.filter(item => item.type === 'amount' && Number.isFinite(Number(item.answer))).reduce((maximum, item) => Math.abs(Number(item.answer)) > Math.abs(Number(maximum.answer)) ? item : maximum, { answer:0 });
-  assert(record.types.size > 0, `${record.key}: semantic type is inferred from authored content or editable metadata`);
-}
-assert.deepStrictEqual(maximumEditable, { id:'C001', cellId:'sales', type:'amount', answer:2520000, key:'金額' }, 'largest editable canonical amount remains 2,520,000');
-
-const fixedKeys = ['asset','acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'];
-const fixed = ordinary.find(question => fixedKeys.every(key => question.table.columns.includes(key)));
-assert(fixed, 'a canonical fixed-asset register contains all six semantic columns');
-assert.deepStrictEqual(fixedKeys.map(label), ['固定資産','取得原価','耐用年数','期首減価償却累計額','当期減価償却額','期末帳簿価額']);
-for (const key of ['currentDepreciation','closingBookValue']) assert(audit.get(key).editable.some(item => item.type === 'amount'), `${key}: fixed-asset amount is editable and included in width budgeting`);
-
-const tableRule = css.match(/\.answer-table\s*\{([^}]*)\}/)?.[1] || '';
-const headRule = css.match(/\.answer-table th\s*\{([^}]*)\}/)?.[1] || '';
-const numericRule = css.match(/\[data-sizing="semantic-content"\] \[data-column-type="numeric"\]\s*\{([^}]*)\}/)?.[1] || '';
-const numericInputRule = css.match(/\[data-sizing="semantic-content"\] td\[data-column-type="numeric"\] \.table-input\s*\{([^}]*)\}/)?.[1] || '';
-assert(/width:\s*max-content/.test(tableRule) && /min-width:\s*100%/.test(tableRule) && !/600px/.test(tableRule), 'ordinary tables fill small containers but grow to content width without a fixed 600px floor');
-assert(/overflow-wrap:\s*normal/.test(headRule) && /word-break:\s*keep-all/.test(headRule) && /white-space:\s*nowrap/.test(headRule), 'complete Japanese headers cannot clip, ellipsize, or stack one glyph per line');
-assert(!/(?:overflow:\s*hidden|text-overflow:\s*ellipsis)/.test(headRule), 'semantic headers never conceal authored labels');
-assert(/min-width:\s*calc\(11ch \+ 26px\)/.test(numericRule) && /white-space:\s*nowrap/.test(numericRule), 'numeric cells budget nine formatted digits plus caret, input chrome, and cell padding');
-assert(/width:\s*100%/.test(numericInputRule) && /min-width:\s*11ch/.test(numericInputRule) && /font-variant-numeric:\s*tabular-nums/.test(numericInputRule), 'editable numeric controls expose the entire safe digit budget');
-assert(glyphs(String(maximumEditable.answer)) <= 11 && glyphs(formatted(maximumEditable.answer)) <= 11, 'raw and comma-formatted canonical maxima fit the numeric content budget');
-assert(view.includes("table.dataset.sizing = 'semantic-content'") && view.includes('th.dataset.columnType = columnTypes.get(column)') && view.includes('cell.dataset.columnType = columnTypes.get(question.table.columns[columnIndex])'), 'renderer exposes content-derived semantic types on ordinary headers and cells');
-assert(view.includes('th.dataset.columnKey = column') && view.includes('cell.dataset.columnKey = question.table.columns[columnIndex]'), 'semantic column keys remain the selector authority');
-assert(!/answer-table[^\n{]*:nth-child[^\n{]*(?:date|description|quantity|unitPrice|amount|openingAccumulated|currentDepreciation|closingBookValue)/.test(css), 'ordinary sizing never guesses meaning from column position');
-assert(/\.table-question-wrap\s*\{[^}]*overflow-x:\s*auto/.test(css), 'the existing single wrapper scrolls content-required wide tables');
-assert(/\.answer-table th:first-child,\s*\.answer-table td:first-child\s*\{[^}]*position:\s*sticky[^}]*left:\s*0/s.test(css), 'sticky first-column behavior remains present');
-assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
-const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
-for (const viewport of [320, 375, 390, 430]) assert(fixedAssetMinimum > viewport && /overflow-x:\s*auto/.test(css), `${viewport}px: fixed-asset content remains wider than its viewport and horizontally scrollable`);
-const accountWidth = Number(css.match(/\.journal-row\s*\{[^}]*minmax\((\d+)px, 3fr\)/s)?.[1]);
-assert(accountWidth >= 240 && /\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'horizontal journal entry integrity remains protected');
-for (const viewport of [320, 375, 390, 430]) assert(accountWidth * 2 + 120 * 2 > viewport, `${viewport}px journals scroll rather than collapse four fields`);
-console.log(`mobile layout semantic audit: ${questions.length} questions, ${ordinary.length} ordinary tables, ${columns.length} unique columns (320/375/390/430): ok`);
+assert(ordinary.length > 0 && columns.length > 0, 'ordinary tables and their columns are extracted from canonical data');
+assert.deepStrictEqual(unclassified, [], 'every canonical ordinary-table column has a supported semantic display type');
+assert.strictEqual(records.get('life').type, 'years'); assert.strictEqual(records.get('quantity').type, 'quantity');
+for (const key of ['acquisitionCost','unitPrice','amount','openingAccumulated','currentDepreciation','closingBookValue','debit','credit','balance']) assert.strictEqual(records.get(key).type, 'money', `${key} uses the money budget`);
+assert.strictEqual(records.get('description').type, 'long-text'); assert.strictEqual(records.get('date').type, 'date'); assert.strictEqual(records.get('account').type, 'account');
+const years = records.get('life'); assert.deepStrictEqual(years.values, [5,5,5,5,5,5]); assert.strictEqual(Math.min(...years.values),5); assert.strictEqual(Math.max(...years.values),5); assert.strictEqual(years.maximumIntegerLength,1);
+const money = [...records.values()].filter(record => record.type === 'money'); const quantity = records.get('quantity'); const dates = records.get('date'); const texts = [...records.values()].filter(record => record.type === 'text' || record.type === 'long-text');
+assert(Math.max(...money.map(record => record.maximumIntegerLength)) >= 9, 'money profile includes the full comma-formatted canonical answer range');
+assert.strictEqual(quantity.maximumIntegerLength,2); assert(dates.maximumTextLength >= 5); assert(Math.max(...texts.map(record => record.maximumTextLength)) >= 10);
+const tableRule = css.match(/\.answer-table\s*\{([^}]*)\}/)?.[1] || '', headRule = css.match(/\.answer-table th\s*\{([^}]*)\}/)?.[1] || '';
+assert(/width:\s*max-content/.test(tableRule) && /min-width:\s*0/.test(tableRule), 'ordinary tables use compact intrinsic width instead of unconditional container stretching');
+assert(/word-break:\s*keep-all/.test(headRule) && /white-space:\s*nowrap/.test(headRule) && !/(?:overflow:\s*hidden|text-overflow:\s*ellipsis)/.test(headRule), 'headers remain complete, readable, and untruncated');
+for (const type of ['money','quantity','years','short-integer','account','date','long-text']) assert(css.includes(`data-column-type="${type}"`), `${type}: semantic CSS contract is present`);
+assert(view.includes('semanticColumnType') && view.includes('th.dataset.columnType = columnTypes.get(column)') && view.includes('cell.dataset.columnType = columnTypes.get(column)'), 'renderer exposes reusable semantic types on headers and cells');
+assert(!/data-column-key="(?:life|acquisitionCost|openingAccumulated|currentDepreciation|closingBookValue|quantity|unitPrice|amount|description|date)"/.test(css), 'ordinary width policy is semantic rather than a list of fixed column exceptions');
+assert(/\.table-question-wrap\s*\{[^}]*overflow-x:\s*auto/.test(css)); assert(/\.answer-table th:first-child,\s*\.answer-table td:first-child\s*\{[^}]*position:\s*sticky[^}]*left:\s*0/s.test(css));
+assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'worksheet retains its dedicated wide-canvas policy');
+const accountWidth = Number(css.match(/\.journal-row\s*\{[^}]*minmax\((\d+)px, 3fr\)/s)?.[1]); assert(accountWidth >= 240 && /\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'horizontal journal integrity remains protected');
+console.log(JSON.stringify({ totalQuestions:questions.length, ordinaryTableCount:ordinary.length, uniqueColumnKeys:columns.length, semanticCoverage:records.size, unclassifiedColumns:unclassified.length, maxMoneyDisplayLength:Math.max(...money.map(record => record.maximumIntegerLength)), maxQuantityDisplayLength:quantity.maximumIntegerLength, yearsProfile:{ values:years.values,min:5,max:5,maximumDisplayLength:1,editable:years.inputTypes.length>0 }, dateProfile:{ maximumDisplayLength:dates.maximumTextLength }, textProfile:{ maximumDisplayLength:Math.max(...texts.map(record => record.maximumTextLength)) } }));

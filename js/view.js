@@ -17,6 +17,22 @@
     recorded: '帳簿の記録', section: '区分', transaction: '取引内容', unitPrice: '単価', value: '内容',
     creditAccount: '貸方科目', creditAmount: '貸方金額'
   };
+  const MONEY_COLUMNS = new Set([
+    'acquisitionCost', 'amount', 'balance', 'closingBookValue', 'credit', 'currentDepreciation', 'debit',
+    'openingAccumulated', 'unitPrice', '整理後借方', '整理後貸方', '整理後金額', '決算整理額', '計算基礎額', '金額'
+  ]);
+  const LONG_TEXT_COLUMNS = new Set(['description', '区分', '締切手続', '記入欄', '論点', '財務諸表の表示項目']);
+  const semanticColumnType = (column, profile = {}) => {
+    const inputTypes = profile.inputTypes || [];
+    if (column === 'life') return 'years';
+    if (column === 'quantity') return 'quantity';
+    if (column === 'date') return 'date';
+    if (column === 'account' || column === '勘定科目' || /account/i.test(column) || inputTypes.includes('account')) return 'account';
+    if (MONEY_COLUMNS.has(column) || inputTypes.includes('amount')) return 'money';
+    if (profile.numeric && profile.maximumIntegerLength <= 3) return 'short-integer';
+    if (LONG_TEXT_COLUMNS.has(column) || profile.maximumTextLength >= 10) return 'long-text';
+    return 'text';
+  };
   class AppView {
     constructor(document) { this.document = document; this.calculatorFirstInput = AppView.prefersCalculatorFirst(root); }
     static prefersCalculatorFirst(environment) {
@@ -190,22 +206,24 @@
         guide.append(title, detail); wrap.append(guide);
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
-      const columnTypes = new Map((question.table.columns || []).map(column => [column, 'text']));
+      const columnProfiles = new Map((question.table.columns || []).map(column => [column, { inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0 }]));
       if (question.format !== 'eight-column-worksheet') {
         let profileInputIndex = 0;
         for (const row of question.table.rows || []) Object.values(row).forEach((value, columnIndex) => {
           const column = question.table.columns[columnIndex];
+          const profile = columnProfiles.get(column); if (!profile) return;
           if (value === '入力') {
             const cellId = question.table.inputCells[profileInputIndex++];
-            columnTypes.set(column, question.table.inputTypes?.[cellId] === 'account' ? 'account' : question.table.inputTypes?.[cellId] === 'text' ? 'text' : 'numeric');
-          } else if (typeof value === 'number' && columnTypes.get(column) === 'text') columnTypes.set(column, 'numeric');
+            profile.inputTypes.push(question.table.inputTypes?.[cellId] || 'amount');
+            const answer = question.answer?.cells?.[cellId];
+            if (Number.isFinite(Number(answer))) profile.maximumIntegerLength = Math.max(profile.maximumIntegerLength, yen(answer).length);
+          } else if (typeof value === 'number') {
+            profile.numeric = true; profile.maximumIntegerLength = Math.max(profile.maximumIntegerLength, yen(value).length);
+          } else profile.maximumTextLength = Math.max(profile.maximumTextLength, [...String(value ?? '')].length);
         });
-        for (const column of question.table.columns || []) {
-          if (column === 'date') columnTypes.set(column, 'date');
-          else if (/account/i.test(column) || column === 'account') columnTypes.set(column, 'account');
-        }
         table.dataset.sizing = 'semantic-content';
       }
+      const columnTypes = new Map([...columnProfiles].map(([column, profile]) => [column, semanticColumnType(column, profile)]));
       if (question.format === 'eight-column-worksheet') table.setAttribute('role', 'grid');
       const thead = table.createTHead();
       if (question.format === 'eight-column-worksheet') {
@@ -215,13 +233,13 @@
         const sideHead = thead.insertRow();
         for (let index = 0; index < 4; index += 1) ['借方', '貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; sideHead.append(th); });
       } else {
-        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); th.scope = 'col'; th.dataset.columnKey = column; th.dataset.columnType = columnTypes.get(column); head.append(th); });
+        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); th.scope = 'col'; th.dataset.columnKey = column; th.dataset.columnType = columnTypes.get(column); th.style.setProperty('--column-content-ch', Math.max(4, columnProfiles.get(column).maximumIntegerLength)); head.append(th); });
       }
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
         const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
           const cell = row.insertCell();
-          if (question.format !== 'eight-column-worksheet') { cell.dataset.columnKey = question.table.columns[columnIndex]; cell.dataset.columnType = columnTypes.get(question.table.columns[columnIndex]); }
+          if (question.format !== 'eight-column-worksheet') { const column = question.table.columns[columnIndex]; cell.dataset.columnKey = column; cell.dataset.columnType = columnTypes.get(column); cell.style.setProperty('--column-content-ch', Math.max(4, columnProfiles.get(column).maximumIntegerLength)); }
           if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');
           if (question.format === 'eight-column-worksheet' && columnIndex > 0) cell.classList.add('worksheet-value-cell');
           if (value === '入力') {
@@ -578,5 +596,6 @@
       container.append(heading, this.journalTable(answer));
     }
   }
+  AppView.semanticColumnType = semanticColumnType;
   root.AppView = AppView;
 }(window));
