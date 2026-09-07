@@ -204,6 +204,9 @@
         for (const column of question.table.columns || []) {
           if (column === 'life') columnTypes.set(column, 'years');
           else if (column === 'date') columnTypes.set(column, 'date');
+          else if (column === 'quantity') columnTypes.set(column, 'quantity');
+          else if (column === 'unitPrice') columnTypes.set(column, 'unit-price');
+          else if (column === 'description') columnTypes.set(column, 'description');
           else if (/account/i.test(column) || column === 'account') columnTypes.set(column, 'account');
         }
         table.dataset.sizing = 'semantic-content';

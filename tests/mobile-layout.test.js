@@ -45,14 +45,16 @@ const numericInputRule = css.match(/\[data-sizing="semantic-content"\] td\[data-
 assert(/width:\s*max-content/.test(tableRule) && /min-width:\s*100%/.test(tableRule) && !/600px/.test(tableRule), 'ordinary tables fill small containers but grow to content width without a fixed 600px floor');
 assert(/overflow-wrap:\s*normal/.test(headRule) && /word-break:\s*keep-all/.test(headRule) && /white-space:\s*nowrap/.test(headRule), 'complete Japanese headers cannot clip, ellipsize, or stack one glyph per line');
 assert(!/(?:overflow:\s*hidden|text-overflow:\s*ellipsis)/.test(headRule), 'semantic headers never conceal authored labels');
-assert(/min-width:\s*calc\(11ch \+ 26px\)/.test(numericRule) && /white-space:\s*nowrap/.test(numericRule), 'numeric cells budget nine formatted digits plus caret, input chrome, and cell padding');
+assert(/white-space:\s*nowrap/.test(numericRule) && !/min-width/.test(numericRule), 'static numeric cells use intrinsic content width instead of inheriting the editable money floor');
 assert(/\[data-column-type="years"\]\s*\{[^}]*width:\s*calc\(4em \+ 14px\)[^}]*max-width:\s*calc\(4em \+ 14px\)/s.test(css), 'years use a dedicated four-glyph header plus cell-chrome width instead of the money floor');
-assert(/width:\s*100%/.test(numericInputRule) && /min-width:\s*11ch/.test(numericInputRule) && /font-variant-numeric:\s*tabular-nums/.test(numericInputRule), 'editable numeric controls expose the entire safe digit budget');
+assert(/width:\s*11ch/.test(numericInputRule) && /min-width:\s*11ch/.test(numericInputRule) && /max-width:\s*11ch/.test(numericInputRule) && /font-variant-numeric:\s*tabular-nums/.test(numericInputRule), 'editable numeric controls expose the safe digit budget without cyclic 100% table sizing');
 assert(glyphs(String(maximumEditable.answer)) <= 11 && glyphs(formatted(maximumEditable.answer)) <= 11, 'raw and comma-formatted canonical maxima fit the numeric content budget');
 assert(view.includes("table.dataset.sizing = 'semantic-content'") && view.includes('th.dataset.columnType = columnTypes.get(column)') && view.includes('cell.dataset.columnType = columnTypes.get(question.table.columns[columnIndex])'), 'renderer exposes content-derived semantic types on ordinary headers and cells');
 assert(view.includes("if (column === 'life') columnTypes.set(column, 'years')"), 'life receives the years semantic type before generic numeric sizing');
 assert(view.includes('th.dataset.columnKey = column') && view.includes('cell.dataset.columnKey = question.table.columns[columnIndex]'), 'semantic column keys remain the selector authority');
 assert(!/answer-table[^\n{]*:nth-child[^\n{]*(?:date|description|quantity|unitPrice|amount|openingAccumulated|currentDepreciation|closingBookValue)/.test(css), 'ordinary sizing never guesses meaning from column position');
+assert(!/\.answer-table th:first-child,[^{]+\{[^}]*min-width:\s*110px/s.test(css), 'sticky first columns use semantic content instead of a global 110px floor');
+assert(/td\[data-column-type="quantity"\] \.table-input\s*\{[^}]*width:\s*2ch/.test(css) && /td\[data-column-type="unit-price"\] \.table-input\s*\{[^}]*width:\s*7ch/.test(css), 'quantity and unit-price semantic controls override the generic money input budget');
 assert(/\.table-question-wrap\s*\{[^}]*overflow-x:\s*auto/.test(css), 'the existing single wrapper scrolls content-required wide tables');
 assert(/\.answer-table th:first-child,\s*\.answer-table td:first-child\s*\{[^}]*position:\s*sticky[^}]*left:\s*0/s.test(css), 'sticky first-column behavior remains present');
 assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');

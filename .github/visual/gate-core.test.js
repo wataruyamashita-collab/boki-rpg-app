@@ -22,4 +22,5 @@ const fixed = base(); fixed.case = 'fixed-asset'; fixed.viewport = { width:390 }
 assert.deepStrictEqual(codes(fixed), [], 'mobile fixed asset semantic width and density contract passes');
 fixture = structuredClone(fixed); fixture.columns.life.width = 120; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'));
 fixture = structuredClone(fixed); fixture.rows.editableRowHeight = 52; assert(codes(fixture).includes('COMPACT_TABLE_DENSITY_FAILURE'));
+fixture = structuredClone(fixed); fixture.columns.life.width = 67; assert(codes(fixture).includes('COLUMN_TOO_NARROW'), 'years still fail when narrower than their four-glyph semantic requirement');
 console.log('visual gate self-tests: normal, semantic years, compact density, narrow, wide, tall, clipping, overflow, wrapping: ok');

@@ -46,15 +46,19 @@ async function measure(page) {
     for (const header of table?.querySelectorAll('thead [data-column-key]') || []) {
       const key = header.dataset.columnKey, cells = [...table.querySelectorAll(`tbody [data-column-key="${CSS.escape(key)}"]`)];
       const canonical = window.visualHarness.canonicalColumn(key), visible = canonical.values.map(value => typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value ?? ''));
+      const editableControl = cells.find(cell => cell.querySelector('input,select'))?.querySelector('input,select');
       const headerStyle = getComputedStyle(header), cellStyle = getComputedStyle(cells[0] || header), range = document.createRange(); range.selectNodeContents(header);
       const lineHeight = parseFloat(headerStyle.lineHeight) || parseFloat(headerStyle.fontSize) * 1.2;
-      const contentWidth = requiredTextWidth(cells[0] || header, visible), headerWidth = requiredTextWidth(header, [header.textContent]);
+      const contentWidth = requiredTextWidth(editableControl || cells[0] || header, visible), headerWidth = requiredTextWidth(header, [header.textContent]);
       const horizontalChrome = parseFloat(cellStyle.paddingLeft) + parseFloat(cellStyle.paddingRight) + parseFloat(cellStyle.borderLeftWidth) + parseFloat(cellStyle.borderRightWidth);
+      const semanticRequiredWidth = header.dataset.columnType === 'years'
+        ? Math.max(contentWidth + horizontalChrome, parseFloat(headerStyle.fontSize) * 4 + 14)
+        : Math.max(contentWidth,headerWidth) + horizontalChrome;
       columns[key] = {
         headerText:header.textContent,classification:header.dataset.columnType,canonicalValues:canonical.values,editable:canonical.editable,
         contentMax:canonical.values.filter(Number.isFinite).reduce((max,value) => Math.max(max,value), Number.NEGATIVE_INFINITY),
         contentLength:Math.max(0,...visible.map(value => [...value].length)),header:dimensions(header),cell:dimensions(cells[0]),input:dimensions(cells.find(cell => cell.querySelector('input'))?.querySelector('input')),
-        width:header.getBoundingClientRect().width,requiredWidth:Math.max(contentWidth,headerWidth) + horizontalChrome,
+        width:header.getBoundingClientRect().width,requiredWidth:semanticRequiredWidth,
         computedMinWidth:headerStyle.minWidth,clipped:cells.some(cell => cell.scrollWidth > cell.clientWidth + 1),
         headerLineCount:Math.max(1,Math.round(range.getBoundingClientRect().height / lineHeight)),headerGlyphStacked:header.getBoundingClientRect().width < headerStyle.fontSize.replace('px','') * 1.8 && [...header.textContent].length > 2
       };

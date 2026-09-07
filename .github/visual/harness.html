@@ -51,7 +51,7 @@
         if (!question.table?.columns?.includes(key)) continue;
         let inputIndex = 0;
         for (const row of question.table.rows || []) Object.values(row).forEach((value, index) => {
-          if (value === '入力') { if (question.table.columns[index] === key) editable = true; inputIndex += 1; }
+          if (value === '入力') { const cellId = question.table.inputCells[inputIndex++]; if (question.table.columns[index] === key) { editable = true; const expected = question.answer?.cells?.[cellId]; if (expected !== '' && expected != null) values.push(expected); } }
           else if (question.table.columns[index] === key) values.push(value);
         });
       }

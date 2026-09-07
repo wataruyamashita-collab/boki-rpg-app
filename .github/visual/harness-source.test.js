@@ -9,4 +9,5 @@ assert.deepStrictEqual(order,[...order].sort((left,right) => left-right),'produc
 for (const dependency of ['QuestionData','AccountingDomain','AppView','AppController','AppController.accountChoices']) assert(harness.includes(dependency),`${dependency} has an explicit dependency check`);
 for (const representative of ['fixed-asset','inventory','ledger','journal','worksheet']) assert(harness.includes(representative),`${representative} has a canonical selector`);
 assert(harness.includes('HARNESS_DEPENDENCY_MISSING:'),'missing dependencies fail with the stable diagnostic');
+assert(harness.includes("question.answer?.cells?.[cellId]"), 'editable canonical answers participate in intrinsic width measurement');
 console.log('visual harness source checks: dependencies, order, diagnostics, representatives: ok');
