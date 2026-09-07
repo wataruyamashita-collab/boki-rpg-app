@@ -11,7 +11,7 @@
   <div id="q-text" class="question-text"></div><section id="question-materials"></section>
   <div id="journal-container" class="journal-entry-area"></div><div id="table-container" class="table-question-wrap"></div>
 </main>
-<script src="/data/accounting-domain.js"></script><script src="/data/questions.js"></script><script src="/js/view.js"></script>
+<script src="/data/accounting-domain.js"></script><script src="/data/questions.js"></script><script src="/js/view.js"></script><script src="/js/controller.js"></script>
 <script>
 (() => {
   const questions = Object.values(window.QuestionData);
@@ -25,6 +25,18 @@
   };
   window.visualHarness = {
     cases:Object.keys(selectors),
+    assertDependencies() {
+      const required = {
+        QuestionData:window.QuestionData,
+        AccountingDomain:window.AccountingDomain,
+        AppView:window.AppView,
+        AppController:window.AppController,
+        'AppController.accountChoices':window.AppController?.accountChoices
+      };
+      const missing = Object.entries(required).filter(([name, value]) => name === 'AppController.accountChoices' ? typeof value !== 'function' : !value).map(([name]) => name);
+      if (missing.length) throw new Error(`HARNESS_DEPENDENCY_MISSING: ${missing.join(', ')}`);
+      return Object.keys(required);
+    },
     render(name) {
       const question = questions.find(selectors[name]);
       if (!question) throw new Error(`canonical representative not found: ${name}`);

@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 20
       - name: Gate evaluator self-tests
-        run: node .github/visual/gate-core.test.js
+        run: node .github/visual/gate-core.test.js && node .github/visual/harness-source.test.js
       - name: Install pinned CI-only Playwright
         run: npm install --no-save --package-lock=false playwright@1.55.0
       - name: Install Chromium and WebKit

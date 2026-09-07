@@ -12,6 +12,14 @@ if (!['audit','strict'].includes(mode)) throw new Error('mode must be audit or s
 const engines = { chromium, webkit };
 const viewports = [{ width:320,height:568 },{ width:375,height:667 },{ width:390,height:844 },{ width:430,height:932 },{ width:768,height:1024 },{ width:1280,height:800 }];
 const mime = { '.css':'text/css', '.html':'text/html', '.js':'text/javascript', '.json':'application/json' };
+const cases = ['fixed-asset','inventory','ledger','journal','worksheet'];
+const evidence = { mode,status:'RUNNING',reports:[],smoke:[],failures:[],failure:null };
+let activeContext = null;
+
+function writeEvidence() {
+  fs.mkdirSync(OUTPUT,{ recursive:true });
+  fs.writeFileSync(path.join(OUTPUT,'visual-audit.json'),`${JSON.stringify(evidence,null,2)}\n`);
+}
 
 const server = http.createServer((request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
@@ -64,29 +72,48 @@ async function measure(page) {
 
 async function run() {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const url = `http://127.0.0.1:${server.address().port}/`, reports = [], failures = [];
+  const url = `http://127.0.0.1:${server.address().port}/`;
+  writeEvidence();
   try {
     for (const [browserName, launcher] of Object.entries(engines)) {
+      activeContext = { phase:'launch',browser:browserName };
       const browser = await launcher.launch();
       try {
+        for (const caseName of cases) {
+          activeContext = { phase:'representative-smoke',browser:browserName,viewport:{ width:390,height:844 },case:caseName };
+          const page = await browser.newPage({ viewport:activeContext.viewport });
+          try {
+            await page.goto(url);
+            const dependencies = await page.evaluate(() => window.visualHarness.assertDependencies());
+            const representative = await page.evaluate(name => window.visualHarness.render(name),caseName);
+            evidence.smoke.push({ ...activeContext,status:'PASS',dependencies,representative }); writeEvidence();
+          } finally { await page.close(); }
+        }
         for (const viewport of viewports) {
           for (const caseName of ['fixed-asset',...(viewport.width === 390 ? ['inventory','ledger','journal','worksheet'] : [])]) {
-            const page = await browser.newPage({ viewport }); await page.goto(url); const representative = await page.evaluate(name => window.visualHarness.render(name), caseName);
-            const directory = path.join(OUTPUT,browserName); fs.mkdirSync(directory,{ recursive:true });
-            await page.screenshot({ path:path.join(directory,`${caseName}-${viewport.width}.png`),fullPage:true });
-            let metrics = { browser:browserName,viewport,case:caseName,representative,...await measure(page) };
-            metrics.violations = evaluateVisualMetrics(metrics); metrics.knownGeneration10Violation = caseName === 'fixed-asset' && detectGeneration10KnownViolation(metrics);
-            reports.push(metrics);
-            if (caseName === 'fixed-asset' && !metrics.knownGeneration10Violation) failures.push(`${browserName}/${viewport.width}: Generation 10 life-width violation not detected`);
-            if (mode === 'strict' && metrics.violations.length) failures.push(`${browserName}/${caseName}/${viewport.width}: ${metrics.violations.map(item => item.code).join(',')}`);
-            await page.close();
+            activeContext = { phase:'observation',browser:browserName,viewport,case:caseName };
+            const page = await browser.newPage({ viewport });
+            try {
+              await page.goto(url); await page.evaluate(() => window.visualHarness.assertDependencies());
+              const representative = await page.evaluate(name => window.visualHarness.render(name), caseName);
+              const directory = path.join(OUTPUT,browserName); fs.mkdirSync(directory,{ recursive:true });
+              await page.screenshot({ path:path.join(directory,`${caseName}-${viewport.width}.png`),fullPage:true });
+              const metrics = { browser:browserName,viewport,case:caseName,representative,...await measure(page) };
+              metrics.violations = evaluateVisualMetrics(metrics); metrics.knownGeneration10Violation = caseName === 'fixed-asset' && detectGeneration10KnownViolation(metrics);
+              evidence.reports.push(metrics);
+              if (caseName === 'fixed-asset' && !metrics.knownGeneration10Violation) evidence.failures.push(`${browserName}/${viewport.width}: Generation 10 life-width violation not detected`);
+              if (mode === 'strict' && metrics.violations.length) evidence.failures.push(`${browserName}/${caseName}/${viewport.width}: ${metrics.violations.map(item => item.code).join(',')}`);
+              writeEvidence();
+            } finally { await page.close(); }
           }
         }
       } finally { await browser.close(); }
     }
-    fs.mkdirSync(OUTPUT,{ recursive:true }); fs.writeFileSync(path.join(OUTPUT,'visual-audit.json'),`${JSON.stringify({ mode,reports },null,2)}\n`);
-    if (failures.length) throw new Error(failures.join('\n'));
+    if (evidence.failures.length) throw new Error(evidence.failures.join('\n'));
+    evidence.status = mode === 'audit' ? 'KNOWN_VIOLATION_DETECTED' : 'STRICT_VISUAL_GATE_PASS'; writeEvidence();
     console.log(mode === 'audit' ? 'KNOWN_VIOLATION_DETECTED' : 'STRICT_VISUAL_GATE_PASS');
+  } catch (error) {
+    evidence.status = 'FAIL'; evidence.failure = { ...activeContext,message:error.message,stack:error.stack }; writeEvidence(); throw error;
   } finally { await new Promise(resolve => server.close(resolve)); }
 }
 run().catch(error => { console.error(error.stack || error); process.exitCode = 1; });
