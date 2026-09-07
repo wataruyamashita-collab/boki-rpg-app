@@ -6,6 +6,7 @@ const questions = Object.values(sandbox.window.QuestionData); const ordinary = q
 const columns = [...new Set(ordinary.flatMap(question => question.table.columns || []))].sort();
 const records = new Map(columns.map(key => [key, { key, values:[], answers:[], inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0 }]));
 const formatted = value => Number(value).toLocaleString('ja-JP');
+const mixedGlyphUnits = value => [...String(value ?? '')].reduce((total, glyph) => total + (/\d/u.test(glyph) ? 0.56 : /[\x00-\x7f]/u.test(glyph) ? 0.6 : 1), 0);
 for (const question of ordinary) {
   let inputIndex = 0;
   for (const row of question.table.rows || []) for (let index = 0; index < question.table.columns.length; index += 1) {
@@ -27,11 +28,13 @@ const years = records.get('life'); assert.deepStrictEqual(years.values, [5,5,5,5
 const money = [...records.values()].filter(record => record.type === 'money'); const quantity = records.get('quantity'); const dates = records.get('date'); const texts = [...records.values()].filter(record => record.type === 'text' || record.type === 'long-text');
 assert(Math.max(...money.map(record => record.maximumIntegerLength)) >= 9, 'money profile includes the full comma-formatted canonical answer range');
 assert.strictEqual(quantity.maximumIntegerLength,2); assert(dates.maximumTextLength >= 5); assert(Math.max(...texts.map(record => record.maximumTextLength)) >= 10);
+assert(Math.max(...dates.values.map(mixedGlyphUnits)) < dates.maximumTextLength, 'date profiling distinguishes narrow ASCII digits from full-width Japanese glyphs');
 const tableRule = css.match(/\.answer-table\s*\{([^}]*)\}/)?.[1] || '', headRule = css.match(/\.answer-table th\s*\{([^}]*)\}/)?.[1] || '';
 assert(/width:\s*max-content/.test(tableRule) && /min-width:\s*0/.test(tableRule), 'ordinary tables use compact intrinsic width instead of unconditional container stretching');
 assert(/--column-horizontal-chrome:\s*17px/.test(css) && /var\(--column-header-glyphs\) \* 1rem/.test(css), 'semantic minimums include intrinsic header width and desktop cell chrome');
 assert(/--column-horizontal-chrome:\s*13px/.test(css), 'mobile semantic minimums include measured mobile cell chrome without changing vertical density');
 assert(view.includes('profileTableColumns(Object.values(root.QuestionData || {}))') && view.includes("th.style.setProperty('--column-header-glyphs'") && view.includes("cell.style.setProperty('--column-content-glyphs'"), 'renderer applies canonical content and header profiles to the browser table algorithm');
+assert(view.includes("style.setProperty('--column-mixed-glyph-units'") && /data-column-type="date"[^}]*var\(--column-mixed-glyph-units\)/s.test(css), 'date columns use a mixed digit/Japanese-glyph intrinsic budget instead of generic text width');
 assert(/word-break:\s*keep-all/.test(headRule) && /white-space:\s*nowrap/.test(headRule) && !/(?:overflow:\s*hidden|text-overflow:\s*ellipsis)/.test(headRule), 'headers remain complete, readable, and untruncated');
 for (const type of ['money','quantity','years','short-integer','account','date','long-text']) assert(css.includes(`data-column-type="${type}"`), `${type}: semantic CSS contract is present`);
 assert(view.includes('semanticColumnType') && view.includes('th.dataset.columnType = columnTypes.get(column)') && view.includes('cell.dataset.columnType = columnTypes.get(column)'), 'renderer exposes reusable semantic types on headers and cells');

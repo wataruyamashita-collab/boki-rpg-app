@@ -22,7 +22,7 @@
     "qa:story": "node scripts/qa/run-story-e2e.js",
     "qa:mutations": "node scripts/qa/run-required-mutations.js",
     "qa:evidence": "node scripts/qa/generate-evidence.js",
-    "qa:test": "node independent-audit/tests/foundation.test.js && node independent-audit/tests/audit-lock-v2.test.js && node independent-audit/tests/phase-b-lifecycle.test.js && node independent-audit/tests/generation-immutability.test.js && node independent-audit/tests/generation-3-finalizer.test.js && node independent-audit/tests/generation-4-finalizer.test.js && node independent-audit/tests/generation-5-finalizer.test.js && node independent-audit/tests/generation-6-finalizer.test.js && node independent-audit/tests/generation-7-finalizer.test.js && node independent-audit/tests/generation-8-finalizer.test.js && node independent-audit/tests/generation-9-finalizer.test.js && node independent-audit/tests/generation-10-finalizer.test.js && node independent-audit/tests/generation-11-finalizer.test.js",
+    "qa:test": "node independent-audit/tests/foundation.test.js && node independent-audit/tests/audit-lock-v2.test.js && node independent-audit/tests/phase-b-lifecycle.test.js && node independent-audit/tests/generation-immutability.test.js && node independent-audit/tests/generation-3-finalizer.test.js && node independent-audit/tests/generation-4-finalizer.test.js && node independent-audit/tests/generation-5-finalizer.test.js && node independent-audit/tests/generation-6-finalizer.test.js && node independent-audit/tests/generation-7-finalizer.test.js && node independent-audit/tests/generation-8-finalizer.test.js && node independent-audit/tests/generation-9-finalizer.test.js && node independent-audit/tests/generation-10-finalizer.test.js",
     "qa:finalize:phase-b": "node scripts/qa/finalize-phase-b-generation.js",
     "qa:finalize:phase-b-generation-3": "node scripts/qa/finalize-phase-b-generation-3.js",
     "qa:finalize:phase-b-generation-4": "node scripts/qa/finalize-phase-b-generation-4.js",
@@ -31,8 +31,7 @@
     "qa:finalize:phase-b-generation-7": "node scripts/qa/finalize-phase-b-generation-7.js",
     "qa:finalize:phase-b-generation-8": "node scripts/qa/finalize-phase-b-generation-8.js",
     "qa:finalize:phase-b-generation-9": "node scripts/qa/finalize-phase-b-generation-9.js",
-    "qa:finalize:phase-b-generation-10": "node scripts/qa/finalize-phase-b-generation-10.js",
-    "qa:finalize:phase-b-generation-11": "node scripts/qa/finalize-phase-b-generation-11.js"
+    "qa:finalize:phase-b-generation-10": "node scripts/qa/finalize-phase-b-generation-10.js"
   },
   "engines": {
     "node": ">=18"

@@ -22,6 +22,7 @@
     'openingAccumulated', 'unitPrice', '整理後借方', '整理後貸方', '整理後金額', '決算整理額', '計算基礎額', '金額'
   ]);
   const LONG_TEXT_COLUMNS = new Set(['description', '区分', '締切手続', '記入欄', '論点', '財務諸表の表示項目']);
+  const mixedGlyphUnits = value => [...String(value ?? '')].reduce((total, glyph) => total + (/\d/u.test(glyph) ? 0.56 : /[\x00-\x7f]/u.test(glyph) ? 0.6 : 1), 0);
   const semanticColumnType = (column, profile = {}) => {
     const inputTypes = profile.inputTypes || [];
     if (column === 'life') return 'years';
@@ -37,7 +38,7 @@
     const profiles = new Map();
     for (const question of questions || []) {
       if (!question.table || question.format === 'eight-column-worksheet') continue;
-      for (const column of question.table.columns || []) if (!profiles.has(column)) profiles.set(column, { inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0 });
+      for (const column of question.table.columns || []) if (!profiles.has(column)) profiles.set(column, { inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0, maximumMixedGlyphUnits:0 });
       let inputIndex = 0;
       for (const row of question.table.rows || []) Object.values(row).forEach((value, columnIndex) => {
         const profile = profiles.get(question.table.columns[columnIndex]); if (!profile) return;
@@ -45,10 +46,10 @@
           const cellId = question.table.inputCells[inputIndex++]; profile.inputTypes.push(question.table.inputTypes?.[cellId] || 'amount');
           const answer = question.answer?.cells?.[cellId];
           if (Number.isFinite(Number(answer))) profile.maximumIntegerLength = Math.max(profile.maximumIntegerLength, yen(answer).length);
-          else profile.maximumTextLength = Math.max(profile.maximumTextLength, [...String(answer ?? '')].length);
+          else { profile.maximumTextLength = Math.max(profile.maximumTextLength, [...String(answer ?? '')].length); profile.maximumMixedGlyphUnits = Math.max(profile.maximumMixedGlyphUnits, mixedGlyphUnits(answer)); }
         } else if (typeof value === 'number') {
           profile.numeric = true; profile.maximumIntegerLength = Math.max(profile.maximumIntegerLength, yen(value).length);
-        } else profile.maximumTextLength = Math.max(profile.maximumTextLength, [...String(value ?? '')].length);
+        } else { profile.maximumTextLength = Math.max(profile.maximumTextLength, [...String(value ?? '')].length); profile.maximumMixedGlyphUnits = Math.max(profile.maximumMixedGlyphUnits, mixedGlyphUnits(value)); }
       });
     }
     return profiles;
@@ -227,7 +228,7 @@
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
       const canonicalProfiles = profileTableColumns(Object.values(root.QuestionData || {}));
-      const columnProfiles = new Map((question.table.columns || []).map(column => [column, canonicalProfiles.get(column) || { inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0 }]));
+      const columnProfiles = new Map((question.table.columns || []).map(column => [column, canonicalProfiles.get(column) || { inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0, maximumMixedGlyphUnits:0 }]));
       if (question.format !== 'eight-column-worksheet') {
         table.dataset.sizing = 'semantic-content';
       }
@@ -241,13 +242,13 @@
         const sideHead = thead.insertRow();
         for (let index = 0; index < 4; index += 1) ['借方', '貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; sideHead.append(th); });
       } else {
-        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); const profile = columnProfiles.get(column), label = this.tableLabel(column); th.textContent = label; th.scope = 'col'; th.dataset.columnKey = column; th.dataset.columnType = columnTypes.get(column); th.style.setProperty('--column-header-glyphs', [...label].length); th.style.setProperty('--column-content-ch', Math.max(1, profile.maximumIntegerLength)); th.style.setProperty('--column-content-glyphs', Math.max(1, profile.maximumTextLength)); head.append(th); });
+        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); const profile = columnProfiles.get(column), label = this.tableLabel(column); th.textContent = label; th.scope = 'col'; th.dataset.columnKey = column; th.dataset.columnType = columnTypes.get(column); th.style.setProperty('--column-header-glyphs', [...label].length); th.style.setProperty('--column-content-ch', Math.max(1, profile.maximumIntegerLength)); th.style.setProperty('--column-content-glyphs', Math.max(1, profile.maximumTextLength)); th.style.setProperty('--column-mixed-glyph-units', Math.max(1, profile.maximumMixedGlyphUnits)); head.append(th); });
       }
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
         const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
           const cell = row.insertCell();
-          if (question.format !== 'eight-column-worksheet') { const column = question.table.columns[columnIndex], profile = columnProfiles.get(column); cell.dataset.columnKey = column; cell.dataset.columnType = columnTypes.get(column); cell.style.setProperty('--column-header-glyphs', [...this.tableLabel(column)].length); cell.style.setProperty('--column-content-ch', Math.max(1, profile.maximumIntegerLength)); cell.style.setProperty('--column-content-glyphs', Math.max(1, profile.maximumTextLength)); }
+          if (question.format !== 'eight-column-worksheet') { const column = question.table.columns[columnIndex], profile = columnProfiles.get(column); cell.dataset.columnKey = column; cell.dataset.columnType = columnTypes.get(column); cell.style.setProperty('--column-header-glyphs', [...this.tableLabel(column)].length); cell.style.setProperty('--column-content-ch', Math.max(1, profile.maximumIntegerLength)); cell.style.setProperty('--column-content-glyphs', Math.max(1, profile.maximumTextLength)); cell.style.setProperty('--column-mixed-glyph-units', Math.max(1, profile.maximumMixedGlyphUnits)); }
           if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');
           if (question.format === 'eight-column-worksheet' && columnIndex > 0) cell.classList.add('worksheet-value-cell');
           if (value === '入力') {

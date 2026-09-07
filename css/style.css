@@ -253,9 +253,11 @@ button.secondary-button:hover { color: #fff; }
 }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="text"],
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="long-text"],
-.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="account"],
-.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="date"] {
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="account"] {
   min-width: max(calc(var(--column-header-glyphs) * 1rem + var(--column-horizontal-chrome)), calc(var(--column-content-glyphs) * 1rem + var(--column-horizontal-chrome)));
+}
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="date"] {
+  min-width: max(calc(var(--column-header-glyphs) * 1rem + var(--column-horizontal-chrome)), calc(var(--column-mixed-glyph-units) * 1rem + var(--column-horizontal-chrome)));
 }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="money"],
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="quantity"],
