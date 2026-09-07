@@ -1,17 +1,19 @@
 'use strict';
 
-const DEFAULTS = Object.freeze({ widthTolerance: 16, widthRatio: 1.35, maximumRowHeight: 56, maximumYearsWidth: 80, maximumCompactHeaderHeight: 48, maximumCompactNormalRowHeight: 48, maximumCompactEditableRowHeight: 50, minimumTouchTargetHeight: 44 });
+const DEFAULTS = Object.freeze({ maximumYearsWidth: 80, maximumCompactHeaderHeight: 48, maximumCompactNormalRowHeight: 48, maximumCompactEditableRowHeight: 50, minimumTouchTargetHeight: 44, rowRoundingTolerance: 1, minimumWasteTolerance: 48, wasteRatio: 0.75 });
 
 function evaluateVisualMetrics(metrics, options = {}) {
   const limits = { ...DEFAULTS, ...options };
   const violations = [];
   for (const [key, column] of Object.entries(metrics.columns || {})) {
-    const required = Number(column.requiredWidth);
     const actual = Number(column.width);
-    const maximum = Math.max(required + limits.widthTolerance, required * limits.widthRatio);
-    if (actual + 0.5 < required) violations.push({ code:'COLUMN_TOO_NARROW', column:key, actual, required });
-    if (actual - 0.5 > maximum) violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual, reasonableMaximum:maximum });
-    if (column.clipped) violations.push({ code:'CONTENT_CLIPPED', column:key });
+    const narrowEvidence = column.headerClipped || column.cellClipped || column.clipped || column.editableAnswerFitFailure;
+    if (narrowEvidence) violations.push({ code:'COLUMN_TOO_NARROW', column:key, actual, representativeRequiredWidth:column.representativeRequiredWidth, evidence:{ headerClipped:Boolean(column.headerClipped),cellClipped:Boolean(column.cellClipped || column.clipped),editableAnswerFitFailure:Boolean(column.editableAnswerFitFailure) } });
+    const occupied = Number(column.occupiedWidth || column.representativeRequiredWidth || column.requiredWidth);
+    const waste = Number.isFinite(Number(column.contentWaste)) ? Number(column.contentWaste) : actual - occupied;
+    const excessiveWaste = Math.max(limits.minimumWasteTolerance, occupied * limits.wasteRatio);
+    if (metrics.table?.requiresHorizontalScroll && waste > excessiveWaste && column.classification !== 'years') violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,occupiedWidth:occupied,contentWaste:waste,maximumUsefulWaste:excessiveWaste });
+    if (narrowEvidence) violations.push({ code:'CONTENT_CLIPPED', column:key });
     if (column.headerLineCount > 2 || column.headerGlyphStacked) violations.push({ code:'UNREADABLE_HEADER_WRAP', column:key, lines:column.headerLineCount });
   }
   if (metrics.case === 'fixed-asset' && Number(metrics.viewport?.width) <= 430) {
@@ -27,7 +29,10 @@ function evaluateVisualMetrics(metrics, options = {}) {
     }
   }
   const rows = metrics.rows || {};
-  for (const key of ['normalRowHeight','editableRowHeight']) if (Number(rows[key]) > limits.maximumRowHeight) violations.push({ code:'ROW_TOO_TALL', row:key, actual:rows[key], maximum:limits.maximumRowHeight });
+  for (const [key, expectedKey] of [['normalRowHeight','expectedNormalRowHeight'],['editableRowHeight','expectedEditableRowHeight']]) {
+    const actual = Number(rows[key]), expected = Number(rows[expectedKey]);
+    if (Number.isFinite(actual) && Number.isFinite(expected) && expected > 0 && actual > expected + limits.rowRoundingTolerance) violations.push({ code:'ROW_TOO_TALL', row:key, actual,expected,chrome:{ paddingTop:rows.paddingTop,paddingBottom:rows.paddingBottom,borderTop:rows.borderTop,borderBottom:rows.borderBottom,inputHeight:rows.inputVisualHeight } });
+  }
   if (metrics.table?.requiresHorizontalScroll && !metrics.table?.horizontalScrollAvailable) violations.push({ code:'HORIZONTAL_OVERFLOW_UNAVAILABLE' });
   if (metrics.table?.clipped) violations.push({ code:'TABLE_CLIPPED' });
   return violations;

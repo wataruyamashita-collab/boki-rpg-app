@@ -10,4 +10,6 @@ for (const dependency of ['QuestionData','AccountingDomain','AppView','AppContro
 for (const representative of ['fixed-asset','inventory','ledger','journal','worksheet']) assert(harness.includes(representative),`${representative} has a canonical selector`);
 assert(harness.includes('HARNESS_DEPENDENCY_MISSING:'),'missing dependencies fail with the stable diagnostic');
 assert(harness.includes("question.answer?.cells?.[cellId]"), 'editable canonical answers participate in intrinsic width measurement');
+assert(harness.includes('representativeColumn(key)') && harness.includes('representativeQuestion = question'), 'browser sizing uses the exact rendered representative');
+assert(harness.includes('visibleValues') && harness.includes('editableAnswers'), 'representative visible and editable evidence remain separately diagnosable');
 console.log('visual harness source checks: dependencies, order, diagnostics, representatives: ok');

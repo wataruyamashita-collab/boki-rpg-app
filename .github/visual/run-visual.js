@@ -45,31 +45,49 @@ async function measure(page) {
     const columns = {};
     for (const header of table?.querySelectorAll('thead [data-column-key]') || []) {
       const key = header.dataset.columnKey, cells = [...table.querySelectorAll(`tbody [data-column-key="${CSS.escape(key)}"]`)];
-      const canonical = window.visualHarness.canonicalColumn(key), visible = canonical.values.map(value => typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value ?? ''));
+      const canonical = window.visualHarness.canonicalColumn(key);
+      const representative = window.visualHarness.representativeColumn(key);
+      const format = value => typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value ?? '');
+      const visible = representative.visibleValues.map(format), editableAnswers = representative.editableAnswers.map(format);
       const editableControl = cells.find(cell => cell.querySelector('input,select'))?.querySelector('input,select');
       const headerStyle = getComputedStyle(header), cellStyle = getComputedStyle(cells[0] || header), range = document.createRange(); range.selectNodeContents(header);
       const lineHeight = parseFloat(headerStyle.lineHeight) || parseFloat(headerStyle.fontSize) * 1.2;
-      const contentWidth = requiredTextWidth(editableControl || cells[0] || header, visible), headerWidth = requiredTextWidth(header, [header.textContent]);
+      const contentWidth = requiredTextWidth(cells.find(cell => !cell.querySelector('input,select')) || cells[0] || header, visible);
+      const editableAnswerWidth = requiredTextWidth(editableControl || cells[0] || header, editableAnswers);
+      const headerWidth = requiredTextWidth(header, [header.textContent]);
       const horizontalChrome = parseFloat(cellStyle.paddingLeft) + parseFloat(cellStyle.paddingRight) + parseFloat(cellStyle.borderLeftWidth) + parseFloat(cellStyle.borderRightWidth);
+      const inputStyle = editableControl ? getComputedStyle(editableControl) : null;
+      const inputChrome = inputStyle ? parseFloat(inputStyle.paddingLeft) + parseFloat(inputStyle.paddingRight) + parseFloat(inputStyle.borderLeftWidth) + parseFloat(inputStyle.borderRightWidth) : 0;
       const semanticRequiredWidth = header.dataset.columnType === 'years'
-        ? Math.max(contentWidth + horizontalChrome, parseFloat(headerStyle.fontSize) * 4 + 14)
-        : Math.max(contentWidth,headerWidth) + horizontalChrome;
+        ? Math.max(contentWidth + horizontalChrome, editableAnswerWidth + horizontalChrome, parseFloat(headerStyle.fontSize) * 4 + 14)
+        : Math.max(contentWidth,editableAnswerWidth,headerWidth) + horizontalChrome;
+      const actualWidth = header.getBoundingClientRect().width;
+      const headerClipped = header.scrollWidth > header.clientWidth + 1;
+      const cellClipped = cells.some(cell => cell.scrollWidth > cell.clientWidth + 1);
+      const editableAnswerFitFailure = Boolean(editableControl && editableAnswerWidth > editableControl.clientWidth - inputChrome + 0.5);
+      const occupiedWidth = Math.max(headerWidth + horizontalChrome, contentWidth + horizontalChrome, editableControl ? editableControl.clientWidth + horizontalChrome : editableAnswerWidth + horizontalChrome);
       columns[key] = {
-        headerText:header.textContent,classification:header.dataset.columnType,canonicalValues:canonical.values,editable:canonical.editable,
-        contentMax:canonical.values.filter(Number.isFinite).reduce((max,value) => Math.max(max,value), Number.NEGATIVE_INFINITY),
-        contentLength:Math.max(0,...visible.map(value => [...value].length)),header:dimensions(header),cell:dimensions(cells[0]),input:dimensions(cells.find(cell => cell.querySelector('input'))?.querySelector('input')),
-        width:header.getBoundingClientRect().width,requiredWidth:semanticRequiredWidth,
-        computedMinWidth:headerStyle.minWidth,clipped:cells.some(cell => cell.scrollWidth > cell.clientWidth + 1),
+        headerText:header.textContent,classification:header.dataset.columnType,canonicalValues:canonical.values,representativeValues:representative.visibleValues,editableAnswers:representative.editableAnswers,editable:representative.editable,
+        contentMax:representative.visibleValues.filter(Number.isFinite).reduce((max,value) => Math.max(max,value), Number.NEGATIVE_INFINITY),
+        contentLength:Math.max(0,...[...visible,...editableAnswers].map(value => [...value].length)),header:dimensions(header),cell:dimensions(cells[0]),input:dimensions(editableControl),
+        width:actualWidth,actualWidth,requiredWidth:semanticRequiredWidth,representativeRequiredWidth:semanticRequiredWidth,
+        headerTextWidth:headerWidth,representativeContentWidth:contentWidth,editableAnswerWidth,horizontalChrome,occupiedWidth,contentWaste:Math.max(0,actualWidth-occupiedWidth),
+        headerScrollWidth:header.scrollWidth,headerClientWidth:header.clientWidth,cellScrollWidth:Math.max(0,...cells.map(cell => cell.scrollWidth)),cellClientWidth:Math.min(...cells.map(cell => cell.clientWidth)),inputClientWidth:editableControl?.clientWidth || 0,
+        computedMinWidth:headerStyle.minWidth,clipped:cellClipped,cellClipped,headerClipped,editableAnswerFitFailure,
         headerLineCount:Math.max(1,Math.round(range.getBoundingClientRect().height / lineHeight)),headerGlyphStacked:header.getBoundingClientRect().width < headerStyle.fontSize.replace('px','') * 1.8 && [...header.textContent].length > 2
       };
     }
     const bodyRows = [...(table?.tBodies[0]?.rows || [])], editableRow = bodyRows.find(row => row.querySelector('input,select')), normalRow = bodyRows.find(row => !row.querySelector('input,select')) || bodyRows[0];
     const representativeCell = editableRow?.cells[0] || normalRow?.cells[0], computedCell = representativeCell ? getComputedStyle(representativeCell) : null;
+    const borderTop = computedCell ? parseFloat(computedCell.borderTopWidth) : 0, borderBottom = computedCell ? parseFloat(computedCell.borderBottomWidth) : 0;
+    const paddingTop = computedCell ? parseFloat(computedCell.paddingTop) : 0, paddingBottom = computedCell ? parseFloat(computedCell.paddingBottom) : 0;
+    const inputHeight = rect(editableRow?.querySelector('input,select'))?.height || 0;
+    const lineHeight = computedCell ? parseFloat(computedCell.lineHeight) || parseFloat(computedCell.fontSize) * 1.2 : 0;
     return {
       questionId:document.body.dataset.questionId,
       table:{ ...dimensions(table),wrapper:dimensions(wrapper),horizontalOverflow:Math.max(0,(table?.scrollWidth || 0)-(wrapper?.clientWidth || 0)),requiresHorizontalScroll:(table?.scrollWidth || 0)>(wrapper?.clientWidth || 0),horizontalScrollAvailable:getComputedStyle(wrapper).overflowX !== 'visible',clipped:(wrapper?.scrollWidth || 0) < (table?.scrollWidth || 0) },
       columns,
-      rows:{ headerRowHeight:rect(table?.tHead?.rows[0])?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,inputVisualHeight:rect(editableRow?.querySelector('input,select'))?.height || 0,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,totalTableHeight:rect(table)?.height || 0 }
+      rows:{ headerRowHeight:rect(table?.tHead?.rows[0])?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,inputVisualHeight:inputHeight,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom }
     };
   });
 }
