@@ -43,7 +43,7 @@ function generationAuthorities(){
     if(!authorityCommit)throw new Error(`generation authority missing for ${file}`);
     const bytes=childProcess.execFileSync('git',['show',`${authorityCommit}:${file}`],{cwd:core.ROOT});
     return {file,commit:authorityCommit,bytes,document:JSON.parse(bytes.toString('utf8'))};
-  });
+  }).sort((left,right)=>left.document.generation-right.document.generation);
 }
 
 function validateRoot(errors){

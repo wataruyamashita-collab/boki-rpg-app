@@ -190,6 +190,22 @@
         guide.append(title, detail); wrap.append(guide);
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
+      const columnTypes = new Map((question.table.columns || []).map(column => [column, 'text']));
+      if (question.format !== 'eight-column-worksheet') {
+        let profileInputIndex = 0;
+        for (const row of question.table.rows || []) Object.values(row).forEach((value, columnIndex) => {
+          const column = question.table.columns[columnIndex];
+          if (value === '入力') {
+            const cellId = question.table.inputCells[profileInputIndex++];
+            columnTypes.set(column, question.table.inputTypes?.[cellId] === 'account' ? 'account' : question.table.inputTypes?.[cellId] === 'text' ? 'text' : 'numeric');
+          } else if (typeof value === 'number' && columnTypes.get(column) === 'text') columnTypes.set(column, 'numeric');
+        });
+        for (const column of question.table.columns || []) {
+          if (column === 'date') columnTypes.set(column, 'date');
+          else if (/account/i.test(column) || column === 'account') columnTypes.set(column, 'account');
+        }
+        table.dataset.sizing = 'semantic-content';
+      }
       if (question.format === 'eight-column-worksheet') table.setAttribute('role', 'grid');
       const thead = table.createTHead();
       if (question.format === 'eight-column-worksheet') {
@@ -199,13 +215,13 @@
         const sideHead = thead.insertRow();
         for (let index = 0; index < 4; index += 1) ['借方', '貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; sideHead.append(th); });
       } else {
-        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); th.scope = 'col'; th.dataset.columnKey = column; head.append(th); });
+        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); th.scope = 'col'; th.dataset.columnKey = column; th.dataset.columnType = columnTypes.get(column); head.append(th); });
       }
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
         const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
           const cell = row.insertCell();
-          if (question.format !== 'eight-column-worksheet') cell.dataset.columnKey = question.table.columns[columnIndex];
+          if (question.format !== 'eight-column-worksheet') { cell.dataset.columnKey = question.table.columns[columnIndex]; cell.dataset.columnType = columnTypes.get(question.table.columns[columnIndex]); }
           if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');
           if (question.format === 'eight-column-worksheet' && columnIndex > 0) cell.classList.add('worksheet-value-cell');
           if (value === '入力') {

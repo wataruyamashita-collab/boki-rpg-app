@@ -21,7 +21,7 @@ try{
     const generation4=authorities.find(item=>item.document.generation===4);
     test('committed Generation 4 is discoverable',()=>assert(generation4));
     test('Generation 4 predecessor is exact Generation 3',()=>assert.deepStrictEqual(generation4.document.predecessor,lifecycle.identity(generation3.document)));
-    test('current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+    test('current integrity passes',()=>assert.strictEqual(core.currentIntegrityCheck().ok,true));
     test('duplicate Generation 4 issuance fails',()=>assert.notStrictEqual(run().status,0));
     test('historical authorities remain byte-identical',()=>{for(const [file,bytes] of savedHistorical)assert(fs.readFileSync(file).equals(bytes));});
     test('commit SHA is excluded from authority identity',()=>assert(!Object.hasOwn(generation4.document.predecessor,'commit')));
