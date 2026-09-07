@@ -33,6 +33,26 @@
     if (LONG_TEXT_COLUMNS.has(column) || profile.maximumTextLength >= 10) return 'long-text';
     return 'text';
   };
+  const profileTableColumns = questions => {
+    const profiles = new Map();
+    for (const question of questions || []) {
+      if (!question.table || question.format === 'eight-column-worksheet') continue;
+      for (const column of question.table.columns || []) if (!profiles.has(column)) profiles.set(column, { inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0 });
+      let inputIndex = 0;
+      for (const row of question.table.rows || []) Object.values(row).forEach((value, columnIndex) => {
+        const profile = profiles.get(question.table.columns[columnIndex]); if (!profile) return;
+        if (value === '入力') {
+          const cellId = question.table.inputCells[inputIndex++]; profile.inputTypes.push(question.table.inputTypes?.[cellId] || 'amount');
+          const answer = question.answer?.cells?.[cellId];
+          if (Number.isFinite(Number(answer))) profile.maximumIntegerLength = Math.max(profile.maximumIntegerLength, yen(answer).length);
+          else profile.maximumTextLength = Math.max(profile.maximumTextLength, [...String(answer ?? '')].length);
+        } else if (typeof value === 'number') {
+          profile.numeric = true; profile.maximumIntegerLength = Math.max(profile.maximumIntegerLength, yen(value).length);
+        } else profile.maximumTextLength = Math.max(profile.maximumTextLength, [...String(value ?? '')].length);
+      });
+    }
+    return profiles;
+  };
   class AppView {
     constructor(document) { this.document = document; this.calculatorFirstInput = AppView.prefersCalculatorFirst(root); }
     static prefersCalculatorFirst(environment) {
@@ -206,21 +226,9 @@
         guide.append(title, detail); wrap.append(guide);
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
-      const columnProfiles = new Map((question.table.columns || []).map(column => [column, { inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0 }]));
+      const canonicalProfiles = profileTableColumns(Object.values(root.QuestionData || {}));
+      const columnProfiles = new Map((question.table.columns || []).map(column => [column, canonicalProfiles.get(column) || { inputTypes:[], numeric:false, maximumIntegerLength:0, maximumTextLength:0 }]));
       if (question.format !== 'eight-column-worksheet') {
-        let profileInputIndex = 0;
-        for (const row of question.table.rows || []) Object.values(row).forEach((value, columnIndex) => {
-          const column = question.table.columns[columnIndex];
-          const profile = columnProfiles.get(column); if (!profile) return;
-          if (value === '入力') {
-            const cellId = question.table.inputCells[profileInputIndex++];
-            profile.inputTypes.push(question.table.inputTypes?.[cellId] || 'amount');
-            const answer = question.answer?.cells?.[cellId];
-            if (Number.isFinite(Number(answer))) profile.maximumIntegerLength = Math.max(profile.maximumIntegerLength, yen(answer).length);
-          } else if (typeof value === 'number') {
-            profile.numeric = true; profile.maximumIntegerLength = Math.max(profile.maximumIntegerLength, yen(value).length);
-          } else profile.maximumTextLength = Math.max(profile.maximumTextLength, [...String(value ?? '')].length);
-        });
         table.dataset.sizing = 'semantic-content';
       }
       const columnTypes = new Map([...columnProfiles].map(([column, profile]) => [column, semanticColumnType(column, profile)]));
@@ -233,13 +241,13 @@
         const sideHead = thead.insertRow();
         for (let index = 0; index < 4; index += 1) ['借方', '貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; sideHead.append(th); });
       } else {
-        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); th.scope = 'col'; th.dataset.columnKey = column; th.dataset.columnType = columnTypes.get(column); th.style.setProperty('--column-content-ch', Math.max(4, columnProfiles.get(column).maximumIntegerLength)); head.append(th); });
+        const head = thead.insertRow(); question.table.columns.forEach(column => { const th = this.document.createElement('th'); const profile = columnProfiles.get(column), label = this.tableLabel(column); th.textContent = label; th.scope = 'col'; th.dataset.columnKey = column; th.dataset.columnType = columnTypes.get(column); th.style.setProperty('--column-header-glyphs', [...label].length); th.style.setProperty('--column-content-ch', Math.max(1, profile.maximumIntegerLength)); th.style.setProperty('--column-content-glyphs', Math.max(1, profile.maximumTextLength)); head.append(th); });
       }
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
         const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
           const cell = row.insertCell();
-          if (question.format !== 'eight-column-worksheet') { const column = question.table.columns[columnIndex]; cell.dataset.columnKey = column; cell.dataset.columnType = columnTypes.get(column); cell.style.setProperty('--column-content-ch', Math.max(4, columnProfiles.get(column).maximumIntegerLength)); }
+          if (question.format !== 'eight-column-worksheet') { const column = question.table.columns[columnIndex], profile = columnProfiles.get(column); cell.dataset.columnKey = column; cell.dataset.columnType = columnTypes.get(column); cell.style.setProperty('--column-header-glyphs', [...this.tableLabel(column)].length); cell.style.setProperty('--column-content-ch', Math.max(1, profile.maximumIntegerLength)); cell.style.setProperty('--column-content-glyphs', Math.max(1, profile.maximumTextLength)); }
           if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');
           if (question.format === 'eight-column-worksheet' && columnIndex > 0) cell.classList.add('worksheet-value-cell');
           if (value === '入力') {
@@ -597,5 +605,6 @@
     }
   }
   AppView.semanticColumnType = semanticColumnType;
+  AppView.profileTableColumns = profileTableColumns;
   root.AppView = AppView;
 }(window));

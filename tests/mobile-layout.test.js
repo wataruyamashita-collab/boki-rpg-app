@@ -29,6 +29,9 @@ assert(Math.max(...money.map(record => record.maximumIntegerLength)) >= 9, 'mone
 assert.strictEqual(quantity.maximumIntegerLength,2); assert(dates.maximumTextLength >= 5); assert(Math.max(...texts.map(record => record.maximumTextLength)) >= 10);
 const tableRule = css.match(/\.answer-table\s*\{([^}]*)\}/)?.[1] || '', headRule = css.match(/\.answer-table th\s*\{([^}]*)\}/)?.[1] || '';
 assert(/width:\s*max-content/.test(tableRule) && /min-width:\s*0/.test(tableRule), 'ordinary tables use compact intrinsic width instead of unconditional container stretching');
+assert(/--column-horizontal-chrome:\s*17px/.test(css) && /var\(--column-header-glyphs\) \* 1rem/.test(css), 'semantic minimums include intrinsic header width and desktop cell chrome');
+assert(/--column-horizontal-chrome:\s*13px/.test(css), 'mobile semantic minimums include measured mobile cell chrome without changing vertical density');
+assert(view.includes('profileTableColumns(Object.values(root.QuestionData || {}))') && view.includes("th.style.setProperty('--column-header-glyphs'") && view.includes("cell.style.setProperty('--column-content-glyphs'"), 'renderer applies canonical content and header profiles to the browser table algorithm');
 assert(/word-break:\s*keep-all/.test(headRule) && /white-space:\s*nowrap/.test(headRule) && !/(?:overflow:\s*hidden|text-overflow:\s*ellipsis)/.test(headRule), 'headers remain complete, readable, and untruncated');
 for (const type of ['money','quantity','years','short-integer','account','date','long-text']) assert(css.includes(`data-column-type="${type}"`), `${type}: semantic CSS contract is present`);
 assert(view.includes('semanticColumnType') && view.includes('th.dataset.columnType = columnTypes.get(column)') && view.includes('cell.dataset.columnType = columnTypes.get(column)'), 'renderer exposes reusable semantic types on headers and cells');

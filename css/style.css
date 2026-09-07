@@ -247,6 +247,16 @@ button.secondary-button:hover { color: #fff; }
 .eight-column-worksheet .table-input { width: 100%; min-width: 11ch; font-size: 16px; }
 .table-input { min-width: 0; }
 .table-text-input { width: 100%; min-width: 120px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; }
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type] {
+  --column-horizontal-chrome: 17px;
+  min-width: max(calc(var(--column-header-glyphs) * 1rem + var(--column-horizontal-chrome)), calc(var(--column-content-ch) * 1ch + var(--column-horizontal-chrome)));
+}
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="text"],
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="long-text"],
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="account"],
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="date"] {
+  min-width: max(calc(var(--column-header-glyphs) * 1rem + var(--column-horizontal-chrome)), calc(var(--column-content-glyphs) * 1rem + var(--column-horizontal-chrome)));
+}
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="money"],
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="quantity"],
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="years"],
@@ -255,9 +265,9 @@ button.secondary-button:hover { color: #fff; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td[data-column-type="quantity"] .table-input,
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td[data-column-type="years"] .table-input,
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td[data-column-type="short-integer"] .table-input { box-sizing: border-box; width: 4ch; min-width: 0; font-variant-numeric: tabular-nums; }
-.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="account"] { min-width: 8em; word-break: keep-all; overflow-wrap: normal; }
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="account"] { word-break: keep-all; overflow-wrap: normal; }
 .answer-table:not(.eight-column-worksheet) [data-column-type="date"] { white-space: nowrap; }
-.answer-table:not(.eight-column-worksheet) [data-column-type="long-text"] { min-width: 7em; word-break: normal; overflow-wrap: break-word; }
+.answer-table:not(.eight-column-worksheet) [data-column-type="long-text"] { word-break: normal; overflow-wrap: break-word; }
 .answer-table td:focus-within { background: #fff4c2; box-shadow: inset 0 0 0 3px rgba(52,152,219,.28); }
 .story-box h2 { margin: 0 0 6px; font-size: 1rem; }
 .story-box p { margin: 4px 0; }
@@ -409,6 +419,7 @@ select, .amount-input {
   }
 
   .answer-table th, .answer-table td { padding: 5px 6px; font-size: .85rem; }
+  .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type] { --column-horizontal-chrome: 13px; }
   .table-input { padding: 6px 1px; font-size: 16px; }
 
   .toc-questions { grid-template-columns: 1fr; }

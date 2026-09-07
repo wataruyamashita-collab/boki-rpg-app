@@ -10,9 +10,9 @@
     "auditHash": "afbe89023b23222503b76154c9daa5fe3142561dd03c3162a7381ae54b36048b",
     "baselineIdentity": "a730d5cc7683d74a9b63a1f3d03dde640ed73f8e2f756267b74a88d787359e49"
   },
-  "baselineIdentity": "215c8ec331f32309c9f2cbc224187c6f78963d7f7b11bd8cb5035a34453d1125",
+  "baselineIdentity": "9394dd11a33090b3925454c217ebe690d4dc6fed7df1c7424af23cbf71ba5f14",
   "productionHashes": {
-    "css/style.css": "a2f623eae97aac56b3e212e57967de4b5f496cac21dfe9d1fddcd84aea30b37b",
+    "css/style.css": "d279da0b80eba25aa6b61da1e3a114f796cc58bfff876766855aad047ea2d872",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
     "data/questions.js": "a549e6cd40a81839a04aae4e5e4ee46cdf5bbae12be3ce30416aafc7554c230e",
@@ -24,9 +24,9 @@
     "js/feedback.js": "8c04b1847aca22a44d48b5f0dc636cec47519b4d6c6f454333e3113cd8710b5f",
     "js/model.js": "513ec85bbc0514d1c0e5bda35a0266dfe1ddb03878f1fbaa028597e8ff3eaa7b",
     "js/rpg.js": "fcc89d34b4a6773ecf33c3004997482a12e5444062e2e41b2b1f31d7c4742410",
-    "js/view.js": "09ea874a9accf24ced442dc6ab26e29811225e134eb7d94a382664ffe18cd246",
+    "js/view.js": "9049d89ed1196ee30d8e848c500f8179a5f9d7682b403b549a70a12c571127e8",
     "manifest.webmanifest": "fcde227f0593c3fc7fd5e8adc89be13201f9a35f74d9ad6a4212b23d2a75bd72",
-    "pwa-release-manifest.json": "8d1a855a6707176166d193fe7438e1108628b62739bc19139b0d8a1fd8877c2e",
+    "pwa-release-manifest.json": "d1d0c25cebf4612bd27869d12e68b2b502ad328df73cd8fd952d3d7d4f67a8b1",
     "service-worker.js": "c0e7b7ee1cd4c38dc92ee5bda547efb3f2e02f52fabd504fc17b344582766a91",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
@@ -73,7 +73,7 @@
     "scripts/qa/contract-runner.js": "86c8579b5427607c58f9da0842f8a7b91cb5cf70155bfe2234c098827a5cb741",
     "scripts/qa/create-audit-lock.js": "baa6dca9ea95ae3241c2b803b8752401de979845055ff1361a51627b64d23695",
     "scripts/qa/finalize-phase-b-generation-10.js": "23cdf6644a57d70733695c83f686486342605f0ddb025ecc4139efac5c046add",
-    "scripts/qa/finalize-phase-b-generation-11.js": "aec744a2046897b302e17559bcebddcf86eeb4928fbef9a783bc50e1a7d06fbd",
+    "scripts/qa/finalize-phase-b-generation-11.js": "4eff062beafe6817e6c7848ae965084527fc89334cf6725fb9098dd301d6197f",
     "scripts/qa/finalize-phase-b-generation-3.js": "be21b28497e28b3fc7305dc2079e9a88b4a7bc1c2667798235eb748845e9b9ac",
     "scripts/qa/finalize-phase-b-generation-4.js": "c59e10ee5243c9e3306d3411921845069dcb1a28e0ae0f4ad2607ba60f255a21",
     "scripts/qa/finalize-phase-b-generation-5.js": "d5cb7855a2930fcbe4b5ebefc72648c345d5894ddcff7e357cce6bb6858480b3",
@@ -92,5 +92,5 @@
     "scripts/qa/verify-audit-candidate.js": "82d1a53b2f905d99ae03eece74eba3e45357246645239b5299d7c8042e6afa61",
     "scripts/qa/verify-audit-integrity.js": "fde989c0ee0bb49229f5f5e5b5d87f28a0020acc0abd7799ceab1632719b1391"
   },
-  "auditHash": "4040f093c53b8d4e23eb1d4b7604d41ff6ea9353902823310459b04ecd779940"
+  "auditHash": "9ed0ad4b89a33075d09f48a12d6c8d5773c75224cde593748d609576dfaf223e"
 }
