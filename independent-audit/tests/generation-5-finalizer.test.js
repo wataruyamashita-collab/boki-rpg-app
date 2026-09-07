@@ -20,7 +20,7 @@ try{
     const generation5=committed?authorities.find(item=>item.document.generation===5):{document:JSON.parse(fs.readFileSync(output,'utf8'))};
     test('committed Generation 5 is discoverable',()=>assert(generation5));
     test('Generation 5 predecessor is exact Generation 4',()=>assert.deepStrictEqual(generation5.document.predecessor,lifecycle.identity(generation4.document)));
-    if(committed)test('current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+    if(committed)test('current integrity passes',()=>assert.strictEqual(core.currentIntegrityCheck().ok,true));
     else test('uncommitted issued candidate verifies',()=>assert.strictEqual(lifecycle.verifyCandidate(generation5.document).ok,true));
     test('duplicate Generation 5 issuance fails',()=>assert.notStrictEqual(run().status,0));
     test('historical authorities remain byte-identical',()=>{for(const [file,bytes] of historical)assert(fs.readFileSync(file).equals(bytes));});
