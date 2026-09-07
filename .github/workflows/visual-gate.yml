@@ -10,7 +10,7 @@ on:
       - 'js/**'
       - 'index.html'
 jobs:
-  generation-10-observation:
+  strict-production-layout:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -24,13 +24,13 @@ jobs:
         run: npm install --no-save --package-lock=false playwright@1.55.0
       - name: Install Chromium and WebKit
         run: npx playwright install --with-deps chromium webkit
-      - name: Observe Generation 10 in real browsers
-        run: node .github/visual/run-visual.js audit
+      - name: Enforce production layout in real browsers
+        run: node .github/visual/run-visual.js strict
       - name: Upload screenshots and DOM metrics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: generation-10-visual-audit
+          name: strict-production-visual-gate
           path: artifacts/
           if-no-files-found: error
           retention-days: 14
