@@ -15,9 +15,14 @@ assert(harness.includes('representativeColumn(key)') && harness.includes('repres
 assert(harness.includes('visibleValues') && harness.includes('editableAnswers'), 'representative visible and editable evidence remain separately diagnosable');
 assert(harness.includes('requiredInputCharacters'), 'representative profiles expose exact-column input character requirements');
 assert(runner.includes('VISUAL_HARNESS_MISSING_ELEMENT:${measuredCase}:${questionId}:${name}'), 'missing required DOM reports case, question, and element');
-assert(runner.includes("requireElement(document.querySelector(measuredCase === 'journal' ? '#journal-container .journal-row' : '.answer-table'), 'table')"), 'table or journal surface is required explicitly');
-assert(runner.includes("requireElement(document.querySelector(measuredCase === 'journal' ? '#journal-container' : '#table-container'), 'wrapper')"), 'case wrapper is required explicitly');
+assert(runner.includes("const isJournal = measuredCase === 'journal'"), 'journal measurement has an explicit case branch');
+assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table')"), 'table or journal surface is required explicitly');
+assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container' : '#table-container'), 'wrapper')"), 'case wrapper is required explicitly');
 const tableGuard = runner.indexOf("const table = requireElement"), wrapperGuard = runner.indexOf("const wrapper = requireElement");
 assert(tableGuard >= 0 && wrapperGuard > tableGuard && runner.indexOf('getComputedStyle(table)',wrapperGuard) > wrapperGuard, 'table style access occurs only after required-element guards');
 assert(runner.includes('stickyLeft:') && runner.includes('stickyViewportLeft:') && runner.includes('contextWidth:') && runner.includes('viewportWidth:'), 'sticky metrics remain collected after guard repair');
+assert(runner.includes("isJournal ? [...wrapper.querySelectorAll('.journal-row')] : [...(table.tBodies?.[0]?.rows || [])]"), 'journal rows never use HTMLTableElement body collections');
+assert(runner.includes("isJournal ? wrapper.querySelector('.journal-header') : table.tHead?.rows?.[0]"), 'journal headers never use HTMLTableElement head collections');
+assert(!runner.includes('table?.tBodies[0]') && !runner.includes('table?.tHead?.rows[0]'), 'unsafe optional chaining cannot index an undefined table collection');
+assert(runner.includes('journalRowHeight:') && runner.includes('hasEditableControl:'), 'journal-specific row and control metrics remain reported');
 console.log('visual harness source checks: dependencies, order, diagnostics, representatives: ok');
