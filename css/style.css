@@ -249,7 +249,7 @@ button.secondary-button:hover { color: #fff; }
 .table-text-input { width: 100%; min-width: 120px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="numeric"] { overflow-wrap: normal; word-break: keep-all; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="years"] { box-sizing: border-box; width: calc(4em + 14px); min-width: calc(4em + 14px); max-width: calc(4em + 14px); overflow-wrap: normal; word-break: keep-all; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td[data-column-type="numeric"] .table-input { box-sizing: border-box; width: 11ch; min-width: 11ch; max-width: 11ch; font-variant-numeric: tabular-nums; }
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td[data-column-type="numeric"] .table-input { box-sizing: border-box; width: 9ch; min-width: 9ch; max-width: 9ch; font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="account"] { min-width: 8em; word-break: keep-all; overflow-wrap: normal; }
 .answer-table:not(.eight-column-worksheet) [data-column-type="date"] { box-sizing: border-box; width: calc(4em + 21px); min-width: calc(4em + 21px); max-width: calc(4em + 21px); white-space: nowrap; }
 .answer-table:not(.eight-column-worksheet) [data-column-type="description"] { width: max-content; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; }
@@ -410,7 +410,9 @@ select, .amount-input {
   }
 
   .answer-table:not(.eight-column-worksheet) th,
-  .answer-table:not(.eight-column-worksheet) td { padding: 1.5px 6px; font-size: .85rem; }
+  .answer-table:not(.eight-column-worksheet) td { padding: 0 3px; font-size: .85rem; }
+  .answer-table:not(.eight-column-worksheet) [data-column-type="date"],
+  .answer-table:not(.eight-column-worksheet) [data-column-type="description"] { padding-right: 6px; padding-left: 6px; }
   .answer-table:not(.eight-column-worksheet) .table-input { min-height: 44px; padding: 2px 1px; font-size: 16px; }
   .eight-column-worksheet th, .eight-column-worksheet td { padding: 5px 6px; }
 

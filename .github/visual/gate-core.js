@@ -1,6 +1,6 @@
 'use strict';
 
-const DEFAULTS = Object.freeze({ maximumYearsWidth: 80, maximumCompactHeaderHeight: 48, maximumCompactNormalRowHeight: 48, maximumCompactEditableRowHeight: 50, minimumTouchTargetHeight: 44, rowRoundingTolerance: 1, minimumWasteTolerance: 48, wasteRatio: 0.75 });
+const DEFAULTS = Object.freeze({ maximumYearsWidth: 80, maximumCompactHeaderHeight: 48, maximumCompactNormalRowHeight: 48, maximumCompactEditableRowHeight: 50, minimumTouchTargetHeight: 44, maximumMoneyInputCharacters: 9.5, rowRoundingTolerance: 1, minimumWasteTolerance: 48, wasteRatio: 0.75 });
 
 function evaluateVisualMetrics(metrics, options = {}) {
   const limits = { ...DEFAULTS, ...options };
@@ -13,6 +13,7 @@ function evaluateVisualMetrics(metrics, options = {}) {
     const waste = Number.isFinite(Number(column.contentWaste)) ? Number(column.contentWaste) : actual - occupied;
     const excessiveWaste = Math.max(limits.minimumWasteTolerance, occupied * limits.wasteRatio);
     if (metrics.table?.requiresHorizontalScroll && waste > excessiveWaste && column.classification !== 'years') violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,occupiedWidth:occupied,contentWaste:waste,maximumUsefulWaste:excessiveWaste });
+    if (column.classification === 'numeric' && column.editable && Number(column.inputCharacterCapacity) > limits.maximumMoneyInputCharacters) violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,inputCharacterCapacity:column.inputCharacterCapacity,maximumInputCharacters:limits.maximumMoneyInputCharacters });
     if (narrowEvidence) violations.push({ code:'CONTENT_CLIPPED', column:key });
     if (column.headerLineCount > 2 || column.headerGlyphStacked) violations.push({ code:'UNREADABLE_HEADER_WRAP', column:key, lines:column.headerLineCount });
   }

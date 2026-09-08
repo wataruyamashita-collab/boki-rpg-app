@@ -58,6 +58,8 @@ async function measure(page) {
       const horizontalChrome = parseFloat(cellStyle.paddingLeft) + parseFloat(cellStyle.paddingRight) + parseFloat(cellStyle.borderLeftWidth) + parseFloat(cellStyle.borderRightWidth);
       const inputStyle = editableControl ? getComputedStyle(editableControl) : null;
       const inputChrome = inputStyle ? parseFloat(inputStyle.paddingLeft) + parseFloat(inputStyle.paddingRight) + parseFloat(inputStyle.borderLeftWidth) + parseFloat(inputStyle.borderRightWidth) : 0;
+      const inputCharacterWidth = editableControl ? requiredTextWidth(editableControl, ['0']) : 0;
+      const inputCharacterCapacity = editableControl && inputCharacterWidth > 0 ? (editableControl.clientWidth - inputChrome) / inputCharacterWidth : 0;
       const semanticRequiredWidth = header.dataset.columnType === 'years'
         ? Math.max(contentWidth + horizontalChrome, editableAnswerWidth + horizontalChrome, parseFloat(headerStyle.fontSize) * 4 + 14)
         : Math.max(contentWidth,editableAnswerWidth,headerWidth) + horizontalChrome;
@@ -71,7 +73,7 @@ async function measure(page) {
         contentMax:representative.visibleValues.filter(Number.isFinite).reduce((max,value) => Math.max(max,value), Number.NEGATIVE_INFINITY),
         contentLength:Math.max(0,...[...visible,...editableAnswers].map(value => [...value].length)),header:dimensions(header),cell:dimensions(cells[0]),input:dimensions(editableControl),
         width:actualWidth,actualWidth,requiredWidth:semanticRequiredWidth,representativeRequiredWidth:semanticRequiredWidth,
-        headerTextWidth:headerWidth,representativeContentWidth:contentWidth,editableAnswerWidth,horizontalChrome,occupiedWidth,contentWaste:Math.max(0,actualWidth-occupiedWidth),
+        headerTextWidth:headerWidth,representativeContentWidth:contentWidth,editableAnswerWidth,horizontalChrome,occupiedWidth,contentWaste:Math.max(0,actualWidth-occupiedWidth),inputCharacterWidth,inputCharacterCapacity,
         headerScrollWidth:header.scrollWidth,headerClientWidth:header.clientWidth,cellScrollWidth:Math.max(0,...cells.map(cell => cell.scrollWidth)),cellClientWidth:Math.min(...cells.map(cell => cell.clientWidth)),inputClientWidth:editableControl?.clientWidth || 0,
         computedMinWidth:headerStyle.minWidth,clipped:cellClipped,cellClipped,headerClipped,editableAnswerFitFailure,
         headerLineCount:Math.max(1,Math.round(range.getBoundingClientRect().height / lineHeight)),headerGlyphStacked:header.getBoundingClientRect().width < headerStyle.fontSize.replace('px','') * 1.8 && [...header.textContent].length > 2

@@ -17,6 +17,8 @@ fixture = base(); fixture.columns.value.cellClipped = true; assert(codes(fixture
 fixture = base(); fixture.columns.value.editableAnswerFitFailure = true; assert(codes(fixture).includes('COLUMN_TOO_NARROW'), 'representative editable answer overflow fails');
 fixture = base(); fixture.table.requiresHorizontalScroll = true; fixture.columns.value.width = 220; fixture.columns.value.contentWaste = 130; assert(codes(fixture).includes('COLUMN_TOO_WIDE'), 'large content waste that contributes to scrolling fails');
 fixture = base(); fixture.table.requiresHorizontalScroll = true; fixture.columns.value.width = 112; fixture.columns.value.contentWaste = 22; assert(!codes(fixture).includes('COLUMN_TOO_WIDE'), 'small form-control whitespace does not fail by generic ratio');
+fixture = base(); fixture.columns.value.editable = true; fixture.columns.value.inputCharacterCapacity = 11; assert(codes(fixture).includes('COLUMN_TOO_WIDE'), 'generic money controls wider than the canonical character budget fail');
+fixture = base(); fixture.columns.value.editable = true; fixture.columns.value.inputCharacterCapacity = 9; assert(!codes(fixture).includes('COLUMN_TOO_WIDE'), 'nine-character money controls pass');
 
 const fixed = base(); fixed.case = 'fixed-asset'; fixed.columns = {
   life:{ width:68.39,actualWidth:68.39,representativeRequiredWidth:68.4,occupiedWidth:68.39,contentWaste:0,classification:'years',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false },
