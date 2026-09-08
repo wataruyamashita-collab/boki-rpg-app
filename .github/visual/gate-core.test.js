@@ -21,13 +21,15 @@ fixture = base(); fixture.columns.value.editable = true; fixture.columns.value.i
 fixture = base(); fixture.columns.value.editable = true; fixture.columns.value.inputCharacterCapacity = 9; assert(!codes(fixture).includes('COLUMN_TOO_WIDE'), 'nine-character money controls pass');
 
 const fixed = base(); fixed.case = 'fixed-asset'; fixed.columns = {
-  life:{ width:68.39,actualWidth:68.39,representativeRequiredWidth:68.4,occupiedWidth:68.39,contentWaste:0,classification:'years',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false },
-  acquisitionCost:{ width:69,occupiedWidth:69,classification:'numeric',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false },
-  currentDepreciation:{ width:111,occupiedWidth:111,classification:'numeric',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false }
+  life:{ width:68.390625,actualWidth:68.390625,representativeRequiredWidth:68.4,occupiedWidth:68.390625,contentWaste:0,classification:'years',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false },
+  acquisitionCost:{ width:63,occupiedWidth:63,classification:'numeric',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false },
+  currentDepreciation:{ width:105,occupiedWidth:105,classification:'numeric',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false }
 };
 fixed.rows = { headerRowHeight:25.75,normalRowHeight:48,editableRowHeight:48,inputVisualHeight:44,paddingTop:'1.5px',paddingBottom:'1.5px',borderTop:0,borderBottom:1,expectedNormalRowHeight:48,expectedEditableRowHeight:48 };
 assert.deepStrictEqual(codes(fixed), [], 'readable 68.39px years and exact mobile density pass');
-fixture = structuredClone(fixed); fixture.columns.life.width = 120; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'years excessive width fails');
+fixture = structuredClone(fixed); fixture.columns.life.width = 81; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'years width above the 80px semantic maximum fails');
+fixture = structuredClone(fixed); fixture.columns.life.headerClipped = true; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'years header clipping fails');
+fixture = structuredClone(fixed); fixture.columns.life.headerGlyphStacked = true; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'stacked years header glyphs fail');
 fixture = structuredClone(fixed); fixture.rows.normalRowHeight = 49; assert(codes(fixture).includes('COMPACT_TABLE_DENSITY_FAILURE'), 'mobile density excessive fails');
 
 const known = { columns:{ life:{ classification:'numeric',computedMinWidth:'114px',canonicalValues:[5,5,5,5,5,5],contentMax:5,contentLength:1,editable:false },acquisitionCost:{ classification:'numeric',computedMinWidth:'114px' } } };

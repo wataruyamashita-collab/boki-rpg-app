@@ -19,10 +19,8 @@ function evaluateVisualMetrics(metrics, options = {}) {
   }
   if (metrics.case === 'fixed-asset' && Number(metrics.viewport?.width) <= 430) {
     const life = metrics.columns?.life;
-    const acquisition = metrics.columns?.acquisitionCost;
-    const depreciation = metrics.columns?.currentDepreciation;
-    if (life && (life.clipped || life.headerLineCount > 1 || life.width > limits.maximumYearsWidth || life.width >= acquisition?.width || life.width >= depreciation?.width)) {
-      violations.push({ code:'YEARS_COLUMN_EXCESSIVE_WIDTH', actual:life.width, maximum:limits.maximumYearsWidth, acquisitionCost:acquisition?.width, currentDepreciation:depreciation?.width });
+    if (life && (life.width > limits.maximumYearsWidth || life.headerClipped || life.cellClipped || life.clipped || life.editableAnswerFitFailure || life.headerGlyphStacked || life.headerLineCount > 1)) {
+      violations.push({ code:'YEARS_COLUMN_EXCESSIVE_WIDTH', actual:life.width, maximum:limits.maximumYearsWidth,evidence:{ headerClipped:Boolean(life.headerClipped),cellClipped:Boolean(life.cellClipped || life.clipped),editableAnswerFitFailure:Boolean(life.editableAnswerFitFailure),headerGlyphStacked:Boolean(life.headerGlyphStacked),headerLineCount:life.headerLineCount } });
     }
     const rows = metrics.rows || {};
     if (Number(rows.headerRowHeight) > limits.maximumCompactHeaderHeight || Number(rows.normalRowHeight) > limits.maximumCompactNormalRowHeight || Number(rows.editableRowHeight) > limits.maximumCompactEditableRowHeight || Number(rows.inputVisualHeight) < limits.minimumTouchTargetHeight) {
