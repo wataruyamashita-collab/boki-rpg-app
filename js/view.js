@@ -192,6 +192,7 @@
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
       const columnTypes = new Map((question.table.columns || []).map(column => [column, 'text']));
+      const inputCharacters = new Map();
       if (question.format !== 'eight-column-worksheet') {
         let profileInputIndex = 0;
         for (const row of question.table.rows || []) Object.values(row).forEach((value, columnIndex) => {
@@ -199,6 +200,10 @@
           if (value === '入力') {
             const cellId = question.table.inputCells[profileInputIndex++];
             columnTypes.set(column, question.table.inputTypes?.[cellId] === 'account' ? 'account' : question.table.inputTypes?.[cellId] === 'text' ? 'text' : 'numeric');
+            if ((question.table.inputTypes?.[cellId] || 'amount') === 'amount') {
+              const values = [question.answer?.cells?.[cellId], ...(question.table.rows || []).map(row => row[column])].filter(value => typeof value === 'number').map(yen);
+              inputCharacters.set(column, Math.min(9, Math.max(4, ...values.map(value => [...value].length + 1))));
+            }
           } else if (typeof value === 'number' && columnTypes.get(column) === 'text') columnTypes.set(column, 'numeric');
         });
         for (const column of question.table.columns || []) {
@@ -234,11 +239,21 @@
             const metadata = question.table.inputMetadata?.[id]; const label = metadata?.label || this.cellLabel(question, id);
             const input = inputType === 'amount' ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[id] ?? '') : this.makeText('table-input', label, draft.cells?.[id] ?? '');
             if (inputType === 'amount') cell.classList.add('amount-cell');
+            if (inputType === 'amount') cell.style.setProperty('--column-input-ch', `${inputCharacters.get(question.table.columns[columnIndex]) || 9}ch`);
             input.dataset.cellId = id; input.dataset.inputType = inputType; cell.append(input);
           }
           else { cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value); if (typeof value === 'number') cell.classList.add('amount-cell'); }
         });
-      }); wrap.append(table);
+      }); wrap.append(table); if (question.format !== 'eight-column-worksheet') this.positionStickyContextColumns(table);
+    }
+    positionStickyContextColumns(table) {
+      const keys = ['date','description','quantity']; let left = 0;
+      for (const key of keys) {
+        const cells = [...table.querySelectorAll(`[data-column-key="${key}"]`)]; if (!cells.length) continue;
+        cells.forEach(cell => { cell.dataset.stickyContext = 'true'; cell.style.setProperty('--sticky-left', `${left}px`); });
+        left += cells[0].getBoundingClientRect().width;
+      }
+      table.style.setProperty('--sticky-context-width', `${left}px`);
     }
     renderBalanceSheet(question, draft = {}, comparison = null) {
       const wrap = comparison ? this.document.createElement('div') : this.byId('table-container');

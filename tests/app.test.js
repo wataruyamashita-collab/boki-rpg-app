@@ -734,7 +734,7 @@ assert(/\.eight-column-worksheet th:not\(:first-child\), \.eight-column-workshee
 assert(/\.table-question-wrap\.worksheet-scroll\s*{[^}]*max-height:[^}]*overflow:\s*auto/s.test(cssSource), '8欄精算表を専用スクロール領域にしてヘッダーを表示内に固定する');
 assert(/\.eight-column-worksheet thead tr:nth-child\(2\) th\s*{[^}]*top:\s*44px/s.test(cssSource), '二段目の借方・貸方ヘッダーも固定する');
 assert(!/\.calculator\s*{[^}]*position:\s*sticky/s.test(cssSource), '計算機を入力欄へ重ねる固定配置にしない');
-assert(/\.answer-table th:first-child, \.answer-table td:first-child\s*{[^}]*position:\s*sticky[^}]*left:\s*0/s.test(cssSource), '横スクロール中も表の先頭列を固定する');
+assert(/\.answer-table \[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(cssSource), '横スクロール中もsemantic context列を累積offsetで固定する');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
 assert(/\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\) minmax\(120px, 2fr\) minmax\(240px, 3fr\) minmax\(120px, 2fr\)/s.test(cssSource), '仕訳は借方科目・借方金額・貸方科目・貸方金額の4列にする');
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\) minmax\(120px, 2fr\) minmax\(240px, 3fr\) minmax\(120px, 2fr\)/s.test(cssSource), '狭い画面でも仕訳の4列を必ず横並びにする');

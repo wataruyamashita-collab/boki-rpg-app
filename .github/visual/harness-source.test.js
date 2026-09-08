@@ -12,4 +12,5 @@ assert(harness.includes('HARNESS_DEPENDENCY_MISSING:'),'missing dependencies fai
 assert(harness.includes("question.answer?.cells?.[cellId]"), 'editable canonical answers participate in intrinsic width measurement');
 assert(harness.includes('representativeColumn(key)') && harness.includes('representativeQuestion = question'), 'browser sizing uses the exact rendered representative');
 assert(harness.includes('visibleValues') && harness.includes('editableAnswers'), 'representative visible and editable evidence remain separately diagnosable');
+assert(harness.includes('requiredInputCharacters'), 'representative profiles expose exact-column input character requirements');
 console.log('visual harness source checks: dependencies, order, diagnostics, representatives: ok');

@@ -31,7 +31,7 @@ const server = http.createServer((request, response) => {
 });
 
 async function measure(page) {
-  return page.evaluate(() => {
+  return page.evaluate(async () => {
     const rect = element => { const value = element?.getBoundingClientRect(); return value ? { x:value.x,y:value.y,width:value.width,height:value.height,top:value.top,right:value.right,bottom:value.bottom,left:value.left } : null; };
     const dimensions = element => element ? { rect:rect(element),scrollWidth:element.scrollWidth,clientWidth:element.clientWidth,scrollHeight:element.scrollHeight,clientHeight:element.clientHeight } : null;
     const requiredTextWidth = (element, texts) => {
@@ -42,6 +42,7 @@ async function measure(page) {
       probe.remove(); return maximum;
     };
     const table = document.querySelector('.answer-table'), wrapper = document.querySelector('#table-container');
+    if (['inventory','ledger'].includes(document.body.dataset.case) && wrapper.scrollWidth > wrapper.clientWidth) { wrapper.scrollLeft = Math.min(120,wrapper.scrollWidth-wrapper.clientWidth); await new Promise(requestAnimationFrame); }
     const columns = {};
     for (const header of table?.querySelectorAll('thead [data-column-key]') || []) {
       const key = header.dataset.columnKey, cells = [...table.querySelectorAll(`tbody [data-column-key="${CSS.escape(key)}"]`)];
@@ -69,13 +70,13 @@ async function measure(page) {
       const editableAnswerFitFailure = Boolean(editableControl && editableAnswerWidth > editableControl.clientWidth - inputChrome + 0.5);
       const occupiedWidth = Math.max(headerWidth + horizontalChrome, contentWidth + horizontalChrome, editableControl ? editableControl.clientWidth + horizontalChrome : editableAnswerWidth + horizontalChrome);
       columns[key] = {
-        headerText:header.textContent,classification:header.dataset.columnType,canonicalValues:canonical.values,representativeValues:representative.visibleValues,editableAnswers:representative.editableAnswers,editable:representative.editable,
+        headerText:header.textContent,classification:header.dataset.columnType,canonicalValues:canonical.values,representativeValues:representative.visibleValues,editableAnswers:representative.editableAnswers,editable:representative.editable,requiredInputCharacters:representative.requiredInputCharacters,
         contentMax:representative.visibleValues.filter(Number.isFinite).reduce((max,value) => Math.max(max,value), Number.NEGATIVE_INFINITY),
         contentLength:Math.max(0,...[...visible,...editableAnswers].map(value => [...value].length)),header:dimensions(header),cell:dimensions(cells[0]),input:dimensions(editableControl),
         width:actualWidth,actualWidth,requiredWidth:semanticRequiredWidth,representativeRequiredWidth:semanticRequiredWidth,
         headerTextWidth:headerWidth,representativeContentWidth:contentWidth,editableAnswerWidth,horizontalChrome,occupiedWidth,contentWaste:Math.max(0,actualWidth-occupiedWidth),inputCharacterWidth,inputCharacterCapacity,
         headerScrollWidth:header.scrollWidth,headerClientWidth:header.clientWidth,cellScrollWidth:Math.max(0,...cells.map(cell => cell.scrollWidth)),cellClientWidth:Math.min(...cells.map(cell => cell.clientWidth)),inputClientWidth:editableControl?.clientWidth || 0,
-        computedMinWidth:headerStyle.minWidth,clipped:cellClipped,cellClipped,headerClipped,editableAnswerFitFailure,
+        computedMinWidth:headerStyle.minWidth,clipped:cellClipped,cellClipped,headerClipped,editableAnswerFitFailure,sticky:header.dataset.stickyContext === 'true',stickyLeft:parseFloat(getComputedStyle(header).left) || 0,stickyViewportLeft:header.getBoundingClientRect().left-wrapper.getBoundingClientRect().left,rightEdge:header.getBoundingClientRect().right,renderedWidth:actualWidth,
         headerLineCount:Math.max(1,Math.round(range.getBoundingClientRect().height / lineHeight)),headerGlyphStacked:header.getBoundingClientRect().width < headerStyle.fontSize.replace('px','') * 1.8 && [...header.textContent].length > 2
       };
     }
@@ -89,7 +90,8 @@ async function measure(page) {
       questionId:document.body.dataset.questionId,
       table:{ ...dimensions(table),wrapper:dimensions(wrapper),horizontalOverflow:Math.max(0,(table?.scrollWidth || 0)-(wrapper?.clientWidth || 0)),requiresHorizontalScroll:(table?.scrollWidth || 0)>(wrapper?.clientWidth || 0),horizontalScrollAvailable:getComputedStyle(wrapper).overflowX !== 'visible',clipped:(wrapper?.scrollWidth || 0) < (table?.scrollWidth || 0) },
       columns,
-      rows:{ headerRowHeight:rect(table?.tHead?.rows[0])?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,inputVisualHeight:inputHeight,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom }
+      rows:{ headerRowHeight:rect(table?.tHead?.rows[0])?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,inputVisualHeight:inputHeight,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom },
+      sticky:{ viewportWidth:wrapper?.clientWidth || innerWidth,scrollLeft:wrapper?.scrollLeft || 0,contextWidth:parseFloat(getComputedStyle(table).getPropertyValue('--sticky-context-width')) || 0 }
     };
   });
 }
@@ -114,15 +116,15 @@ async function run() {
           } finally { await page.close(); }
         }
         for (const viewport of viewports) {
-          for (const caseName of ['fixed-asset',...(viewport.width === 390 ? ['inventory','ledger','journal','worksheet'] : [])]) {
+          for (const caseName of ['fixed-asset',...(viewport.width <= 430 ? ['inventory','ledger'] : []),...(viewport.width === 390 ? ['journal','worksheet'] : [])]) {
             activeContext = { phase:'observation',browser:browserName,viewport,case:caseName };
             const page = await browser.newPage({ viewport });
             try {
               await page.goto(url); await page.evaluate(() => window.visualHarness.assertDependencies());
               const representative = await page.evaluate(name => window.visualHarness.render(name), caseName);
               const directory = path.join(OUTPUT,browserName); fs.mkdirSync(directory,{ recursive:true });
-              await page.screenshot({ path:path.join(directory,`${caseName}-${viewport.width}.png`),fullPage:true });
               const metrics = { browser:browserName,viewport,case:caseName,representative,...await measure(page) };
+              await page.screenshot({ path:path.join(directory,`${caseName}-${viewport.width}.png`),fullPage:true });
               metrics.violations = evaluateVisualMetrics(metrics); metrics.knownGeneration10Violation = caseName === 'fixed-asset' && detectGeneration10KnownViolation(metrics);
               evidence.reports.push(metrics);
               if (mode === 'audit' && caseName === 'fixed-asset' && !metrics.knownGeneration10Violation) evidence.failures.push(`${browserName}/${viewport.width}: Generation 10 life-width violation not detected`);

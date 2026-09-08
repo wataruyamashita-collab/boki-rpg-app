@@ -32,6 +32,15 @@ function evaluateVisualMetrics(metrics, options = {}) {
     const actual = Number(rows[key]), expected = Number(rows[expectedKey]);
     if (Number.isFinite(actual) && Number.isFinite(expected) && expected > 0 && actual > expected + limits.rowRoundingTolerance) violations.push({ code:'ROW_TOO_TALL', row:key, actual,expected,chrome:{ paddingTop:rows.paddingTop,paddingBottom:rows.paddingBottom,borderTop:rows.borderTop,borderBottom:rows.borderBottom,inputHeight:rows.inputVisualHeight } });
   }
+  const stickyColumns = ['date','description','quantity'].filter(key => metrics.columns?.[key]); let expectedLeft = 0;
+  for (const key of stickyColumns) {
+    const column = metrics.columns[key];
+    const offsetMismatch = Math.abs(Number(column.stickyLeft)-expectedLeft) > 1.5;
+    const scrollMismatch = Number(metrics.sticky?.scrollLeft) > 0 && Math.abs(Number(column.stickyViewportLeft)-expectedLeft) > 2;
+    if (!column.sticky || offsetMismatch || scrollMismatch) violations.push({ code:'STICKY_CONTEXT_FAILURE',column:key,sticky:column.sticky,actualLeft:column.stickyLeft,actualViewportLeft:column.stickyViewportLeft,expectedLeft,scrollLeft:metrics.sticky?.scrollLeft });
+    expectedLeft += Number(column.renderedWidth || column.width);
+  }
+  if (stickyColumns.length && Number(metrics.sticky?.contextWidth) > Number(metrics.sticky?.viewportWidth)-limits.minimumTouchTargetHeight) violations.push({ code:'STICKY_CONTEXT_OCCUPIES_VIEWPORT',contextWidth:metrics.sticky.contextWidth,viewportWidth:metrics.sticky.viewportWidth,minimumEditableArea:limits.minimumTouchTargetHeight });
   if (metrics.table?.requiresHorizontalScroll && !metrics.table?.horizontalScrollAvailable) violations.push({ code:'HORIZONTAL_OVERFLOW_UNAVAILABLE' });
   if (metrics.table?.clipped) violations.push({ code:'TABLE_CLIPPED' });
   return violations;

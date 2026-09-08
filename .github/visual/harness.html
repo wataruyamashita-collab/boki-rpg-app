@@ -70,7 +70,9 @@
           if (column === key) { const expected = representativeQuestion.answer?.cells?.[cellId]; if (expected !== '' && expected != null) editableAnswers.push(expected); }
         } else if (column === key) visibleValues.push(value);
       });
-      return { visibleValues, editableAnswers, editable:editableAnswers.length > 0 };
+      const formatted = [...visibleValues,...editableAnswers].filter(value => typeof value === 'number').map(value => value.toLocaleString('ja-JP'));
+      const requiredInputCharacters = editableAnswers.length ? Math.min(9,Math.max(4,...formatted.map(value => [...value].length + 1))) : 0;
+      return { visibleValues, editableAnswers, editable:editableAnswers.length > 0,requiredInputCharacters };
     }
   };
 })();
