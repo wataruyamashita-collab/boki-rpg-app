@@ -3,6 +3,7 @@ const assert = require('assert');
 const fs = require('fs');
 
 const harness = fs.readFileSync('.github/visual/harness.html','utf8');
+const runner = fs.readFileSync('.github/visual/run-visual.js','utf8');
 const order = ['data/accounting-domain.js','data/questions.js','js/view.js','js/controller.js'].map(source => harness.indexOf(`src="/${source}"`));
 assert(order.every(position => position >= 0),'harness loads every required production dependency');
 assert.deepStrictEqual(order,[...order].sort((left,right) => left-right),'production dependencies load in deterministic order');
@@ -13,4 +14,10 @@ assert(harness.includes("question.answer?.cells?.[cellId]"), 'editable canonical
 assert(harness.includes('representativeColumn(key)') && harness.includes('representativeQuestion = question'), 'browser sizing uses the exact rendered representative');
 assert(harness.includes('visibleValues') && harness.includes('editableAnswers'), 'representative visible and editable evidence remain separately diagnosable');
 assert(harness.includes('requiredInputCharacters'), 'representative profiles expose exact-column input character requirements');
+assert(runner.includes('VISUAL_HARNESS_MISSING_ELEMENT:${measuredCase}:${questionId}:${name}'), 'missing required DOM reports case, question, and element');
+assert(runner.includes("requireElement(document.querySelector(measuredCase === 'journal' ? '#journal-container .journal-row' : '.answer-table'), 'table')"), 'table or journal surface is required explicitly');
+assert(runner.includes("requireElement(document.querySelector(measuredCase === 'journal' ? '#journal-container' : '#table-container'), 'wrapper')"), 'case wrapper is required explicitly');
+const tableGuard = runner.indexOf("const table = requireElement"), wrapperGuard = runner.indexOf("const wrapper = requireElement");
+assert(tableGuard >= 0 && wrapperGuard > tableGuard && runner.indexOf('getComputedStyle(table)',wrapperGuard) > wrapperGuard, 'table style access occurs only after required-element guards');
+assert(runner.includes('stickyLeft:') && runner.includes('stickyViewportLeft:') && runner.includes('contextWidth:') && runner.includes('viewportWidth:'), 'sticky metrics remain collected after guard repair');
 console.log('visual harness source checks: dependencies, order, diagnostics, representatives: ok');

@@ -30,8 +30,13 @@ const server = http.createServer((request, response) => {
   response.end(fs.readFileSync(file));
 });
 
-async function measure(page) {
-  return page.evaluate(async () => {
+async function measure(page, caseName) {
+  return page.evaluate(async measuredCase => {
+    const questionId = document.body.dataset.questionId || 'unknown';
+    const requireElement = (element, name) => {
+      if (!(element instanceof Element)) throw new Error(`VISUAL_HARNESS_MISSING_ELEMENT:${measuredCase}:${questionId}:${name}`);
+      return element;
+    };
     const rect = element => { const value = element?.getBoundingClientRect(); return value ? { x:value.x,y:value.y,width:value.width,height:value.height,top:value.top,right:value.right,bottom:value.bottom,left:value.left } : null; };
     const dimensions = element => element ? { rect:rect(element),scrollWidth:element.scrollWidth,clientWidth:element.clientWidth,scrollHeight:element.scrollHeight,clientHeight:element.clientHeight } : null;
     const requiredTextWidth = (element, texts) => {
@@ -41,8 +46,9 @@ async function measure(page) {
       for (const text of texts) { probe.textContent = text; maximum = Math.max(maximum, probe.getBoundingClientRect().width); }
       probe.remove(); return maximum;
     };
-    const table = document.querySelector('.answer-table'), wrapper = document.querySelector('#table-container');
-    if (['inventory','ledger'].includes(document.body.dataset.case) && wrapper.scrollWidth > wrapper.clientWidth) { wrapper.scrollLeft = Math.min(120,wrapper.scrollWidth-wrapper.clientWidth); await new Promise(requestAnimationFrame); }
+    const table = requireElement(document.querySelector(measuredCase === 'journal' ? '#journal-container .journal-row' : '.answer-table'), 'table');
+    const wrapper = requireElement(document.querySelector(measuredCase === 'journal' ? '#journal-container' : '#table-container'), 'wrapper');
+    if (['inventory','ledger'].includes(measuredCase) && wrapper.scrollWidth > wrapper.clientWidth) { wrapper.scrollLeft = Math.min(120,wrapper.scrollWidth-wrapper.clientWidth); await new Promise(requestAnimationFrame); }
     const columns = {};
     for (const header of table?.querySelectorAll('thead [data-column-key]') || []) {
       const key = header.dataset.columnKey, cells = [...table.querySelectorAll(`tbody [data-column-key="${CSS.escape(key)}"]`)];
@@ -91,9 +97,9 @@ async function measure(page) {
       table:{ ...dimensions(table),wrapper:dimensions(wrapper),horizontalOverflow:Math.max(0,(table?.scrollWidth || 0)-(wrapper?.clientWidth || 0)),requiresHorizontalScroll:(table?.scrollWidth || 0)>(wrapper?.clientWidth || 0),horizontalScrollAvailable:getComputedStyle(wrapper).overflowX !== 'visible',clipped:(wrapper?.scrollWidth || 0) < (table?.scrollWidth || 0) },
       columns,
       rows:{ headerRowHeight:rect(table?.tHead?.rows[0])?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,inputVisualHeight:inputHeight,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom },
-      sticky:{ viewportWidth:wrapper?.clientWidth || innerWidth,scrollLeft:wrapper?.scrollLeft || 0,contextWidth:parseFloat(getComputedStyle(table).getPropertyValue('--sticky-context-width')) || 0 }
+      sticky:{ viewportWidth:wrapper.clientWidth,scrollLeft:wrapper.scrollLeft,contextWidth:parseFloat(getComputedStyle(table).getPropertyValue('--sticky-context-width')) || 0 }
     };
-  });
+  }, caseName);
 }
 
 async function run() {
@@ -123,7 +129,7 @@ async function run() {
               await page.goto(url); await page.evaluate(() => window.visualHarness.assertDependencies());
               const representative = await page.evaluate(name => window.visualHarness.render(name), caseName);
               const directory = path.join(OUTPUT,browserName); fs.mkdirSync(directory,{ recursive:true });
-              const metrics = { browser:browserName,viewport,case:caseName,representative,...await measure(page) };
+              const metrics = { browser:browserName,viewport,case:caseName,representative,...await measure(page,caseName) };
               await page.screenshot({ path:path.join(directory,`${caseName}-${viewport.width}.png`),fullPage:true });
               metrics.violations = evaluateVisualMetrics(metrics); metrics.knownGeneration10Violation = caseName === 'fixed-asset' && detectGeneration10KnownViolation(metrics);
               evidence.reports.push(metrics);
