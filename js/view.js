@@ -247,7 +247,7 @@
       }); wrap.append(table); if (question.format !== 'eight-column-worksheet') this.positionStickyContextColumns(table);
     }
     positionStickyContextColumns(table) {
-      const keys = ['date','description','quantity']; let left = 0;
+      const keys = ['description','quantity']; let left = 0;
       for (const key of keys) {
         const cells = [...table.querySelectorAll(`[data-column-key="${key}"]`)]; if (!cells.length) continue;
         cells.forEach(cell => { cell.dataset.stickyContext = 'true'; cell.style.setProperty('--sticky-left', `${left}px`); });

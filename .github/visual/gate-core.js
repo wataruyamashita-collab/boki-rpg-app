@@ -32,7 +32,9 @@ function evaluateVisualMetrics(metrics, options = {}) {
     const actual = Number(rows[key]), expected = Number(rows[expectedKey]);
     if (Number.isFinite(actual) && Number.isFinite(expected) && expected > 0 && actual > expected + limits.rowRoundingTolerance) violations.push({ code:'ROW_TOO_TALL', row:key, actual,expected,chrome:{ paddingTop:rows.paddingTop,paddingBottom:rows.paddingBottom,borderTop:rows.borderTop,borderBottom:rows.borderBottom,inputHeight:rows.inputVisualHeight } });
   }
-  const stickyColumns = ['date','description','quantity'].filter(key => metrics.columns?.[key]); let expectedLeft = 0;
+  const stickyColumns = ['description','quantity'].filter(key => metrics.columns?.[key]); let expectedLeft = 0;
+  const date = metrics.columns?.date;
+  if (date?.sticky) violations.push({ code:'STICKY_CONTEXT_FAILURE',column:'date',sticky:true,expectedSticky:false });
   for (const key of stickyColumns) {
     const column = metrics.columns[key];
     const offsetMismatch = Math.abs(Number(column.stickyLeft)-expectedLeft) > 1.5;

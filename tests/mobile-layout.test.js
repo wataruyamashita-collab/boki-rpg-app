@@ -59,7 +59,7 @@ assert(!/answer-table[^\n{]*:nth-child[^\n{]*(?:date|description|quantity|unitPr
 assert(!/\.answer-table th:first-child,[^{]+\{[^}]*min-width:\s*110px/s.test(css), 'sticky first columns use semantic content instead of a global 110px floor');
 assert(/\.table-question-wrap\s*\{[^}]*overflow-x:\s*auto/.test(css), 'the existing single wrapper scrolls content-required wide tables');
 assert(/\[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(css), 'semantic context columns use rendered cumulative sticky offsets');
-assert(view.includes("const keys = ['date','description','quantity']") && view.includes("--sticky-left") && view.includes('getBoundingClientRect().width'), 'date, description, and quantity sticky offsets derive from rendered widths');
+assert(view.includes("const keys = ['description','quantity']") && view.includes("--sticky-left") && view.includes('getBoundingClientRect().width'), 'description and quantity sticky offsets derive from rendered widths without pinning date');
 assert(view.includes("--column-input-ch") && view.includes('Math.min(9, Math.max(4'), 'renderer supplies exact-question numeric input character budgets with bounded fallback safety');
 assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
