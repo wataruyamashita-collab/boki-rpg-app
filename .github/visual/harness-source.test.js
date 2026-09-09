@@ -21,6 +21,7 @@ assert(runner.includes("requireElement(document.querySelector(isJournal ? '#jour
 const tableGuard = runner.indexOf("const table = requireElement"), wrapperGuard = runner.indexOf("const wrapper = requireElement");
 assert(tableGuard >= 0 && wrapperGuard > tableGuard && runner.indexOf('getComputedStyle(table)',wrapperGuard) > wrapperGuard, 'table style access occurs only after required-element guards');
 assert(runner.includes('stickyLeft:') && runner.includes('stickyViewportLeft:') && runner.includes('contextWidth:') && runner.includes('viewportWidth:'), 'sticky metrics remain collected after guard repair');
+assert(runner.includes('naturalViewportLefts') && runner.includes('naturalViewportLeft:'), 'sticky metrics preserve each column natural position before scrolling');
 assert(runner.includes("isJournal ? [...wrapper.querySelectorAll('.journal-row')] : [...(table.tBodies?.[0]?.rows || [])]"), 'journal rows never use HTMLTableElement body collections');
 assert(runner.includes("isJournal ? wrapper.querySelector('.journal-header') : table.tHead?.rows?.[0]"), 'journal headers never use HTMLTableElement head collections');
 assert(!runner.includes('table?.tBodies[0]') && !runner.includes('table?.tHead?.rows[0]'), 'unsafe optional chaining cannot index an undefined table collection');

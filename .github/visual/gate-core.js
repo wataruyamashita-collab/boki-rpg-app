@@ -38,8 +38,10 @@ function evaluateVisualMetrics(metrics, options = {}) {
   for (const key of stickyColumns) {
     const column = metrics.columns[key];
     const offsetMismatch = Math.abs(Number(column.stickyLeft)-expectedLeft) > 1.5;
-    const scrollMismatch = Number(metrics.sticky?.scrollLeft) > 0 && Math.abs(Number(column.stickyViewportLeft)-expectedLeft) > 2;
-    if (!column.sticky || offsetMismatch || scrollMismatch) violations.push({ code:'STICKY_CONTEXT_FAILURE',column:key,sticky:column.sticky,actualLeft:column.stickyLeft,actualViewportLeft:column.stickyViewportLeft,expectedLeft,scrollLeft:metrics.sticky?.scrollLeft });
+    const naturalLeft = Number(column.naturalViewportLeft), scrollLeft = Number(metrics.sticky?.scrollLeft) || 0;
+    const expectedViewportLeft = Math.max(expectedLeft, naturalLeft-scrollLeft);
+    const scrollMismatch = Number.isFinite(naturalLeft) && Math.abs(Number(column.stickyViewportLeft)-expectedViewportLeft) > 2;
+    if (!column.sticky || offsetMismatch || !Number.isFinite(naturalLeft) || scrollMismatch) violations.push({ code:'STICKY_CONTEXT_FAILURE',column:key,sticky:column.sticky,actualLeft:column.stickyLeft,naturalViewportLeft:column.naturalViewportLeft,actualViewportLeft:column.stickyViewportLeft,expectedViewportLeft,expectedLeft,scrollLeft });
     expectedLeft += Number(column.renderedWidth || column.width);
   }
   if (stickyColumns.length && Number(metrics.sticky?.contextWidth) > Number(metrics.sticky?.viewportWidth)-limits.minimumTouchTargetHeight) violations.push({ code:'STICKY_CONTEXT_OCCUPIES_VIEWPORT',contextWidth:metrics.sticky.contextWidth,viewportWidth:metrics.sticky.viewportWidth,minimumEditableArea:limits.minimumTouchTargetHeight });

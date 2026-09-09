@@ -49,6 +49,8 @@ async function measure(page, caseName) {
     const isJournal = measuredCase === 'journal';
     const table = requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table');
     const wrapper = requireElement(document.querySelector(isJournal ? '#journal-container' : '#table-container'), 'wrapper');
+    const wrapperLeft = wrapper.getBoundingClientRect().left;
+    const naturalViewportLefts = new Map(isJournal ? [] : [...table.querySelectorAll('thead [data-column-key]')].map(header => [header.dataset.columnKey, header.getBoundingClientRect().left-wrapperLeft]));
     if (['inventory','ledger'].includes(measuredCase) && wrapper.scrollWidth > wrapper.clientWidth) { wrapper.scrollLeft = Math.min(120,wrapper.scrollWidth-wrapper.clientWidth); await new Promise(requestAnimationFrame); }
     const columns = {};
     for (const header of isJournal ? [] : table.querySelectorAll('thead [data-column-key]')) {
@@ -83,7 +85,7 @@ async function measure(page, caseName) {
         width:actualWidth,actualWidth,requiredWidth:semanticRequiredWidth,representativeRequiredWidth:semanticRequiredWidth,
         headerTextWidth:headerWidth,representativeContentWidth:contentWidth,editableAnswerWidth,horizontalChrome,occupiedWidth,contentWaste:Math.max(0,actualWidth-occupiedWidth),inputCharacterWidth,inputCharacterCapacity,
         headerScrollWidth:header.scrollWidth,headerClientWidth:header.clientWidth,cellScrollWidth:Math.max(0,...cells.map(cell => cell.scrollWidth)),cellClientWidth:Math.min(...cells.map(cell => cell.clientWidth)),inputClientWidth:editableControl?.clientWidth || 0,
-        computedMinWidth:headerStyle.minWidth,clipped:cellClipped,cellClipped,headerClipped,editableAnswerFitFailure,sticky:header.dataset.stickyContext === 'true',stickyLeft:parseFloat(getComputedStyle(header).left) || 0,stickyViewportLeft:header.getBoundingClientRect().left-wrapper.getBoundingClientRect().left,rightEdge:header.getBoundingClientRect().right,renderedWidth:actualWidth,
+        computedMinWidth:headerStyle.minWidth,clipped:cellClipped,cellClipped,headerClipped,editableAnswerFitFailure,sticky:header.dataset.stickyContext === 'true',stickyLeft:parseFloat(getComputedStyle(header).left) || 0,naturalViewportLeft:naturalViewportLefts.get(key),stickyViewportLeft:header.getBoundingClientRect().left-wrapper.getBoundingClientRect().left,rightEdge:header.getBoundingClientRect().right,renderedWidth:actualWidth,
         headerLineCount:Math.max(1,Math.round(range.getBoundingClientRect().height / lineHeight)),headerGlyphStacked:header.getBoundingClientRect().width < headerStyle.fontSize.replace('px','') * 1.8 && [...header.textContent].length > 2
       };
     }
