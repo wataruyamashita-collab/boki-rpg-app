@@ -46,6 +46,7 @@ assert(/width:\s*max-content/.test(tableRule) && /min-width:\s*100%/.test(tableR
 assert(/overflow-wrap:\s*normal/.test(headRule) && /word-break:\s*keep-all/.test(headRule) && /white-space:\s*nowrap/.test(headRule), 'complete Japanese headers cannot clip, ellipsize, or stack one glyph per line');
 assert(!/(?:overflow:\s*hidden|text-overflow:\s*ellipsis)/.test(headRule), 'semantic headers never conceal authored labels');
 assert(/white-space:\s*nowrap/.test(numericRule) && !/min-width/.test(numericRule), 'static numeric cells use intrinsic content width instead of inheriting the editable money floor');
+assert(/th\[data-column-type="numeric"\]\s*\{[^}]*min-width:\s*max-content/.test(css), 'numeric headers impose their intrinsic rendered label width without per-column pixel constants');
 assert(/\[data-column-type="years"\]\s*\{[^}]*width:\s*calc\(4em \+ 14px\)[^}]*max-width:\s*calc\(4em \+ 14px\)/s.test(css), 'years use a dedicated four-glyph header plus cell-chrome width instead of the money floor');
 assert(/width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericInputRule) && /min-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericInputRule) && /max-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericInputRule), 'editable numeric controls use their exact-column budget with a nine-character fallback');
 assert(glyphs(String(maximumEditable.answer)) <= 9 && glyphs(formatted(maximumEditable.answer)) <= 9, 'raw and comma-formatted canonical maxima fit the nine-character numeric content budget');

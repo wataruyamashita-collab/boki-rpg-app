@@ -1,14 +1,17 @@
 'use strict';
 
-const DEFAULTS = Object.freeze({ maximumYearsWidth: 80, maximumCompactHeaderHeight: 48, maximumCompactNormalRowHeight: 48, maximumCompactEditableRowHeight: 50, minimumTouchTargetHeight: 44, maximumMoneyInputCharacters: 9.5, rowRoundingTolerance: 1, minimumWasteTolerance: 48, wasteRatio: 0.75 });
+const DEFAULTS = Object.freeze({ maximumYearsWidth: 80, maximumCompactHeaderHeight: 48, maximumCompactNormalRowHeight: 48, maximumCompactEditableRowHeight: 50, minimumTouchTargetHeight: 44, maximumMoneyInputCharacters: 9.5, rowRoundingTolerance: 1, browserRoundingTolerance: 0.5, minimumWasteTolerance: 48, wasteRatio: 0.75 });
 
 function evaluateVisualMetrics(metrics, options = {}) {
   const limits = { ...DEFAULTS, ...options };
   const violations = [];
   for (const [key, column] of Object.entries(metrics.columns || {})) {
-    const actual = Number(column.width);
-    const narrowEvidence = column.headerClipped || column.cellClipped || column.clipped || column.editableAnswerFitFailure;
-    if (narrowEvidence) violations.push({ code:'COLUMN_TOO_NARROW', column:key, actual, representativeRequiredWidth:column.representativeRequiredWidth, evidence:{ headerClipped:Boolean(column.headerClipped),cellClipped:Boolean(column.cellClipped || column.clipped),editableAnswerFitFailure:Boolean(column.editableAnswerFitFailure) } });
+    const actual = Number(column.actualWidth ?? column.width);
+    const headerTextWidth = Number(column.headerTextWidth), horizontalChrome = Number(column.horizontalChrome);
+    const requiredHeaderWidth = headerTextWidth + horizontalChrome;
+    const headerWidthDeficit = Number.isFinite(requiredHeaderWidth) && actual + limits.browserRoundingTolerance < requiredHeaderWidth;
+    const narrowEvidence = column.headerClipped || headerWidthDeficit || column.cellClipped || column.clipped || column.editableAnswerFitFailure;
+    if (narrowEvidence) violations.push({ code:'COLUMN_TOO_NARROW', column:key, actualWidth:actual, headerTextWidth, horizontalChrome, requiredHeaderWidth, deficit:Number.isFinite(requiredHeaderWidth) ? Math.max(0,requiredHeaderWidth-actual) : null, representativeRequiredWidth:column.representativeRequiredWidth, evidence:{ headerClipped:Boolean(column.headerClipped),headerWidthDeficit,cellClipped:Boolean(column.cellClipped || column.clipped),editableAnswerFitFailure:Boolean(column.editableAnswerFitFailure) } });
     const occupied = Number(column.occupiedWidth || column.representativeRequiredWidth || column.requiredWidth);
     const waste = Number.isFinite(Number(column.contentWaste)) ? Number(column.contentWaste) : actual - occupied;
     const excessiveWaste = Math.max(limits.minimumWasteTolerance, occupied * limits.wasteRatio);
