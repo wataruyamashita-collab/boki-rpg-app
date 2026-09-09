@@ -39,12 +39,15 @@ async function measure(page, caseName) {
     };
     const rect = element => { const value = element?.getBoundingClientRect(); return value ? { x:value.x,y:value.y,width:value.width,height:value.height,top:value.top,right:value.right,bottom:value.bottom,left:value.left } : null; };
     const dimensions = element => element ? { rect:rect(element),scrollWidth:element.scrollWidth,clientWidth:element.clientWidth,scrollHeight:element.scrollHeight,clientHeight:element.clientHeight } : null;
+    const fontProperties = style => Object.fromEntries(['fontFamily','fontSize','fontWeight','fontStyle','fontStretch','fontVariant','letterSpacing','fontKerning','fontFeatureSettings'].map(property => [property,style[property]]));
+    const horizontalChrome = style => parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
     const requiredTextWidth = (element, texts) => {
       const probe = document.createElement('span'), style = getComputedStyle(element);
-      Object.assign(probe.style,{ position:'fixed',visibility:'hidden',whiteSpace:'nowrap',font:style.font,letterSpacing:style.letterSpacing });
+      Object.assign(probe.style,{ position:'fixed',visibility:'hidden',whiteSpace:'nowrap',...fontProperties(style) });
       document.body.append(probe); let maximum = 0;
       for (const text of texts) { probe.textContent = text; maximum = Math.max(maximum, probe.getBoundingClientRect().width); }
-      probe.remove(); return maximum;
+      const probeFont = fontProperties(getComputedStyle(probe));
+      probe.remove(); return { width:maximum,actualFont:fontProperties(style),probeFont };
     };
     const isJournal = measuredCase === 'journal';
     const table = requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table');
@@ -62,28 +65,34 @@ async function measure(page, caseName) {
       const editableControl = cells.find(cell => cell.querySelector('input,select'))?.querySelector('input,select');
       const headerStyle = getComputedStyle(header), cellStyle = getComputedStyle(cells[0] || header), range = document.createRange(); range.selectNodeContents(header);
       const lineHeight = parseFloat(headerStyle.lineHeight) || parseFloat(headerStyle.fontSize) * 1.2;
-      const contentWidth = requiredTextWidth(cells.find(cell => !cell.querySelector('input,select')) || cells[0] || header, visible);
-      const editableAnswerWidth = requiredTextWidth(editableControl || cells[0] || header, editableAnswers);
-      const headerWidth = requiredTextWidth(header, [header.textContent]);
-      const horizontalChrome = parseFloat(cellStyle.paddingLeft) + parseFloat(cellStyle.paddingRight) + parseFloat(cellStyle.borderLeftWidth) + parseFloat(cellStyle.borderRightWidth);
+      const contentMeasurement = requiredTextWidth(cells.find(cell => !cell.querySelector('input,select')) || cells[0] || header, visible);
+      const editableMeasurement = requiredTextWidth(editableControl || cells[0] || header, editableAnswers);
+      const headerMeasurement = requiredTextWidth(header, [header.textContent]);
+      const contentWidth = contentMeasurement.width, editableAnswerWidth = editableMeasurement.width, headerWidth = headerMeasurement.width;
+      const headerHorizontalChrome = horizontalChrome(headerStyle), cellHorizontalChrome = horizontalChrome(cellStyle);
       const inputStyle = editableControl ? getComputedStyle(editableControl) : null;
-      const inputChrome = inputStyle ? parseFloat(inputStyle.paddingLeft) + parseFloat(inputStyle.paddingRight) + parseFloat(inputStyle.borderLeftWidth) + parseFloat(inputStyle.borderRightWidth) : 0;
-      const inputCharacterWidth = editableControl ? requiredTextWidth(editableControl, ['0']) : 0;
-      const inputCharacterCapacity = editableControl && inputCharacterWidth > 0 ? (editableControl.clientWidth - inputChrome) / inputCharacterWidth : 0;
+      const inputChrome = inputStyle ? horizontalChrome(inputStyle) : 0;
+      const inputPadding = inputStyle ? parseFloat(inputStyle.paddingLeft) + parseFloat(inputStyle.paddingRight) : 0;
+      const inputInnerWidth = editableControl ? editableControl.clientWidth - inputPadding : 0;
+      const inputCharacterWidth = editableControl ? requiredTextWidth(editableControl, ['0']).width : 0;
+      const inputCharacterCapacity = editableControl && inputCharacterWidth > 0 ? inputInnerWidth / inputCharacterWidth : 0;
+      const requiredHeaderWidth = headerWidth + headerHorizontalChrome;
+      const requiredCellWidth = contentWidth + cellHorizontalChrome;
+      const requiredEditableWidth = editableAnswerWidth + inputChrome + cellHorizontalChrome;
       const semanticRequiredWidth = header.dataset.columnType === 'years'
-        ? Math.max(contentWidth + horizontalChrome, editableAnswerWidth + horizontalChrome, parseFloat(headerStyle.fontSize) * 4 + 14)
-        : Math.max(contentWidth,editableAnswerWidth,headerWidth) + horizontalChrome;
+        ? Math.max(requiredHeaderWidth, requiredCellWidth, requiredEditableWidth, parseFloat(headerStyle.fontSize) * 4 + 14)
+        : Math.max(requiredHeaderWidth,requiredCellWidth,requiredEditableWidth);
       const actualWidth = header.getBoundingClientRect().width;
       const headerClipped = header.scrollWidth > header.clientWidth + 1;
       const cellClipped = cells.some(cell => cell.scrollWidth > cell.clientWidth + 1);
-      const editableAnswerFitFailure = Boolean(editableControl && editableAnswerWidth > editableControl.clientWidth - inputChrome + 0.5);
-      const occupiedWidth = Math.max(headerWidth + horizontalChrome, contentWidth + horizontalChrome, editableControl ? editableControl.clientWidth + horizontalChrome : editableAnswerWidth + horizontalChrome);
+      const editableAnswerFitFailure = Boolean(editableControl && editableAnswerWidth > inputInnerWidth + 0.5);
+      const occupiedWidth = Math.max(requiredHeaderWidth,requiredCellWidth,editableControl ? editableControl.getBoundingClientRect().width + cellHorizontalChrome : requiredEditableWidth);
       columns[key] = {
         headerText:header.textContent,classification:header.dataset.columnType,canonicalValues:canonical.values,representativeValues:representative.visibleValues,editableAnswers:representative.editableAnswers,editable:representative.editable,requiredInputCharacters:representative.requiredInputCharacters,
         contentMax:representative.visibleValues.filter(Number.isFinite).reduce((max,value) => Math.max(max,value), Number.NEGATIVE_INFINITY),
         contentLength:Math.max(0,...[...visible,...editableAnswers].map(value => [...value].length)),header:dimensions(header),cell:dimensions(cells[0]),input:dimensions(editableControl),
         width:actualWidth,actualWidth,requiredWidth:semanticRequiredWidth,representativeRequiredWidth:semanticRequiredWidth,
-        headerTextWidth:headerWidth,representativeContentWidth:contentWidth,editableAnswerWidth,horizontalChrome,occupiedWidth,contentWaste:Math.max(0,actualWidth-occupiedWidth),inputCharacterWidth,inputCharacterCapacity,
+        headerTextWidth:headerWidth,representativeContentWidth:contentWidth,editableAnswerWidth,headerFont:{ actual:headerMeasurement.actualFont,probe:headerMeasurement.probeFont },headerHorizontalChrome,cellHorizontalChrome,inputChrome,inputInnerWidth,requiredHeaderWidth,requiredCellWidth,occupiedWidth,contentWaste:Math.max(0,actualWidth-occupiedWidth),inputCharacterWidth,inputCharacterCapacity,
         headerScrollWidth:header.scrollWidth,headerClientWidth:header.clientWidth,cellScrollWidth:Math.max(0,...cells.map(cell => cell.scrollWidth)),cellClientWidth:Math.min(...cells.map(cell => cell.clientWidth)),inputClientWidth:editableControl?.clientWidth || 0,
         computedMinWidth:headerStyle.minWidth,clipped:cellClipped,cellClipped,headerClipped,editableAnswerFitFailure,sticky:header.dataset.stickyContext === 'true',stickyLeft:parseFloat(getComputedStyle(header).left) || 0,naturalViewportLeft:naturalViewportLefts.get(key),stickyViewportLeft:header.getBoundingClientRect().left-wrapper.getBoundingClientRect().left,rightEdge:header.getBoundingClientRect().right,renderedWidth:actualWidth,
         headerLineCount:Math.max(1,Math.round(range.getBoundingClientRect().height / lineHeight)),headerGlyphStacked:header.getBoundingClientRect().width < headerStyle.fontSize.replace('px','') * 1.8 && [...header.textContent].length > 2

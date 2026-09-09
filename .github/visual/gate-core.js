@@ -7,17 +7,18 @@ function evaluateVisualMetrics(metrics, options = {}) {
   const violations = [];
   for (const [key, column] of Object.entries(metrics.columns || {})) {
     const actual = Number(column.actualWidth ?? column.width);
-    const headerTextWidth = Number(column.headerTextWidth), horizontalChrome = Number(column.horizontalChrome);
-    const requiredHeaderWidth = headerTextWidth + horizontalChrome;
+    const headerTextWidth = Number(column.headerTextWidth), headerHorizontalChrome = Number(column.headerHorizontalChrome);
+    const requiredHeaderWidth = headerTextWidth + headerHorizontalChrome;
     const headerWidthDeficit = Number.isFinite(requiredHeaderWidth) && actual + limits.browserRoundingTolerance < requiredHeaderWidth;
-    const narrowEvidence = column.headerClipped || headerWidthDeficit || column.cellClipped || column.clipped || column.editableAnswerFitFailure;
-    if (narrowEvidence) violations.push({ code:'COLUMN_TOO_NARROW', column:key, actualWidth:actual, headerTextWidth, horizontalChrome, requiredHeaderWidth, deficit:Number.isFinite(requiredHeaderWidth) ? Math.max(0,requiredHeaderWidth-actual) : null, representativeRequiredWidth:column.representativeRequiredWidth, evidence:{ headerClipped:Boolean(column.headerClipped),headerWidthDeficit,cellClipped:Boolean(column.cellClipped || column.clipped),editableAnswerFitFailure:Boolean(column.editableAnswerFitFailure) } });
+    const actualClipping = column.headerClipped || column.cellClipped || column.clipped || column.editableAnswerFitFailure;
+    const narrowEvidence = headerWidthDeficit || actualClipping;
+    if (narrowEvidence) violations.push({ code:'COLUMN_TOO_NARROW', column:key, actualWidth:actual, headerTextWidth, headerHorizontalChrome, requiredHeaderWidth, deficit:Number.isFinite(requiredHeaderWidth) ? Math.max(0,requiredHeaderWidth-actual) : null, representativeRequiredWidth:column.representativeRequiredWidth, evidence:{ headerClipped:Boolean(column.headerClipped),headerWidthDeficit,cellClipped:Boolean(column.cellClipped || column.clipped),editableAnswerFitFailure:Boolean(column.editableAnswerFitFailure) } });
     const occupied = Number(column.occupiedWidth || column.representativeRequiredWidth || column.requiredWidth);
     const waste = Number.isFinite(Number(column.contentWaste)) ? Number(column.contentWaste) : actual - occupied;
     const excessiveWaste = Math.max(limits.minimumWasteTolerance, occupied * limits.wasteRatio);
     if (metrics.table?.requiresHorizontalScroll && waste > excessiveWaste && column.classification !== 'years') violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,occupiedWidth:occupied,contentWaste:waste,maximumUsefulWaste:excessiveWaste });
     if (column.classification === 'numeric' && column.editable && Number(column.inputCharacterCapacity) > limits.maximumMoneyInputCharacters) violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,inputCharacterCapacity:column.inputCharacterCapacity,maximumInputCharacters:limits.maximumMoneyInputCharacters });
-    if (narrowEvidence) violations.push({ code:'CONTENT_CLIPPED', column:key });
+    if (actualClipping) violations.push({ code:'CONTENT_CLIPPED', column:key });
     if (column.headerLineCount > 2 || column.headerGlyphStacked) violations.push({ code:'UNREADABLE_HEADER_WRAP', column:key, lines:column.headerLineCount });
   }
   if (metrics.case === 'fixed-asset' && Number(metrics.viewport?.width) <= 430) {
@@ -49,7 +50,10 @@ function evaluateVisualMetrics(metrics, options = {}) {
   }
   if (stickyColumns.length && Number(metrics.sticky?.contextWidth) > Number(metrics.sticky?.viewportWidth)-limits.minimumTouchTargetHeight) violations.push({ code:'STICKY_CONTEXT_OCCUPIES_VIEWPORT',contextWidth:metrics.sticky.contextWidth,viewportWidth:metrics.sticky.viewportWidth,minimumEditableArea:limits.minimumTouchTargetHeight });
   if (metrics.table?.requiresHorizontalScroll && !metrics.table?.horizontalScrollAvailable) violations.push({ code:'HORIZONTAL_OVERFLOW_UNAVAILABLE' });
-  if (metrics.table?.clipped) violations.push({ code:'TABLE_CLIPPED' });
+  if (metrics.table?.clipped) {
+    violations.push({ code:'TABLE_CLIPPED' });
+    violations.push({ code:'CONTENT_CLIPPED', scope:'table' });
+  }
   return violations;
 }
 

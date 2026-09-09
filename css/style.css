@@ -411,7 +411,7 @@ select, .amount-input {
 
   .answer-table:not(.eight-column-worksheet) th,
   .answer-table:not(.eight-column-worksheet) td { padding: 0 3px; font-size: .85rem; }
-  .answer-table:not(.eight-column-worksheet) [data-column-type="numeric"] { padding-right: 1px; padding-left: 1px; }
+  .answer-table:not(.eight-column-worksheet) td[data-column-type="numeric"] { padding-right: 1px; padding-left: 1px; }
   .answer-table:not(.eight-column-worksheet) [data-column-type="date"],
   .answer-table:not(.eight-column-worksheet) [data-column-type="description"] { padding-right: 6px; padding-left: 6px; }
   .answer-table:not(.eight-column-worksheet) .table-input { min-height: 44px; padding: 2px 1px; font-size: 16px; }

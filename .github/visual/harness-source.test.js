@@ -26,4 +26,9 @@ assert(runner.includes("isJournal ? [...wrapper.querySelectorAll('.journal-row')
 assert(runner.includes("isJournal ? wrapper.querySelector('.journal-header') : table.tHead?.rows?.[0]"), 'journal headers never use HTMLTableElement head collections');
 assert(!runner.includes('table?.tBodies[0]') && !runner.includes('table?.tHead?.rows[0]'), 'unsafe optional chaining cannot index an undefined table collection');
 assert(runner.includes('journalRowHeight:') && runner.includes('hasEditableControl:'), 'journal-specific row and control metrics remain reported');
+for (const property of ['fontFamily','fontSize','fontWeight','fontStyle','fontStretch','fontVariant','letterSpacing','fontKerning','fontFeatureSettings']) assert(runner.includes(`'${property}'`), `measurement probes copy computed ${property}`);
+assert(!runner.includes('font:style.font'), 'measurement probes do not use lossy font shorthand');
+assert(runner.includes('headerFont:{ actual:headerMeasurement.actualFont,probe:headerMeasurement.probeFont }'), 'actual and probe header fonts remain independently diagnosable');
+assert(runner.includes('headerHorizontalChrome,cellHorizontalChrome,inputChrome,inputInnerWidth,requiredHeaderWidth,requiredCellWidth'), 'header, cell, and input chrome plus semantic requirements remain separate');
+assert(runner.includes('editableAnswerWidth > inputInnerWidth + 0.5'), 'editable fit compares text against the actual input inner width with browser tolerance');
 console.log('visual harness source checks: dependencies, order, diagnostics, representatives: ok');
