@@ -251,6 +251,9 @@ button.secondary-button:hover { color: #fff; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="numeric"] { overflow-wrap: normal; word-break: keep-all; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] th[data-column-type="numeric"] { min-width: max-content; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="years"] { box-sizing: border-box; width: calc(4em + 14px); min-width: calc(4em + 14px); max-width: calc(4em + 14px); overflow-wrap: normal; word-break: keep-all; white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (min-width: 431px) {
+  .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] th[data-column-type="years"] { padding-inline: 6px; }
+}
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] .table-input[data-input-type="amount"] { box-sizing: border-box; width: var(--column-input-ch, 9ch); min-width: var(--column-input-ch, 9ch); max-width: var(--column-input-ch, 9ch); font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="account"] { min-width: 8em; word-break: keep-all; overflow-wrap: normal; }
 .answer-table:not(.eight-column-worksheet) [data-column-type="date"] { box-sizing: border-box; width: calc(4em + 21px); min-width: calc(4em + 21px); max-width: calc(4em + 21px); white-space: nowrap; }
