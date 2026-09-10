@@ -15,6 +15,7 @@
 <script>
 (() => {
   const questions = Object.values(window.QuestionData);
+  let representativeQuestion = null;
   const hasColumns = (...keys) => question => keys.every(key => question.table?.columns?.includes(key));
   const selectors = {
     'fixed-asset': hasColumns('asset','acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'),
@@ -40,6 +41,7 @@
     render(name) {
       const question = questions.find(selectors[name]);
       if (!question) throw new Error(`canonical representative not found: ${name}`);
+      representativeQuestion = question;
       new window.AppView(document).renderQuestion(question, {}, 'training');
       document.body.dataset.case = name; document.body.dataset.questionId = question.id;
       return { id:question.id, category:question.category, columns:question.table?.columns || [] };
@@ -51,11 +53,26 @@
         if (!question.table?.columns?.includes(key)) continue;
         let inputIndex = 0;
         for (const row of question.table.rows || []) Object.values(row).forEach((value, index) => {
-          if (value === '入力') { if (question.table.columns[index] === key) editable = true; inputIndex += 1; }
+          if (value === '入力') { const cellId = question.table.inputCells[inputIndex++]; if (question.table.columns[index] === key) { editable = true; const expected = question.answer?.cells?.[cellId]; if (expected !== '' && expected != null) values.push(expected); } }
           else if (question.table.columns[index] === key) values.push(value);
         });
       }
       return { values, editable };
+    },
+    representativeColumn(key) {
+      if (!representativeQuestion?.table?.columns?.includes(key)) throw new Error(`representative column not found: ${key}`);
+      const visibleValues = [], editableAnswers = [];
+      let inputIndex = 0;
+      for (const row of representativeQuestion.table.rows || []) Object.values(row).forEach((value, index) => {
+        const column = representativeQuestion.table.columns[index];
+        if (value === '入力') {
+          const cellId = representativeQuestion.table.inputCells[inputIndex++];
+          if (column === key) { const expected = representativeQuestion.answer?.cells?.[cellId]; if (expected !== '' && expected != null) editableAnswers.push(expected); }
+        } else if (column === key) visibleValues.push(value);
+      });
+      const formatted = [...visibleValues,...editableAnswers].filter(value => typeof value === 'number').map(value => value.toLocaleString('ja-JP'));
+      const requiredInputCharacters = editableAnswers.length ? Math.min(9,Math.max(4,...formatted.map(value => [...value].length + 1))) : 0;
+      return { visibleValues, editableAnswers, editable:editableAnswers.length > 0,requiredInputCharacters };
     }
   };
 })();

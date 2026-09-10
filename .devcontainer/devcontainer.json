@@ -1,0 +1,12 @@
+{
+  "name": "Boki RPG physical preview",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bookworm",
+  "forwardPorts": [4173],
+  "portsAttributes": {
+    "4173": {
+      "label": "Exact PR physical preview",
+      "onAutoForward": "notify",
+      "protocol": "https"
+    }
+  }
+}

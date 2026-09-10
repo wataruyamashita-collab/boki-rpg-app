@@ -30,44 +30,91 @@ const server = http.createServer((request, response) => {
   response.end(fs.readFileSync(file));
 });
 
-async function measure(page) {
-  return page.evaluate(() => {
+async function measure(page, caseName) {
+  return page.evaluate(async measuredCase => {
+    const questionId = document.body.dataset.questionId || 'unknown';
+    const requireElement = (element, name) => {
+      if (!(element instanceof Element)) throw new Error(`VISUAL_HARNESS_MISSING_ELEMENT:${measuredCase}:${questionId}:${name}`);
+      return element;
+    };
     const rect = element => { const value = element?.getBoundingClientRect(); return value ? { x:value.x,y:value.y,width:value.width,height:value.height,top:value.top,right:value.right,bottom:value.bottom,left:value.left } : null; };
     const dimensions = element => element ? { rect:rect(element),scrollWidth:element.scrollWidth,clientWidth:element.clientWidth,scrollHeight:element.scrollHeight,clientHeight:element.clientHeight } : null;
+    const fontProperties = style => Object.fromEntries(['fontFamily','fontSize','fontWeight','fontStyle','fontStretch','fontVariant','letterSpacing','fontKerning','fontFeatureSettings'].map(property => [property,style[property]]));
+    const horizontalChrome = style => parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
     const requiredTextWidth = (element, texts) => {
       const probe = document.createElement('span'), style = getComputedStyle(element);
-      Object.assign(probe.style,{ position:'fixed',visibility:'hidden',whiteSpace:'nowrap',font:style.font,letterSpacing:style.letterSpacing });
+      Object.assign(probe.style,{ position:'fixed',visibility:'hidden',whiteSpace:'nowrap',...fontProperties(style) });
       document.body.append(probe); let maximum = 0;
       for (const text of texts) { probe.textContent = text; maximum = Math.max(maximum, probe.getBoundingClientRect().width); }
-      probe.remove(); return maximum;
+      const probeFont = fontProperties(getComputedStyle(probe));
+      probe.remove(); return { width:maximum,actualFont:fontProperties(style),probeFont };
     };
-    const table = document.querySelector('.answer-table'), wrapper = document.querySelector('#table-container');
+    const isJournal = measuredCase === 'journal';
+    const table = requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table');
+    const wrapper = requireElement(document.querySelector(isJournal ? '#journal-container' : '#table-container'), 'wrapper');
+    const wrapperLeft = wrapper.getBoundingClientRect().left;
+    const naturalViewportLefts = new Map(isJournal ? [] : [...table.querySelectorAll('thead [data-column-key]')].map(header => [header.dataset.columnKey, header.getBoundingClientRect().left-wrapperLeft]));
+    if (['inventory','ledger'].includes(measuredCase) && wrapper.scrollWidth > wrapper.clientWidth) { wrapper.scrollLeft = Math.min(120,wrapper.scrollWidth-wrapper.clientWidth); await new Promise(requestAnimationFrame); }
     const columns = {};
-    for (const header of table?.querySelectorAll('thead [data-column-key]') || []) {
+    for (const header of isJournal ? [] : table.querySelectorAll('thead [data-column-key]')) {
       const key = header.dataset.columnKey, cells = [...table.querySelectorAll(`tbody [data-column-key="${CSS.escape(key)}"]`)];
-      const canonical = window.visualHarness.canonicalColumn(key), visible = canonical.values.map(value => typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value ?? ''));
+      const canonical = window.visualHarness.canonicalColumn(key);
+      const representative = window.visualHarness.representativeColumn(key);
+      const format = value => typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value ?? '');
+      const visible = representative.visibleValues.map(format), editableAnswers = representative.editableAnswers.map(format);
+      const editableControl = cells.find(cell => cell.querySelector('input,select'))?.querySelector('input,select');
       const headerStyle = getComputedStyle(header), cellStyle = getComputedStyle(cells[0] || header), range = document.createRange(); range.selectNodeContents(header);
       const lineHeight = parseFloat(headerStyle.lineHeight) || parseFloat(headerStyle.fontSize) * 1.2;
-      const contentWidth = requiredTextWidth(cells[0] || header, visible), headerWidth = requiredTextWidth(header, [header.textContent]);
-      const horizontalChrome = parseFloat(cellStyle.paddingLeft) + parseFloat(cellStyle.paddingRight) + parseFloat(cellStyle.borderLeftWidth) + parseFloat(cellStyle.borderRightWidth);
+      const contentMeasurement = requiredTextWidth(cells.find(cell => !cell.querySelector('input,select')) || cells[0] || header, visible);
+      const editableMeasurement = requiredTextWidth(editableControl || cells[0] || header, editableAnswers);
+      const headerMeasurement = requiredTextWidth(header, [header.textContent]);
+      const contentWidth = contentMeasurement.width, editableAnswerWidth = editableMeasurement.width, headerWidth = headerMeasurement.width;
+      const headerHorizontalChrome = horizontalChrome(headerStyle), cellHorizontalChrome = horizontalChrome(cellStyle);
+      const inputStyle = editableControl ? getComputedStyle(editableControl) : null;
+      const inputChrome = inputStyle ? horizontalChrome(inputStyle) : 0;
+      const inputPadding = inputStyle ? parseFloat(inputStyle.paddingLeft) + parseFloat(inputStyle.paddingRight) : 0;
+      const inputInnerWidth = editableControl ? editableControl.clientWidth - inputPadding : 0;
+      const inputCharacterWidth = editableControl ? requiredTextWidth(editableControl, ['0']).width : 0;
+      const inputCharacterCapacity = editableControl && inputCharacterWidth > 0 ? inputInnerWidth / inputCharacterWidth : 0;
+      const requiredHeaderWidth = headerWidth + headerHorizontalChrome;
+      const requiredCellWidth = contentWidth + cellHorizontalChrome;
+      const requiredEditableWidth = editableAnswerWidth + inputChrome + cellHorizontalChrome;
+      const semanticRequiredWidth = header.dataset.columnType === 'years'
+        ? Math.max(requiredHeaderWidth, requiredCellWidth, requiredEditableWidth, parseFloat(headerStyle.fontSize) * 4 + 14)
+        : Math.max(requiredHeaderWidth,requiredCellWidth,requiredEditableWidth);
+      const actualWidth = header.getBoundingClientRect().width;
+      const headerClipped = header.scrollWidth > header.clientWidth + 1;
+      const cellClipped = cells.some(cell => cell.scrollWidth > cell.clientWidth + 1);
+      const editableAnswerFitFailure = Boolean(editableControl && editableAnswerWidth > inputInnerWidth + 0.5);
+      const occupiedWidth = Math.max(requiredHeaderWidth,requiredCellWidth,editableControl ? editableControl.getBoundingClientRect().width + cellHorizontalChrome : requiredEditableWidth);
       columns[key] = {
-        headerText:header.textContent,classification:header.dataset.columnType,canonicalValues:canonical.values,editable:canonical.editable,
-        contentMax:canonical.values.filter(Number.isFinite).reduce((max,value) => Math.max(max,value), Number.NEGATIVE_INFINITY),
-        contentLength:Math.max(0,...visible.map(value => [...value].length)),header:dimensions(header),cell:dimensions(cells[0]),input:dimensions(cells.find(cell => cell.querySelector('input'))?.querySelector('input')),
-        width:header.getBoundingClientRect().width,requiredWidth:Math.max(contentWidth,headerWidth) + horizontalChrome,
-        computedMinWidth:headerStyle.minWidth,clipped:cells.some(cell => cell.scrollWidth > cell.clientWidth + 1),
+        headerText:header.textContent,classification:header.dataset.columnType,canonicalValues:canonical.values,representativeValues:representative.visibleValues,editableAnswers:representative.editableAnswers,editable:representative.editable,requiredInputCharacters:representative.requiredInputCharacters,
+        contentMax:representative.visibleValues.filter(Number.isFinite).reduce((max,value) => Math.max(max,value), Number.NEGATIVE_INFINITY),
+        contentLength:Math.max(0,...[...visible,...editableAnswers].map(value => [...value].length)),header:dimensions(header),cell:dimensions(cells[0]),input:dimensions(editableControl),
+        width:actualWidth,actualWidth,requiredWidth:semanticRequiredWidth,representativeRequiredWidth:semanticRequiredWidth,
+        headerTextWidth:headerWidth,representativeContentWidth:contentWidth,editableAnswerWidth,headerFont:{ actual:headerMeasurement.actualFont,probe:headerMeasurement.probeFont },headerHorizontalChrome,cellHorizontalChrome,inputChrome,inputInnerWidth,requiredHeaderWidth,requiredCellWidth,occupiedWidth,contentWaste:Math.max(0,actualWidth-occupiedWidth),inputCharacterWidth,inputCharacterCapacity,
+        headerScrollWidth:header.scrollWidth,headerClientWidth:header.clientWidth,cellScrollWidth:Math.max(0,...cells.map(cell => cell.scrollWidth)),cellClientWidth:Math.min(...cells.map(cell => cell.clientWidth)),inputClientWidth:editableControl?.clientWidth || 0,
+        computedMinWidth:headerStyle.minWidth,clipped:cellClipped,cellClipped,headerClipped,editableAnswerFitFailure,sticky:header.dataset.stickyContext === 'true',stickyLeft:parseFloat(getComputedStyle(header).left) || 0,naturalViewportLeft:naturalViewportLefts.get(key),stickyViewportLeft:header.getBoundingClientRect().left-wrapper.getBoundingClientRect().left,rightEdge:header.getBoundingClientRect().right,renderedWidth:actualWidth,
         headerLineCount:Math.max(1,Math.round(range.getBoundingClientRect().height / lineHeight)),headerGlyphStacked:header.getBoundingClientRect().width < headerStyle.fontSize.replace('px','') * 1.8 && [...header.textContent].length > 2
       };
     }
-    const bodyRows = [...(table?.tBodies[0]?.rows || [])], editableRow = bodyRows.find(row => row.querySelector('input,select')), normalRow = bodyRows.find(row => !row.querySelector('input,select')) || bodyRows[0];
-    const representativeCell = editableRow?.cells[0] || normalRow?.cells[0], computedCell = representativeCell ? getComputedStyle(representativeCell) : null;
+    const bodyRows = isJournal ? [...wrapper.querySelectorAll('.journal-row')] : [...(table.tBodies?.[0]?.rows || [])];
+    const editableRow = bodyRows.find(row => row.querySelector('input,select')), normalRow = bodyRows.find(row => !row.querySelector('input,select')) || bodyRows[0];
+    const representativeCell = isJournal ? editableRow || normalRow : editableRow?.cells?.[0] || normalRow?.cells?.[0];
+    const computedCell = representativeCell instanceof Element ? getComputedStyle(representativeCell) : null;
+    const borderTop = computedCell ? parseFloat(computedCell.borderTopWidth) : 0, borderBottom = computedCell ? parseFloat(computedCell.borderBottomWidth) : 0;
+    const paddingTop = computedCell ? parseFloat(computedCell.paddingTop) : 0, paddingBottom = computedCell ? parseFloat(computedCell.paddingBottom) : 0;
+    const inputHeight = rect(editableRow?.querySelector('input,select'))?.height || 0;
+    const lineHeight = computedCell ? parseFloat(computedCell.lineHeight) || parseFloat(computedCell.fontSize) * 1.2 : 0;
+    const headerRow = isJournal ? wrapper.querySelector('.journal-header') : table.tHead?.rows?.[0];
     return {
       questionId:document.body.dataset.questionId,
       table:{ ...dimensions(table),wrapper:dimensions(wrapper),horizontalOverflow:Math.max(0,(table?.scrollWidth || 0)-(wrapper?.clientWidth || 0)),requiresHorizontalScroll:(table?.scrollWidth || 0)>(wrapper?.clientWidth || 0),horizontalScrollAvailable:getComputedStyle(wrapper).overflowX !== 'visible',clipped:(wrapper?.scrollWidth || 0) < (table?.scrollWidth || 0) },
       columns,
-      rows:{ headerRowHeight:rect(table?.tHead?.rows[0])?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,inputVisualHeight:rect(editableRow?.querySelector('input,select'))?.height || 0,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null }
+      rows:{ headerRowHeight:rect(headerRow)?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,journalRowHeight:isJournal ? rect(editableRow)?.height || 0 : 0,inputVisualHeight:inputHeight,hasEditableControl:Boolean(editableRow?.querySelector('input,select')),paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom },
+      sticky:{ viewportWidth:wrapper.clientWidth,scrollLeft:wrapper.scrollLeft,contextWidth:parseFloat(getComputedStyle(table).getPropertyValue('--sticky-context-width')) || 0 }
     };
-  });
+  }, caseName);
 }
 
 async function run() {
@@ -90,18 +137,18 @@ async function run() {
           } finally { await page.close(); }
         }
         for (const viewport of viewports) {
-          for (const caseName of ['fixed-asset',...(viewport.width === 390 ? ['inventory','ledger','journal','worksheet'] : [])]) {
+          for (const caseName of ['fixed-asset',...(viewport.width <= 430 ? ['inventory','ledger'] : []),...(viewport.width === 390 ? ['journal','worksheet'] : [])]) {
             activeContext = { phase:'observation',browser:browserName,viewport,case:caseName };
             const page = await browser.newPage({ viewport });
             try {
               await page.goto(url); await page.evaluate(() => window.visualHarness.assertDependencies());
               const representative = await page.evaluate(name => window.visualHarness.render(name), caseName);
               const directory = path.join(OUTPUT,browserName); fs.mkdirSync(directory,{ recursive:true });
+              const metrics = { browser:browserName,viewport,case:caseName,representative,...await measure(page,caseName) };
               await page.screenshot({ path:path.join(directory,`${caseName}-${viewport.width}.png`),fullPage:true });
-              const metrics = { browser:browserName,viewport,case:caseName,representative,...await measure(page) };
               metrics.violations = evaluateVisualMetrics(metrics); metrics.knownGeneration10Violation = caseName === 'fixed-asset' && detectGeneration10KnownViolation(metrics);
               evidence.reports.push(metrics);
-              if (caseName === 'fixed-asset' && !metrics.knownGeneration10Violation) evidence.failures.push(`${browserName}/${viewport.width}: Generation 10 life-width violation not detected`);
+              if (mode === 'audit' && caseName === 'fixed-asset' && !metrics.knownGeneration10Violation) evidence.failures.push(`${browserName}/${viewport.width}: Generation 10 life-width violation not detected`);
               if (mode === 'strict' && metrics.violations.length) evidence.failures.push(`${browserName}/${caseName}/${viewport.width}: ${metrics.violations.map(item => item.code).join(',')}`);
               writeEvidence();
             } finally { await page.close(); }
