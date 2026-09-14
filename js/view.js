@@ -309,11 +309,11 @@
       }).filter(item => item.attempted).map(({ account, amount }) => ({ account, amount }));
       return { debit: side('debit'), credit: side('credit') };
     }
-    result(question, score, userAnswer, confidence = 'unsure', achievement = {}) {
+    result(question, score, userAnswer, confidence = 'unsure', achievement = {}, retryAuthorized = false) {
       const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
       if (standardActions) standardActions.hidden = false; if (examActions) examActions.hidden = true;
       const retryAction = this.document.querySelector('[data-action="coaching-retry-result"]');
-      if (retryAction) retryAction.hidden = score.correct;
+      if (retryAction) retryAction.hidden = !retryAuthorized;
       const topActions = this.byId('top-result-actions'); if (topActions) topActions.hidden = false;
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
       const calibration = confidence === 'sure'
@@ -331,6 +331,7 @@
     protectedResult(confidence = 'unsure', retry = false) {
       const panel = this.byId('protected-learning'); const status = this.byId('protected-status');
       panel.hidden = false;
+      status.hidden = false;
       status.replaceChildren();
       const headline = this.document.createElement('strong'); headline.className = 'result-headline'; headline.textContent = retry ? '練習の回答はまだ要確認です' : '最初の回答はもう一歩です';
       const guidance = this.document.createElement('span'); guidance.className = 'confidence-feedback'; guidance.textContent = confidence === 'sure' ? '自信ありとして記録しました。根拠を順に確認しましょう。' : 'まだ自信なしとして記録しました。ヒントを使って確認できます。';
@@ -358,7 +359,7 @@
     }
     resetLearningSurfaces() {
       const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = false;
-      const protectedStatus = this.byId('protected-status'); protectedStatus?.replaceChildren();
+      const protectedStatus = this.byId('protected-status'); if (protectedStatus) { protectedStatus.hidden = true; protectedStatus.replaceChildren(); }
       const hintPanel = this.byId('hint-panel'); if (hintPanel) hintPanel.hidden = true;
       const heading = this.byId('hint-heading'); if (heading) heading.textContent = '';
       const text = this.byId('hint-text'); if (text) text.textContent = '';
@@ -367,7 +368,7 @@
       ['result-status','answer-comparison','correct-journal','explanation'].forEach(id => this.byId(id)?.replaceChildren());
       const top = this.byId('top-result-actions'); if (top) top.hidden = true;
     }
-    hideProtectedResult() { const panel = this.byId('protected-learning'); if (panel) panel.hidden = true; }
+    hideProtectedResult() { const panel = this.byId('protected-learning'); if (panel) panel.hidden = true; const status = this.byId('protected-status'); if (status) { status.hidden = true; status.replaceChildren(); } }
     renderHint(stage, text) {
       const panel = this.byId('hint-panel'); const heading = this.byId('hint-heading');
       panel.hidden = false; heading.textContent = `ヒント ${stage}`; this.byId('hint-text').textContent = text;

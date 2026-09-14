@@ -410,10 +410,10 @@
       this.view.updateRpg(this.rpg);
       if (!score.correct) {
         this.learningFlow.phase = 'W'; this.learningFlow.gameOverPending = this.rpg.state.companyHP === 0;
-        this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
+        this.view.result(question, score, answer, confidence, achievement, true); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
         return;
       }
-      this.learningFlow.phase = 'C'; this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
+      this.learningFlow.phase = 'C'; this.view.result(question, score, answer, confidence, achievement, false); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
     }
     static journalRetryDraft(answer, expected) {
       const matchSide = side => { const remaining = [...(expected?.[side] || [])]; return (answer?.[side] || []).map(item => { const amount = Number(item?.amount); const index = remaining.findIndex(row => row.account === item?.account && Number.isFinite(amount) && row.amount === amount); if (index < 0) return { account:'', amount:'' }; remaining.splice(index, 1); return { account:item.account, amount:item.amount }; }); };
@@ -451,14 +451,14 @@
       const flow = this.learningFlow; flow.retryCount += 1; this.submitting = false;
       if (!score.correct) {
         flow.coachingAnswer = question.type === 'journal' ? Controller.journalRetryDraft(answer, question.answer) : Controller.tableRetryDraft(answer, score.details);
-        flow.phase = 'W'; this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement); this.view.show('view-result'); this.document?.getElementById?.('result-status')?.focus(); return false;
+        flow.phase = 'W'; this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, true); this.view.show('view-result'); this.document?.getElementById?.('result-status')?.focus(); return false;
       }
-      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement); const status = this.document.getElementById('result-status');
+      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, false); const status = this.document.getElementById('result-status');
       const note = this.document.createElement('span'); note.className = 'coaching-success'; note.textContent = '練習で修正できました。最初の回答は誤答として記録されています。'; status?.append(note); this.view.show('view-result'); status?.focus?.(); this.dispatchPendingGameOver(); return true;
     }
     revealAnswer() {
       const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase)) return false;
-      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(this.questions[this.currentId], flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); this.dispatchPendingGameOver(); return true;
+      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(this.questions[this.currentId], flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, false); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); this.dispatchPendingGameOver(); return true;
     }
     dispatchPendingGameOver() { const flow = this.learningFlow; if (flow?.gameOverPending && !flow.gameOverDispatched) { flow.gameOverDispatched = true; this.showGameOver(); } }
     next() {
@@ -466,6 +466,7 @@
       if (this.model.state.mode !== 'exam' && lifecycleManaged) {
         const flow = this.learningFlow;
         if (!flow || !['W','C','D'].includes(flow.phase) || flow.nextConsumed) return false;
+        if (flow.gameOverPending) { this.dispatchPendingGameOver(); return false; }
         flow.nextConsumed = true;
       }
       if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story');
