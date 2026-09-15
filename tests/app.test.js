@@ -530,12 +530,12 @@ for (const [type, id] of Object.entries(representativeIds)) {
   const wrongIndex = question.table.inputCells.indexOf(wrongCell); const matchingIndex = question.table.inputCells.indexOf(matchingCell);
   assert.strictEqual(container.hidden, false, `${id}の誤答時に比較欄を表示する`);
   if (type === 'correction') {
-    assert.strictEqual(container.children[0].textContent, 'あなたの訂正仕訳（誤答）', 'E001の比較見出しを訂正仕訳として表示する');
+    assert.strictEqual(container.children[0].textContent, '最初の訂正仕訳（誤答）', 'E001の比較見出しを最初の訂正仕訳として表示する');
     assert.strictEqual(descendants(container, 'table')[0].className, 'journal-table', 'E001の誤答を借方・貸方の仕訳表で表示する');
     continue;
   }
   if (type === 'worksheet') {
-    assert.strictEqual(container.children[0].textContent, '決算整理表で回答を比較', 'D001の比較見出しを決算整理表として表示する');
+    assert.strictEqual(container.children[0].textContent, '最初の回答を決算整理表で比較', 'D001の比較見出しを最初の回答として表示する');
     assert.strictEqual(descendants(container, 'table')[0].className, 'answer-comparison-table worksheet-answer-comparison', 'D001を問題と同じ表形式で比較する');
     assert(descendants(container, 'span').some(span => /^入力 /.test(span.textContent)) && descendants(container, 'span').some(span => /^正解 /.test(span.textContent)), 'D001の入力値と正解を同じセル内で横に比較する');
     continue;
@@ -711,12 +711,12 @@ assert(viewSource.includes('container.hidden = true') && viewSource.includes('co
 assert(controllerSource.includes('this.view.result(question, score, answer, confidence, achievement,'), '採点結果画面へ回答者の仕訳・達成通知・retry authorizationを渡す');
 assert(controllerSource.includes('writable = false'), 'QuotaExceededErrorの反復を避けてストレージをFail-Safe化する');
 assert(viewSource.includes('confidence-feedback') && viewSource.includes('achievement-banner'), '確信度校正とレベル・役職解放を結果画面で強調する');
-assert(viewSource.includes("heading.textContent = 'あなたの仕訳（誤答）'"), '回答者が入力した誤答を表示する');
+assert(viewSource.includes("heading.textContent = '最初の仕訳（誤答）'"), '最初に入力した誤答であることを明示する');
 assert(viewSource.includes("heading.textContent = '今回の解説'") && viewSource.includes('diagnostic.nextRule'), '誤答理由と次回の判別ポイントを一つの解説内に表示する');
 assert(viewSource.includes("solutionHeading.textContent = '解き方（この順番で考える）'") && viewSource.includes("correction:['帳簿に記録済みの仕訳"), '解説に問題形式別の具体的な解法手順を表示する');
 assert(viewSource.includes("heading.textContent = question.type === 'correction' ? '正しい訂正仕訳' : '正しい仕訳'"), '訂正問題の正解を借方・貸方の仕訳表で表示する');
-assert(viewSource.includes("heading.textContent = 'あなたの訂正仕訳（誤答）'") && viewSource.includes('this.journalTable(this.correctionJournal(userAnswer))'), '訂正問題の誤答も仕訳形式の表で比較する');
-assert(viewSource.includes("heading.textContent = '決算整理表で回答を比較'") && viewSource.includes('this.worksheetAnswerComparison(question, score, userAnswer)'), '決算整理問題は元の行列を保った表で誤答と正答を比較する');
+assert(viewSource.includes("heading.textContent = '最初の訂正仕訳（誤答）'") && viewSource.includes('this.journalTable(this.correctionJournal(userAnswer))'), '訂正問題の最初の誤答も仕訳形式の表で比較する');
+assert(viewSource.includes("heading.textContent = '最初の回答を決算整理表で比較'") && viewSource.includes('this.worksheetAnswerComparison(question, score, userAnswer)'), '決算整理問題は最初の回答と正答を元の行列を保った表で比較する');
 assert(/\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*minmax\(9rem, auto\) minmax\(9rem, auto\)/s.test(cssSource), '決算整理の入力値と正解に十分な横幅を確保する');
 assert(/@media \(max-width: 480px\)[\s\S]*?\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*8\.75rem 8\.75rem/s.test(cssSource), 'iPhone幅でも入力値と正解の数値欄を常に二列表示する');
 assert(!viewSource.includes("heading.textContent = 'なぜ間違えた？'") && !viewSource.includes("heading.textContent = '詳しい解説'"), '意味が重なる二つの解説見出しを表示しない');
@@ -1059,6 +1059,113 @@ browserSandbox.window.AppView.prototype.hideProtectedResult.call(resetProtectedV
 assert.strictEqual(resetProtectedElements['protected-learning'].hidden,true,'hideProtectedResult hides protected-learning');
 assert.strictEqual(resetProtectedElements['protected-status'].hidden,true,'hideProtectedResult hides protected-status');
 assert.strictEqual(resetProtectedElements['protected-status'].textContent,'','hideProtectedResult clears protected-status');
+
+
+// Physical iPhone retry UX regressions.
+const coachingUiState = {
+  confidence:{hidden:false},
+  save:{hidden:false},
+  saveStatus:{hidden:false},
+  protected:{hidden:false},
+  actions:{hidden:false},
+  submit:{textContent:'回答を確定する'}
+};
+
+const coachingUiForm = {
+  querySelectorAll:()=>[],
+  querySelector(selector) {
+    if (selector === '.question-actions') return coachingUiState.actions;
+    if (selector === '.confidence-selector') return coachingUiState.confidence;
+    if (selector === '.save-button') return coachingUiState.save;
+    if (selector === 'button[type="submit"]') return coachingUiState.submit;
+    return null;
+  },
+  setAttribute(name,value){ this[name]=value; }
+};
+
+const coachingUiView = {
+  byId(id) {
+    if (id === 'question-form') return coachingUiForm;
+    if (id === 'save-status') return coachingUiState.saveStatus;
+    if (id === 'protected-learning') return coachingUiState.protected;
+    return null;
+  }
+};
+
+browserSandbox.window.AppView.prototype.setAnswerMode.call(coachingUiView,'coaching');
+assert.strictEqual(coachingUiState.confidence.hidden,true,'retry中は初回回答用の確信度を隠す');
+assert.strictEqual(coachingUiState.save.hidden,true,'retry中は通常の保存ボタンを隠す');
+assert.strictEqual(coachingUiState.saveStatus.hidden,true,'retry中は通常保存statusを隠す');
+assert.strictEqual(coachingUiState.protected.hidden,true,'retry中は回答前ヒント領域を隠す');
+assert.strictEqual(coachingUiState.submit.textContent,'練習回答を確認する','retry送信を練習回答として明示する');
+
+browserSandbox.window.AppView.prototype.setAnswerMode.call(coachingUiView,'initial');
+assert.strictEqual(coachingUiState.confidence.hidden,false,'次の初回回答では確信度を復元する');
+assert.strictEqual(coachingUiState.save.hidden,false,'次の初回回答では保存ボタンを復元する');
+assert.strictEqual(coachingUiState.saveStatus.hidden,false,'次の初回回答では保存statusを復元する');
+assert.strictEqual(coachingUiState.protected.hidden,false,'次の初回回答ではヒント領域を復元する');
+assert.strictEqual(coachingUiState.submit.textContent,'回答を確定する','次の初回回答では通常送信へ戻す');
+
+let retryHideCalls = 0;
+let retryProtectedCalls = 0;
+
+const physicalRetryContext = {
+  learningFlow:{
+    phase:'W',
+    authoritativeAnswer:{cells:{a:'bad'}},
+    authoritativeScore:{details:[{cellId:'a',correct:false}]},
+    confidence:'unsure'
+  },
+  currentId:'Q',
+  questions:{Q:{type:'table'}},
+  view:{
+    applyRetryDraft(){},
+    setAnswerMode(){},
+    hideProtectedResult(){retryHideCalls += 1;},
+    protectedResult(){retryProtectedCalls += 1;},
+    show(){}
+  },
+  document:{
+    querySelectorAll:()=>[],
+    querySelector:()=>null
+  }
+};
+
+assert.strictEqual(
+  D2Controller.prototype.beginCoachingRetry.call(physicalRetryContext),
+  true,
+  '結果画面からretryへ遷移できる'
+);
+assert.strictEqual(physicalRetryContext.learningFlow.phase,'R','retry開始時にState Rへ遷移する');
+assert.strictEqual(retryHideCalls,1,'retry開始時に回答前ヒント領域を閉じる');
+assert.strictEqual(retryProtectedCalls,0,'retry開始時に回答前ヒントstatusを再表示しない');
+
+const physicalCopyQuestion = browserSandbox.window.QuestionData[representativeIds.ledger];
+const physicalCopyWrongCell = physicalCopyQuestion.table.inputCells[0];
+const physicalCopyAnswer = {
+  cells:{...physicalCopyQuestion.answer.cells,[physicalCopyWrongCell]:''}
+};
+const physicalCopyScore = Engine.grade(physicalCopyQuestion,physicalCopyAnswer);
+
+tableComparisonView.renderAnswerComparison(
+  physicalCopyQuestion,
+  physicalCopyScore,
+  physicalCopyAnswer
+);
+
+const physicalCopyContainer = comparisonElements['answer-comparison'];
+
+assert.strictEqual(
+  physicalCopyContainer.children[0].textContent,
+  '最初の解答と正しい解答',
+  '比較表が初回回答の記録であることを明示する'
+);
+
+assert(
+  domText(physicalCopyContainer).includes('最初の回答時の判定'),
+  '未入力・要確認がretry回答ではなく初回回答時の判定であることを説明する'
+);
+
 
 // D2 final closure: direct W/R persistence, control modes, and start lifecycle.
 const makeDraftBoundary=phase=>{let setDraftCalls=0;const context={currentId:'Q',learningFlow:{phase},questions:{Q:{}},model:{state:{mode:'story',drafts:{}},setDraft(){setDraftCalls++;this.state.drafts.Q={persisted:true};}},view:{readAnswer:()=>({session:`${phase}_INPUT`})},document:{getElementById:()=>({textContent:'',classList:{remove(){}}})}};return {context,calls:()=>setDraftCalls};};

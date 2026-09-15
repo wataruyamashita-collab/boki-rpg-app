@@ -348,13 +348,17 @@
       this.document.querySelectorAll('.table-input').forEach(input => { input.value = draft.cells?.[input.dataset.cellId] ?? ''; if (input.tagName === 'SELECT') this.updateSelectTitle(input); });
     }
     setAnswerMode(mode) {
-      const form = this.byId('question-form'); const locked = mode === 'protected';
+      const form = this.byId('question-form'); const locked = mode === 'protected'; const coaching = mode === 'coaching';
       form?.querySelectorAll('input, select, textarea').forEach(field => {
         if (locked && !field.disabled) { field.dataset.flowLocked = 'true'; field.disabled = true; }
         else if (!locked && field.dataset.flowLocked === 'true') { field.disabled = false; delete field.dataset.flowLocked; }
       });
       const actions = form?.querySelector('.question-actions'); if (actions) actions.hidden = locked;
-      const submit = form?.querySelector('button[type="submit"]'); if (submit) submit.textContent = mode === 'coaching' ? '練習回答を確認する' : '回答を確定する';
+      const confidence = form?.querySelector('.confidence-selector'); if (confidence) confidence.hidden = coaching;
+      const save = form?.querySelector('.save-button'); if (save) save.hidden = coaching;
+      const saveStatus = this.byId('save-status'); if (saveStatus) saveStatus.hidden = coaching;
+      const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = coaching;
+      const submit = form?.querySelector('button[type="submit"]'); if (submit) submit.textContent = coaching ? '練習回答を確認する' : '回答を確定する';
       form?.setAttribute('data-answer-mode', mode);
     }
     resetLearningSurfaces() {
@@ -459,31 +463,31 @@
       container.hidden = false;
       const heading = this.document.createElement('h3');
       if (question.type === 'journal') {
-        heading.textContent = 'あなたの仕訳（誤答）';
+        heading.textContent = '最初の仕訳（誤答）';
         const note = this.document.createElement('p'); note.textContent = '下の「正しい仕訳」と、科目・貸借・金額を一つずつ見比べましょう。';
         container.append(heading, note, this.journalTable(userAnswer));
         return;
       }
       if (question.type === 'correction') {
-        heading.textContent = 'あなたの訂正仕訳（誤答）';
+        heading.textContent = '最初の訂正仕訳（誤答）';
         const note = this.document.createElement('p'); note.textContent = '下の「正しい訂正仕訳」と、借方・貸方の科目と金額を見比べましょう。';
         container.append(heading, note, this.journalTable(this.correctionJournal(userAnswer)));
         return;
       }
       if (question.type === 'worksheet') {
-        heading.textContent = '決算整理表で回答を比較';
+        heading.textContent = '最初の回答を決算整理表で比較';
         const note = this.document.createElement('p'); note.textContent = '問題と同じ行・列の中で、入力した値と正解を横に見比べましょう。';
         container.append(heading, note, this.worksheetAnswerComparison(question, score, userAnswer));
         return;
       }
       if (question.format === 'balance-sheet') {
-        heading.textContent = '貸借対照表で回答を比較';
+        heading.textContent = '最初の回答を貸借対照表で比較';
         const note = this.document.createElement('p'); note.textContent = '資産と負債・純資産の左右を保ったまま、入力と正解を見比べましょう。';
         container.append(heading, note, this.renderBalanceSheet(question, {}, { user:userAnswer, score }));
         return;
       }
-      heading.textContent = 'あなたの解答と正しい解答';
-      const note = this.document.createElement('p'); note.textContent = '「要確認」の項目を横に見比べて、入力と正解の違いを確認しましょう。';
+      heading.textContent = '最初の解答と正しい解答';
+      const note = this.document.createElement('p'); note.textContent = '「要確認」は最初の回答時の判定です。最初の入力と正解の違いを確認しましょう。';
       container.append(heading, note, this.tableAnswerComparison(question, score, userAnswer));
     }
     renderDiagnostics(question, answer, score) {

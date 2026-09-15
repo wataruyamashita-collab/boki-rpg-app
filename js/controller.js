@@ -444,7 +444,7 @@
       const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase)) return false;
       const question = this.questions[this.currentId];
       const draft = flow.coachingAnswer || (question.type === 'journal' ? Controller.journalRetryDraft(flow.authoritativeAnswer, question.answer) : Controller.tableRetryDraft(flow.authoritativeAnswer, flow.authoritativeScore?.details));
-      flow.phase = 'R'; flow.coachingAnswer = draft; this.submitting = false; this.view.applyRetryDraft(question, draft); this.view.setAnswerMode?.('coaching'); this.view.protectedResult(flow.confidence, true); this.view.show('view-question');
+      flow.phase = 'R'; flow.coachingAnswer = draft; this.submitting = false; this.view.applyRetryDraft(question, draft); this.view.setAnswerMode?.('coaching'); this.view.hideProtectedResult?.(); this.view.show('view-question');
       const first = [...this.document.querySelectorAll('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)')].find(input => !input.value) || this.document.querySelector('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)'); first?.focus?.(); return true;
     }
     finishCoachingRetry(question, answer, score) {
