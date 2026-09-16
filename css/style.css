@@ -198,6 +198,13 @@ button.toc-question:hover { color: #fff; background: var(--accent-color); }
 .confidence-selector label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .confidence-selector input { flex: 0 0 auto; min-height: 24px; width: 24px; margin: 0; }
 .confidence-selector small { color: #566573; }
+
+/* Coaching retry: WebKitでもhidden属性をauthor displayルールより優先する。 */
+.confidence-selector[hidden],
+.question-actions .save-button[hidden],
+#save-status[hidden] {
+  display: none !important;
+}
 .game-over-dialog { width: min(88vw, 420px); padding: 20px; border: 0; border-radius: 10px; color: var(--primary-color); }
 .game-over-dialog::backdrop { background: rgba(23, 32, 42, .65); }
 button.secondary-button { color: var(--accent-color); background: #fff; border: 1px solid var(--accent-color); }
