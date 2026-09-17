@@ -383,13 +383,13 @@ select, .amount-input {
 
   .journal-header,
   .journal-row {
-    grid-template-columns: minmax(240px, 3fr) minmax(120px, 2fr) minmax(240px, 3fr) minmax(120px, 2fr);
+    grid-template-columns: minmax(232px, 3fr) minmax(112px, 2fr) minmax(232px, 3fr) minmax(112px, 2fr);
     gap: 2px;
   }
 
   .correction-header,
   .correction-row {
-    grid-template-columns: minmax(240px, 3fr) minmax(120px, 2fr) minmax(240px, 3fr) minmax(120px, 2fr);
+    grid-template-columns: minmax(232px, 3fr) minmax(112px, 2fr) minmax(232px, 3fr) minmax(112px, 2fr);
     gap: 2px;
   }
 

@@ -737,7 +737,7 @@ assert(!/\.calculator\s*{[^}]*position:\s*sticky/s.test(cssSource), '計算機�
 assert(/\.answer-table \[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(cssSource), '横スクロール中もsemantic context列を累積offsetで固定する');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
 assert(/\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\) minmax\(120px, 2fr\) minmax\(240px, 3fr\) minmax\(120px, 2fr\)/s.test(cssSource), '仕訳は借方科目・借方金額・貸方科目・貸方金額の4列にする');
-assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\) minmax\(120px, 2fr\) minmax\(240px, 3fr\) minmax\(120px, 2fr\)/s.test(cssSource), '狭い画面でも仕訳の4列を必ず横並びにする');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(232px, 3fr\) minmax\(112px, 2fr\) minmax\(232px, 3fr\) minmax\(112px, 2fr\)/s.test(cssSource), '狭い画面では監査済み幅で仕訳の4列を横並びにする');
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-row select,\s*\.journal-row \.amount-input\s*{[^}]*font-size:\s*16px/s.test(cssSource), 'iPhoneの仕訳コントロールを16px以上にして自動ズームを防ぐ');
 assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦並び用ラベルを追加しない');
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');

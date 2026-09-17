@@ -74,8 +74,40 @@ assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(c
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
 for (const viewport of [320, 375, 390, 430]) assert(fixedAssetMinimum > viewport && /overflow-x:\s*auto/.test(css), `${viewport}px: fixed-asset content remains wider than its viewport and horizontally scrollable`);
 const accountWidth = Number(css.match(/\.journal-row\s*\{[^}]*minmax\((\d+)px, 3fr\)/s)?.[1]);
-assert(accountWidth >= 240 && /\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'horizontal journal entry integrity remains protected');
-for (const viewport of [320, 375, 390, 430]) assert(accountWidth * 2 + 120 * 2 > viewport, `${viewport}px journals scroll rather than collapse four fields`);
+assert(accountWidth >= 240 && /\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'desktop journal entry integrity remains protected');
+
+const journalQuestions = questions.filter(question => question.type === 'journal');
+const journalAccounts = journalQuestions.flatMap(question =>
+  ['debit', 'credit'].flatMap(side => (question.answer?.[side] || []).map(item => String(item.account || '')))
+).filter(Boolean);
+const journalAmounts = journalQuestions.flatMap(question =>
+  ['debit', 'credit'].flatMap(side => (question.answer?.[side] || []).map(item => Number(item.amount)))
+).filter(Number.isFinite);
+
+const longestJournalAccountGlyphs = Math.max(...journalAccounts.map(glyphs));
+const longestJournalAmountGlyphs = Math.max(...journalAmounts.map(value => glyphs(formatted(value))));
+
+assert.strictEqual(longestJournalAccountGlyphs, 12, 'canonical journal account maximum remains 12 glyphs');
+assert.strictEqual(longestJournalAmountGlyphs, 9, 'canonical formatted journal amount maximum remains 9 glyphs');
+
+const mobileJournalMatch = css.match(
+  /@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*\{\s*grid-template-columns:\s*minmax\((\d+)px,\s*3fr\)\s*minmax\((\d+)px,\s*2fr\)\s*minmax\((\d+)px,\s*3fr\)\s*minmax\((\d+)px,\s*2fr\)/s
+);
+assert(mobileJournalMatch, 'mobile journal sizing rule is present');
+
+const mobileAccountWidth = Number(mobileJournalMatch[1]);
+const mobileAmountWidth = Number(mobileJournalMatch[2]);
+
+assert.strictEqual(mobileAccountWidth, 232, 'mobile journal account width uses the audited 12-glyph budget');
+assert.strictEqual(mobileAmountWidth, 112, 'mobile journal amount width uses the audited 9-glyph budget');
+assert(mobileAccountWidth >= longestJournalAccountGlyphs * 16 + 40, 'mobile account control preserves text plus native select chrome');
+assert(mobileAmountWidth >= longestJournalAmountGlyphs * 10 + 22, 'mobile amount control preserves the longest formatted amount');
+
+const mobilePairWidth = mobileAccountWidth + 2 + mobileAmountWidth;
+assert(mobilePairWidth <= 375 - 20, '375px iPhone shows one debit account-and-amount pair without horizontal clipping');
+assert(mobilePairWidth <= 390 - 20, '390px iPhone shows one debit account-and-amount pair without horizontal clipping');
+assert(mobilePairWidth <= 430 - 20, '430px iPhone shows one debit account-and-amount pair without horizontal clipping');
+assert(mobilePairWidth > 320 - 20 && /\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css), '320px retains intentional horizontal scrolling instead of crushing fields');
 const coachingHiddenRule = css.match(/\.confidence-selector\[hidden\],\s*\.question-actions \.save-button\[hidden\],\s*#save-status\[hidden\]\s*\{([^}]*)\}/)?.[1] || '';
 assert(
   /display:\s*none\s*!important/.test(coachingHiddenRule),
