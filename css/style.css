@@ -470,6 +470,11 @@ button {
   touch-action: manipulation;
 }
 button:hover { background-color: #2980b9; }
+
+/* hidden属性をauthor displayルールより必ず優先する。 */
+button[hidden] {
+  display: none !important;
+}
 button:active { transform: translateY(1px); filter: brightness(.92); }
 button:focus-visible,
 summary:focus-visible,

@@ -748,6 +748,7 @@ assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの�
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
+assert(/button\[hidden\]\s*\{[^}]*display:\s*none\s*!important/s.test(cssSource), 'hidden指定されたbuttonをauthor displayルールより優先して非表示にする');
 assert(html.includes(`css/style.css?v=${release}`) && html.includes(`js/view.js?v=${release}`), 'iPhone Chromeに改修後のCSSとJSを再読み込みさせる');
 assert(html.includes('name="format-detection" content="telephone=no"'), 'iPhoneで金額を電話番号リンクとして誤認しない');
 assert(!html.includes('maximum-scale=1'), 'ユーザーのピンチズームを制限しない');
@@ -987,7 +988,11 @@ assert.strictEqual(answerTouched,false,'D2 hint pathはquestion.answer getterへ
 const mutationSnapshot={attempts:1,xp:10,mastery:2,hp:95,review:'same',mistakes:1}; let renderedScore;
 const coachingContext={learningFlow:{phase:'R',retryCount:0,authoritativeScore:{correct:false},authoritativeAnswer:{own:'FIRST'},confidence:'unsure',achievement:{},gameOverPending:false},submitting:true,document:{createElement(){return {className:'',textContent:''};},getElementById(){return {append(){},focus(){}};}},view:{applyRetryDraft(){},setAnswerMode(){},protectedResult(){},hideProtectedResult(){},result(_q,score,answer){renderedScore={score,answer};},show(){}},dispatchPendingGameOver(){}};
 assert.strictEqual(D2Controller.prototype.finishCoachingRetry.call(coachingContext,{id:'Q'},{own:'RETRY'},{correct:false,details:[]}),false); assert.strictEqual(D2Controller.prototype.finishCoachingRetry.call(coachingContext,{id:'Q'},{own:'RETRY'},{correct:true,details:[]}),true);
-assert.deepStrictEqual(mutationSnapshot,{attempts:1,xp:10,mastery:2,hp:95,review:'same',mistakes:1},'D2 coaching retry helper performs no authoritative mutation'); assert.strictEqual(renderedScore.score.correct,false); assert.strictEqual(renderedScore.answer.own,'FIRST','D2 correct coaching reveal keeps first wrong answer authoritative');
+assert.deepStrictEqual(mutationSnapshot,{attempts:1,xp:10,mastery:2,hp:95,review:'same',mistakes:1},'D2 coaching retry helper performs no authoritative mutation');
+assert.strictEqual(renderedScore.score.correct,true,'D2 correct coaching result renders the retry score');
+assert.strictEqual(renderedScore.answer.own,'RETRY','D2 correct coaching result renders the corrected retry answer');
+assert.strictEqual(coachingContext.learningFlow.authoritativeScore.correct,false,'D2 first wrong score remains authoritative in learning history');
+assert.strictEqual(coachingContext.learningFlow.authoritativeAnswer.own,'FIRST','D2 first wrong answer remains authoritative in learning history');
 let advances=0; const guardedNext={learningFlow:{phase:'R',nextConsumed:false},model:{state:{mode:'story'}},questions:{Q:{category:'x'}},currentId:'Q'};
 assert.strictEqual(D2Controller.prototype.next.call(guardedNext),false,'D2 coaching retry direct next is blocked'); guardedNext.learningFlow.phase='D'; guardedNext.model.recommendedIds=()=>[]; guardedNext.modeIds=()=>['Q','N']; guardedNext.start=()=>{advances+=1;};
 D2Controller.prototype.next.call(guardedNext); D2Controller.prototype.next.call(guardedNext); assert.strictEqual(advances,1,'D2 top/bottom repeated next advances once');
@@ -1187,6 +1192,24 @@ for(const phase of ['W','C','D']) { const blocked=blockedSubmit(phase); assert.s
 const revealBlockedContext={learningFlow:{phase:'R',authoritativeScore:{correct:false},authoritativeAnswer:{},confidence:'unsure',achievement:{}},currentId:'Q',questions:{Q:{}},view:{hideProtectedResult(){},result(){},show(){}},document:{getElementById:()=>({focus(){}})},dispatchPendingGameOver(){}}; assert.strictEqual(D2Controller.prototype.revealAnswer.call(revealBlockedContext),true); revealBlockedContext.submitting=false; revealBlockedContext.model={state:{mode:'story'}}; const revealCalls={grade:0}; browserSandbox.window.GradingEngine={grade(){revealCalls.grade++;}}; assert.strictEqual(D2Controller.prototype.submit.call(revealBlockedContext),false,'State D after reveal direct submit is blocked'); assert.strictEqual(revealCalls.grade,0);
 const journalControls={debitAccounts:[{value:'現金',selectedOptions:[]}],debitAmounts:[{value:'999'}],creditAccounts:[{value:'売上',selectedOptions:[]}],creditAmounts:[{value:'100'}]}; const selectorValues={'.debit-account':journalControls.debitAccounts,'.debit-amount':journalControls.debitAmounts,'.credit-account':journalControls.creditAccounts,'.credit-amount':journalControls.creditAmounts}; const retryDocument={querySelectorAll:selector=>selectorValues[selector]||[],querySelector:()=>null}; const retryView=new browserSandbox.window.AppView(retryDocument); let retryLocked='',protectedRendered=0; retryView.setAnswerMode=mode=>{retryLocked=mode;}; retryView.protectedResult=()=>{protectedRendered++;}; retryView.result=()=>{protectedRendered++;}; retryView.show=()=>{}; const retryFlowContext={learningFlow:{phase:'R',retryCount:0,confidence:'unsure'},submitting:true,view:retryView}; const retryQuestion={type:'journal',answer:{debit:[{account:'現金',amount:100}],credit:[{account:'売上',amount:100}]}}; assert.strictEqual(D2Controller.prototype.finishCoachingRetry.call(retryFlowContext,retryQuestion,{debit:[{account:'現金',amount:999}],credit:[{account:'売上',amount:100}]},{correct:false}),false); assert.strictEqual(retryFlowContext.learningFlow.phase,'W','wrong coaching retry transitions R -> W'); assert.deepStrictEqual(JSON.parse(JSON.stringify(retryFlowContext.learningFlow.coachingAnswer)),{debit:[{account:'',amount:''}],credit:[{account:'売上',amount:100}]}); assert.deepStrictEqual([journalControls.debitAccounts[0].value,journalControls.debitAmounts[0].value],['現金','999'],'result view preserves the submitted Journal answer for comparison'); assert.deepStrictEqual([journalControls.creditAccounts[0].value,journalControls.creditAmounts[0].value],['売上','100'],'correct Journal pair is preserved'); assert.strictEqual(retryLocked,''); assert.strictEqual(protectedRendered,1,'wrong retry returns directly to the full explanation');
 const tableA={value:'learner-a',dataset:{cellId:'a'},tagName:'INPUT'},tableB={value:'learner-b',dataset:{cellId:'b'},tagName:'INPUT'}; const tableView=new browserSandbox.window.AppView({querySelectorAll:selector=>selector==='.table-input'?[tableA,tableB]:[]}); tableView.setAnswerMode=()=>{}; tableView.protectedResult=()=>{}; tableView.result=()=>{}; tableView.show=()=>{}; const tableRetryContext={learningFlow:{phase:'R',retryCount:0,confidence:'unsure'},submitting:true,view:tableView}; D2Controller.prototype.finishCoachingRetry.call(tableRetryContext,{type:'table'},{cells:{a:'learner-a',b:'learner-b'}},{correct:false,details:[{cellId:'a',correct:true,expected:'SECRET'},{cellId:'b',correct:false,expected:'SECRET2'}]}); assert.deepStrictEqual([tableA.value,tableB.value],['learner-a','learner-b'],'result view preserves submitted table cells for comparison');
+let touchSelectFocused=false,touchQuestionFocused=false;
+const touchSelect={value:'',tagName:'SELECT',focus(){touchSelectFocused=true;}};
+const touchRetryContext={
+  learningFlow:{phase:'W',authoritativeAnswer:{debit:[],credit:[]},authoritativeScore:{},confidence:'unsure'},
+  currentId:'Q',
+  questions:{Q:{type:'journal',answer:{debit:[],credit:[]}}},
+  model:{state:{mode:'story'}},
+  view:{calculatorFirstInput:true,applyRetryDraft(){},setAnswerMode(){},hideProtectedResult(){},show(){}},
+  document:{
+    querySelectorAll:()=>[touchSelect],
+    querySelector:()=>touchSelect,
+    getElementById:id=>id==='q-text'?{focus(){touchQuestionFocused=true;}}:null
+  }
+};
+assert.strictEqual(D2Controller.prototype.beginCoachingRetry.call(touchRetryContext),true);
+assert.strictEqual(touchSelectFocused,false,'touch端末ではretry開始時にselectを自動focusしない');
+assert.strictEqual(touchQuestionFocused,true,'touch端末で最初の空欄がselectなら問題文へ安全にfocusを移す');
+
 let renderQuestionCalls=0,answerRendererCalls=0,appliedDraft=null,focused=false; const clearedField={value:'',focus(){focused=true;}}; const beginContext={learningFlow:{phase:'W',authoritativeAnswer:{cells:{a:'bad'}},authoritativeScore:{details:[{cellId:'a',correct:false}]},confidence:'unsure'},currentId:'Q',questions:{Q:{type:'table'}},model:{state:{mode:'story'}},view:{applyRetryDraft(_q,draft){appliedDraft=draft;},renderQuestion(){renderQuestionCalls++;},renderJournal(){answerRendererCalls++;},renderCorrection(){answerRendererCalls++;},setAnswerMode(){},protectedResult(){},show(){}},document:{querySelectorAll:()=>[clearedField],querySelector:()=>clearedField}}; assert.strictEqual(D2Controller.prototype.beginCoachingRetry.call(beginContext),true); assert.strictEqual(beginContext.learningFlow.phase,'R','explicit retry transitions W -> R'); assert.deepStrictEqual(JSON.parse(JSON.stringify(appliedDraft)),{cells:{a:''}}); assert.strictEqual(renderQuestionCalls,0,'protected retry does not call renderQuestion'); assert.strictEqual(answerRendererCalls,0,'protected retry does not call answer-derived renderer'); assert.strictEqual(focused,true,'protected retry focuses first cleared field');
 
 
@@ -1226,6 +1249,10 @@ browserSandbox.window.AppView.prototype.result.call(
 assert.strictEqual(retryActionState.hidden,true,'State C keeps coaching retry hidden');
 
 let retryAuthorizationSignal=null;
+let retryResultScore=null;
+let retryResultAnswer=null;
+let retryComparisonScore=null;
+let retryComparisonAnswer=null;
 const retryAuthorizationContext={
   learningFlow:{
     phase:'R',
@@ -1245,6 +1272,12 @@ const retryAuthorizationContext={
     hideProtectedResult(){},
     result(_q,_score,_answer,_confidence,_achievement,retryAuthorized){
       retryAuthorizationSignal=retryAuthorized;
+      retryResultScore=_score;
+      retryResultAnswer=_answer;
+    },
+    renderAnswerComparison(_q,_score,_answer){
+      retryComparisonScore=_score;
+      retryComparisonAnswer=_answer;
     },
     show(){}
   },
@@ -1275,6 +1308,10 @@ assert.strictEqual(
 );
 assert.strictEqual(retryAuthorizationContext.learningFlow.phase,'D','successful coaching retry transitions to D');
 assert.strictEqual(retryAuthorizationSignal,false,'successful coaching retry removes retry authorization');
+assert.strictEqual(retryResultScore.correct,true,'successful coaching retry uses the retry score as the current result');
+assert.deepStrictEqual(retryResultAnswer,{cells:{}},'successful coaching retry uses the retry answer as the current result');
+assert.strictEqual(retryComparisonScore.correct,false,'successful coaching retry keeps the initial wrong score only for comparison');
+assert.deepStrictEqual(retryComparisonAnswer,{first:true},'successful coaching retry keeps the initial wrong answer only for comparison');
 
 let revealRetryAuthorization=null;
 const revealRetryAuthorizationContext={

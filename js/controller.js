@@ -470,7 +470,10 @@
       const question = this.questions[this.currentId];
       const draft = flow.coachingAnswer || (question.type === 'journal' ? Controller.journalRetryDraft(flow.authoritativeAnswer, question.answer) : Controller.tableRetryDraft(flow.authoritativeAnswer, flow.authoritativeScore?.details));
       flow.phase = 'R'; flow.coachingAnswer = draft; this.submitting = false; this.view.applyRetryDraft(question, draft); this.view.setAnswerMode?.('coaching'); this.view.hideProtectedResult?.(); this.view.show('view-question');
-      const first = [...this.document.querySelectorAll('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)')].find(input => !input.value) || this.document.querySelector('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)'); first?.focus?.(); return true;
+      const first = [...this.document.querySelectorAll('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)')].find(input => !input.value) || this.document.querySelector('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)');
+      if (first?.tagName === 'SELECT' && this.view?.calculatorFirstInput) this.document.getElementById?.('q-text')?.focus?.();
+      else first?.focus?.();
+      return true;
     }
     finishCoachingRetry(question, answer, score) {
       const flow = this.learningFlow; flow.retryCount += 1; this.submitting = false;
@@ -478,7 +481,11 @@
         flow.coachingAnswer = question.type === 'journal' ? Controller.journalRetryDraft(answer, question.answer) : Controller.tableRetryDraft(answer, score.details);
         flow.phase = 'W'; this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, true); this.view.show('view-result'); this.document?.getElementById?.('result-status')?.focus(); return false;
       }
-      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, false); const status = this.document.getElementById('result-status');
+      flow.phase = 'D';
+      this.view.hideProtectedResult?.();
+      this.view.result(question, score, answer, flow.confidence, flow.achievement, false);
+      this.view.renderAnswerComparison?.(question, flow.authoritativeScore, flow.authoritativeAnswer);
+      const status = this.document.getElementById('result-status');
       const note = this.document.createElement('span'); note.className = 'coaching-success'; note.textContent = '練習で修正できました。最初の回答は誤答として記録されています。'; status?.append(note); this.view.show('view-result'); status?.focus?.(); this.dispatchPendingGameOver(); return true;
     }
     revealAnswer() {
