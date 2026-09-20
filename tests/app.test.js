@@ -781,6 +781,11 @@ assert(html.includes('id="exam-result-actions"') && !/id="exam-result-actions"[^
 assert(controllerSource.includes("if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story')"), '模試sessionなしで回答可能画面へ進む遷移を防ぐ');
 assert(html.includes('id="filter-query"') && html.includes('id="filter-account"') && html.includes('id="filter-mistakes"'), '問題検索・勘定科目・誤答頻度の絞り込みUIを表示する');
 assert(controllerSource.includes('filteredIds(ids)') && controllerSource.includes("this.filters.mistakes === 'frequent'"), '問題一覧を検索し誤答頻度順に並べる');
+assert(controllerSource.includes('populateAccountFilter(ids = this.modeIds())') && controllerSource.includes('ids.flatMap(id => this.questionAccounts(this.questions[id]))'), '勘定科目フィルターを現在モードの問題集合へ限定する');
+assert(controllerSource.includes("select.disabled = accounts.length === 0") && controllerSource.includes("query.placeholder = accounts.length ? '問題文・カテゴリ・勘定科目' : '問題文・カテゴリ'"), '勘定科目検索できないモードでは入力UIを無効化して検索範囲を明示する');
+assert(/showMode\(mode\)[\s\S]*?this\.model\.save\(\);\s*this\.renderModes\(\);/.test(controllerSource), 'モード切替時に検索候補と件数を再同期する');
+assert(controllerSource.includes("'このモードには条件に一致する問題がありません。'"), '検索0件時に現在モード内の結果であることを明示する');
+assert(/const modeIndex = \['story', 'training', 'review', 'exam'\]\.indexOf\(this\.model\.state\.mode\);\s*this\.populateAccountFilter\([\s\S]*?\);\s*const counts = \[/.test(controllerSource), 'モード変更で無効になった勘定科目条件を一覧絞り込み前に解除する');
 assert(fs.existsSync('types/domain.d.ts') && fs.existsSync('tsconfig.json'), '段階的TypeScript導入用のドメイン型と設定を提供する');
 // 第3問は表示資料から独立再計算し、answer改ざんを検出する。
 const c001Proof = browserSandbox.window.validateExamQuestion3(browserSandbox.window.QuestionData.C001);

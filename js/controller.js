@@ -192,7 +192,9 @@
       this.model.state.mode = mode;
       if (mode === 'exam') this.ensureExamSession();
       else this.stopExamTimer();
-      this.model.save(); this.view.show(`view-${mode}`); this.document.getElementById('question-filters').hidden = mode === 'exam' || mode === 'desk';
+      this.model.save();
+      this.renderModes();
+      this.view.show(`view-${mode}`); this.document.getElementById('question-filters').hidden = mode === 'exam' || mode === 'desk';
       this.document.body?.classList?.toggle('exam-active', mode === 'exam');
       this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false'));
       if (mode === 'exam') { this.updateExamStatus(); this.startExamTimer(); }
@@ -325,9 +327,17 @@
       this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); return true;
     }
     questionAccounts(question) { return question.type === 'journal' ? [...question.answer.debit, ...question.answer.credit].map(item => item.account) : []; }
-    populateAccountFilter() {
+    populateAccountFilter(ids = this.modeIds()) {
       const select = this.document.getElementById('filter-account');
-      [...new Set(this.ids.flatMap(id => this.questionAccounts(this.questions[id])))].sort((a, b) => a.localeCompare(b, 'ja')).forEach(account => select.append(new Option(account, account)));
+      const accounts = [...new Set(ids.flatMap(id => this.questionAccounts(this.questions[id])))].sort((a, b) => a.localeCompare(b, 'ja'));
+      const current = this.filters.account;
+      select.replaceChildren(new Option(accounts.length ? 'すべての勘定科目' : 'このモードでは勘定科目検索なし', ''));
+      accounts.forEach(account => select.append(new Option(account, account)));
+      this.filters.account = current && accounts.includes(current) ? current : '';
+      select.value = this.filters.account;
+      select.disabled = accounts.length === 0;
+      const query = this.document.getElementById('filter-query');
+      if (query) query.placeholder = accounts.length ? '問題文・カテゴリ・勘定科目' : '問題文・カテゴリ';
     }
     filteredIds(ids) {
       const normalized = this.filters.query.trim().toLocaleLowerCase('ja');
@@ -350,9 +360,24 @@
     }
     renderModes() {
       const render = (id, ids) => { const filtered = this.filteredIds(ids); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; const mistakes = this.model.state.mistakeCounts[qid] || 0; button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}`; return button; })); return filtered.length; };
-      const counts = [render('story-list', this.storyIds()), render('training-list', this.learningIds().filter(id => this.questions[id].type !== 'journal')), render('review-list', this.reviewIds()), render('exam-list', this.buildExamIds())];
-      const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode); const count = modeIndex < 0 ? 0 : counts[modeIndex]; this.document.getElementById('filter-status').textContent = `${count}問を表示しています。`;
       const storyIds = this.storyIds();
+      const trainingIds = this.learningIds().filter(id => this.questions[id].type !== 'journal');
+      const reviewIds = this.reviewIds();
+      const examIds = this.buildExamIds();
+      const pools = [storyIds, trainingIds, reviewIds, examIds];
+      const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode);
+      this.populateAccountFilter(modeIndex < 0 ? [] : pools[modeIndex]);
+      const counts = [
+        render('story-list', storyIds),
+        render('training-list', trainingIds),
+        render('review-list', reviewIds),
+        render('exam-list', examIds)
+      ];
+      const count = modeIndex < 0 ? 0 : counts[modeIndex];
+      const hasActiveFilter = Boolean(this.filters.query.trim() || this.filters.account || this.filters.mistakes !== 'all');
+      this.document.getElementById('filter-status').textContent = count === 0 && hasActiveFilter
+        ? 'このモードには条件に一致する問題がありません。'
+        : `${count}問を表示しています。`;
       const nextId = storyIds.find(id => !this.model.state.answeredIds.includes(id)) || this.model.state.currentQuestionId || storyIds[0];
       const next = this.questions[nextId]; const chapterIds = storyIds.filter(id => this.questions[id].chapter === next.chapter);
       this.document.getElementById('resume-scene').textContent = `第${next.chapter}章｜${next.scene}`;
