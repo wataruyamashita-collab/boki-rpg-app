@@ -51,6 +51,38 @@ fixture = structuredClone(fixed); fixture.columns.life.headerClipped = true; ass
 fixture = structuredClone(fixed); fixture.columns.life.headerGlyphStacked = true; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'stacked years header glyphs fail');
 fixture = structuredClone(fixed); fixture.rows.normalRowHeight = 49; assert(codes(fixture).includes('COMPACT_TABLE_DENSITY_FAILURE'), 'mobile density excessive fails');
 
+const fixedCellFill = structuredClone(fixed);
+fixedCellFill.columns.currentDepreciation = {
+  width:105,actualWidth:105,occupiedWidth:105,classification:'numeric',
+  editable:true,inputCharacterCapacity:12,
+  headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,
+  headerLineCount:1,headerGlyphStacked:false,
+  cellHorizontalChrome:3,
+  cell:{ rect:{ width:105 } },
+  input:{ rect:{ width:102 } }
+};
+fixedCellFill.columns.closingBookValue = {
+  width:105,actualWidth:105,occupiedWidth:105,classification:'numeric',
+  editable:true,inputCharacterCapacity:12,
+  headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,
+  headerLineCount:1,headerGlyphStacked:false,
+  cellHorizontalChrome:3,
+  cell:{ rect:{ width:105 } },
+  input:{ rect:{ width:102 } }
+};
+assert.deepStrictEqual(codes(fixedCellFill), [], 'fixed-asset paired amount inputs may exceed the generic character budget when each input exactly fills its equal-width cell content box');
+
+fixture = structuredClone(fixedCellFill);
+fixture.columns.closingBookValue.input.rect.width = 90;
+assert(codes(fixture).includes('INPUT_CELL_WIDTH_MISMATCH'), 'fixed-asset input narrower than its cell content box fails');
+
+fixture = structuredClone(fixedCellFill);
+fixture.columns.closingBookValue.width = 108;
+fixture.columns.closingBookValue.actualWidth = 108;
+fixture.columns.closingBookValue.cell.rect.width = 108;
+fixture.columns.closingBookValue.input.rect.width = 105;
+assert(codes(fixture).includes('FIXED_ASSET_EDITABLE_WIDTH_MISMATCH'), 'fixed-asset paired editable columns with different rendered widths fail');
+
 const known = { columns:{ life:{ classification:'numeric',computedMinWidth:'114px',canonicalValues:[5,5,5,5,5,5],contentMax:5,contentLength:1,editable:false },acquisitionCost:{ classification:'numeric',computedMinWidth:'114px' } } };
 assert.strictEqual(detectGeneration10KnownViolation(known),true,'Generation 10 shared numeric floor is detected');
 known.columns.life.computedMinWidth = '70px'; assert.strictEqual(detectGeneration10KnownViolation(known),false,'a separate life floor is not mislabeled as the known defect');

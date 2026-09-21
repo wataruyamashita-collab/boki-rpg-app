@@ -214,6 +214,7 @@
           else if (column === 'description') columnTypes.set(column, 'description');
           else if (/account/i.test(column) || column === 'account') columnTypes.set(column, 'account');
         }
+        if (inputCharacters.size) table.style.setProperty('--table-input-ch', `${Math.max(...inputCharacters.values())}ch`);
         table.dataset.sizing = 'semantic-content';
       }
       if (question.format === 'eight-column-worksheet') table.setAttribute('role', 'grid');

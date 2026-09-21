@@ -41,6 +41,7 @@ assert(audit.get('life').visible.every(item => Number.isInteger(item.value) && i
 const tableRule = css.match(/\.answer-table\s*\{([^}]*)\}/)?.[1] || '';
 const headRule = css.match(/\.answer-table th\s*\{([^}]*)\}/)?.[1] || '';
 const numericRule = css.match(/\[data-sizing="semantic-content"\] \[data-column-type="numeric"\]\s*\{([^}]*)\}/)?.[1] || '';
+const numericCellRule = css.match(/\[data-sizing="semantic-content"\] td\.amount-cell\s*\{([^}]*)\}/)?.[1] || '';
 const numericInputRule = css.match(/\[data-sizing="semantic-content"\] \.table-input\[data-input-type="amount"\]\s*\{([^}]*)\}/)?.[1] || '';
 const desktopYearsHeaderRule = css.match(/@media\s*\(min-width:\s*431px\)\s*\{\s*\.answer-table:not\(\.eight-column-worksheet\)\[data-sizing="semantic-content"\] th\[data-column-type="years"\]\s*\{([^}]*)\}/)?.[1] || '';
 assert(/width:\s*max-content/.test(tableRule) && /min-width:\s*100%/.test(tableRule) && !/600px/.test(tableRule), 'ordinary tables fill small containers but grow to content width without a fixed 600px floor');
@@ -48,13 +49,16 @@ assert(/overflow-wrap:\s*normal/.test(headRule) && /word-break:\s*keep-all/.test
 assert(!/(?:overflow:\s*hidden|text-overflow:\s*ellipsis)/.test(headRule), 'semantic headers never conceal authored labels');
 assert(/white-space:\s*nowrap/.test(numericRule) && !/min-width/.test(numericRule), 'static numeric cells use intrinsic content width instead of inheriting the editable money floor');
 assert(/th\[data-column-type="numeric"\]\s*\{[^}]*min-width:\s*max-content/.test(css), 'numeric headers impose their intrinsic rendered label width without per-column pixel constants');
+assert(/th\[data-column-key="currentDepreciation"\],[\s\S]*th\[data-column-key="closingBookValue"\],[\s\S]*td\[data-column-key="currentDepreciation"\],[\s\S]*td\[data-column-key="closingBookValue"\]\s*\{[^}]*box-sizing:\s*content-box[^}]*width:\s*calc\(7ic \+ 3px\)[^}]*min-width:\s*calc\(7ic \+ 3px\)[^}]*max-width:\s*calc\(7ic \+ 3px\)/s.test(css), 'fixed-asset current-depreciation and closing-book-value headers and cells share the verified seven-ideograph width plus cross-browser safety margin');
 assert(/\[data-column-type="years"\]\s*\{[^}]*width:\s*calc\(4em \+ 14px\)[^}]*max-width:\s*calc\(4em \+ 14px\)/s.test(css), 'years use a dedicated four-glyph header plus cell-chrome width instead of the money floor');
 assert(/padding-inline:\s*6px/.test(desktopYearsHeaderRule), 'above 430px only the semantic years header uses compact six-pixel inline padding');
 assert(!/@media\s*\(max-width:\s*430px\)[\s\S]*th\[data-column-type="years"\]/.test(css), 'at 430px and below the years header keeps the established mobile behavior');
 const desktopLife = { actualWidth:78,headerTextWidth:64,headerHorizontalChrome:6 + 6 + 1 };
 assert(desktopLife.headerTextWidth + desktopLife.headerHorizontalChrome <= desktopLife.actualWidth && desktopLife.actualWidth <= 80, 'desktop life header content and 13px chrome fit the measured 78px column within the 80px contract');
 assert(/white-space:\s*nowrap/.test(css.match(/\[data-column-type="years"\]\s*\{([^}]*)\}/)?.[1] || ''), 'life header remains one line without clipping or glyph stacking');
-assert(/width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericInputRule) && /min-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericInputRule) && /max-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericInputRule), 'editable numeric controls use their exact-column budget with a nine-character fallback');
+assert(/min-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericCellRule), 'editable numeric cells preserve their exact-column budget with a nine-character fallback');
+assert(/width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule) && /min-width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule) && /max-width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule), 'editable numeric controls use one shared compact width within each ordinary table');
+assert(/td\[data-column-key="currentDepreciation"\] \.table-input\[data-input-type="amount"\],[\s\S]*td\[data-column-key="closingBookValue"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%/s.test(css), 'fixed-asset editable amount controls fill their equal-width table cells instead of using the table-level compact width');
 assert(glyphs(String(maximumEditable.answer)) <= 9 && glyphs(formatted(maximumEditable.answer)) <= 9, 'raw and comma-formatted canonical maxima fit the nine-character numeric content budget');
 assert(/td\s*\{\s*padding:\s*0 3px/.test(css) && /\[data-column-type="date"\],[^}]+\[data-column-type="description"\]\s*\{[^}]*padding-right:\s*6px[^}]*padding-left:\s*6px/s.test(css), 'mobile money cells lose excess chrome while accepted date and description spacing remains unchanged');
 assert(/td\[data-column-type="numeric"\]\s*\{[^}]*padding-right:\s*1px[^}]*padding-left:\s*1px/.test(css), 'mobile numeric body cells retain only the chrome needed to separate cell content');
@@ -69,7 +73,7 @@ assert(!/\.answer-table th:first-child,[^{]+\{[^}]*min-width:\s*110px/s.test(css
 assert(/\.table-question-wrap\s*\{[^}]*overflow-x:\s*auto/.test(css), 'the existing single wrapper scrolls content-required wide tables');
 assert(/\[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(css), 'semantic context columns use rendered cumulative sticky offsets');
 assert(view.includes("const keys = ['description','quantity']") && view.includes("--sticky-left") && view.includes('getBoundingClientRect().width'), 'description and quantity sticky offsets derive from rendered widths without pinning date');
-assert(view.includes("--column-input-ch") && view.includes('Math.min(9, Math.max(4'), 'renderer supplies exact-question numeric input character budgets with bounded fallback safety');
+assert(view.includes("--column-input-ch") && view.includes("--table-input-ch") && view.includes('Math.min(9, Math.max(4') && view.includes('Math.max(...inputCharacters.values())'), 'renderer supplies bounded per-column budgets and one shared compact numeric-input width per ordinary table');
 assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
 for (const viewport of [320, 375, 390, 430]) assert(fixedAssetMinimum > viewport && /overflow-x:\s*auto/.test(css), `${viewport}px: fixed-asset content remains wider than its viewport and horizontally scrollable`);

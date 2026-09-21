@@ -17,9 +17,51 @@ function evaluateVisualMetrics(metrics, options = {}) {
     const waste = Number.isFinite(Number(column.contentWaste)) ? Number(column.contentWaste) : actual - occupied;
     const excessiveWaste = Math.max(limits.minimumWasteTolerance, occupied * limits.wasteRatio);
     if (metrics.table?.requiresHorizontalScroll && waste > excessiveWaste && column.classification !== 'years') violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,occupiedWidth:occupied,contentWaste:waste,maximumUsefulWaste:excessiveWaste });
-    if (column.classification === 'numeric' && column.editable && Number(column.inputCharacterCapacity) > limits.maximumMoneyInputCharacters) violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,inputCharacterCapacity:column.inputCharacterCapacity,maximumInputCharacters:limits.maximumMoneyInputCharacters });
+    const fixedAssetCellFill = metrics.case === 'fixed-asset' && ['currentDepreciation','closingBookValue'].includes(key);
+    if (column.classification === 'numeric' && column.editable && !fixedAssetCellFill && Number(column.inputCharacterCapacity) > limits.maximumMoneyInputCharacters) violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,inputCharacterCapacity:column.inputCharacterCapacity,maximumInputCharacters:limits.maximumMoneyInputCharacters });
+    if (fixedAssetCellFill && column.editable) {
+      const cellOuterWidth = Number(column.cell?.rect?.width);
+      const cellHorizontalChrome = Number(column.cellHorizontalChrome);
+      const inputOuterWidth = Number(column.input?.rect?.width);
+      const expectedInputWidth = cellOuterWidth - cellHorizontalChrome;
+      const inputCellWidthDelta = Math.abs(inputOuterWidth - expectedInputWidth);
+      if (!Number.isFinite(cellOuterWidth) || !Number.isFinite(cellHorizontalChrome) || !Number.isFinite(inputOuterWidth) || !Number.isFinite(expectedInputWidth) || inputCellWidthDelta > 1.5) {
+        violations.push({
+          code:'INPUT_CELL_WIDTH_MISMATCH',
+          column:key,
+          cellOuterWidth,
+          cellHorizontalChrome,
+          inputOuterWidth,
+          expectedInputWidth,
+          delta:inputCellWidthDelta
+        });
+      }
+    }
     if (actualClipping) violations.push({ code:'CONTENT_CLIPPED', column:key });
     if (column.headerLineCount > 2 || column.headerGlyphStacked) violations.push({ code:'UNREADABLE_HEADER_WRAP', column:key, lines:column.headerLineCount });
+  }
+  if (metrics.case === 'fixed-asset') {
+    const currentDepreciation = metrics.columns?.currentDepreciation;
+    const closingBookValue = metrics.columns?.closingBookValue;
+    if (currentDepreciation && closingBookValue) {
+      const currentColumnWidth = Number(currentDepreciation.actualWidth ?? currentDepreciation.width);
+      const closingColumnWidth = Number(closingBookValue.actualWidth ?? closingBookValue.width);
+      const currentInputWidth = Number(currentDepreciation.input?.rect?.width);
+      const closingInputWidth = Number(closingBookValue.input?.rect?.width);
+      const columnDelta = Math.abs(currentColumnWidth - closingColumnWidth);
+      const inputDelta = Math.abs(currentInputWidth - closingInputWidth);
+      if (!Number.isFinite(currentColumnWidth) || !Number.isFinite(closingColumnWidth) || !Number.isFinite(currentInputWidth) || !Number.isFinite(closingInputWidth) || columnDelta > limits.browserRoundingTolerance || inputDelta > limits.browserRoundingTolerance) {
+        violations.push({
+          code:'FIXED_ASSET_EDITABLE_WIDTH_MISMATCH',
+          currentColumnWidth,
+          closingColumnWidth,
+          currentInputWidth,
+          closingInputWidth,
+          columnDelta,
+          inputDelta
+        });
+      }
+    }
   }
   if (metrics.case === 'fixed-asset' && Number(metrics.viewport?.width) <= 430) {
     const life = metrics.columns?.life;
