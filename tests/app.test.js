@@ -583,6 +583,169 @@ assert.strictEqual(examPrototype.isExamExpired.call(expiryContext, 2000), true, 
 assert.strictEqual(examPrototype.isExamExpired.call(expiryContext, 2001), true, 'CASE C: 終了1ms後は採点不可');
 assert.strictEqual(examPrototype.isExamExpired.call(expiryContext, 3000), true, 'CASE D: 終了1秒後は採点不可');
 ['EXPIRED', 'FINISHING', 'FINISHED'].forEach(status => assert.strictEqual(examPrototype.isExamExpired.call({ model: { state: { examSession: { ...expirySession, status } } } }, 1500), true, `${status}からSCORE_UPDATEへ遷移できない`));
+
+const modeGuardNow = 5000;
+const activeModeGuardSession = {
+  ids:['Q1'],
+  startedAt:1000,
+  endAt:6000,
+  status:'RUNNING',
+  scores:{}
+};
+const activeModeGuardContext = {
+  model:{state:{examSession:activeModeGuardSession}},
+  isExamExpired:examPrototype.isExamExpired
+};
+assert.strictEqual(
+  examPrototype.hasActiveExamSession.call(activeModeGuardContext, modeGuardNow),
+  true,
+  'RUNNINGかつ期限内の模試sessionだけをactiveとして扱う'
+);
+assert.strictEqual(
+  examPrototype.hasActiveExamSession.call({
+    model:{state:{examSession:{...activeModeGuardSession,endAt:modeGuardNow}}},
+    isExamExpired:examPrototype.isExamExpired
+  }, modeGuardNow),
+  false,
+  '期限切れ模試sessionはactiveとして扱わない'
+);
+assert.strictEqual(
+  examPrototype.hasActiveExamSession.call({
+    model:{state:{examSession:{...activeModeGuardSession,status:'EXPIRED'}}},
+    isExamExpired:examPrototype.isExamExpired
+  }, modeGuardNow),
+  false,
+  'EXPIRED模試sessionはactiveとして扱わない'
+);
+assert.strictEqual(
+  examPrototype.hasActiveExamSession.call({
+    model:{state:{examSession:null}},
+    isExamExpired:examPrototype.isExamExpired
+  }, modeGuardNow),
+  false,
+  '模試sessionがなければactiveとして扱わない'
+);
+
+for (const targetMode of ['story','training','review','desk']) {
+  let saves=0,stops=0,renders=0,views=0,domMutations=0,alerts=0;
+  const guardContext={
+    model:{
+      state:{mode:'exam',examSession:{...activeModeGuardSession}},
+      save(){saves+=1;}
+    },
+    hasActiveExamSession:examPrototype.hasActiveExamSession,
+    isExamExpired(){return false;},
+    stopExamTimer(){stops+=1;},
+    renderModes(){renders+=1;},
+    view:{show(){views+=1;}},
+    document:{
+      body:{classList:{
+        remove(){domMutations+=1;},
+        toggle(){domMutations+=1;}
+      }},
+      getElementById(){domMutations+=1;return {hidden:false};},
+      querySelectorAll(){domMutations+=1;return [];}
+    }
+  };
+  browserSandbox.window.alert=()=>{alerts+=1;};
+
+  assert.strictEqual(
+    examPrototype.showMode.call(guardContext,targetMode),
+    false,
+    `RUNNING模試中は${targetMode}へ移動できない`
+  );
+  assert.strictEqual(
+    guardContext.model.state.mode,
+    'exam',
+    `RUNNING模試中の${targetMode}要求でmodeを書き換えない`
+  );
+  assert.deepStrictEqual(
+    [saves,stops,renders,views,domMutations,alerts],
+    [0,0,0,0,0,1],
+    `RUNNING模試中の${targetMode}拒否ではsave・timer停止・render・view・DOM変更を行わない`
+  );
+}
+
+let allowedExamEnsures=0,allowedExamSaves=0,allowedExamUpdates=0,allowedExamTimers=0;
+const allowedExamContext={
+  model:{
+    state:{mode:'exam',examSession:{...activeModeGuardSession}},
+    save(){allowedExamSaves+=1;}
+  },
+  hasActiveExamSession:examPrototype.hasActiveExamSession,
+  isExamExpired(){return false;},
+  unmetExamPrerequisites(){return [];},
+  ensureExamSession(){allowedExamEnsures+=1;return this.model.state.examSession;},
+  renderModes(){},
+  view:{show(){}},
+  document:{
+    body:{classList:{remove(){},toggle(){}}},
+    getElementById(id){return id==='question-filters'?{hidden:false}:null;},
+    querySelectorAll(){return [];}
+  },
+  updateExamStatus(){allowedExamUpdates+=1;},
+  startExamTimer(){allowedExamTimers+=1;}
+};
+assert.strictEqual(
+  examPrototype.showMode.call(allowedExamContext,'exam'),
+  true,
+  'RUNNING模試中でもexam自身への再表示は許可する'
+);
+assert.deepStrictEqual(
+  [allowedExamEnsures,allowedExamSaves,allowedExamUpdates,allowedExamTimers],
+  [1,1,1,1],
+  'exam自身への再表示ではsession維持・保存・HUD更新・timer継続を行う'
+);
+
+let normalReviewStops=0,normalReviewViews=0;
+const normalReviewContext={
+  model:{state:{mode:'story',examSession:null},save(){}},
+  hasActiveExamSession:examPrototype.hasActiveExamSession,
+  isExamExpired:examPrototype.isExamExpired,
+  stopExamTimer(){normalReviewStops+=1;},
+  renderModes(){},
+  view:{show(id){if(id==='view-review') normalReviewViews+=1;}},
+  document:{
+    body:{classList:{remove(){},toggle(){}}},
+    getElementById(id){return id==='question-filters'?{hidden:false}:null;},
+    querySelectorAll(){return [];}
+  }
+};
+assert.strictEqual(
+  examPrototype.showMode.call(normalReviewContext,'review'),
+  true,
+  '模試sessionがなければ通常どおりreviewへ移動できる'
+);
+assert.deepStrictEqual(
+  [normalReviewContext.model.state.mode,normalReviewStops,normalReviewViews],
+  ['review',1,1],
+  '非模試時の既存review遷移を維持する'
+);
+
+let resumedMode='';
+const reloadResumeContext={
+  bindEvents(){},
+  populateAccountFilter(){},
+  renderModes(){},
+  view:{updateRpg(){}},
+  rpg:{},
+  model:{
+    state:{
+      placement:{completed:true},
+      examSession:{...activeModeGuardSession}
+    },
+    migrateLegacyPlacement(){}
+  },
+  hasActiveExamSession(){return true;},
+  showMode(mode){resumedMode=mode;return true;},
+  questions:{}
+};
+examPrototype.init.call(reloadResumeContext,{mode:'review'});
+assert.strictEqual(
+  resumedMode,
+  'exam',
+  'RUNNING模試sessionを保持したreloadでは保存modeやrouteよりexam復帰を優先する'
+);
 let forcedFinishes = 0; let grades = 0;
 const lateSubmit = {
   submitting: false, currentId: 'Q1', questions: { Q1: { id: 'Q1' } },

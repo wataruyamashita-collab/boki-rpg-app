@@ -72,7 +72,8 @@
       this.bindEvents(); this.populateAccountFilter(); this.renderModes(); this.view.updateRpg(this.rpg);
       this.model.migrateLegacyPlacement();
       if (!this.model.state.placement) { this.showPlacement(); return; }
-      const mode = ['story', 'training', 'review', 'exam', 'desk'].includes(route.mode) ? route.mode : 'story';
+      const requestedMode = ['story', 'training', 'review', 'exam', 'desk'].includes(route.mode) ? route.mode : 'story';
+      const mode = this.hasActiveExamSession() ? 'exam' : requestedMode;
       if (this.showMode(mode) === false) return;
       if (typeof route.questionId === 'string' && this.questions[route.questionId] && (mode !== 'exam' || this.modeIds().includes(route.questionId))) this.start(route.questionId);
     }
@@ -180,7 +181,19 @@
       this.document.body?.classList?.remove('placement-active');
       this.document.querySelector('.mode-nav').hidden = false; this.renderModes(); this.start(startId); return startId;
     }
+    hasActiveExamSession(now = Date.now()) {
+      const session = this.model.state.examSession;
+      return Boolean(
+        session &&
+        (session.status || 'RUNNING') === 'RUNNING' &&
+        !this.isExamExpired(now, session)
+      );
+    }
     showMode(mode) {
+      if (mode !== 'exam' && this.hasActiveExamSession()) {
+        root.alert?.('模試中は他のモードへ移動できません。先に試験を終了して採点してください。');
+        return false;
+      }
       this.document.body?.classList?.remove('placement-active');
       if (mode === 'exam') {
         const unmet = this.unmetExamPrerequisites();
