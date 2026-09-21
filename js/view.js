@@ -64,6 +64,7 @@
       }));
     }
     renderQuestion(question, draft, mode = 'story') {
+      this.questionMode = mode;
       const hintSupport = this.byId('protected-learning'); if (hintSupport) hintSupport.hidden = mode === 'exam';
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;
       const story = this.byId('q-story'); story.hidden = mode !== 'story';
@@ -248,6 +249,15 @@
       }); wrap.append(table); if (question.format !== 'eight-column-worksheet') this.positionStickyContextColumns(table);
     }
     positionStickyContextColumns(table) {
+      this.stickyContextObserver?.disconnect();
+      const update = () => this.updateStickyContextColumns(table);
+      update();
+      if (root.ResizeObserver) {
+        this.stickyContextObserver = new root.ResizeObserver(update);
+        this.stickyContextObserver.observe(table);
+      }
+    }
+    updateStickyContextColumns(table) {
       const keys = ['description','quantity']; let left = 0;
       for (const key of keys) {
         const cells = [...table.querySelectorAll(`[data-column-key="${key}"]`)]; if (!cells.length) continue;
@@ -358,7 +368,7 @@
       const confidence = form?.querySelector('.confidence-selector'); if (confidence) confidence.hidden = coaching;
       const save = form?.querySelector('.save-button'); if (save) save.hidden = coaching;
       const saveStatus = this.byId('save-status'); if (saveStatus) saveStatus.hidden = coaching;
-      const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = coaching;
+      const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = coaching || this.questionMode === 'exam';
       const submit = form?.querySelector('button[type="submit"]'); if (submit) submit.textContent = coaching ? '練習回答を確認する' : '回答を確定する';
       form?.setAttribute('data-answer-mode', mode);
     }

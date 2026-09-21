@@ -1279,6 +1279,34 @@ assert.strictEqual(coachingUiState.saveStatus.hidden,false,'次の初回回答�
 assert.strictEqual(coachingUiState.protected.hidden,false,'次の初回回答ではヒント領域を復元する');
 assert.strictEqual(coachingUiState.submit.textContent,'回答を確定する','次の初回回答では通常送信へ戻す');
 
+coachingUiView.questionMode='exam';
+browserSandbox.window.AppView.prototype.setAnswerMode.call(coachingUiView,'initial');
+assert.strictEqual(coachingUiState.protected.hidden,true,'exam question remains free of dead hint controls after initial answer mode reset');
+coachingUiView.questionMode='story';
+
+let stickyResizeCallback;
+let stickyObserverDisconnects=0;
+browserSandbox.window.ResizeObserver=class {
+  constructor(callback){stickyResizeCallback=callback;}
+  observe(table){this.table=table;}
+  disconnect(){stickyObserverDisconnects++;}
+};
+const stickyCells={
+  description:[{dataset:{},style:{setProperty(name,value){this[name]=value;}},getBoundingClientRect:()=>({width:180})}],
+  quantity:[{dataset:{},style:{setProperty(name,value){this[name]=value;}},getBoundingClientRect:()=>({width:70})}]
+};
+const stickyTable={style:{setProperty(name,value){this[name]=value;}},querySelectorAll(selector){return selector.includes('description')?stickyCells.description:stickyCells.quantity;}};
+const stickyView={updateStickyContextColumns:browserSandbox.window.AppView.prototype.updateStickyContextColumns};
+browserSandbox.window.AppView.prototype.positionStickyContextColumns.call(stickyView,stickyTable);
+assert.strictEqual(stickyCells.quantity[0].style['--sticky-left'],'180px','quantity initially sticks after rendered description width');
+stickyCells.description[0].getBoundingClientRect=()=>({width:96});
+stickyResizeCallback();
+assert.strictEqual(stickyCells.quantity[0].style['--sticky-left'],'96px','sticky offset is recomputed after table resize/reflow');
+assert.strictEqual(stickyTable.style['--sticky-context-width'],'166px','combined sticky context width follows resized columns');
+browserSandbox.window.AppView.prototype.positionStickyContextColumns.call(stickyView,stickyTable);
+assert.strictEqual(stickyObserverDisconnects,1,'rerender disconnects the previous table resize observer');
+delete browserSandbox.window.ResizeObserver;
+
 let retryHideCalls = 0;
 let retryProtectedCalls = 0;
 
