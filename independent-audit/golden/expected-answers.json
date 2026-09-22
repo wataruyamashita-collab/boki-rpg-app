@@ -2325,8 +2325,8 @@
     },
     "L005": {
       "cells": {
-        "r1_currentDepreciation": 85000,
-        "r1_closingBookValue": 255000
+        "currentDepreciation": 85000,
+        "closingBookValue": 340000
       }
     },
     "L006": {
@@ -2356,8 +2356,9 @@
     },
     "L010": {
       "cells": {
-        "r1_currentDepreciation": 90000,
-        "r1_closingBookValue": 270000
+        "currentDepreciation": 90000,
+        "closingAccumulated": 180000,
+        "closingBookValue": 270000
       }
     },
     "L011": {
@@ -2387,8 +2388,10 @@
     },
     "L015": {
       "cells": {
-        "r1_currentDepreciation": 95000,
-        "r1_closingBookValue": 285000
+        "acquisitionDate": "4/1",
+        "acquisitionCost": 475000,
+        "currentDepreciation": 95000,
+        "closingBookValue": 380000
       }
     },
     "L016": {
@@ -2418,8 +2421,9 @@
     },
     "L020": {
       "cells": {
-        "r1_currentDepreciation": 100000,
-        "r1_closingBookValue": 300000
+        "currentDepreciation": 100000,
+        "closingAccumulated": 300000,
+        "closingBookValue": 200000
       }
     },
     "L021": {
@@ -2449,8 +2453,9 @@
     },
     "L025": {
       "cells": {
-        "r1_currentDepreciation": 105000,
-        "r1_closingBookValue": 315000
+        "months": 6,
+        "currentDepreciation": 60000,
+        "closingBookValue": 420000
       }
     },
     "L026": {
@@ -2480,8 +2485,10 @@
     },
     "L030": {
       "cells": {
-        "r1_currentDepreciation": 110000,
-        "r1_closingBookValue": 330000
+        "annualDepreciation": 72000,
+        "months": 4,
+        "currentDepreciation": 24000,
+        "closingBookValue": 336000
       }
     },
     "L031": {
@@ -2498,10 +2505,12 @@
     },
     "L033": {
       "cells": {
-        "date": "7/1",
-        "cost": 360000,
-        "depreciation": 54000,
-        "bookValue": 306000
+        "acquisitionDate": "7/1",
+        "acquisitionCost": 360000,
+        "months": 9,
+        "currentDepreciation": 54000,
+        "closingAccumulated": 54000,
+        "closingBookValue": 306000
       }
     },
     "L034": {
@@ -2558,9 +2567,12 @@
     "L040": {
       "cells": {
         "annualA": 120000,
+        "monthsA": 6,
         "depreciationA": 60000,
         "bookA": 540000,
         "lossA": 120000,
+        "annualB": 60000,
+        "monthsB": 9,
         "depreciationB": 45000,
         "bookB": 255000
       }
