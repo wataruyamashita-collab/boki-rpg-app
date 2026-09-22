@@ -14,7 +14,7 @@
       if (!plain(value) || !safeValue(value)) return false;
       const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
       if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
-      if (value.contentRevision !== undefined && !(Number.isSafeInteger(value.contentRevision) && value.contentRevision >= 1)) return false;
+      if (value.contentRevision !== undefined && !(Number.isSafeInteger(value.contentRevision) && value.contentRevision >= 1 && value.contentRevision <= CONTENT_REVISION)) return false;
       if (value.mode !== undefined && !['story', 'training', 'review', 'exam', 'desk'].includes(value.mode)) return false;
       if (value.currentQuestionId !== undefined && value.currentQuestionId !== null && !knownId(value.currentQuestionId)) return false;
       for (const key of ['answeredIds', 'correctIds', 'incorrectIds']) if (value[key] !== undefined && !idList(value[key])) return false;
@@ -51,6 +51,7 @@
       try {
         const saved = JSON.parse(this.storage?.getItem?.(this.key));
         if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+          if (Number.isSafeInteger(saved.contentRevision) && saved.contentRevision > CONTENT_REVISION) return;
           const needsContentMigration = !Number.isSafeInteger(saved.contentRevision) || saved.contentRevision < CONTENT_REVISION;
           const migratedDrafts = saved.drafts && typeof saved.drafts === 'object' && !Array.isArray(saved.drafts)
             ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object' && !(needsContentMigration && FIXED_ASSET_SCHEMA_IDS.has(id)))) : {};

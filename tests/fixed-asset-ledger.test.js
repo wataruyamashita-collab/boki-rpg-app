@@ -35,6 +35,13 @@ assert.strictEqual(model.state.drafts.L005,undefined);assert.strictEqual(model.s
 assert.strictEqual(JSON.stringify(model.state.answeredIds),JSON.stringify(['L005']));assert.strictEqual(JSON.stringify(model.state.correctIds),JSON.stringify(['L005']));assert.strictEqual(model.state.attempts.length,1,'progress and attempts preserved');
 assert.strictEqual(model.state.examSession,null);assert.strictEqual(model.state.mode,'story','schema-incompatible exam invalidated safely');
 const compatible={...saved,mode:'exam',drafts:{J001:{debit:[],credit:[]}},examSession:{...saved.examSession,ids:root.ExamPoolDefinition.filter(id=>!['L033','L040'].includes(id)).slice(0,15)}};stored=JSON.stringify(compatible);const compatibleModel=new root.ProgressModel(questions,storage);assert(compatibleModel.state.examSession,'unaffected active exam preserved');
-assert.strictEqual(root.ProgressModel.validateBackupState({...saved,mode:'story',examSession:null},questions),true,'legacy backup v1 remains importable');
-assert.strictEqual(root.ProgressModel.validateBackupState({...saved,mode:'story',examSession:null,contentRevision:2},questions),true,'optional content revision accepted');
+const legacyBackup={...saved,mode:'story',examSession:null};
+assert.strictEqual(root.ProgressModel.validateBackupState(legacyBackup,questions),true,'legacy backup v1 remains importable');
+assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:2},questions),true,'current content revision accepted');
+assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:3},questions),false,'future content revision rejected');
+const futureState={...saved,contentRevision:3,mode:'exam',currentQuestionId:'L033',answeredIds:['L005'],correctIds:['L005'],incorrectIds:['L010'],drafts:{L033:{cells:{future:1}}},examSession:saved.examSession};
+stored=JSON.stringify(futureState);let futureWrites=0;
+const futureModel=new root.ProgressModel(questions,{getItem:()=>stored,setItem:()=>{futureWrites++;return true;}});
+assert.deepStrictEqual(JSON.parse(JSON.stringify(futureModel.state)),{contentRevision:2,mode:'story',currentQuestionId:null,answeredIds:[],correctIds:[],incorrectIds:[],mistakeCounts:{},reviewSchedule:{},reviewAssignments:{},attempts:[],drafts:{},completed:false,placement:null,examAttempt:0,examSession:null,examHistory:[],lastExamReview:null},'future persisted state leaves the safe default state intact');
+assert.strictEqual(futureWrites,0,'future persisted state is not silently downgraded or saved');
 console.log('fixed asset ledger tests: ok');
