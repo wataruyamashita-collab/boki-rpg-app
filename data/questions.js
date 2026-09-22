@@ -14862,6 +14862,18 @@ Object.assign(QuestionData.L041, { variantGroup:'仕訳帳:段階転移2', curri
 Object.assign(QuestionData.L042, { variantGroup:'受取手形記入帳:段階転移2', curriculumPrerequisites:['J005','J148','J150'] });
 Object.assign(QuestionData.L043, { variantGroup:'支払手形記入帳:段階転移2', curriculumPrerequisites:['J004','J149','J150'] });
 
+// Preserve each bookkeeping form's identity instead of presenting every ledger
+// as a generic label/value list. These formats affect presentation only: cell
+// IDs, answers, and independent derivation remain unchanged.
+const BookkeepingFormats = {
+  L034:'bookkeeping-journal-book', L035:'bookkeeping-notes-receivable', L036:'bookkeeping-notes-payable',
+  L037:'bookkeeping-general-ledger', L038:'bookkeeping-general-ledger', L039:'bookkeeping-account-ledger',
+  L041:'journal-book', L042:'bookkeeping-notes-receivable', L043:'bookkeeping-notes-payable',
+  L044:'bookkeeping-cash-book', L045:'bookkeeping-checking-book', L046:'bookkeeping-petty-cash-book',
+  L047:'bookkeeping-purchase-book', L048:'bookkeeping-sales-book', L049:'bookkeeping-inventory-ledger', L050:'bookkeeping-voucher-entry'
+};
+Object.entries(BookkeepingFormats).forEach(([id, format]) => { QuestionData[id].format = format; });
+
 ['J145','J146','J147'].forEach(id => Object.assign(QuestionData[id], { learningRole:'transfer', timelineRole:'transfer', materials:[{資料種別:'独立取引資料',取引内容:QuestionData[id].question}] }));
 
 // Each month advances the same company's year.  The suffix is based on the work
@@ -15863,7 +15875,9 @@ Object.values(QuestionData).forEach((item, index) => {
       const semanticType = explicitSemanticType || semanticTypeForLabel(label, value) || item.table.inputMetadata[key]?.semanticType;
       item.table.inputMetadata[key] = { ...item.table.inputMetadata[key], label, semanticType };
       item.table.controlTypes ||= {};
-      item.table.controlTypes[key] = typeof value === 'number' ? 'numeric' : 'text';
+      item.table.controlTypes[key] = ['amount','unitPrice','months','years'].includes(semanticType) ? 'numeric' : semanticType;
+      // inputTypes remains the legacy grading transport contract (numeric/text),
+      // while controlTypes carries the authoritative user-facing semantics.
       item.table.inputTypes[key] = typeof value === 'number' ? 'amount' : 'text';
     }
   }

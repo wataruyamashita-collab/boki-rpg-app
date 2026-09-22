@@ -75,7 +75,8 @@
       this.byId('table-container').hidden = question.type === 'journal';
       if (question.type === 'journal') this.renderJournal(question, draft, mode);
       else if (question.type === 'correction') this.renderCorrection(question, draft);
-      else if (question.category === '仕訳帳' && question.table?.inputCells?.includes('d1Account')) this.renderJournalBook(question, draft);
+      else if (question.format === 'journal-book' && question.table?.inputCells?.includes('d1Account')) this.renderJournalBook(question, draft);
+      else if (question.format?.startsWith('bookkeeping-')) this.renderBookkeepingForm(question, draft);
       else if (question.format === 'balance-sheet') this.renderBalanceSheet(question, draft);
       else if (question.format === 'fixed-asset-ledger') this.renderFixedAssetLedger(question, draft);
       else this.renderTable(question, draft);
@@ -114,7 +115,8 @@
         const instruction = this.document.createElement('p'); instruction.className = 'journal-instruction';
         instruction.textContent = '必要な行だけ入力し、不要な行は空欄のままにしてください。'; container.append(instruction);
       }
-      const header = this.document.createElement('div'); header.className = 'journal-header'; header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'; container.append(header);
+      const grid = this.document.createElement('div'); grid.className = 'journal-grid-scroll';
+      const header = this.document.createElement('div'); header.className = 'journal-header'; header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'; grid.append(header);
       const count = mode === 'exam' ? 3 : Math.max(question.answer.debit.length, question.answer.credit.length);
       for (let index = 0; index < count; index += 1) {
         const row = this.document.createElement('div'); row.className = 'journal-row';
@@ -129,8 +131,9 @@
           const amount = this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : '');
           if (!enabled) amount.disabled = true;
           row.append(select, amount);
-        }); container.append(row);
+        }); grid.append(row);
       }
+      container.append(grid);
     }
     renderCorrection(question, draft = {}) {
       const container = this.byId('table-container'); container.replaceChildren();
@@ -165,14 +168,41 @@
         const row = body.insertRow(); const date = question.table.inputMetadata?.[`d${index}Account`]?.label?.split(' ')[0] || '';
         const dateCell = row.insertCell(); dateCell.textContent = date;
         [`d${index}Account`, `d${index}Ref`, `d${index}Amount`, `c${index}Account`, `c${index}Ref`, `c${index}Amount`].forEach(cellId => {
-          const cell = row.insertCell(); const inputType = question.table.inputTypes?.[cellId]; const label = this.cellLabel(question, cellId);
-          const input = inputType === 'amount'
+          const cell = row.insertCell(); const semanticType = question.table.inputMetadata?.[cellId]?.semanticType || question.table.inputTypes?.[cellId]; const label = this.cellLabel(question, cellId);
+          const input = semanticType === 'amount'
             ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[cellId] ?? '')
             : this.makeText('table-input', label, draft.cells?.[cellId] ?? '');
-          input.dataset.cellId = cellId; input.dataset.inputType = inputType; cell.append(input);
+          input.dataset.cellId = cellId; input.dataset.inputType = semanticType; input.dataset.semanticType = semanticType;
+          if (semanticType === 'folio') input.classList.add('folio-input');
+          const line = this.document.createElement('span'); line.className = 'bookkeeping-input-line'; line.append(input);
+          if (semanticType === 'amount') { const unit = this.document.createElement('span'); unit.className = 'bookkeeping-unit'; unit.textContent = '円'; line.append(unit); }
+          cell.append(line);
         });
       }
       container.append(table);
+    }
+    renderBookkeepingForm(question, draft = {}) {
+      const wrap = this.byId('table-container'); wrap.replaceChildren();
+      const book = this.document.createElement('section'); book.className = `bookkeeping-form ${question.format}`; book.setAttribute('aria-label', question.category);
+      const heading = this.document.createElement('h3'); heading.className = 'bookkeeping-form-title'; heading.textContent = question.category; book.append(heading);
+      const records = this.document.createElement('div'); records.className = 'bookkeeping-records'; let inputIndex = 0;
+      for (const row of question.table.rows || []) {
+        const cellId = question.table.inputCells[inputIndex++]; const metadata = question.table.inputMetadata?.[cellId] || {};
+        const semanticType = metadata.semanticType || question.table.inputTypes?.[cellId] || 'text';
+        const record = this.document.createElement('div'); record.className = 'bookkeeping-field'; record.dataset.semanticType = semanticType;
+        const label = this.document.createElement('label'); label.textContent = metadata.label || Object.values(row)[0]; label.htmlFor = `bookkeeping-${question.id}-${cellId}`;
+        const amountLike = semanticType === 'amount' || semanticType === 'unitPrice';
+        const input = amountLike ? this.makeAmount('table-input bookkeeping-input', `${label.textContent}（金額）`, draft.cells?.[cellId] ?? '') : this.makeText('table-input bookkeeping-input', label.textContent, draft.cells?.[cellId] ?? '');
+        input.id = label.htmlFor; input.dataset.cellId = cellId; input.dataset.inputType = semanticType; input.dataset.semanticType = semanticType;
+        if (semanticType === 'date') { input.placeholder = '例：6/5'; input.inputMode = 'numeric'; }
+        if (semanticType === 'folio') { input.classList.add('folio-input'); input.inputMode = 'numeric'; }
+        if (semanticType === 'account') input.classList.add('account-input');
+        const line = this.document.createElement('div'); line.className = 'bookkeeping-input-line'; line.append(input);
+        const units = { amount:'円', unitPrice:'円', months:'か月', years:'年' };
+        if (units[semanticType]) { const unit = this.document.createElement('span'); unit.className = 'bookkeeping-unit'; unit.textContent = units[semanticType]; line.append(unit); }
+        record.append(label, line); records.append(record);
+      }
+      book.append(records); wrap.append(book);
     }
     accountType(account) {
       return DOMAIN.accountType(account);

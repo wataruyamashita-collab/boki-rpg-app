@@ -26,7 +26,7 @@ assert(viewSource.includes("question.table.rows.filter(row => row.section === 'å
 assert(viewSource.includes("question.format === 'balance-sheet'") && viewSource.includes("this.renderBalanceSheet(question, {}, { user:userAnswer, score })"), 'wrong-answer comparison preserves balance sheet');
 const css = fs.readFileSync('css/style.css','utf8');
 assert(/\.balance-sheet-table\s*\{[^}]*min-width:\s*680px[^}]*table-layout:\s*fixed/s.test(css));
-assert(/\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css));
+assert(/\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(css));
 assert(/\.journal-row\s*\{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\).*minmax\(120px, 2fr\).*minmax\(240px, 3fr\).*minmax\(120px, 2fr\)/s.test(css));
 assert(!/\.journal-row select\s*\{[^}]*text-overflow:\s*ellipsis/s.test(css));
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-row select,\s*\.journal-row \.amount-input\s*\{[^}]*font-size:\s*16px/s.test(css));

@@ -216,6 +216,11 @@ button.secondary-button:hover { color: #fff; }
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  overflow: visible;
+}
+.journal-grid-scroll {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
@@ -267,6 +272,16 @@ button.secondary-button:hover { color: #fff; }
 .fixed-asset-input[data-semantic-type="date"] { width: 7ch; }
 .fixed-asset-input[data-semantic-type="months"] { width: 4ch; }
 .fixed-asset-unit { flex: 0 0 auto; font-weight: 700; }
+.bookkeeping-form { margin-bottom: 20px; border: 1px solid #aebbc3; border-radius: 10px; overflow: hidden; background: #fff; }
+.bookkeeping-form-title { margin: 0; padding: 10px 14px; color: #fff; background: #2c3e50; font-size: 1rem; }
+.bookkeeping-records { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.bookkeeping-field { display: grid; align-content: start; gap: 5px; min-width: 0; padding: 10px 12px; border-right: 1px solid #d5dce0; border-bottom: 1px solid #d5dce0; }
+.bookkeeping-field > label { color: #34495e; font-size: .8rem; font-weight: 800; }
+.bookkeeping-input-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bookkeeping-input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 8px; font-size: 16px; }
+.bookkeeping-input[data-semantic-type="date"] { width: 8ch; }
+.bookkeeping-input.folio-input { width: 10ch; font-variant-numeric: tabular-nums; }
+.bookkeeping-unit { flex: 0 0 auto; font-weight: 700; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="numeric"] { overflow-wrap: normal; word-break: keep-all; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] th[data-column-type="numeric"] { min-width: max-content; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] th[data-column-key="currentDepreciation"],
@@ -480,6 +495,9 @@ select, .amount-input {
   .fixed-asset-input { width: 100%; }
   .fixed-asset-input[data-semantic-type="date"] { width: 7ch; }
   .fixed-asset-input[data-semantic-type="months"] { width: 4ch; }
+  .bookkeeping-records { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bookkeeping-field { padding: 9px 8px; }
+  .bookkeeping-field[data-semantic-type="text"], .bookkeeping-field[data-semantic-type="account"] { grid-column: 1 / -1; }
 }
 
 .result-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }

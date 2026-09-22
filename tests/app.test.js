@@ -466,14 +466,15 @@ const topologyView = new browserSandbox.window.AppView({ getElementById: () => t
 const shapes = ['J001', 'J128', 'J120', 'J137'];
 const examTopologies = shapes.map(id => {
   topologyView.renderJournal(browserSandbox.window.QuestionData[id], {}, 'exam');
-  const rows = topologyContainer.children.filter(child => child.className === 'journal-row');
+  const grid = topologyContainer.children.find(child => child.className === 'journal-grid-scroll');
+  const rows = grid.children.filter(child => child.className === 'journal-row');
   return rows.map(row => row.children.map(control => ({ className:control.className, disabled:control.disabled, placeholder:control.innerHTML, choices:control.tagName === 'select' ? control.children.map(option => option.value) : [] })));
 });
 examTopologies.slice(1).forEach(topology => assert.deepStrictEqual(topology, examTopologies[0], '異なる正答形状でも空の模試仕訳DOMを同一にする'));
 assert.strictEqual(examTopologies[0].length, 3, '模試仕訳は常に3行を表示する');
 assert(examTopologies[0].every(row => row.length === 4 && row.every(control => !control.disabled)), '模試3行の借方・貸方科目・金額をすべて有効にする');
 topologyView.renderJournal(browserSandbox.window.QuestionData.J001, {}, 'story');
-assert.strictEqual(topologyContainer.children.filter(child => child.className === 'journal-row').length, 1, 'Storyは従来の正答形状に応じた行数を維持する');
+assert.strictEqual(topologyContainer.children.find(child => child.className === 'journal-grid-scroll').children.filter(child => child.className === 'journal-row').length, 1, 'Storyは従来の正答形状に応じた行数を維持する');
 const maximum = browserSandbox.window.QuestionData.J128.answer;
 const maximumWithEmptyRows = { debit:[...maximum.debit], credit:[...maximum.credit] };
 assert.strictEqual(Engine.gradeJournalEntry(maximumWithEmptyRows, maximum), true, '最大3行の正答を採点できる');
@@ -888,7 +889,7 @@ Object.values(browserSandbox.window.QuestionData).forEach(question => {
 });
 assert(viewSource.includes("this.byId('explanation').before(container)"), '古いHTMLがキャッシュされていても正しい仕訳の表示領域を補完する');
 assert(/\.journal-header\s*\{[^}]*min-width:\s*620px/s.test(cssSource), '仕訳の科目可読幅を横スクロール領域で確保する');
-assert(/\.journal-entry-area\s*\{[^}]*max-width:\s*100%[^}]*overflow-x:\s*auto/s.test(cssSource), 'iPhoneで可読幅を保った仕訳を横スクロールできる');
+assert(/\.journal-entry-area\s*\{[^}]*max-width:\s*100%[^}]*overflow:\s*visible/s.test(cssSource) && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(cssSource), 'iPhoneで説明を固定したまま仕訳グリッドだけを横スクロールできる');
 assert(/\.table-question-wrap\s*{[^}]*overflow-x:\s*auto/s.test(cssSource), '大きな表は小型画面で横スクロールできる');
 assert(viewSource.includes('2欄×4組＝8欄') && viewSource.includes("guide.className = 'worksheet-guide'"), '8桁精算表の構成と横スクロール操作を表の直前で説明する');
 assert(viewSource.includes("th.scope = 'colgroup'") && viewSource.includes("accountHead.rowSpan = 2"), '8欄精算表のヘッダーを4組と借方・貸方の二段構成にする');

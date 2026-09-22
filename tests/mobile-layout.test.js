@@ -78,7 +78,7 @@ assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(c
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
 for (const viewport of [320, 375, 390, 430]) assert(fixedAssetMinimum > viewport && /overflow-x:\s*auto/.test(css), `${viewport}px: fixed-asset content remains wider than its viewport and horizontally scrollable`);
 const accountWidth = Number(css.match(/\.journal-row\s*\{[^}]*minmax\((\d+)px, 3fr\)/s)?.[1]);
-assert(accountWidth >= 240 && /\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'desktop journal entry integrity remains protected');
+assert(accountWidth >= 240 && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'desktop journal grid integrity remains protected while its instruction stays outside the scroller');
 
 const journalQuestions = questions.filter(question => question.type === 'journal');
 const journalAccounts = journalQuestions.flatMap(question =>
@@ -111,7 +111,7 @@ const mobilePairWidth = mobileAccountWidth + 2 + mobileAmountWidth;
 assert(mobilePairWidth <= 375 - 20, '375px iPhone shows one debit account-and-amount pair without horizontal clipping');
 assert(mobilePairWidth <= 390 - 20, '390px iPhone shows one debit account-and-amount pair without horizontal clipping');
 assert(mobilePairWidth <= 430 - 20, '430px iPhone shows one debit account-and-amount pair without horizontal clipping');
-assert(mobilePairWidth > 320 - 20 && /\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css), '320px retains intentional horizontal scrolling instead of crushing fields');
+assert(mobilePairWidth > 320 - 20 && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(css), '320px retains intentional grid scrolling instead of crushing fields');
 const coachingHiddenRule = css.match(/\.confidence-selector\[hidden\],\s*\.question-actions \.save-button\[hidden\],\s*#save-status\[hidden\]\s*\{([^}]*)\}/)?.[1] || '';
 assert(
   /display:\s*none\s*!important/.test(coachingHiddenRule),
