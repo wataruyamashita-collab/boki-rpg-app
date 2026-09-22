@@ -676,6 +676,7 @@ const allowedExamContext={
   hasActiveExamSession:examPrototype.hasActiveExamSession,
   isExamExpired(){return false;},
   unmetExamPrerequisites(){return [];},
+  clearOrdinaryFilters:examPrototype.clearOrdinaryFilters,
   ensureExamSession(){allowedExamEnsures+=1;return this.model.state.examSession;},
   renderModes(){},
   view:{show(){}},
@@ -950,6 +951,26 @@ assert(controllerSource.includes('populateAccountFilter(ids = this.modeIds())') 
 assert(controllerSource.includes("select.disabled = accounts.length === 0") && controllerSource.includes("query.placeholder = accounts.length ? '問題文・カテゴリ・勘定科目' : '問題文・カテゴリ'"), '勘定科目検索できないモードでは入力UIを無効化して検索範囲を明示する');
 assert(/showMode\(mode\)[\s\S]*?this\.model\.save\(\);\s*this\.renderModes\(\);/.test(controllerSource), 'モード切替時に検索候補と件数を再同期する');
 assert(controllerSource.includes("'このモードには条件に一致する問題がありません。'"), '検索0件時に現在モード内の結果であることを明示する');
+const intendedExamFilterIds = ['E01','E02','E03'];
+for (const [label, filters] of [
+  ['nonmatching keyword', { query:'never-matches', account:'', mistakes:'all' }],
+  ['mistake status', { query:'', account:'', mistakes:'incorrect' }],
+  ['account filter', { query:'', account:'現金', mistakes:'all' }]
+]) {
+  const staleContext = { filters, filteredIds(){ return []; } };
+  assert.deepStrictEqual([...examPrototype.visibleIdsForMode.call(staleContext, intendedExamFilterIds, 'exam')], intendedExamFilterIds, `exam ignores stale ordinary ${label} state`);
+}
+let normalFilterDelegations = 0;
+const normalFilterContext = { filteredIds(ids){ normalFilterDelegations += 1; return ids.slice(0, 1); } };
+assert.deepStrictEqual([...examPrototype.visibleIdsForMode.call(normalFilterContext, ['S1','S2'], 'story')], ['S1'], 'normal filtering remains active outside exam mode');
+assert.strictEqual(normalFilterDelegations, 1, 'non-exam list delegates to ordinary filtering exactly once');
+const filterControls = { 'filter-query':{value:'never-matches'}, 'filter-account':{value:'現金'}, 'filter-mistakes':{value:'incorrect'} };
+const clearFilterContext = { filters:{query:'never-matches',account:'現金',mistakes:'incorrect'}, document:{getElementById(id){return filterControls[id] || null;}} };
+examPrototype.clearOrdinaryFilters.call(clearFilterContext);
+assert.deepStrictEqual([clearFilterContext.filters.query,clearFilterContext.filters.account,clearFilterContext.filters.mistakes,filterControls['filter-query'].value,filterControls['filter-account'].value,filterControls['filter-mistakes'].value], ['','','all','','','all'], 'exam entry clears internal and UI ordinary filter state coherently');
+assert(controllerSource.includes("const examIds = this.model.state.examSession?.ids || this.buildExamIds();"), 'exam list uses the active session IDs when a session exists');
+assert(controllerSource.includes("render('exam-list', examIds, 'exam')"), 'exam list explicitly bypasses ordinary filtering');
+assert(/if \(mode === 'exam'\) this\.clearOrdinaryFilters\(\);[\s\S]*?this\.renderModes\(\);/.test(controllerSource), 'exam filters are cleared before list rendering');
 assert(/const modeIndex = \['story', 'training', 'review', 'exam'\]\.indexOf\(this\.model\.state\.mode\);\s*this\.populateAccountFilter\([\s\S]*?\);\s*const counts = \[/.test(controllerSource), 'モード変更で無効になった勘定科目条件を一覧絞り込み前に解除する');
 assert(fs.existsSync('types/domain.d.ts') && fs.existsSync('tsconfig.json'), '段階的TypeScript導入用のドメイン型と設定を提供する');
 // 第3問は表示資料から独立再計算し、answer改ざんを検出する。

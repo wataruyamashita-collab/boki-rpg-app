@@ -64,16 +64,39 @@
       }
       return { values, editable };
     },
+    representativeColumnKey(key) {
+      if (representativeQuestion?.table?.columns?.includes(key)) return key;
+      let inputIndex = 0;
+      for (const row of representativeQuestion?.table?.rows || []) {
+        for (const [index, value] of Object.values(row).entries()) {
+          if (value !== '入力') continue;
+          const cellId = representativeQuestion.table.inputCells[inputIndex++];
+          if (cellId === key) return representativeQuestion.table.columns[index];
+        }
+      }
+      throw new Error(`representative column not found: ${key}`);
+    },
+    representativeControl(key) {
+      const cells = representativeQuestion?.answer?.cells || {};
+      if (Object.prototype.hasOwnProperty.call(cells,key)) {
+        const expected = cells[key];
+        const editableAnswers = expected !== '' && expected != null ? [expected] : [];
+        const formatted = editableAnswers.filter(value => typeof value === 'number').map(value => value.toLocaleString('ja-JP'));
+        const requiredInputCharacters = editableAnswers.length ? Math.min(9,Math.max(4,...formatted.map(value => [...value].length + 1))) : 0;
+        return { visibleValues:[], editableAnswers, editable:editableAnswers.length > 0, requiredInputCharacters, answerSource:'cell' };
+      }
+      return { ...window.visualHarness.representativeColumn(key), answerSource:'column' };
+    },
     representativeColumn(key) {
-      if (!representativeQuestion?.table?.columns?.includes(key)) throw new Error(`representative column not found: ${key}`);
+      const columnKey = window.visualHarness.representativeColumnKey(key);
       const visibleValues = [], editableAnswers = [];
       let inputIndex = 0;
       for (const row of representativeQuestion.table.rows || []) Object.values(row).forEach((value, index) => {
         const column = representativeQuestion.table.columns[index];
         if (value === '入力') {
           const cellId = representativeQuestion.table.inputCells[inputIndex++];
-          if (column === key) { const expected = representativeQuestion.answer?.cells?.[cellId]; if (expected !== '' && expected != null) editableAnswers.push(expected); }
-        } else if (column === key) visibleValues.push(value);
+          if (column === columnKey) { const expected = representativeQuestion.answer?.cells?.[cellId]; if (expected !== '' && expected != null) editableAnswers.push(expected); }
+        } else if (column === columnKey) visibleValues.push(value);
       });
       const formatted = [...visibleValues,...editableAnswers].filter(value => typeof value === 'number').map(value => value.toLocaleString('ja-JP'));
       const requiredInputCharacters = editableAnswers.length ? Math.min(9,Math.max(4,...formatted.map(value => [...value].length + 1))) : 0;

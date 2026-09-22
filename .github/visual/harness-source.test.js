@@ -12,6 +12,8 @@ for (const representative of ['fixed-asset','inventory','ledger','journal','work
 assert(harness.includes('HARNESS_DEPENDENCY_MISSING:'),'missing dependencies fail with the stable diagnostic');
 assert(harness.includes("question.answer?.cells?.[cellId]"), 'editable canonical answers participate in intrinsic width measurement');
 assert(harness.includes('representativeColumn(key)') && harness.includes('representativeQuestion = question'), 'browser sizing uses the exact rendered representative');
+assert(harness.includes('representativeColumnKey(key)') && harness.includes('cellId === key'), 'column fallback can resolve a representative cell ID to its table column');
+assert(harness.includes('representativeControl(key)') && harness.includes('Object.prototype.hasOwnProperty.call(cells,key)') && harness.includes("answerSource:'cell'"), 'card controls prefer the exact answer cell before column fallback');
 assert(harness.includes('visibleValues') && harness.includes('editableAnswers'), 'representative visible and editable evidence remain separately diagnosable');
 assert(harness.includes('requiredInputCharacters'), 'representative profiles expose exact-column input character requirements');
 assert(runner.includes('VISUAL_HARNESS_MISSING_ELEMENT:${measuredCase}:${questionId}:${name}'), 'missing required DOM reports case, question, and element');
@@ -32,4 +34,11 @@ assert(!runner.includes('font:style.font'), 'measurement probes do not use lossy
 assert(runner.includes('headerFont:{ actual:headerMeasurement.actualFont,probe:headerMeasurement.probeFont }'), 'actual and probe header fonts remain independently diagnosable');
 assert(runner.includes('headerHorizontalChrome,cellHorizontalChrome,inputChrome,inputInnerWidth,requiredHeaderWidth,requiredCellWidth'), 'header, cell, and input chrome plus semantic requirements remain separate');
 assert(runner.includes('editableAnswerWidth > inputInnerWidth + 0.5'), 'editable fit compares text against the actual input inner width with browser tolerance');
+const cardStart = runner.indexOf('if (cardRoot) {'), cardEnd = runner.indexOf('const table = requireElement', cardStart);
+const cardBranch = runner.slice(cardStart, cardEnd);
+assert(runner.includes("const cardRoot = document.querySelector(measuredCase === 'fixed-asset' ? '.fixed-asset-ledger' : '.bookkeeping-form');"), 'the expected-answer card path covers both fixed-asset and bookkeeping cards');
+assert(cardBranch.includes('window.visualHarness.representativeControl(key)') && cardBranch.includes('requiredTextWidth(control, editableAnswers)'), 'card controls measure the exact expected answer using the rendered control font');
+assert(cardBranch.includes('editableAnswerWidth > inputInnerWidth + 0.5'), 'card expected-answer width is compared with usable input inner width');
+assert(cardBranch.includes('answerSource:representative?.answerSource || null') && cardBranch.includes('editableAnswerWidth,inputPadding,inputChrome,inputInnerWidth') && cardBranch.includes('editableFont:'), 'card visual evidence preserves answer source, expected-width, usable-width, chrome, and font diagnostics');
+assert(!cardBranch.includes('control.scrollWidth > control.clientWidth'), 'card fit cannot regress to measuring an empty control scroll box');
 console.log('visual harness source checks: dependencies, order, diagnostics, representatives: ok');

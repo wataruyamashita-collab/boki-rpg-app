@@ -202,6 +202,7 @@
           return false;
         }
       }
+      if (mode === 'exam') this.clearOrdinaryFilters();
       this.model.state.mode = mode;
       if (mode === 'exam') this.ensureExamSession();
       else this.stopExamTimer();
@@ -367,24 +368,29 @@
       if (this.filters.mistakes === 'frequent') matches.sort((a, b) => (this.model.state.mistakeCounts[b] || 0) - (this.model.state.mistakeCounts[a] || 0));
       return matches;
     }
-    resetFilters() {
+    clearOrdinaryFilters() {
       this.filters = { query: '', account: '', mistakes: 'all' };
-      this.document.getElementById('filter-query').value = ''; this.document.getElementById('filter-account').value = ''; this.document.getElementById('filter-mistakes').value = 'all'; this.renderModes();
+      [['filter-query', ''], ['filter-account', ''], ['filter-mistakes', 'all']].forEach(([id, value]) => {
+        const control = this.document.getElementById(id);
+        if (control) control.value = value;
+      });
     }
+    resetFilters() { this.clearOrdinaryFilters(); this.renderModes(); }
+    visibleIdsForMode(ids, mode) { return mode === 'exam' ? [...ids] : this.filteredIds(ids); }
     renderModes() {
-      const render = (id, ids) => { const filtered = this.filteredIds(ids); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; const mistakes = this.model.state.mistakeCounts[qid] || 0; button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}`; return button; })); return filtered.length; };
+      const render = (id, ids, mode) => { const filtered = this.visibleIdsForMode(ids, mode); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; const mistakes = this.model.state.mistakeCounts[qid] || 0; button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}`; return button; })); return filtered.length; };
       const storyIds = this.storyIds();
       const trainingIds = this.learningIds().filter(id => this.questions[id].type !== 'journal');
       const reviewIds = this.reviewIds();
-      const examIds = this.buildExamIds();
+      const examIds = this.model.state.examSession?.ids || this.buildExamIds();
       const pools = [storyIds, trainingIds, reviewIds, examIds];
       const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode);
       this.populateAccountFilter(modeIndex < 0 ? [] : pools[modeIndex]);
       const counts = [
-        render('story-list', storyIds),
-        render('training-list', trainingIds),
-        render('review-list', reviewIds),
-        render('exam-list', examIds)
+        render('story-list', storyIds, 'story'),
+        render('training-list', trainingIds, 'training'),
+        render('review-list', reviewIds, 'review'),
+        render('exam-list', examIds, 'exam')
       ];
       const count = modeIndex < 0 ? 0 : counts[modeIndex];
       const hasActiveFilter = Boolean(this.filters.query.trim() || this.filters.account || this.filters.mistakes !== 'all');

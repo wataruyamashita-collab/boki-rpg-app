@@ -59,9 +59,21 @@ async function measure(page, caseName) {
       const columns = Object.fromEntries(fields.map((field, index) => {
         const control = field.querySelector('input,select');
         const key = field.dataset.cell || field.dataset.field || `field${index}`;
+        const representative = control ? window.visualHarness.representativeControl(key) : null;
+        const format = value => typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value ?? '');
+        const editableAnswers = representative ? representative.editableAnswers.map(format) : [];
+        const inputStyle = control ? getComputedStyle(control) : null;
+        const inputPadding = inputStyle ? parseFloat(inputStyle.paddingLeft) + parseFloat(inputStyle.paddingRight) : 0;
+        const inputChrome = inputStyle ? horizontalChrome(inputStyle) : 0;
+        const inputInnerWidth = control ? Math.max(0, control.clientWidth - inputPadding) : 0;
+        const editableMeasurement = control ? requiredTextWidth(control, editableAnswers) : { width:0,actualFont:null,probeFont:null };
+        const editableAnswerWidth = editableMeasurement.width;
         return [key,{ classification:control?.dataset.semanticType || 'text', actualWidth:field.getBoundingClientRect().width,
           width:field.getBoundingClientRect().width, headerClipped:false, cellClipped:field.scrollWidth > field.clientWidth + 1,
-          clipped:field.scrollWidth > field.clientWidth + 1, editableAnswerFitFailure:Boolean(control && control.scrollWidth > control.clientWidth + 1),
+          clipped:field.scrollWidth > field.clientWidth + 1,
+          editableAnswers:representative?.editableAnswers || [],answerSource:representative?.answerSource || null,editableAnswerWidth,inputPadding,inputChrome,inputInnerWidth,
+          editableFont:{ actual:editableMeasurement.actualFont,probe:editableMeasurement.probeFont },
+          editableAnswerFitFailure:Boolean(control && editableAnswers.length && editableAnswerWidth > inputInnerWidth + 0.5),
           input:dimensions(control), cell:dimensions(field), headerLineCount:1, headerGlyphStacked:false }];
       }));
       return { questionId,cardLayout:true,columns,

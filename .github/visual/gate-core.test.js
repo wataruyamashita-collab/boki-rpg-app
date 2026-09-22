@@ -69,6 +69,17 @@ fixture.cards.clipped = false;
 fixture.rows.inputVisualHeight = 43;
 assert(codes(fixture).includes('CARD_TOUCH_TARGET_FAILURE'), 'fixed-asset cards retain the 44px touch-target requirement');
 
+for (const cardCase of ['fixed-asset','journal-book']) {
+  const expectedOverflow = base();
+  expectedOverflow.case = cardCase;
+  expectedOverflow.cardLayout = true;
+  expectedOverflow.columns = { answer:{ width:96,actualWidth:96,classification:'numeric',headerClipped:false,cellClipped:false,editableAnswerFitFailure:true,headerLineCount:1,headerGlyphStacked:false } };
+  expectedOverflow.rows = { inputVisualHeight:44,hasEditableControl:true };
+  expectedOverflow.cards = { count:1,clipped:false };
+  expectedOverflow.table = { requiresHorizontalScroll:false,horizontalScrollAvailable:true,horizontalOverflow:0,clipped:false };
+  assert(codes(expectedOverflow).includes('COLUMN_TOO_NARROW'), `${cardCase} expected answer wider than its control fails closed`);
+}
+
 fixture.cardLayout = false;
 fixture.rows = structuredClone(fixed.rows);
 assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'the same wide life field still fails in the legacy fixed-asset table layout');
