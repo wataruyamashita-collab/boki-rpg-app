@@ -21,6 +21,8 @@ assert.strictEqual(root.GradingEngine.grade(l033,{cells:{...l033.answer.cells,ac
 assert(root.ExamPoolDefinition.includes('L033')&&root.ExamPoolDefinition.includes('L040'),'redesigned exam questions remain in pool');
 const view=fs.readFileSync('js/view.js','utf8'),css=fs.readFileSync('css/style.css','utf8');
 assert(view.includes("question.format === 'fixed-asset-ledger'")&&view.includes("input.placeholder = '例：7/1'")&&!view.includes("input.type = 'date'"),'renderer uses compact text dates');
+const fixedRendererSource=view.slice(view.indexOf('renderFixedAssetLedger'),view.indexOf('positionStickyContextColumns'));
+assert(!/semanticType === 'date'[^\n]*inputMode/.test(fixedRendererSource),'slash-form fixed-asset dates do not force a numeric-only keyboard');
 assert(view.includes("unit.textContent = semanticType === 'amount' ? '円' : 'か月'")&&view.includes("label.htmlFor = `fixed-asset-"),'visible labels and external units');
 const fixedRenderer=view.slice(view.lastIndexOf('renderFixedAssetLedger(question'),view.indexOf('positionStickyContextColumns(table)',view.indexOf('renderFixedAssetLedger(question'))); assert(!fixedRenderer.includes('question.answer'),'renderer does not read answers or leak them in exam mode');
 assert(/@media \(max-width: 430px\)[\s\S]*fixed-asset-fields/.test(css)&&/min-height: 44px/.test(css),'phone card reflow and touch targets');

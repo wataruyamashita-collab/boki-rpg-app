@@ -74,6 +74,11 @@ function evaluateVisualMetrics(metrics, options = {}) {
     }
   }
   const rows = metrics.rows || {};
+  if (metrics.cardLayout) {
+    if (!rows.hasEditableControl || Number(rows.inputVisualHeight) < limits.minimumTouchTargetHeight) violations.push({ code:'CARD_TOUCH_TARGET_FAILURE', minimum:limits.minimumTouchTargetHeight, actual:rows.inputVisualHeight });
+    if (!Number(metrics.cards?.count) || metrics.cards?.clipped) violations.push({ code:'CARD_CONTENT_CLIPPED', cards:metrics.cards });
+    if (metrics.table?.requiresHorizontalScroll || metrics.table?.horizontalOverflow > 1) violations.push({ code:'CARD_HORIZONTAL_OVERFLOW', overflow:metrics.table.horizontalOverflow });
+  }
   for (const [key, expectedKey] of [['normalRowHeight','expectedNormalRowHeight'],['editableRowHeight','expectedEditableRowHeight']]) {
     const actual = Number(rows[key]), expected = Number(rows[expectedKey]);
     if (Number.isFinite(actual) && Number.isFinite(expected) && expected > 0 && actual > expected + limits.rowRoundingTolerance) violations.push({ code:'ROW_TOO_TALL', row:key, actual,expected,chrome:{ paddingTop:rows.paddingTop,paddingBottom:rows.paddingBottom,borderTop:rows.borderTop,borderBottom:rows.borderBottom,inputHeight:rows.inputVisualHeight } });

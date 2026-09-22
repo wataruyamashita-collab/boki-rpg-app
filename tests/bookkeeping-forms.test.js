@@ -50,6 +50,9 @@ assert(journal.includes('grid.append(header)') && journal.includes('grid.append(
 const rendererStart = view.indexOf('    renderBookkeepingForm(question');
 const renderer = view.slice(rendererStart, view.indexOf('    accountType(account)', rendererStart));
 assert(renderer.includes('metadata.semanticType') && renderer.includes("input.placeholder = '例：6/5'") && renderer.includes("semanticType === 'folio'") && renderer.includes("semanticType === 'account'"), 'field-level semantics choose date, folio, and account affordances');
+assert(!/semanticType === 'date'[^\n]*inputMode/.test(renderer), 'slash-form bookkeeping dates keep a text keyboard');
+assert(!/semanticType === 'folio'[^\n]*inputMode/.test(renderer), 'compound and individual folios keep a separator-capable text keyboard');
+assert(renderer.includes("record.className = 'bookkeeping-record'") && renderer.includes("fields.className = 'bookkeeping-record-fields'"), 'related fields are grouped into coherent bookkeeping records');
 assert(renderer.includes("amount:'円', unitPrice:'円', months:'か月', years:'年'") && !renderer.includes('question.answer'), 'external units are semantic and renderer cannot leak answers');
-assert(/@media \(max-width: 430px\)[\s\S]*bookkeeping-records[^}]*repeat\(2, minmax\(0, 1fr\)\)/.test(css) && /bookkeeping-input[^}]*min-height:\s*44px/.test(css), '320/375/390/430 use unclipped card grid and 44px controls');
+assert(/@media \(max-width: 430px\)[\s\S]*bookkeeping-record-fields[^}]*repeat\(2, minmax\(0, 1fr\)\)/.test(css) && /bookkeeping-input[^}]*min-height:\s*44px/.test(css), '320/375/390/430 preserve coherent record cards and 44px controls');
 console.log('bookkeeping form UX tests: ok');

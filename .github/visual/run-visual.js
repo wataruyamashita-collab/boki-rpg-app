@@ -12,7 +12,7 @@ if (!['audit','strict'].includes(mode)) throw new Error('mode must be audit or s
 const engines = { chromium, webkit };
 const viewports = [{ width:320,height:568 },{ width:375,height:667 },{ width:390,height:844 },{ width:430,height:932 },{ width:768,height:1024 },{ width:1280,height:800 }];
 const mime = { '.css':'text/css', '.html':'text/html', '.js':'text/javascript', '.json':'application/json' };
-const cases = ['fixed-asset','inventory','ledger','journal','worksheet'];
+const cases = ['fixed-asset','inventory','ledger','journal','worksheet','journal-book','notes-register','general-ledger','inventory-ledger','voucher'];
 const evidence = { mode,status:'RUNNING',reports:[],smoke:[],failures:[],failure:null };
 let activeContext = null;
 
@@ -50,6 +50,25 @@ async function measure(page, caseName) {
       probe.remove(); return { width:maximum,actualFont:fontProperties(style),probeFont };
     };
     const isJournal = measuredCase === 'journal';
+    const cardRoot = document.querySelector(measuredCase === 'fixed-asset' ? '.fixed-asset-ledger' : '.bookkeeping-form');
+    if (cardRoot) {
+      const wrapper = requireElement(document.querySelector('#table-container'), 'wrapper');
+      const cards = [...cardRoot.querySelectorAll(measuredCase === 'fixed-asset' ? '.fixed-asset-card' : '.bookkeeping-record')];
+      const fields = [...cardRoot.querySelectorAll(measuredCase === 'fixed-asset' ? '.fixed-asset-field' : '.bookkeeping-field')];
+      const controls = [...cardRoot.querySelectorAll('input,select')];
+      const columns = Object.fromEntries(fields.map((field, index) => {
+        const control = field.querySelector('input,select');
+        const key = field.dataset.cell || field.dataset.field || `field${index}`;
+        return [key,{ classification:control?.dataset.semanticType || 'text', actualWidth:field.getBoundingClientRect().width,
+          width:field.getBoundingClientRect().width, headerClipped:false, cellClipped:field.scrollWidth > field.clientWidth + 1,
+          clipped:field.scrollWidth > field.clientWidth + 1, editableAnswerFitFailure:Boolean(control && control.scrollWidth > control.clientWidth + 1),
+          input:dimensions(control), cell:dimensions(field), headerLineCount:1, headerGlyphStacked:false }];
+      }));
+      return { questionId,cardLayout:true,columns,
+        table:{...dimensions(cardRoot),wrapper:dimensions(wrapper),horizontalOverflow:Math.max(0,cardRoot.scrollWidth-wrapper.clientWidth),requiresHorizontalScroll:cardRoot.scrollWidth>wrapper.clientWidth,horizontalScrollAvailable:getComputedStyle(wrapper).overflowX !== 'visible',clipped:wrapper.scrollWidth+1<cardRoot.scrollWidth},
+        cards:{count:cards.length,clipped:cards.some(card=>card.scrollWidth>card.clientWidth+1),maximumHeight:Math.max(0,...cards.map(card=>card.getBoundingClientRect().height))},
+        rows:{inputVisualHeight:Math.min(...controls.map(control=>control.getBoundingClientRect().height)),hasEditableControl:controls.length>0},sticky:{viewportWidth:wrapper.clientWidth,scrollLeft:wrapper.scrollLeft,contextWidth:0} };
+    }
     const table = requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table');
     const wrapper = requireElement(document.querySelector(isJournal ? '#journal-container' : '#table-container'), 'wrapper');
     const wrapperLeft = wrapper.getBoundingClientRect().left;
@@ -137,7 +156,7 @@ async function run() {
           } finally { await page.close(); }
         }
         for (const viewport of viewports) {
-          for (const caseName of ['fixed-asset',...(viewport.width <= 430 ? ['inventory','ledger'] : []),...(viewport.width === 390 ? ['journal','worksheet'] : [])]) {
+          for (const caseName of ['fixed-asset',...(viewport.width <= 430 ? ['inventory','ledger','journal-book','notes-register','general-ledger','inventory-ledger','voucher'] : []),...(viewport.width === 390 ? ['journal','worksheet'] : [])]) {
             activeContext = { phase:'observation',browser:browserName,viewport,case:caseName };
             const page = await browser.newPage({ viewport });
             try {

@@ -15649,7 +15649,8 @@ const answerLabel = Object.freeze({
   debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額',
   unitPrice:'払出単価', currentDepreciation:'当期減価償却費', closingBookValue:'期末帳簿価額', answer:'答え',
   quantity:'数量', life:'耐用年数', folio:'元丁', date:'日付', acquisitionCost:'取得原価', openingAccumulated:'期首減価償却累計額', amount:'金額', description:'摘要', asset:'固定資産',
-  item:'項目', recorded:'帳簿の記録', evidence:'証憑', transaction:'取引内容', account:'勘定科目', debit:'借方', credit:'貸方', balance:'残高', before:'整理前金額', tbDebit:'試算表借方', tbCredit:'試算表貸方'
+  item:'項目', recorded:'帳簿の記録', evidence:'証憑', transaction:'取引内容', account:'勘定科目', debit:'借方', credit:'貸方', balance:'残高', before:'整理前金額', tbDebit:'試算表借方', tbCredit:'試算表貸方',
+  acquisitionDate:'取得日', residualValue:'残存価額', method:'償却方法', annualDepreciation:'年間減価償却額', months:'使用月数', closingAccumulated:'期末減価償却累計額', disposalBookValue:'売却時帳簿価額', disposalLoss:'固定資産売却損'
 });
 const getDisplayLabel = field => {
   const key = String(field);
@@ -15661,7 +15662,7 @@ const answerFieldLabel = (item, key) => {
   if (answerLabel[key]) return answerLabel[key];
   const keyLabel = getDisplayLabel(key);
   const metadata = item.table?.inputMetadata?.[key]?.label;
-  if (metadata && metadata !== key && !/[A-Z_]|unitPrice|currentDepreciation|closingBookValue|answer/u.test(metadata)) return String(metadata);
+  if (metadata && metadata !== key && !/unitPrice|currentDepreciation|closingBookValue|answer/u.test(metadata)) return String(metadata);
   const inputIndex = item.table?.inputCells?.indexOf(key) ?? -1; let cursor = -1;
   for (const row of item.table?.rows || []) for (const [column, value] of Object.entries(row)) if (value === '入力' && ++cursor === inputIndex) {
     const subject = ['account','item','description'].map(name => row[name]).find(value => value && value !== '入力' && value !== '—');
@@ -15871,8 +15872,8 @@ Object.values(QuestionData).forEach((item, index) => {
     for (const key of item.table.inputCells) {
       const value = item.answer?.cells?.[key];
       const label = answerFieldLabel(item, key);
-      const explicitSemanticType = item.id === 'L040' && ['depreciationA', 'depreciationB'].includes(key) ? 'amount' : null;
-      const semanticType = explicitSemanticType || semanticTypeForLabel(label, value) || item.table.inputMetadata[key]?.semanticType;
+      const inferredSemanticType = semanticTypeForLabel(label, value);
+      const semanticType = inferredSemanticType !== 'amount' ? inferredSemanticType : (item.table.inputMetadata[key]?.semanticType || inferredSemanticType);
       item.table.inputMetadata[key] = { ...item.table.inputMetadata[key], label, semanticType };
       item.table.controlTypes ||= {};
       item.table.controlTypes[key] = ['amount','unitPrice','months','years'].includes(semanticType) ? 'numeric' : semanticType;

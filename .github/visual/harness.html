@@ -22,7 +22,12 @@
     inventory: hasColumns('date','description','quantity','unitPrice','amount'),
     ledger: question => question.table && /元帳/u.test(question.category || '') && question.format !== 'eight-column-worksheet',
     journal: question => question.type === 'journal',
-    worksheet: question => question.format === 'eight-column-worksheet'
+    worksheet: question => question.format === 'eight-column-worksheet',
+    'journal-book': question => question.id === 'L034',
+    'notes-register': question => question.id === 'L042',
+    'general-ledger': question => question.id === 'L037',
+    'inventory-ledger': question => question.id === 'L049',
+    voucher: question => question.id === 'L050'
   };
   window.visualHarness = {
     cases:Object.keys(selectors),

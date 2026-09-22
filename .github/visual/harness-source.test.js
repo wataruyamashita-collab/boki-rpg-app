@@ -8,7 +8,7 @@ const order = ['data/accounting-domain.js','data/questions.js','js/view.js','js/
 assert(order.every(position => position >= 0),'harness loads every required production dependency');
 assert.deepStrictEqual(order,[...order].sort((left,right) => left-right),'production dependencies load in deterministic order');
 for (const dependency of ['QuestionData','AccountingDomain','AppView','AppController','AppController.accountChoices']) assert(harness.includes(dependency),`${dependency} has an explicit dependency check`);
-for (const representative of ['fixed-asset','inventory','ledger','journal','worksheet']) assert(harness.includes(representative),`${representative} has a canonical selector`);
+for (const representative of ['fixed-asset','inventory','ledger','journal','worksheet','journal-book','notes-register','general-ledger','inventory-ledger','voucher']) assert(harness.includes(representative),`${representative} has a canonical selector`);
 assert(harness.includes('HARNESS_DEPENDENCY_MISSING:'),'missing dependencies fail with the stable diagnostic');
 assert(harness.includes("question.answer?.cells?.[cellId]"), 'editable canonical answers participate in intrinsic width measurement');
 assert(harness.includes('representativeColumn(key)') && harness.includes('representativeQuestion = question'), 'browser sizing uses the exact rendered representative');
@@ -18,7 +18,7 @@ assert(runner.includes('VISUAL_HARNESS_MISSING_ELEMENT:${measuredCase}:${questio
 assert(runner.includes("const isJournal = measuredCase === 'journal'"), 'journal measurement has an explicit case branch');
 assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table')"), 'table or journal surface is required explicitly');
 assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container' : '#table-container'), 'wrapper')"), 'case wrapper is required explicitly');
-const tableGuard = runner.indexOf("const table = requireElement"), wrapperGuard = runner.indexOf("const wrapper = requireElement");
+const tableGuard = runner.indexOf("const table = requireElement"), wrapperGuard = runner.indexOf("const wrapper = requireElement", tableGuard);
 assert(tableGuard >= 0 && wrapperGuard > tableGuard && runner.indexOf('getComputedStyle(table)',wrapperGuard) > wrapperGuard, 'table style access occurs only after required-element guards');
 assert(runner.includes('stickyLeft:') && runner.includes('stickyViewportLeft:') && runner.includes('contextWidth:') && runner.includes('viewportWidth:'), 'sticky metrics remain collected after guard repair');
 assert(runner.includes('naturalViewportLefts') && runner.includes('naturalViewportLeft:'), 'sticky metrics preserve each column natural position before scrolling');

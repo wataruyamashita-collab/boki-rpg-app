@@ -274,7 +274,15 @@ button.secondary-button:hover { color: #fff; }
 .fixed-asset-unit { flex: 0 0 auto; font-weight: 700; }
 .bookkeeping-form { margin-bottom: 20px; border: 1px solid #aebbc3; border-radius: 10px; overflow: hidden; background: #fff; }
 .bookkeeping-form-title { margin: 0; padding: 10px 14px; color: #fff; background: #2c3e50; font-size: 1rem; }
-.bookkeeping-records { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.bookkeeping-records { display: grid; gap: 12px; padding: 12px; background: #eef2f5; }
+.bookkeeping-record { min-width: 0; overflow: hidden; border: 1px solid #bdc3c7; border-radius: 8px; background: #fff; }
+.bookkeeping-record-title { margin: 0; padding: 7px 10px; border-bottom: 1px solid #bdc3c7; background: #e8f1f7; color: #234; font-size: .85rem; }
+.bookkeeping-record-fields { display: grid; grid-template-columns: repeat(var(--book-columns, 4), minmax(0, 1fr)); }
+.bookkeeping-journal-book, .bookkeeping-general-ledger { --book-columns: 5; }
+.bookkeeping-notes-receivable, .bookkeeping-notes-payable { --book-columns: 6; }
+.bookkeeping-account-ledger { --book-columns: 3; }
+.bookkeeping-inventory-ledger { --book-columns: 3; }
+.bookkeeping-voucher-entry { --book-columns: 3; }
 .bookkeeping-field { display: grid; align-content: start; gap: 5px; min-width: 0; padding: 10px 12px; border-right: 1px solid #d5dce0; border-bottom: 1px solid #d5dce0; }
 .bookkeeping-field > label { color: #34495e; font-size: .8rem; font-weight: 800; }
 .bookkeeping-input-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -495,7 +503,8 @@ select, .amount-input {
   .fixed-asset-input { width: 100%; }
   .fixed-asset-input[data-semantic-type="date"] { width: 7ch; }
   .fixed-asset-input[data-semantic-type="months"] { width: 4ch; }
-  .bookkeeping-records { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bookkeeping-records { padding: 8px; }
+  .bookkeeping-record-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bookkeeping-field { padding: 9px 8px; }
   .bookkeeping-field[data-semantic-type="text"], .bookkeeping-field[data-semantic-type="account"] { grid-column: 1 / -1; }
 }
