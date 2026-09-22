@@ -255,6 +255,18 @@ button.secondary-button:hover { color: #fff; }
 .eight-column-worksheet .table-input { width: 100%; min-width: 11ch; font-size: 16px; }
 .table-input { min-width: 0; }
 .table-text-input { width: 100%; min-width: 120px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; }
+.fixed-asset-ledger { display: grid; gap: 14px; padding: 12px; background: #eef2f5; }
+.fixed-asset-card { min-width: 0; overflow: hidden; border: 1px solid #aebbc3; border-radius: 10px; background: #fff; }
+.fixed-asset-card h3 { margin: 0; padding: 10px 14px; color: #fff; background: #2c3e50; font-size: 1rem; }
+.fixed-asset-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.fixed-asset-field { display: grid; align-content: start; gap: 5px; min-width: 0; padding: 10px 12px; border-right: 1px solid #d5dce0; border-bottom: 1px solid #d5dce0; }
+.fixed-asset-field > label, .fixed-asset-label { color: #34495e; font-size: .8rem; font-weight: 800; }
+.fixed-asset-field > strong { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.fixed-asset-input-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.fixed-asset-input { box-sizing: border-box; width: min(100%, 12ch); min-width: 0; min-height: 44px; padding: 8px; font-size: 16px; }
+.fixed-asset-input[data-semantic-type="date"] { width: 7ch; }
+.fixed-asset-input[data-semantic-type="months"] { width: 4ch; }
+.fixed-asset-unit { flex: 0 0 auto; font-weight: 700; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] [data-column-type="numeric"] { overflow-wrap: normal; word-break: keep-all; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] th[data-column-type="numeric"] { min-width: max-content; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] th[data-column-key="currentDepreciation"],
@@ -459,6 +471,15 @@ select, .amount-input {
   .player-status { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .player-status > div { min-width: 0; padding: 6px 7px; }
   .player-status dd { overflow: hidden; font-size: .78rem; text-overflow: ellipsis; }
+}
+
+@media (max-width: 430px) {
+  .fixed-asset-ledger { padding: 8px; }
+  .fixed-asset-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fixed-asset-field { padding: 9px 8px; }
+  .fixed-asset-input { width: 100%; }
+  .fixed-asset-input[data-semantic-type="date"] { width: 7ch; }
+  .fixed-asset-input[data-semantic-type="months"] { width: 4ch; }
 }
 
 .result-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }

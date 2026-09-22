@@ -295,7 +295,7 @@ const sourceAnswerMutations = [
   ['J004', '"account": "買掛金"', '"account": "未払金"'],
   ['D020', 'profit:180000', 'profit:160000'],
   ['L039', 'profitTransfer:18000', 'profitTransfer:9000'],
-  ['L040', 'lossA:120000', 'lossA:60000'],
+  ['L040', '"lossA": 120000', '"lossA": 60000'],
   ['L044', "[50000,18000,32000]", "[50000,18000,50000]"],
   ['T001', '"total_debit": 1024000', '"total_debit": 410000'],
   ['E001', '"debitAccount": "広告宣伝費"', '"debitAccount": "備品"']

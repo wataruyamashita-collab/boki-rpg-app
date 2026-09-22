@@ -65,7 +65,7 @@ for(const phrase of ['株主から現金3,020,000円の追加払込みを受け�
     assert.deepStrictEqual(JSON.parse(JSON.stringify(root.deriveAccountingExpected(id,null,shuffled).expected.cells)),JSON.parse(JSON.stringify(original)),`${id}: material order cannot alter chronological facts`);
   }
   const disposal=structuredClone(root.QuestionData.L040);disposal.materials[0].売却日='11/1';
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(root.deriveAccountingExpected('L040',null,disposal).expected.cells)),{annualA:120000,depreciationA:70000,bookA:530000,lossA:110000,depreciationB:45000,bookB:255000});
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(root.deriveAccountingExpected('L040',null,disposal).expected.cells)),{annualA:120000,monthsA:7,depreciationA:70000,bookA:530000,lossA:110000,annualB:60000,monthsB:9,depreciationB:45000,bookB:255000});
   const acquisition=structuredClone(root.QuestionData.L040);acquisition.materials[1].取得日='8/1';
   assert.strictEqual(root.deriveAccountingExpected('L040',null,acquisition).expected.cells.depreciationB,40000,'L040 acquisition month controls proration');
 }

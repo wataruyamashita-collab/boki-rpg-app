@@ -1,5 +1,7 @@
 (function (root) {
   'use strict';
+  const CONTENT_REVISION = 2;
+  const FIXED_ASSET_SCHEMA_IDS = new Set(['L005','L010','L015','L020','L025','L030','L033','L040']);
   class ProgressModel {
     static validateBackupState(value, questions = {}) {
       const plain = item => item && typeof item === 'object' && !Array.isArray(item);
@@ -12,6 +14,7 @@
       if (!plain(value) || !safeValue(value)) return false;
       const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
       if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
+      if (value.contentRevision !== undefined && !(Number.isSafeInteger(value.contentRevision) && value.contentRevision >= 1)) return false;
       if (value.mode !== undefined && !['story', 'training', 'review', 'exam', 'desk'].includes(value.mode)) return false;
       if (value.currentQuestionId !== undefined && value.currentQuestionId !== null && !knownId(value.currentQuestionId)) return false;
       for (const key of ['answeredIds', 'correctIds', 'incorrectIds']) if (value[key] !== undefined && !idList(value[key])) return false;
@@ -41,13 +44,19 @@
     }
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state = { contentRevision:CONTENT_REVISION, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
       try {
         const saved = JSON.parse(this.storage?.getItem?.(this.key));
-        if (saved && typeof saved === 'object' && !Array.isArray(saved)) this.state = Object.assign(this.state, saved, {
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+          const needsContentMigration = !Number.isSafeInteger(saved.contentRevision) || saved.contentRevision < CONTENT_REVISION;
+          const migratedDrafts = saved.drafts && typeof saved.drafts === 'object' && !Array.isArray(saved.drafts)
+            ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object' && !(needsContentMigration && FIXED_ASSET_SCHEMA_IDS.has(id)))) : {};
+          const incompatibleExam = needsContentMigration && saved.examSession?.ids?.some(id => id === 'L033' || id === 'L040');
+          this.state = Object.assign(this.state, saved, {
+          contentRevision:CONTENT_REVISION,
           mode: ['story', 'training', 'review', 'exam', 'desk'].includes(saved.mode) ? saved.mode : 'story',
           currentQuestionId: this.questions[saved.currentQuestionId] ? saved.currentQuestionId : null,
           answeredIds: Array.isArray(saved.answeredIds) ? saved.answeredIds.filter(id => this.questions[id]) : [],
@@ -56,8 +65,7 @@
           correctIds: Array.isArray(saved.correctIds) ? [...new Set(saved.correctIds.filter(id => this.questions[id]))]
             : [...new Set((Array.isArray(saved.attempts) ? saved.attempts : []).filter(item => item?.correct === true && this.questions[item.questionId || item.id]).map(item => item.questionId || item.id))],
           incorrectIds: Array.isArray(saved.incorrectIds) ? saved.incorrectIds.filter(id => this.questions[id]) : [],
-          drafts: saved.drafts && typeof saved.drafts === 'object' && !Array.isArray(saved.drafts)
-            ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object')) : {},
+          drafts: migratedDrafts,
           mistakeCounts: saved.mistakeCounts && typeof saved.mistakeCounts === 'object'
             ? Object.fromEntries(Object.entries(saved.mistakeCounts).filter(([id, count]) => this.questions[id] && Number.isSafeInteger(count) && count > 0)) : {},
           reviewSchedule: saved.reviewSchedule && typeof saved.reviewSchedule === 'object' && !Array.isArray(saved.reviewSchedule)
@@ -74,10 +82,13 @@
             Number.isFinite(saved.placement.foundation) && Number.isFinite(saved.placement.closing)
             ? { completed:true, foundation:Math.max(0, Math.min(100, saved.placement.foundation)), closing:Math.max(0, Math.min(100, saved.placement.closing)), startQuestionId:saved.placement.startQuestionId, completedAt:Number(saved.placement.completedAt) || 0 } : null,
           examAttempt: Number.isSafeInteger(saved.examAttempt) && saved.examAttempt >= 0 ? saved.examAttempt : 0,
-          examSession: this.validExamSession(saved.examSession) ? saved.examSession : null,
+          examSession: !incompatibleExam && this.validExamSession(saved.examSession) ? saved.examSession : null,
           examHistory: Array.isArray(saved.examHistory) ? saved.examHistory.filter(item => item && Number.isFinite(item.finishedAt) && Number.isFinite(item.points)).slice(-10) : [],
           lastExamReview: saved.lastExamReview && typeof saved.lastExamReview === 'object' ? saved.lastExamReview : null
-        });
+          });
+          if (incompatibleExam && this.state.mode === 'exam') this.state.mode = 'story';
+          if (needsContentMigration) this.save();
+        }
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
     }
     validExamSession(session) {

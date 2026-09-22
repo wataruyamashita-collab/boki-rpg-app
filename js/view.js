@@ -10,10 +10,10 @@
   // intentionally evaluated without the application bootstrap.
   const DOMAIN = root.AccountingDomain || { accountType: account => ({ '現金過不足':'temporary', '損益':'closing' })[account] || 'unknown', typeLabels:{ temporary:'仮勘定', closing:'決算勘定' } };
   const TABLE_LABELS = {
-    account: '勘定科目', acquisitionCost: '取得原価', amount: '金額', answer: '解答', asset: '固定資産',
-    balance: '残高', closingBookValue: '期末帳簿価額', credit: '貸方', currentDepreciation: '当期減価償却額',
+    account: '勘定科目', acquisitionCost: '取得原価', acquisitionDate: '取得日', amount: '金額', answer: '解答', asset: '固定資産',
+    annualDepreciation: '年間減価償却額', balance: '残高', closingAccumulated: '期末減価償却累計額', closingBookValue: '期末帳簿価額', credit: '貸方', currentDepreciation: '当期減価償却額',
     date: '日付', debit: '借方', debitAccount: '借方科目', debitAmount: '借方金額', description: '摘要',
-    evidence: '証憑', item: '項目', life: '耐用年数', openingAccumulated: '期首減価償却累計額', quantity: '数量',
+    disposalBookValue: '売却時帳簿価額', disposalLoss: '固定資産売却損', evidence: '証憑', item: '項目', life: '耐用年数', method: '償却方法', months: '使用月数', openingAccumulated: '期首減価償却累計額', quantity: '数量', residualValue: '残存価額',
     recorded: '帳簿の記録', section: '区分', transaction: '取引内容', unitPrice: '単価', value: '内容',
     creditAccount: '貸方科目', creditAmount: '貸方金額'
   };
@@ -77,6 +77,7 @@
       else if (question.type === 'correction') this.renderCorrection(question, draft);
       else if (question.category === '仕訳帳' && question.table?.inputCells?.includes('d1Account')) this.renderJournalBook(question, draft);
       else if (question.format === 'balance-sheet') this.renderBalanceSheet(question, draft);
+      else if (question.format === 'fixed-asset-ledger') this.renderFixedAssetLedger(question, draft);
       else this.renderTable(question, draft);
     }
     renderMaterials(question) {
@@ -84,7 +85,7 @@
       if (!container) { container = this.document.createElement('section'); container.id = 'question-materials'; container.className = 'question-materials'; this.byId('q-text').after(container); }
       container.replaceChildren(); container.hidden = !Array.isArray(question.materials) || question.materials.length === 0;
       if (container.hidden) return;
-      const heading = this.document.createElement('h3'); heading.textContent = '解答資料';
+      const heading = this.document.createElement('h3'); heading.textContent = question.materialTitle || '資料';
       const wrap = this.document.createElement('div'); wrap.className = 'materials-table-wrap';
       const table = this.document.createElement('table'); table.className = 'materials-table';
       const columns = [...new Set(question.materials.flatMap(row => Object.keys(row)))];
@@ -247,6 +248,39 @@
           else { cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value); if (typeof value === 'number') cell.classList.add('amount-cell'); }
         });
       }); wrap.append(table); if (question.format !== 'eight-column-worksheet') this.positionStickyContextColumns(table);
+    }
+    renderFixedAssetLedger(question, draft = {}) {
+      const wrap = this.byId('table-container'); wrap.replaceChildren();
+      const ledger = this.document.createElement('div'); ledger.className = 'fixed-asset-ledger'; let inputIndex = 0;
+      for (const [rowIndex, row] of question.table.rows.entries()) {
+        const section = this.document.createElement('section'); section.className = 'fixed-asset-card';
+        const title = this.document.createElement('h3'); title.textContent = row.asset || `固定資産${rowIndex + 1}`; section.append(title);
+        const fields = this.document.createElement('div'); fields.className = 'fixed-asset-fields';
+        for (const [key, value] of Object.entries(row)) {
+          if (key === 'asset') continue;
+          const field = this.document.createElement('div'); field.className = 'fixed-asset-field'; field.dataset.field = key;
+          if (value === '入力') {
+            const cellId = question.table.inputCells[inputIndex++]; const metadata = question.table.inputMetadata?.[cellId] || {};
+            const semanticType = metadata.semanticType || 'amount'; const label = this.document.createElement('label');
+            label.textContent = metadata.label || this.tableLabel(key); label.htmlFor = `fixed-asset-${question.id}-${cellId}`;
+            const input = semanticType === 'amount' ? this.makeAmount('table-input fixed-asset-input', `${label.textContent}（金額）`, draft.cells?.[cellId] ?? '') : this.makeText('table-input fixed-asset-input', label.textContent, draft.cells?.[cellId] ?? '');
+            input.id = label.htmlFor; input.dataset.cellId = cellId; input.dataset.inputType = question.table.inputTypes?.[cellId] || 'text'; input.dataset.semanticType = semanticType;
+            if (semanticType === 'date') { input.placeholder = '例：7/1'; input.inputMode = 'numeric'; }
+            if (semanticType === 'months') input.inputMode = 'numeric';
+            const line = this.document.createElement('div'); line.className = 'fixed-asset-input-line'; line.append(input);
+            if (semanticType === 'amount' || semanticType === 'months') { const unit = this.document.createElement('span'); unit.className = 'fixed-asset-unit'; unit.textContent = semanticType === 'amount' ? '円' : 'か月'; line.append(unit); }
+            field.append(label, line);
+          } else {
+            const label = this.document.createElement('span'); label.className = 'fixed-asset-label'; label.textContent = this.tableLabel(key);
+            const shown = this.document.createElement('strong'); shown.textContent = typeof value === 'number' ? yen(value) : String(value ?? '—');
+            const unit = ['acquisitionCost','residualValue','openingAccumulated','salePrice'].includes(key) ? '円' : key === 'life' ? '年' : ''; if (unit) shown.textContent += unit;
+            field.append(label, shown);
+          }
+          fields.append(field);
+        }
+        section.append(fields); ledger.append(section);
+      }
+      wrap.append(ledger);
     }
     positionStickyContextColumns(table) {
       this.stickyContextObserver?.disconnect();
