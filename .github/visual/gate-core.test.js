@@ -51,6 +51,28 @@ fixture = structuredClone(fixed); fixture.columns.life.headerClipped = true; ass
 fixture = structuredClone(fixed); fixture.columns.life.headerGlyphStacked = true; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'stacked years header glyphs fail');
 fixture = structuredClone(fixed); fixture.rows.normalRowHeight = 49; assert(codes(fixture).includes('COMPACT_TABLE_DENSITY_FAILURE'), 'mobile density excessive fails');
 
+fixture = structuredClone(fixed);
+fixture.cardLayout = true;
+fixture.columns.life.width = 240;
+fixture.columns.life.actualWidth = 240;
+fixture.table = { requiresHorizontalScroll:false,horizontalScrollAvailable:true,horizontalOverflow:0,clipped:false };
+fixture.cards = { count:1,clipped:false };
+fixture.rows = { inputVisualHeight:44,hasEditableControl:true };
+assert.deepStrictEqual(codes(fixture), [], 'wide but unclipped fixed-asset card fields are not constrained by the legacy years column or table-density rules');
+
+fixture.table.horizontalOverflow = 2;
+assert(codes(fixture).includes('CARD_HORIZONTAL_OVERFLOW'), 'fixed-asset cards retain strict horizontal-overflow validation');
+fixture.table.horizontalOverflow = 0;
+fixture.cards.clipped = true;
+assert(codes(fixture).includes('CARD_CONTENT_CLIPPED'), 'fixed-asset cards retain strict content-clipping validation');
+fixture.cards.clipped = false;
+fixture.rows.inputVisualHeight = 43;
+assert(codes(fixture).includes('CARD_TOUCH_TARGET_FAILURE'), 'fixed-asset cards retain the 44px touch-target requirement');
+
+fixture.cardLayout = false;
+fixture.rows = structuredClone(fixed.rows);
+assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'the same wide life field still fails in the legacy fixed-asset table layout');
+
 const fixedCellFill = structuredClone(fixed);
 fixedCellFill.columns.currentDepreciation = {
   width:105,actualWidth:105,occupiedWidth:105,classification:'numeric',

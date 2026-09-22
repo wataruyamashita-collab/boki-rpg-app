@@ -17,7 +17,7 @@ function evaluateVisualMetrics(metrics, options = {}) {
     const waste = Number.isFinite(Number(column.contentWaste)) ? Number(column.contentWaste) : actual - occupied;
     const excessiveWaste = Math.max(limits.minimumWasteTolerance, occupied * limits.wasteRatio);
     if (metrics.table?.requiresHorizontalScroll && waste > excessiveWaste && column.classification !== 'years') violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,occupiedWidth:occupied,contentWaste:waste,maximumUsefulWaste:excessiveWaste });
-    const fixedAssetCellFill = metrics.case === 'fixed-asset' && ['currentDepreciation','closingBookValue'].includes(key);
+    const fixedAssetCellFill = metrics.case === 'fixed-asset' && !metrics.cardLayout && ['currentDepreciation','closingBookValue'].includes(key);
     if (column.classification === 'numeric' && column.editable && !fixedAssetCellFill && Number(column.inputCharacterCapacity) > limits.maximumMoneyInputCharacters) violations.push({ code:'COLUMN_TOO_WIDE', column:key, actual,inputCharacterCapacity:column.inputCharacterCapacity,maximumInputCharacters:limits.maximumMoneyInputCharacters });
     if (fixedAssetCellFill && column.editable) {
       const cellOuterWidth = Number(column.cell?.rect?.width);
@@ -40,7 +40,7 @@ function evaluateVisualMetrics(metrics, options = {}) {
     if (actualClipping) violations.push({ code:'CONTENT_CLIPPED', column:key });
     if (column.headerLineCount > 2 || column.headerGlyphStacked) violations.push({ code:'UNREADABLE_HEADER_WRAP', column:key, lines:column.headerLineCount });
   }
-  if (metrics.case === 'fixed-asset') {
+  if (metrics.case === 'fixed-asset' && !metrics.cardLayout) {
     const currentDepreciation = metrics.columns?.currentDepreciation;
     const closingBookValue = metrics.columns?.closingBookValue;
     if (currentDepreciation && closingBookValue) {
@@ -63,7 +63,7 @@ function evaluateVisualMetrics(metrics, options = {}) {
       }
     }
   }
-  if (metrics.case === 'fixed-asset' && Number(metrics.viewport?.width) <= 430) {
+  if (metrics.case === 'fixed-asset' && !metrics.cardLayout && Number(metrics.viewport?.width) <= 430) {
     const life = metrics.columns?.life;
     if (life && (life.width > limits.maximumYearsWidth || life.headerClipped || life.cellClipped || life.clipped || life.editableAnswerFitFailure || life.headerGlyphStacked || life.headerLineCount > 1)) {
       violations.push({ code:'YEARS_COLUMN_EXCESSIVE_WIDTH', actual:life.width, maximum:limits.maximumYearsWidth,evidence:{ headerClipped:Boolean(life.headerClipped),cellClipped:Boolean(life.cellClipped || life.clipped),editableAnswerFitFailure:Boolean(life.editableAnswerFitFailure),headerGlyphStacked:Boolean(life.headerGlyphStacked),headerLineCount:life.headerLineCount } });

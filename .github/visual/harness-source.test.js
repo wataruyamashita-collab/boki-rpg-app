@@ -17,7 +17,8 @@ assert(harness.includes('requiredInputCharacters'), 'representative profiles exp
 assert(runner.includes('VISUAL_HARNESS_MISSING_ELEMENT:${measuredCase}:${questionId}:${name}'), 'missing required DOM reports case, question, and element');
 assert(runner.includes("const isJournal = measuredCase === 'journal'"), 'journal measurement has an explicit case branch');
 assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table')"), 'table or journal surface is required explicitly');
-assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container' : '#table-container'), 'wrapper')"), 'case wrapper is required explicitly');
+assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container .journal-grid-scroll' : '#table-container'), 'wrapper')"), 'journal measurement uses the inner grid scroller while other cases use the table container');
+assert(!runner.includes("isJournal ? '#journal-container' : '#table-container'"), 'journal measurement cannot regress to the outer instruction container');
 const tableGuard = runner.indexOf("const table = requireElement"), wrapperGuard = runner.indexOf("const wrapper = requireElement", tableGuard);
 assert(tableGuard >= 0 && wrapperGuard > tableGuard && runner.indexOf('getComputedStyle(table)',wrapperGuard) > wrapperGuard, 'table style access occurs only after required-element guards');
 assert(runner.includes('stickyLeft:') && runner.includes('stickyViewportLeft:') && runner.includes('contextWidth:') && runner.includes('viewportWidth:'), 'sticky metrics remain collected after guard repair');

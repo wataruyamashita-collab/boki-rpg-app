@@ -70,7 +70,7 @@ async function measure(page, caseName) {
         rows:{inputVisualHeight:Math.min(...controls.map(control=>control.getBoundingClientRect().height)),hasEditableControl:controls.length>0},sticky:{viewportWidth:wrapper.clientWidth,scrollLeft:wrapper.scrollLeft,contextWidth:0} };
     }
     const table = requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table');
-    const wrapper = requireElement(document.querySelector(isJournal ? '#journal-container' : '#table-container'), 'wrapper');
+    const wrapper = requireElement(document.querySelector(isJournal ? '#journal-container .journal-grid-scroll' : '#table-container'), 'wrapper');
     const wrapperLeft = wrapper.getBoundingClientRect().left;
     const naturalViewportLefts = new Map(isJournal ? [] : [...table.querySelectorAll('thead [data-column-key]')].map(header => [header.dataset.columnKey, header.getBoundingClientRect().left-wrapperLeft]));
     if (['inventory','ledger'].includes(measuredCase) && wrapper.scrollWidth > wrapper.clientWidth) { wrapper.scrollLeft = Math.min(120,wrapper.scrollWidth-wrapper.clientWidth); await new Promise(requestAnimationFrame); }
