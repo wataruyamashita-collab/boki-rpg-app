@@ -10,6 +10,12 @@ for(const id of ids){
   assert.deepStrictEqual(JSON.parse(JSON.stringify(derived.expected)),JSON.parse(JSON.stringify(q.answer)),`${id}: independently recomputed answer`);
   for(const cell of q.table.inputCells)assert(q.table.inputMetadata[cell]?.label&&q.table.inputMetadata[cell]?.semanticType,`${id}/${cell}: labeled semantic control`);
 }
+for(const id of ['L015','L033']){
+  const explanation=root.QuestionData[id].explanation;
+  assert(explanation.includes('耐用年数5年'),`${id}: pre-unitized useful life is preserved`);
+  assert(!explanation.includes('5年年'),`${id}: useful-life unit is not duplicated`);
+}
+assert(root.QuestionData.L005.explanation.includes('耐用年数5年'),'numeric useful life receives one year unit');
 for(const missing of ['定額法','残存価額','耐用年数']){
   const q=structuredClone(root.QuestionData.L033);
   q.question=q.question.replace(missing,''); q.materials=q.materials.map(row=>Object.fromEntries(Object.entries(row).filter(([key,value])=>key!==missing&&value!==missing)));

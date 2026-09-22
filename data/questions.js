@@ -15630,7 +15630,8 @@ const SEMANTIC_SUFFIX = Object.freeze({ amount:'円', quantity:'個', years:'年
 const formatSemanticValue = (value, semanticType = 'text') => {
   if (value == null) return '—';
   const rendered = typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value);
-  return `${rendered}${SEMANTIC_SUFFIX[semanticType] ?? ''}`;
+  const suffix = SEMANTIC_SUFFIX[semanticType] ?? '';
+  return `${rendered}${suffix && !rendered.endsWith(suffix) ? suffix : ''}`;
 };
 const yenText = value => formatSemanticValue(value, 'amount');
 const semanticTypeForLabel = (label, value) => {
