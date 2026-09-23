@@ -1,5 +1,5 @@
 const assert = require('assert');
-const ExplanationModel = require('../js/explanation-model');
+const ExplanationModel = require('../scripts/explanation-model');
 
 const diagnostics = [{
   kind:'cell', title:'残高を見直します', reason:'入力値が正答と異なります。', nextRule:'直前残高から増減を反映します。', cause:'ledger:balance'
