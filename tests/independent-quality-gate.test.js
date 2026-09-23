@@ -21,8 +21,8 @@ function independentAudit(questions) {
   for (const question of Object.values(questions)) if (RAW_KEY.test(String(question.explanation || ''))) fail(question.id, 'RAW_INTERNAL_KEY');
   if (/(?:113|401|521|101)円/u.test(questions.L041.explanation)) fail('L041', 'FOLIO_YEN');
   for (const id of FIXED_ASSET_IDS) {
-    const text=questions[id].explanation, ordered=['取得原価','残存価額','耐用年数','定額法','年額'];
-    if (!ordered.every((term,index)=>text.indexOf(term)>=0&&(index===0||text.indexOf(term)>text.indexOf(ordered[index-1]))) || !/当期減価償却額/.test(text) || !/(?:期末帳簿価額|売却時帳簿価額)/.test(text)) fail(id, 'FIXED_ASSET_PATH');
+    const text=questions[id].explanation, ordered=['取得原価','残存価額','耐用年数','定額法','1年分の減価償却費'];
+    if (!ordered.every((term,index)=>text.indexOf(term)>=0&&(index===0||text.indexOf(term)>text.indexOf(ordered[index-1]))) || !/当期減価償却費/.test(text) || !/(?:期末帳簿価額|売却時帳簿価額)/.test(text)) fail(id, 'FIXED_ASSET_PATH');
   }
   return { ok: failures.length === 0, failures };
 }

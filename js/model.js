@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
-  const CONTENT_REVISION = 2;
-  const FIXED_ASSET_SCHEMA_IDS = new Set(['L005','L010','L015','L020','L025','L030','L033','L040']);
+  const CONTENT_REVISION = 3;
+  const FIXED_ASSET_SCHEMA_REVISION_2_IDS = new Set(['L005','L010','L015','L020','L025','L030','L033','L040']);
   class ProgressModel {
     static validateBackupState(value, questions = {}) {
       const plain = item => item && typeof item === 'object' && !Array.isArray(item);
@@ -52,10 +52,15 @@
         const saved = JSON.parse(this.storage?.getItem?.(this.key));
         if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
           if (Number.isSafeInteger(saved.contentRevision) && saved.contentRevision > CONTENT_REVISION) return;
-          const needsContentMigration = !Number.isSafeInteger(saved.contentRevision) || saved.contentRevision < CONTENT_REVISION;
+          const savedContentRevision = Number.isSafeInteger(saved.contentRevision) ? saved.contentRevision : 1;
+          const needsRevision2Migration = savedContentRevision < 2;
+          const needsRevision3Migration = savedContentRevision < 3;
+          const needsContentMigration = savedContentRevision < CONTENT_REVISION;
           const migratedDrafts = saved.drafts && typeof saved.drafts === 'object' && !Array.isArray(saved.drafts)
-            ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object' && !(needsContentMigration && FIXED_ASSET_SCHEMA_IDS.has(id)))) : {};
-          const incompatibleExam = needsContentMigration && saved.examSession?.ids?.some(id => id === 'L033' || id === 'L040');
+            ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object' &&
+              !(needsRevision2Migration && FIXED_ASSET_SCHEMA_REVISION_2_IDS.has(id)) &&
+              !(needsRevision3Migration && id === 'L030'))) : {};
+          const incompatibleExam = needsRevision2Migration && saved.examSession?.ids?.some(id => id === 'L033' || id === 'L040');
           this.state = Object.assign(this.state, saved, {
           contentRevision:CONTENT_REVISION,
           mode: ['story', 'training', 'review', 'exam', 'desk'].includes(saved.mode) ? saved.mode : 'story',
