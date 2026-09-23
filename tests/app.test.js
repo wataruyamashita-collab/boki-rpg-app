@@ -450,7 +450,11 @@ assert(!viewSource.includes("createElement('pre')"), 'IOS-REVIEW-03: 模試レ�
 assert(viewSource.includes("answerReviewBlock('自分の回答'") && viewSource.includes('this.journalTable(answer)'), 'IOS-REVIEW-02: 長い仕訳回答を意味のある仕訳表で表示する');
 vm.runInNewContext(viewSource, browserSandbox);
 class FakeElement {
-  constructor(tagName = 'div') { this.tagName = tagName; this.children = []; this.hidden = false; this.disabled = false; this.selectedOptions = []; this.classList = { add() {}, remove() {}, toggle() {} }; }
+  constructor(tagName = 'div') {
+    this.tagName = tagName; this.children = []; this.hidden = false; this.disabled = false; this.selectedOptions = []; this.className = ''; this.dataset = {};
+    this.style = { values:{}, setProperty(name, value) { this.values[name] = value; } };
+    this.classList = { add() {}, remove() {}, toggle() {}, contains: name => String(this.className || '').split(/\\s+/).includes(name) };
+  }
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
   setAttribute(name, value) { this[name] = value; }
