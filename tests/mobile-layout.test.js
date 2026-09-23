@@ -56,8 +56,8 @@ assert(!/@media\s*\(max-width:\s*430px\)[\s\S]*th\[data-column-type="years"\]/.t
 const desktopLife = { actualWidth:78,headerTextWidth:64,headerHorizontalChrome:6 + 6 + 1 };
 assert(desktopLife.headerTextWidth + desktopLife.headerHorizontalChrome <= desktopLife.actualWidth && desktopLife.actualWidth <= 80, 'desktop life header content and 13px chrome fit the measured 78px column within the 80px contract');
 assert(/white-space:\s*nowrap/.test(css.match(/\[data-column-type="years"\]\s*\{([^}]*)\}/)?.[1] || ''), 'life header remains one line without clipping or glyph stacking');
-assert(/min-width:\s*calc\(var\(--column-input-ch,\s*9ch\)\s*\+\s*10px\)/.test(numericCellRule), 'editable numeric cells preserve their nine-glyph content budget plus control chrome');
-assert(/width:\s*calc\(var\(--table-input-ch,\s*9ch\)\s*\+\s*10px\)/.test(numericInputRule) && /min-width:\s*calc\(var\(--table-input-ch,\s*9ch\)\s*\+\s*10px\)/.test(numericInputRule) && /max-width:\s*calc\(var\(--table-input-ch,\s*9ch\)\s*\+\s*10px\)/.test(numericInputRule), 'editable numeric controls use one shared compact content-plus-chrome width within each ordinary table');
+assert(/min-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericCellRule), 'editable numeric cells preserve the nine-glyph content floor while the control carries its own chrome');
+assert(/box-sizing:\s*content-box/.test(numericInputRule) && /width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule) && /min-width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule) && /max-width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule), 'editable numeric controls reserve exactly nine content glyphs and let the actual padding and borders provide control chrome');
 assert(/td\[data-column-key="currentDepreciation"\] \.table-input\[data-input-type="amount"\],[\s\S]*td\[data-column-key="closingBookValue"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%/s.test(css), 'fixed-asset editable amount controls fill their equal-width table cells instead of using the table-level compact width');
 assert(glyphs(String(maximumEditable.answer)) <= 9 && glyphs(formatted(maximumEditable.answer)) <= 9, 'raw and comma-formatted canonical maxima fit the nine-character numeric content budget');
 assert(/td\s*\{\s*padding:\s*0 3px/.test(css) && /\[data-column-type="date"\],[^}]+\[data-column-type="description"\]\s*\{[^}]*padding-right:\s*6px[^}]*padding-left:\s*6px/s.test(css), 'mobile money cells lose excess chrome while accepted date and description spacing remains unchanged');
@@ -73,6 +73,7 @@ assert(!/\.answer-table th:first-child,[^{]+\{[^}]*min-width:\s*110px/s.test(css
 assert(/\.table-question-wrap\s*\{[^}]*overflow-x:\s*auto/.test(css), 'the existing single wrapper scrolls content-required wide tables');
 assert(/\[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(css), 'semantic context columns use rendered cumulative sticky offsets');
 assert(view.includes("const keys = ['description','quantity']") && view.includes("--sticky-left") && view.includes('getBoundingClientRect().width'), 'description and quantity sticky offsets derive from rendered widths without pinning date');
+assert(/\[data-column-type="quantity"\]\s*\{[^}]*width:\s*calc\(2em \+ 17px\)[^}]*min-width:\s*calc\(2em \+ 17px\)[^}]*max-width:\s*calc\(2em \+ 17px\)/s.test(css), 'quantity context column cannot absorb unrelated table surplus width');
 const widthFixture = {
   table: {
     columns:['floor','middle','ceiling'],
@@ -95,8 +96,8 @@ assert.strictEqual(glyphs(formatted(t001.answer.cells.total_debit)), 9, 'T001 to
 const c001Widths=sandbox.window.AppView.genericTableInputCharacters(c001),t001Widths=sandbox.window.AppView.genericTableInputCharacters(t001);
 assert(c001Widths.size>0&&[...c001Widths.values()].every(width => width === 9), 'C001 input-only amount column reserves nine content glyphs');
 assert(t001Widths.size>0&&[...t001Widths.values()].every(width => width === 9), 'T001 total amount columns reserve nine content glyphs');
-assert(/min-width:\s*calc\(var\(--column-input-ch,\s*9ch\)\s*\+\s*10px\)/.test(numericCellRule), 'ordinary amount cells reserve nine-glyph content plus horizontal control chrome');
-assert(/width:\s*calc\(var\(--table-input-ch,\s*9ch\)\s*\+\s*10px\)/.test(numericInputRule), 'ordinary amount controls reserve content width plus padding and borders');
+assert(/min-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericCellRule), 'ordinary amount cells keep the nine-glyph semantic floor without double-counting input chrome');
+assert(/box-sizing:\s*content-box/.test(numericInputRule) && /width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule), 'ordinary amount controls reserve nine content glyphs with padding and borders outside that content box');
 assert(view.includes("cell.style.setProperty('--column-input-ch'") && view.includes("table.style.setProperty('--table-input-ch'"), 'renderer applies bounded per-column budgets and one shared compact numeric-input width per ordinary table');
 assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
