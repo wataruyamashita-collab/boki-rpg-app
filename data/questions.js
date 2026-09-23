@@ -14932,8 +14932,13 @@ function independentlyDerivedTableCells(item) {
     }
     if(item.id==='L030'){
       const questionText=String(item.question||'');
-      const l030Acquisition=rows[0]?.acquisitionDate||questionText.match(/([0-9]{1,2}月[0-9]{1,2}日)(?:に)?取得/u)?.[1];
-      if(!/会計期間[^。]*4月1日[^。]*3月31日/.test(questionText)||!parseMonthDay(l030Acquisition))return null;
+      const questionAcquisitionText=questionText.match(/([0-9]{1,2}月[0-9]{1,2}日)(?:に)?取得/u)?.[1]||null;
+      const rowAcquisitionText=rows[0]?.acquisitionDate||null;
+      const questionAcquisition=parseMonthDay(questionAcquisitionText),rowAcquisition=parseMonthDay(rowAcquisitionText);
+      if(!/会計期間[^。]*4月1日[^。]*3月31日/.test(questionText))return null;
+      if((questionAcquisitionText&&!questionAcquisition)||(rowAcquisitionText&&!rowAcquisition)||(!questionAcquisition&&!rowAcquisition))return null;
+      if(questionAcquisition&&rowAcquisition&&(questionAcquisition.month!==rowAcquisition.month||questionAcquisition.day!==rowAcquisition.day))return null;
+      const l030Acquisition=rowAcquisitionText||questionAcquisitionText;
       const months=monthDistance(l030Acquisition,'3/31',{inclusiveEnd:true});
       if(!Number.isInteger(months))return null;
       const depreciation=annual*months/12;

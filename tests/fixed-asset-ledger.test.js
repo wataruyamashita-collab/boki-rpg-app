@@ -59,5 +59,10 @@ assert.strictEqual(root.QuestionData.L015.materials[1].資料,'償却条件');
 assert(root.QuestionData.L015.question.includes('請求書と償却条件')&&root.QuestionData.L033.question.includes('請求書と償却条件'));
 assert(root.QuestionData.L040.explanation.includes('4月から9月までの6か月')&&root.QuestionData.L040.explanation.includes('10月を使用月数に含めない'));
 for(const mutate of [item=>{item.question=item.question.replace(/会計期間は4月1日から翌年3月31日までである。/u,'');},item=>{item.question=item.question.replace(/備品Aは12月1日に取得した。/u,'備品Aを取得した。');delete item.table.rows[0].acquisitionDate;},item=>{item.question=item.question.replace(/残存価額0円、/u,'');delete item.table.rows[0].residualValue;},item=>{item.question=item.question.replace(/耐用年数5年、/u,'');delete item.table.rows[0].life;},item=>{item.question=item.question.replace(/減価償却方法は定額法である。/u,'');delete item.table.rows[0].method;}]){const candidate=structuredClone(root.QuestionData.L030);mutate(candidate);assert.strictEqual(root.deriveAccountingExpected('L030',null,candidate).derivable,false,'L030 required visible fact fails closed');}
+const l030Matching=structuredClone(root.QuestionData.L030);
+assert.strictEqual(root.deriveAccountingExpected('L030',null,l030Matching).derivable,true,'L030 equivalent prompt/table acquisition dates remain valid');
+const l030Conflict=structuredClone(root.QuestionData.L030);
+l030Conflict.question=l030Conflict.question.replace('12月1日','11月1日');
+assert.strictEqual(root.deriveAccountingExpected('L030',null,l030Conflict).derivable,false,'L030 conflicting prompt/table acquisition dates fail closed');
 const revision2={...saved,contentRevision:2,mode:'exam',drafts:{L005:{cells:{keep:1}},L030:{cells:{drop:1}},J001:{debit:[],credit:[]}},examSession:compatible.examSession};stored=JSON.stringify(revision2);const revision2Model=new root.ProgressModel(questions,storage);assert.strictEqual(revision2Model.state.drafts.L030,undefined);assert(revision2Model.state.drafts.L005);assert(revision2Model.state.drafts.J001);assert(revision2Model.state.examSession);
 console.log('fixed asset ledger tests: ok');

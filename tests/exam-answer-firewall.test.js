@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('assert'),fs=require('fs'),vm=require('vm');
+const source=fs.readFileSync('js/view.js','utf8');
+const sandbox={window:{}};vm.createContext(sandbox);vm.runInContext(source,sandbox,{filename:'js/view.js'});
+const AppView=sandbox.window.AppView;
+const visible={format:'trial-balance',table:{columns:['account','amount'],rows:[{account:'現金',amount:'入力'},{account:'売掛金',amount:125000}],inputCells:['amount'],inputTypes:{amount:'amount'}},answer:{cells:{amount:1}}};
+const large=structuredClone(visible);large.answer.cells.amount=999999999;
+const noAnswer=structuredClone(visible);delete noAnswer.answer;
+const widths=x=>Object.fromEntries(AppView.genericTableInputCharacters(x));
+assert.deepStrictEqual(widths(visible),widths(large),'hidden answer magnitude must not affect generic table width');
+assert.deepStrictEqual(widths(visible),widths(noAnswer),'generic table width must not require an answer key');
+const render=source.slice(source.indexOf('renderTable(question, draft = {})'),source.indexOf('renderFixedAssetLedger',source.indexOf('renderTable(question, draft = {})')));
+assert(!render.includes('question.answer'),'generic renderTable must not read hidden answers');
+console.log('exam answer firewall tests: ok');

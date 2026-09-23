@@ -5,6 +5,17 @@
     .replace(/，/g, ',');
   const validAmountText = value => value === '' || /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(value);
   const yen = value => Number(value).toLocaleString('ja-JP');
+  const genericTableInputCharacters = question => {
+    const widths=new Map(); let inputIndex=0;
+    for(const row of question.table?.rows||[]) Object.values(row).forEach((value,columnIndex)=>{
+      if(value!=='入力')return;
+      const column=question.table.columns[columnIndex],cellId=question.table.inputCells[inputIndex++];
+      if((question.table.inputTypes?.[cellId]||'amount')!=='amount')return;
+      const visible=(question.table.rows||[]).map(source=>source[column]).filter(item=>typeof item==='number').map(yen);
+      widths.set(column,Math.min(9,Math.max(7,...visible.map(item=>[...item].length+1))));
+    });
+    return widths;
+  };
   // accounting-domain.js is the production source of truth.  The two special
   // values below only keep isolated view unit tests fail-safe when scripts are
   // intentionally evaluated without the application bootstrap.
@@ -22,6 +33,7 @@
     static prefersCalculatorFirst(environment) {
       return environment.matchMedia?.('(hover: none) and (pointer: coarse)').matches === true;
     }
+    static genericTableInputCharacters(question) { return genericTableInputCharacters(question); }
     byId(id) { return this.document.getElementById(id); }
     tableLabel(value) { return TABLE_LABELS[value] || value; }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
@@ -236,7 +248,7 @@
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
       const columnTypes = new Map((question.table.columns || []).map(column => [column, 'text']));
-      const inputCharacters = new Map();
+      const inputCharacters = genericTableInputCharacters(question);
       if (question.format !== 'eight-column-worksheet') {
         let profileInputIndex = 0;
         for (const row of question.table.rows || []) Object.values(row).forEach((value, columnIndex) => {
@@ -244,10 +256,6 @@
           if (value === '入力') {
             const cellId = question.table.inputCells[profileInputIndex++];
             columnTypes.set(column, question.table.inputTypes?.[cellId] === 'account' ? 'account' : question.table.inputTypes?.[cellId] === 'text' ? 'text' : 'numeric');
-            if ((question.table.inputTypes?.[cellId] || 'amount') === 'amount') {
-              const values = [question.answer?.cells?.[cellId], ...(question.table.rows || []).map(row => row[column])].filter(value => typeof value === 'number').map(yen);
-              inputCharacters.set(column, Math.min(9, Math.max(4, ...values.map(value => [...value].length + 1))));
-            }
           } else if (typeof value === 'number' && columnTypes.get(column) === 'text') columnTypes.set(column, 'numeric');
         });
         for (const column of question.table.columns || []) {
