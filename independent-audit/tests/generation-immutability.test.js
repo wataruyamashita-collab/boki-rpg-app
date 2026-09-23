@@ -20,7 +20,7 @@ const auditPath=path.join(
 );
 
 const authorityBytes=new Map(
-  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
+  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
     .filter(generation=>fs.existsSync(authorityPath(generation)))
     .map(
       generation=>[
@@ -65,15 +65,15 @@ try{
   const generations=authorities.map(
     item=>item.document.generation
   );
-  const generation17Committed=committed(17);
+  const generation18Committed=committed(18);
 
   test(
-    'authority sequence is [2..16] before Generation 17 or [2..17] after commit',
+    'authority sequence is [2..17] before Generation 18 or [2..18] after commit',
     ()=>assert.deepStrictEqual(
       generations,
-      generation17Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
-        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+      generation18Committed
+        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
     )
   );
 
@@ -143,17 +143,17 @@ try{
 
   const documents=authorities.map(item=>item.document);
 
-  const candidate=generation17Committed
+  const candidate=generation18Committed
     ? documents.at(-1)
     : (
-        fs.existsSync(authorityPath(17))
+        fs.existsSync(authorityPath(18))
           ? JSON.parse(
-              fs.readFileSync(authorityPath(17),'utf8')
+              fs.readFileSync(authorityPath(18),'utf8')
             )
           : lifecycle.createCandidate()
       );
 
-  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]){
+  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]){
     test(
       `duplicate Generation ${generation} is rejected`,
       ()=>{
@@ -171,16 +171,16 @@ try{
   }
 
   test(
-    'skipped Generation 17 successor is rejected',
+    'skipped Generation 18 successor is rejected',
     ()=>{
       const skipped=structuredClone(candidate);
-      skipped.generation=18;
+      skipped.generation=19;
       rejectCandidate(skipped,documents);
     }
   );
 
   test(
-    'competing Generation 17 is rejected',
+    'competing Generation 18 is rejected',
     ()=>{
       const fork=structuredClone(candidate);
       fork.auditHash='f'.repeat(64);
@@ -189,7 +189,7 @@ try{
         candidate,
         [
           ...documents.filter(
-            document=>document.generation<17
+            document=>document.generation<18
           ),
           fork
         ]
@@ -198,7 +198,7 @@ try{
   );
 
   test(
-    'broken Generation 17 predecessor is rejected',
+    'broken Generation 18 predecessor is rejected',
     ()=>{
       const broken=structuredClone(candidate);
       broken.predecessor.canonicalDocumentSha256='0'.repeat(64);
@@ -206,7 +206,7 @@ try{
       rejectCandidate(
         broken,
         documents.filter(
-          document=>document.generation<17
+          document=>document.generation<18
         )
       );
     }
@@ -250,9 +250,9 @@ try{
     }
   );
 
-  if(generation17Committed){
+  if(generation18Committed){
     test(
-      'committed Generation 17 current integrity passes',
+      'committed Generation 18 current integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCurrent().ok,
         true
@@ -260,7 +260,7 @@ try{
     );
   }else{
     test(
-      'pending Generation 17 candidate integrity passes',
+      'pending Generation 18 candidate integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCandidate(candidate).ok,
         true

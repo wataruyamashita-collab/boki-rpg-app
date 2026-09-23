@@ -14931,8 +14931,10 @@ function independentlyDerivedTableCells(item) {
       return {annualA,monthsA,depreciationA,bookA,lossA:bookA-Number(a?.['売却価額']),annualB,monthsB,depreciationB,bookB:costB-depreciationB};
     }
     if(item.id==='L030'){
-      if(!/会計期間[^。]*4月1日[^。]*3月31日/.test(String(item.question||'')))return null;
-      const months=monthDistance(acquisition,'3/31',{inclusiveEnd:true});
+      const questionText=String(item.question||'');
+      const l030Acquisition=rows[0]?.acquisitionDate||questionText.match(/([0-9]{1,2}月[0-9]{1,2}日)(?:に)?取得/u)?.[1];
+      if(!/会計期間[^。]*4月1日[^。]*3月31日/.test(questionText)||!parseMonthDay(l030Acquisition))return null;
+      const months=monthDistance(l030Acquisition,'3/31',{inclusiveEnd:true});
       if(!Number.isInteger(months))return null;
       const depreciation=annual*months/12;
       return {annualDepreciation:annual,months,currentDepreciation:depreciation,closingAccumulated:depreciation,closingBookValue:cost-depreciation};
