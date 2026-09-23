@@ -305,8 +305,8 @@ button.secondary-button:hover { color: #fff; }
 @media (min-width: 431px) {
   .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] th[data-column-type="years"] { padding-inline: 6px; }
 }
-.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td.amount-cell { min-width: var(--column-input-ch, 9ch); }
-.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] .table-input[data-input-type="amount"] { box-sizing: border-box; width: var(--table-input-ch, 9ch); min-width: var(--table-input-ch, 9ch); max-width: var(--table-input-ch, 9ch); font-variant-numeric: tabular-nums; }
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td.amount-cell { min-width: calc(var(--column-input-ch, 9ch) + 10px); }
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] .table-input[data-input-type="amount"] { box-sizing: border-box; width: calc(var(--table-input-ch, 9ch) + 10px); min-width: calc(var(--table-input-ch, 9ch) + 10px); max-width: calc(var(--table-input-ch, 9ch) + 10px); font-variant-numeric: tabular-nums; }
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td[data-column-key="currentDepreciation"] .table-input[data-input-type="amount"],
 .answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td[data-column-key="closingBookValue"] .table-input[data-input-type="amount"] {
   width: 100%;

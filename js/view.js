@@ -5,14 +5,14 @@
     .replace(/，/g, ',');
   const validAmountText = value => value === '' || /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(value);
   const yen = value => Number(value).toLocaleString('ja-JP');
+  const GENERIC_AMOUNT_CONTENT_GLYPHS = 9;
   const genericTableInputCharacters = question => {
     const widths=new Map(); let inputIndex=0;
     for(const row of question.table?.rows||[]) Object.values(row).forEach((value,columnIndex)=>{
       if(value!=='入力')return;
       const column=question.table.columns[columnIndex],cellId=question.table.inputCells[inputIndex++];
       if((question.table.inputTypes?.[cellId]||'amount')!=='amount')return;
-      const visible=(question.table.rows||[]).map(source=>source[column]).filter(item=>typeof item==='number').map(yen);
-      widths.set(column,Math.min(9,Math.max(7,...visible.map(item=>[...item].length+1))));
+      widths.set(column,GENERIC_AMOUNT_CONTENT_GLYPHS);
     });
     return widths;
   };

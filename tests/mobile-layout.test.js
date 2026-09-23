@@ -84,9 +84,19 @@ const widthFixture = {
 Object.defineProperty(widthFixture, 'answer', { get() { throw new Error('generic width profiling must not read hidden answers'); } });
 assert.deepStrictEqual(
   Object.fromEntries(sandbox.window.AppView.genericTableInputCharacters(widthFixture)),
-  { floor:7, middle:8, ceiling:9 },
-  'visible numeric values use the bounded 7ch floor, intermediate 8ch budget, and 9ch ceiling without reading hidden answers'
+  { floor:9, middle:9, ceiling:9 },
+  'all generic amount inputs reserve the canonical nine-glyph content bound without reading hidden answers'
 );
+const c001 = questions.find(question => question.id === 'C001');
+const t001 = questions.find(question => question.id === 'T001');
+assert(c001 && t001, 'canonical C001 and T001 sizing regressions are present');
+assert.strictEqual(glyphs(formatted(c001.answer.cells.sales)), 9, 'C001 maximum formatted amount requires nine glyphs');
+assert.strictEqual(glyphs(formatted(t001.answer.cells.total_debit)), 9, 'T001 total 1,024,000 requires nine glyphs');
+const c001Widths=sandbox.window.AppView.genericTableInputCharacters(c001),t001Widths=sandbox.window.AppView.genericTableInputCharacters(t001);
+assert(c001Widths.size>0&&[...c001Widths.values()].every(width => width === 9), 'C001 input-only amount column reserves nine content glyphs');
+assert(t001Widths.size>0&&[...t001Widths.values()].every(width => width === 9), 'T001 total amount columns reserve nine content glyphs');
+assert(/min-width:\s*calc\(var\(--column-input-ch,\s*9ch\)\s*\+\s*10px\)/.test(numericCellRule), 'ordinary amount cells reserve nine-glyph content plus horizontal control chrome');
+assert(/width:\s*calc\(var\(--table-input-ch,\s*9ch\)\s*\+\s*10px\)/.test(numericInputRule), 'ordinary amount controls reserve content width plus padding and borders');
 assert(view.includes("cell.style.setProperty('--column-input-ch'") && view.includes("table.style.setProperty('--table-input-ch'"), 'renderer applies bounded per-column budgets and one shared compact numeric-input width per ordinary table');
 assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);

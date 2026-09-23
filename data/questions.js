@@ -14910,6 +14910,47 @@ function independentlyDerivedTableCells(item) {
   const rows=item?.table?.rows || [];
   const numeric=value => typeof value === 'number' ? value : 0;
   if (item?.format === 'fixed-asset-ledger') {
+    if(item.id==='L030'){
+      const questionText=String(item.question||''),row=rows[0]||{};
+      const normalizeNumber=value=>{
+        if(value===null||value===undefined||value==='')return null;
+        const normalized=String(value).normalize('NFKC').replace(/,/g,'').trim();
+        if(!/^-?\d+(?:\.\d+)?$/u.test(normalized))return null;
+        const number=Number(normalized);
+        return Number.isFinite(number)?number:null;
+      };
+      const normalizeMethod=value=>{
+        const normalized=String(value??'').normalize('NFKC').trim();
+        return normalized==='定額法'||normalized==='定率法'?normalized:null;
+      };
+      const reconcile=(leftRaw,rightRaw,normalize,equal=(left,right)=>left===right)=>{
+        const leftPresent=leftRaw!==null&&leftRaw!==undefined&&leftRaw!=='';
+        const rightPresent=rightRaw!==null&&rightRaw!==undefined&&rightRaw!=='';
+        if(!leftPresent&&!rightPresent)return {ok:false,value:null};
+        const left=leftPresent?normalize(leftRaw):null,right=rightPresent?normalize(rightRaw):null;
+        if((leftPresent&&left===null)||(rightPresent&&right===null))return {ok:false,value:null};
+        if(leftPresent&&rightPresent&&!equal(left,right))return {ok:false,value:null};
+        return {ok:true,value:leftPresent?left:right};
+      };
+      const questionNumber=label=>questionText.match(new RegExp(`${label}\\s*([0-9０-９,，]+)`,'u'))?.[1]??null;
+      const questionAcquisitionText=questionText.match(/([0-9０-９]{1,2}(?:月|[\/.\-])[0-9０-９]{1,2}日?)(?:に)?取得/u)?.[1]||questionText.match(/取得日(?:は|：|:)?\s*([0-9０-９]{1,2}(?:月|[\/.\-])[0-9０-９]{1,2}日?)/u)?.[1]||null;
+      const questionMethod=questionText.match(/減価償却方法(?:は)?[^。]*(定額法|定率法)/u)?.[1]||null;
+      const acquisition=reconcile(questionAcquisitionText,row.acquisitionDate,parseMonthDay,(left,right)=>left.month===right.month&&left.day===right.day);
+      const costEvidence=reconcile(questionNumber('取得原価'),row.acquisitionCost,normalizeNumber);
+      const residualEvidence=reconcile(questionNumber('残存価額'),row.residualValue,normalizeNumber);
+      const lifeEvidence=reconcile(questionNumber('耐用年数'),row.life,normalizeNumber);
+      const methodEvidence=reconcile(questionMethod,row.method,normalizeMethod);
+      if(!/会計期間[^。]*4月1日[^。]*3月31日/u.test(questionText))return null;
+      if(!acquisition.ok||!costEvidence.ok||!residualEvidence.ok||!lifeEvidence.ok||!methodEvidence.ok)return null;
+      const cost=costEvidence.value,residual=residualEvidence.value,life=lifeEvidence.value,method=methodEvidence.value;
+      if(method!=='定額法'||residual!==0||!Number.isFinite(cost)||!Number.isFinite(life)||life<=0)return null;
+      const annual=(cost-residual)/life;
+      if(!Number.isFinite(annual))return null;
+      const months=monthDistance(`${acquisition.value.month}/${acquisition.value.day}`,'3/31',{inclusiveEnd:true});
+      if(!Number.isInteger(months))return null;
+      const depreciation=annual*months/12;
+      return {annualDepreciation:annual,months,currentDepreciation:depreciation,closingAccumulated:depreciation,closingBookValue:cost-depreciation};
+    }
     const visible=JSON.stringify({question:item.question,materials:item.materials,rows:item.table?.rows});
     const numberAfter=label=>Number(visible.match(new RegExp(`${label}[^0-9]*([0-9,]+)`))?.[1].replace(/,/g,''));
     const method=/定額法/.test(visible), residual=numberAfter('残存価額'), life=numberAfter('耐用年数');
@@ -14929,20 +14970,6 @@ function independentlyDerivedTableCells(item) {
       if(!Number.isInteger(monthsA)||!Number.isInteger(monthsB))return null;
       const annualA=costA/life,annualB=costB/life,depreciationA=annualA*monthsA/12,depreciationB=annualB*monthsB/12,bookA=costA-depreciationA;
       return {annualA,monthsA,depreciationA,bookA,lossA:bookA-Number(a?.['売却価額']),annualB,monthsB,depreciationB,bookB:costB-depreciationB};
-    }
-    if(item.id==='L030'){
-      const questionText=String(item.question||'');
-      const questionAcquisitionText=questionText.match(/([0-9]{1,2}月[0-9]{1,2}日)(?:に)?取得/u)?.[1]||null;
-      const rowAcquisitionText=rows[0]?.acquisitionDate||null;
-      const questionAcquisition=parseMonthDay(questionAcquisitionText),rowAcquisition=parseMonthDay(rowAcquisitionText);
-      if(!/会計期間[^。]*4月1日[^。]*3月31日/.test(questionText))return null;
-      if((questionAcquisitionText&&!questionAcquisition)||(rowAcquisitionText&&!rowAcquisition)||(!questionAcquisition&&!rowAcquisition))return null;
-      if(questionAcquisition&&rowAcquisition&&(questionAcquisition.month!==rowAcquisition.month||questionAcquisition.day!==rowAcquisition.day))return null;
-      const l030Acquisition=rowAcquisitionText||questionAcquisitionText;
-      const months=monthDistance(l030Acquisition,'3/31',{inclusiveEnd:true});
-      if(!Number.isInteger(months))return null;
-      const depreciation=annual*months/12;
-      return {annualDepreciation:annual,months,currentDepreciation:depreciation,closingAccumulated:depreciation,closingBookValue:cost-depreciation};
     }
     const closing=item.materials?.find(row=>row['決算日'])?.['決算日']||'3/31',months=monthDistance(acquisition,closing,{inclusiveEnd:true});
     if(!Number.isInteger(months))return null;
