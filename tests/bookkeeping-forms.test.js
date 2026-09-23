@@ -49,8 +49,9 @@ assert(journal.indexOf("container.append(instruction)") < journal.indexOf("grid.
 assert(journal.includes('grid.append(header)') && journal.includes('grid.append(row)') && journal.includes('container.append(grid)'), 'only journal header and rows enter the scroller');
 const rendererStart = view.indexOf('    renderBookkeepingForm(question');
 const renderer = view.slice(rendererStart, view.indexOf('    accountType(account)', rendererStart));
-assert(renderer.includes('metadata.semanticType') && renderer.includes("input.placeholder = '例：6/5'") && renderer.includes("semanticType === 'folio'") && renderer.includes("semanticType === 'account'"), 'field-level semantics choose date, folio, and account affordances');
-assert(!/semanticType === 'date'[^\n]*inputMode/.test(renderer), 'slash-form bookkeeping dates keep a text keyboard');
+assert(renderer.includes('metadata.semanticType') && renderer.includes('makeShortDateInput') && renderer.includes('makeDatePicker') && renderer.includes("semanticType === 'folio'") && renderer.includes("semanticType === 'account'"), 'field-level semantics choose date, folio, account, and optional calendar affordances');
+assert(view.includes("input.setAttribute('inputmode', 'numeric')"), 'bookkeeping semantic dates use a numeric-friendly keyboard while retaining a text answer control');
+assert(view.includes("picker.type = 'date'") && view.includes("input.value = `${Number(match[1])}/${Number(match[2])}`"), 'optional calendar selection converts back to the short M/D learner answer');
 assert(!/semanticType === 'folio'[^\n]*inputMode/.test(renderer), 'compound and individual folios keep a separator-capable text keyboard');
 assert(renderer.includes("record.className = 'bookkeeping-record'") && renderer.includes("fields.className = 'bookkeeping-record-fields'"), 'related fields are grouped into coherent bookkeeping records');
 assert(renderer.includes("amount:'円', unitPrice:'円', months:'か月', years:'年'") && !renderer.includes('question.answer'), 'external units are semantic and renderer cannot leak answers');
