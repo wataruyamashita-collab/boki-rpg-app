@@ -893,7 +893,7 @@ Object.values(browserSandbox.window.QuestionData).forEach(question => {
   assert(String(question.explanation).trim(), `${question.id}にauthored explanationまたはfallbackがある`);
 });
 assert(viewSource.includes("this.byId('explanation').before(container)"), '古いHTMLがキャッシュされていても正しい仕訳の表示領域を補完する');
-assert(/\.journal-header\s*\{[^}]*min-width:\s*620px/s.test(cssSource), '仕訳の科目可読幅を横スクロール領域で確保する');
+assert(/\.journal-header\s*\{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+120px[^}]*width:\s*max-content[^}]*min-width:\s*0/s.test(cssSource), '仕訳は過剰な620px固定床を使わずコンパクトな4列幅を保つ');
 assert(/\.journal-entry-area\s*\{[^}]*max-width:\s*100%[^}]*overflow:\s*visible/s.test(cssSource) && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(cssSource), 'iPhoneで説明を固定したまま仕訳グリッドだけを横スクロールできる');
 assert(/\.table-question-wrap\s*{[^}]*overflow-x:\s*auto/s.test(cssSource), '大きな表は小型画面で横スクロールできる');
 assert(viewSource.includes('2欄×4組＝8欄') && viewSource.includes("guide.className = 'worksheet-guide'"), '8桁精算表の構成と横スクロール操作を表の直前で説明する');
@@ -905,9 +905,9 @@ assert(/\.eight-column-worksheet thead tr:nth-child\(2\) th\s*{[^}]*top:\s*44px/
 assert(!/\.calculator\s*{[^}]*position:\s*sticky/s.test(cssSource), '計算機を入力欄へ重ねる固定配置にしない');
 assert(/\.answer-table \[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(cssSource), '横スクロール中もsemantic context列を累積offsetで固定する');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
-assert(/\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\) minmax\(120px, 2fr\) minmax\(240px, 3fr\) minmax\(120px, 2fr\)/s.test(cssSource), '仕訳は借方科目・借方金額・貸方科目・貸方金額の4列にする');
-assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*minmax\(232px, 3fr\) minmax\(112px, 2fr\) minmax\(232px, 3fr\) minmax\(112px, 2fr\)/s.test(cssSource), '狭い画面では監査済み幅で仕訳の4列を横並びにする');
-assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-row select,\s*\.journal-row \.amount-input\s*{[^}]*font-size:\s*16px/s.test(cssSource), 'iPhoneの仕訳コントロールを16px以上にして自動ズームを防ぐ');
+assert(/\.journal-row\s*{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+120px/s.test(cssSource), '仕訳はコンパクトな借方科目・借方金額・貸方科目・貸方金額の4列にする');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*184px\s+112px\s+184px\s+112px/s.test(cssSource), '狭い画面では184/112pxの監査済み幅で仕訳の4列を横並びにする');
+assert(/\.journal-row select:focus,[\s\S]*?\.journal-row select:active\s*{[^}]*font-size:\s*16px/s.test(cssSource) && /\.journal-row \.amount-input\s*{[^}]*font-size:\s*16px/s.test(cssSource), 'iPhoneでは科目selectの操作中と金額入力を16pxに保ち自動ズームを防ぐ');
 assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦並び用ラベルを追加しない');
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
 assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('acquisitionCost'), '取得原価', '表の英語見出しを日本語で表示する');
