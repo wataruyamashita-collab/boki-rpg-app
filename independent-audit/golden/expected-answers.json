@@ -2516,11 +2516,18 @@
     },
     "L034": {
       "cells": {
-        "date1": "8/2",
-        "summary1": "掛売上",
-        "folio1": "113・401",
-        "debitTotal": 102000,
-        "creditTotal": 102000
+        "d1Account": "売掛金",
+        "d1Ref": 113,
+        "d1Amount": 90000,
+        "c1Account": "売上",
+        "c1Ref": 401,
+        "c1Amount": 90000,
+        "d2Account": "通信費",
+        "d2Ref": 521,
+        "d2Amount": 12000,
+        "c2Account": "現金",
+        "c2Ref": 101,
+        "c2Amount": 12000
       }
     },
     "L035": {

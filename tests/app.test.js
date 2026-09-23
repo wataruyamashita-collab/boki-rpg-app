@@ -486,7 +486,13 @@ const examTopologies = shapes.map(id => {
   const rows = grid.children.filter(child => child.className === 'journal-row');
   return rows.map(row => row.children.map(control => ({ className:control.className, disabled:control.disabled, placeholder:control.innerHTML, choices:control.tagName === 'select' ? control.children.map(option => option.value) : [] })));
 });
-examTopologies.slice(1).forEach(topology => assert.deepStrictEqual(topology, examTopologies[0], '異なる正答形状でも空の模試仕訳DOMを同一にする'));
+const topologyShape = topology => topology.map(row => row.map(control => ({ className:control.className, disabled:control.disabled, placeholder:control.placeholder, choiceCount:control.choices.length })));
+examTopologies.slice(1).forEach(topology => assert.deepStrictEqual(topologyShape(topology), topologyShape(examTopologies[0]), '異なる正答形状でも模試仕訳DOM構造を同一にする'));
+examTopologies.forEach((topology, topologyIndex) => {
+  const accountSets = topology.flat().filter(control => /-account$/.test(control.className)).map(control => control.choices);
+  assert(accountSets.every(choices => choices.length === 5), `${shapes[topologyIndex]}の模試全行を5科目選択にする`);
+  assert(accountSets.every(choices => JSON.stringify(choices) === JSON.stringify(accountSets[0])), `${shapes[topologyIndex]}の模試全行で同一5科目を使い正答行を漏らさない`);
+});
 assert.strictEqual(examTopologies[0].length, 3, '模試仕訳は常に3行を表示する');
 assert(examTopologies[0].every(row => row.length === 4 && row.every(control => !control.disabled)), '模試3行の借方・貸方科目・金額をすべて有効にする');
 topologyView.renderJournal(browserSandbox.window.QuestionData.J001, {}, 'story');
@@ -896,8 +902,10 @@ assert(viewSource.includes("else if (question.type === 'correction') this.render
 assert(viewSource.includes("header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'"), '記帳訂正に借方・貸方の科目欄と金額欄を明示する');
 assert(viewSource.includes("input = this.document.createElement('select'); input.className = 'table-input correction-account'"), '記帳訂正の科目欄をプルダウンで表示する');
 assert(/\.correction-row\s*\{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\) minmax\(120px, 2fr\) minmax\(240px, 3fr\) minmax\(120px, 2fr\)/s.test(cssSource), '記帳訂正の借方科目・金額と貸方科目・金額を横一列にする');
-assert(viewSource.includes("this.renderJournalBook(question, draft)"), '仕訳帳形式も借方と貸方を横並びの専用帳票で表示する');
-assert(viewSource.includes("['日付', '借方科目', '元丁', '借方金額', '貸方科目', '元丁', '貸方金額']"), '仕訳帳に日付・借方・貸方の正式な列見出しを表示する');
+assert(viewSource.includes("this.renderJournalBook(question, draft, mode)"), '仕訳帳形式は学習モードを維持して専用帳票で表示する');
+assert(viewSource.includes("['日付', '摘要', '元丁', '借方', '貸方']"), '仕訳帳をTAC標準の5列（日付・摘要・元丁・借方・貸方）で表示する');
+assert(viewSource.includes("select.className = 'table-input journal-book-account'") && viewSource.includes('dateCell.rowSpan = 2'), '仕訳帳は摘要欄の勘定科目を5択で入力し、1取引を借方・貸方の2行で表示する');
+assert(controllerSource.includes(".journal-row select, .correction-row select, .journal-book-account"), '仕訳帳の勘定科目選択もchange時に下書き保存する');
 assert(/\.journal-book-entry\s*\{[^}]*table-layout:\s*fixed/s.test(cssSource), '仕訳帳の借方列と貸方列を同じ行に固定する');
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
 assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');

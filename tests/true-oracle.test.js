@@ -26,11 +26,10 @@ for(const phrase of ['株主から現金3,020,000円の追加払込みを受け�
 }
 {
   const folio=structuredClone(root.QuestionData.L034);folio.question=folio.question.replace('売掛金113','売掛金999');
-  assert.strictEqual(root.deriveAccountingExpected('L034',null,folio).expected.cells.folio1,'999・401','L034 folio follows the source account code');
+  assert.strictEqual(root.deriveAccountingExpected('L034',null,folio).expected.cells.d1Ref,999,'L034 debit folio follows the source account code');
   const cash=structuredClone(root.QuestionData.L034);cash.materials[0].内容=cash.materials[0].内容.replace('掛販売','現金販売');
   const expected=root.deriveAccountingExpected('L034',null,cash).expected.cells;
-  assert.strictEqual(expected.summary1,'現金売上','L034 summary follows transaction semantics');
-  assert.strictEqual(expected.folio1,'101・401','L034 accounts and folios follow transaction semantics');
+  assert.deepStrictEqual({debit:expected.d1Account,credit:expected.c1Account,dRef:expected.d1Ref,cRef:expected.c1Ref},{debit:'現金',credit:'売上',dRef:101,cRef:401},'L034 account and folio cells follow transaction semantics');
 }
 {
   const question=structuredClone(root.QuestionData.L037),last=question.materials.at(-1);

@@ -395,18 +395,23 @@ button.secondary-button:hover { color: #fff; }
 .correction-row .table-input { width: 100%; min-width: 0; box-sizing: border-box; }
 
 .journal-book-scroll { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
-.journal-book-entry { width: max(100%, 820px); border-collapse: collapse; table-layout: fixed; }
+.journal-book-entry { width: max(100%, 680px); border-collapse: collapse; table-layout: fixed; }
 .journal-book-entry th,
-.journal-book-entry td { padding: 6px 4px; border: 1px solid #bdc3c7; text-align: center; }
+.journal-book-entry td { padding: 6px 4px; border: 1px solid #bdc3c7; text-align: center; vertical-align: middle; }
 .journal-book-entry th { color: #566573; background: #eef2f5; font-size: .8rem; }
-.journal-book-entry th:nth-child(1) { width: 9%; }
-.journal-book-entry th:nth-child(2),
-.journal-book-entry th:nth-child(5) { width: 22%; }
-.journal-book-entry th:nth-child(3),
-.journal-book-entry th:nth-child(6) { width: 8%; }
+.journal-book-entry th:nth-child(1) { width: 12%; }
+.journal-book-entry th:nth-child(2) { width: 34%; }
+.journal-book-entry th:nth-child(3) { width: 10%; }
 .journal-book-entry th:nth-child(4),
-.journal-book-entry th:nth-child(7) { width: 15.5%; }
+.journal-book-entry th:nth-child(5) { width: 22%; }
 .journal-book-entry .table-input { width: 100%; min-width: 0; box-sizing: border-box; }
+.journal-book-transaction-start > td { border-top-width: 2px; border-top-color: #7f8c8d; }
+.journal-book-date-cell { font-variant-numeric: tabular-nums; font-weight: 700; background: #f8fafb; }
+.journal-book-account { min-width: 0; font-size: 16px; }
+.journal-book-credit-row .journal-book-account { padding-left: 18px; }
+.journal-book-folio-cell .folio-input { width: 100%; min-width: 0; text-align: center; font-variant-numeric: tabular-nums; }
+.journal-book-amount-cell .bookkeeping-input-line { justify-content: flex-end; }
+.journal-book-empty-cell { background: #fafafa; }
 
 .journal-row {
   display: grid;

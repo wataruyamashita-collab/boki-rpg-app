@@ -4,14 +4,14 @@ const sandbox = { window:{}, console }; vm.createContext(sandbox);
 for (const file of ['data/questions.js','data/accounting-oracle.js','js/engine.js']) vm.runInContext(fs.readFileSync(file,'utf8'), sandbox, {filename:file});
 const root = sandbox.window;
 const expectedFormats = {
-  L034:'bookkeeping-journal-book', L035:'bookkeeping-notes-receivable', L036:'bookkeeping-notes-payable',
+  L034:'journal-book', L035:'bookkeeping-notes-receivable', L036:'bookkeeping-notes-payable',
   L037:'bookkeeping-general-ledger', L038:'bookkeeping-general-ledger', L039:'bookkeeping-account-ledger',
   L041:'journal-book', L042:'bookkeeping-notes-receivable', L043:'bookkeeping-notes-payable',
   L044:'bookkeeping-cash-book', L045:'bookkeeping-checking-book', L046:'bookkeeping-petty-cash-book',
   L047:'bookkeeping-purchase-book', L048:'bookkeeping-sales-book', L049:'bookkeeping-inventory-ledger', L050:'bookkeeping-voucher-entry'
 };
 const expectedAnswers = {
-  L034:{date1:'8/2',summary1:'掛売上',folio1:'113・401',debitTotal:102000,creditTotal:102000},
+  L034:{d1Account:'売掛金',d1Ref:113,d1Amount:90000,c1Account:'売上',c1Ref:401,c1Amount:90000,d2Account:'通信費',d2Ref:521,d2Amount:12000,c2Account:'現金',c2Ref:101,c2Amount:12000},
   L035:{received:'6/2',due:'10/31',drawer:'青空商店・森物産・星商会',total:200000},
   L036:{issued:'7/3',due:'11/30',payee:'若葉物産・山川商事',total:200000},
   L037:{date:'4/20',counterpart:'現金',side:'貸方',balance:70000},
@@ -40,6 +40,13 @@ for (const cell of ['d1Ref','c1Ref','d2Ref','c2Ref']) {
   assert.strictEqual(root.QuestionData.L041.table.inputMetadata[cell].semanticType, 'folio');
   assert.strictEqual(root.QuestionData.L041.table.controlTypes[cell], 'folio', `L041/${cell}: folio control is never currency semantics`);
 }
+for (const id of ['L034','L041']) {
+  assert.strictEqual(root.QuestionData[id].format, 'journal-book', `${id}: Chapter 8 journal-book variants share one formal renderer`);
+  assert.deepStrictEqual([...root.QuestionData[id].table.inputCells], ['d1Account','d1Ref','d1Amount','c1Account','c1Ref','c1Amount','d2Account','d2Ref','d2Amount','c2Account','c2Ref','c2Amount'], `${id}: two complete debit/credit transactions are recorded`);
+  for (const cell of ['d1Account','c1Account','d2Account','c2Account']) assert.strictEqual(root.QuestionData[id].table.inputMetadata[cell].semanticType, 'account', `${id}/${cell}: 摘要欄 is an account control`);
+  for (const cell of ['d1Ref','c1Ref','d2Ref','c2Ref']) assert.strictEqual(root.QuestionData[id].table.inputMetadata[cell].semanticType, 'folio', `${id}/${cell}: 元丁 is not currency semantics`);
+}
+
 const dateQuestion = root.QuestionData.L042; for (const value of ['6/5','06/05','6月5日']) assert(root.GradingEngine.grade(dateQuestion,{cells:{...dateQuestion.answer.cells,received1:value}}).correct, `${value}: normalized date accepted`);
 assert(!root.GradingEngine.grade(dateQuestion,{cells:{...dateQuestion.answer.cells,received1:'6/6'}}).correct, 'wrong date rejected');
 const view = fs.readFileSync('js/view.js','utf8'); const css = fs.readFileSync('css/style.css','utf8');
@@ -47,6 +54,12 @@ const journalStart = view.indexOf('    renderJournal(question');
 const journal = view.slice(journalStart, view.indexOf('    renderCorrection(question', journalStart));
 assert(journal.indexOf("container.append(instruction)") < journal.indexOf("grid.className = 'journal-grid-scroll'"), 'exam instruction precedes and remains outside journal grid scroller');
 assert(journal.includes('grid.append(header)') && journal.includes('grid.append(row)') && journal.includes('container.append(grid)'), 'only journal header and rows enter the scroller');
+const journalBookStart = view.indexOf('    renderJournalBook(question');
+const journalBookEnd = view.indexOf('    renderBookkeepingForm(question', journalBookStart);
+const journalBookRenderer = view.slice(journalBookStart, journalBookEnd);
+assert(journalBookRenderer.includes("['日付', '摘要', '元丁', '借方', '貸方']"), '仕訳帳はTAC標準5列を使う');
+assert(journalBookRenderer.includes("select.className = 'table-input journal-book-account'") && journalBookRenderer.includes('accountChoices(question, question.answer.cells[cellId], mode)'), '摘要欄の勘定科目は5択で出題する');
+assert(journalBookRenderer.includes('dateCell.rowSpan = 2') && journalBookRenderer.includes("credit.className = 'journal-book-credit-row'"), '1取引を借方行・貸方行の2行で記帳する');
 const rendererStart = view.indexOf('    renderBookkeepingForm(question');
 const renderer = view.slice(rendererStart, view.indexOf('    accountType(account)', rendererStart));
 assert(renderer.includes('metadata.semanticType') && renderer.includes('makeShortDateInput') && renderer.includes('makeDatePicker') && renderer.includes("semanticType === 'folio'") && renderer.includes("semanticType === 'account'"), 'field-level semantics choose date, folio, account, and optional calendar affordances');

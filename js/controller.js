@@ -50,7 +50,11 @@
     static accountChoices(question, correct, mode = 'story') {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
       if (mode === 'exam') {
-        const required = [...new Set(['debit', 'credit'].flatMap(side => (question.answer?.[side] || []).map(item => item.account)).filter(Boolean))];
+        const required = question.type === 'journal'
+          ? [...new Set(['debit', 'credit'].flatMap(side => (question.answer?.[side] || []).map(item => item.account)).filter(Boolean))]
+          : question.format === 'journal-book'
+            ? [...new Set(Object.entries(question.answer?.cells || {}).filter(([key]) => /^[dc]\d+Account$/.test(key)).map(([, account]) => account).filter(Boolean))]
+            : [correct].filter(Boolean);
         const related = [...new Set(required.flatMap(account => JOURNAL_GROUPS.find(group => group.includes(account)) || []))];
         const seed = `${question.id}:exam`;
         const distractors = Controller.seededShuffle([...new Set([...related, ...all])].filter(name => !required.includes(name)), seed);
@@ -92,7 +96,7 @@
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target, event); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
       this.document.addEventListener('pointerdown', event => { if (event.target.matches('.amount-input[readonly]:not(:disabled)')) this.selectCalculatorTarget(event.target); });
       this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
-      this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select, .correction-row select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
+      this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select, .correction-row select, .journal-book-account')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
       this.document.getElementById('filter-query').addEventListener('input', event => { this.filters.query = event.target.value; this.renderModes(); });
       ['filter-account', 'filter-mistakes'].forEach(id => this.document.getElementById(id).addEventListener('change', event => { this.filters[id === 'filter-account' ? 'account' : 'mistakes'] = event.target.value; this.renderModes(); }));
       this.document.getElementById('question-form').addEventListener('submit', event => {
