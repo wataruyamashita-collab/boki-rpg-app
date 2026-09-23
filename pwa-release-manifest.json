@@ -1,6 +1,6 @@
 {
-  "release": "20260923-99",
-  "previousRelease": "20260923-98",
+  "release": "20260923-100",
+  "previousRelease": "20260923-99",
   "assets": {
     "css/style.css": "86c04f7beb750e838dfdd16cd7868d0669058e2f202217b61fa4e5793757a01c",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
@@ -12,7 +12,7 @@
     "js/engine.js": "a0f94eaa142ce19c07da284d3777a23a2c7af38c7b1eb6591e982ab48de50f78",
     "js/feedback.js": "8c04b1847aca22a44d48b5f0dc636cec47519b4d6c6f454333e3113cd8710b5f",
     "js/view.js": "03c2600b54af282f651816f4eda7deca343152de801a3c0bf887f1d199d47095",
-    "js/controller.js": "9fbc6b01304f1371836d412ca9a2d2d2ef47c26aa19d2189ad679508c286dd3d",
+    "js/controller.js": "c0769846c8b2454c427e70817abb0186273d5fe62f3d531b156720eef10ec404",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b"
   }
 }

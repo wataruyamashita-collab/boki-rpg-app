@@ -432,8 +432,20 @@ assert(correctPositions.every(count => count > 0), `仕訳の正解が5位置す
 assert(Math.max(...correctPositions) / Math.min(...correctPositions) < 1.5, `正解位置分布に異常な偏りがない: ${correctPositions.join(',')}`);
 assert.deepStrictEqual([...browserSandbox.window.AppController.accountChoices(browserSandbox.window.QuestionData.J001, '現金')], [...browserSandbox.window.AppController.accountChoices(browserSandbox.window.QuestionData.J001, '現金')], '同一問題とseedの選択肢順は常に同じ');
 const allJournalAccounts = [...new Set(Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal').flatMap(question => [...question.answer.debit, ...question.answer.credit].map(item => item.account)))];
+const allJournalQuestions = Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal');
+allJournalQuestions.forEach(question => {
+  const required = [...new Set([...question.answer.debit, ...question.answer.credit].map(item => item.account))];
+  const choices = browserSandbox.window.AppController.accountChoices(question, undefined, 'exam');
+  assert.strictEqual(choices.length, 5, `${question.id}の模試勘定科目は5択にする`);
+  assert.strictEqual(new Set(choices).size, 5, `${question.id}の模試5択に重複を作らない`);
+  required.forEach(account => assert(choices.includes(account), `${question.id}の模試5択に正答科目${account}を含める`));
+  assert.deepStrictEqual(choices, browserSandbox.window.AppController.accountChoices(question, undefined, 'exam'), `${question.id}の模試5択順は決定論的にする`);
+});
+assert(allJournalAccounts.length > 5, '全仕訳科目集合は5科目より多いことを確認する');
+const examJournalIds = browserSandbox.window.ExamPoolDefinition.filter(id => browserSandbox.window.QuestionData[id]?.type === 'journal');
+assert.strictEqual(examJournalIds.length, 20, '現在の模試候補に含まれる仕訳20問を全件監査する');
+examJournalIds.forEach(id => assert.strictEqual(browserSandbox.window.AppController.accountChoices(browserSandbox.window.QuestionData[id], undefined, 'exam').length, 5, `${id}の模試勘定科目は全科目表示へ戻さない`));
 const examQuestion = browserSandbox.window.QuestionData.J001;
-assert.deepStrictEqual([...browserSandbox.window.AppController.accountChoices(examQuestion, '現金', 'exam')], [...allJournalAccounts].sort((a, b) => a.localeCompare(b, 'ja')), '模擬試験では全仕訳科目を五十音順で選択できる');
 ['story', 'training', 'review'].forEach(mode => assert.strictEqual(browserSandbox.window.AppController.accountChoices(examQuestion, '現金', mode).length, 5, `${mode}では既存の5択を維持する`));
 const amountInput = { value: '1234', selectionStart: 2, selectionEnd: 3, selectionDirection: 'forward', setSelectionRange(...range) { this.range = range; } };
 browserSandbox.window.AppController.prototype.formatAmount(amountInput);

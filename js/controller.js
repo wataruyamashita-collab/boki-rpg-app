@@ -49,7 +49,13 @@
     }
     static accountChoices(question, correct, mode = 'story') {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
-      if (mode === 'exam') return all.sort((a, b) => a.localeCompare(b, 'ja'));
+      if (mode === 'exam') {
+        const required = [...new Set(['debit', 'credit'].flatMap(side => (question.answer?.[side] || []).map(item => item.account)).filter(Boolean))];
+        const related = [...new Set(required.flatMap(account => JOURNAL_GROUPS.find(group => group.includes(account)) || []))];
+        const seed = `${question.id}:exam`;
+        const distractors = Controller.seededShuffle([...new Set([...related, ...all])].filter(name => !required.includes(name)), seed);
+        return Controller.seededShuffle([...required, ...distractors].slice(0, 5), seed);
+      }
       const related = JOURNAL_GROUPS.find(group => group.includes(correct)) || [];
       const seed = `${question.id}:${correct}`;
       const choices = Controller.seededShuffle([...new Set([correct, ...related, ...all])].slice(0, 5), seed);
