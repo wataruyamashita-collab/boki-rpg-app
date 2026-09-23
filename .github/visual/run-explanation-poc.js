@@ -25,7 +25,7 @@ async function measure(page,caseId,width){return page.evaluate(({caseId,width,ex
     currentLink:document.querySelector('.case-switch a[aria-current="page"]')?.dataset.caseLink||null,
     expectedFormulaPresence:expected.every(v=>formulas.some(e=>e.textContent===v))
   };
-},{caseId,width,expected});}
+},{caseId,width,expected:expected[caseId]});}
 async function run(){
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port+'/.github/visual/explanation-poc.html';write();
   try{
