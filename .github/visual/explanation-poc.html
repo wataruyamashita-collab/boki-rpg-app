@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Issue 154 解説UX PoC</title>
+<style>
+*{box-sizing:border-box}html{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:#f5f6f8;color:#172033}body{margin:0}.shell{max-width:760px;margin:0 auto;padding:16px}.hero,.section{background:#fff;border:1px solid #d9dee8;border-radius:16px}.hero{padding:18px;margin-bottom:14px}.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.04em}.hero h1{font-size:1.35rem;line-height:1.35;margin:.3rem 0 .45rem}.hero p{margin:0;line-height:1.65}.case-switch{display:flex;gap:8px;margin-top:14px}.case-switch a{display:inline-flex;min-height:44px;align-items:center;justify-content:center;padding:8px 14px;border:1px solid #b7c0d0;border-radius:12px;color:inherit;text-decoration:none;font-weight:700}.case-switch a[aria-current="page"]{border-width:2px}.diagnostic{border-left:5px solid currentColor;padding:13px 14px;margin:12px 0 0;background:#f8f9fb;border-radius:10px}.diagnostic strong{display:block;margin-bottom:4px}.flow{display:grid;gap:10px}.section{padding:16px;margin:12px 0}.section-head{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}.step{flex:0 0 32px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:2px solid currentColor;font-weight:800}.section h2{font-size:1.05rem;margin:4px 0 0}.source-card,.formula,.transfer-card,.check-item,.mistake-card,.summary-item{border:1px solid #d9dee8;border-radius:12px;padding:12px;background:#fbfcfe}.source-card h3,.mistake-card h3{font-size:.95rem;margin:0 0 6px}.source-focus{font-weight:700;margin:0 0 10px}.source-values{display:grid;gap:6px}.source-value{display:grid;grid-template-columns:minmax(72px,.8fr) minmax(0,2fr);gap:8px;padding-top:6px;border-top:1px dashed #d9dee8}.source-value:first-child{border-top:0;padding-top:0}.source-value dt{font-weight:700}.source-value dd{margin:0;min-width:0;overflow-wrap:anywhere}.summary-list,.checks{display:grid;gap:8px}.summary-item{line-height:1.55}.formula{font-variant-numeric:tabular-nums}.formula strong{display:block;font-size:1.15rem;line-height:1.45;overflow-wrap:anywhere}.formula-label{font-size:.82rem;font-weight:700;margin-bottom:6px}.operands{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.operand{border:1px solid #cfd6e2;border-radius:999px;padding:4px 8px;font-size:.8rem}.transfer-card{display:grid;grid-template-columns:minmax(0,1fr) 24px minmax(0,1.25fr);gap:6px;align-items:center}.transfer-from,.transfer-to{min-width:0;overflow-wrap:anywhere}.transfer-to strong{display:block}.arrow{text-align:center;font-weight:900}.check-item{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start}.check-mark{font-weight:900}.check-item strong{display:block}.check-item span{font-size:.86rem}.mistake-card p{margin:.35rem 0;line-height:1.55}.mistake-fix{font-weight:700}.empty{font-size:.9rem;margin:0}.note{font-size:.78rem;margin-top:16px;line-height:1.5}
+@media(max-width:430px){.shell{padding:12px}.hero,.section{border-radius:14px}.hero{padding:15px}.section{padding:14px}.hero h1{font-size:1.22rem}.transfer-card{grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="shell">
+<section class="hero" aria-labelledby="page-title">
+<div class="eyebrow">まちがえた後の解き直し</div>
+<h1 id="page-title">資料から答えまで、順番にほどく</h1>
+<p id="case-question"></p>
+<nav class="case-switch" aria-label="PoC問題切替">
+<a href="?case=L034" data-case-link="L034">L034 商品有高帳</a>
+<a href="?case=L041" data-case-link="L041">L041 現金元帳</a>
+</nav>
+<div id="top-diagnostic" class="diagnostic"></div>
+</section>
+<div id="flow" class="flow"></div>
+<p class="note">PoC: 学習内容に直接関係する情報だけを図解化。正答・採点・会計ルールは変更しない。</p>
+</main>
+<script src="../../scripts/explanation-model.js"></script>
+<script>
+const CASES={
+L034:{
+question:{id:'L034',type:'ledger',category:'商品有高帳',question:'商品有高帳を先入先出法で完成させなさい。払出単価、払出額、期末残高を順に求めること。',materials:[],table:{columns:['date','description','quantity','unitPrice','amount'],rows:[{date:'10月1日',description:'前月繰越',quantity:74,unitPrice:1200,amount:88800},{date:'10月9日',description:'仕入',quantity:20,unitPrice:1500,amount:30000},{date:'10月20日',description:'払出（先入先出法）',quantity:25,unitPrice:'入力',amount:'入力'},{date:'10月31日',description:'残高',quantity:69,unitPrice:'内訳',amount:'入力'}],inputCells:['r3_unitPrice','r3_amount','r4_amount']},answer:{cells:{r3_unitPrice:1200,r3_amount:30000,r4_amount:88800}},explanation:'先入先出法では古い単価1,200円の商品から払い出します。払出額は25×1,200＝30,000円、残高は49個×1,200円＋20個×1,500円＝88,800円です。',explanationModel:{sources:[{kind:'table',title:'商品有高帳',focus:'10月20日の払出行と、10月31日の残高行を見る',values:[{label:'前月繰越',value:'74個 × 1,200円'},{label:'10月9日 仕入',value:'20個 × 1,500円'},{label:'10月20日 払出',value:'25個を先入先出法で払出'},{label:'10月31日 残高',value:'69個'}]}],summary:[{text:'先に入った1,200円の商品から25個を払い出す。'},{text:'払出後は1,200円の商品49個と、1,500円の商品20個が残る。'}],calculation:[{label:'払出額',expression:'25 × 1,200 = 30,000',result:30000,operands:[{label:'払出数量',value:25},{label:'先に入った単価',value:1200}]},{label:'期末残高',expression:'49 × 1,200 + 20 × 1,500 = 88,800',result:88800,operands:[{label:'旧在庫',value:58800},{label:'新在庫',value:30000}]}],transfer:[{from:'10月20日 払出',decision:'先入先出法の単価 1,200円',to:'払出単価・払出額',value:'1,200円 / 30,000円'},{from:'10月31日 残高',decision:'49個@1,200円 + 20個@1,500円',to:'残高金額',value:'88,800円'}],checks:[{label:'払出数量',expected:'25個を古い層から使用'},{label:'残った数量',expected:'49個 + 20個 = 69個'},{label:'残高金額',expected:'58,800円 + 30,000円 = 88,800円'}]}},diagnostics:[{kind:'cell',title:'払出額の作り方を確認',reason:'払出数量25個に、先に入った1,200円を使います。',nextRule:'先入先出法では「どの単価の層から出すか」を先に決めてから掛け算します。'}]},
+L041:{
+question:{id:'L041',type:'ledger',category:'総勘定元帳（現金）',question:'入出金を現金元帳へ転記した。各取引後の残高を計算し、残高欄を完成させなさい。',materials:[],table:{columns:['date','description','debit','credit','balance'],rows:[{date:'10月1日',description:'前月繰越',debit:505000,credit:null,balance:505000},{date:'10月8日',description:'売掛金回収',debit:173000,credit:null,balance:'入力'},{date:'10月15日',description:'仕入代金支払',debit:null,credit:86500,balance:'入力'}],inputCells:['r2_balance','r3_balance']},answer:{cells:{r2_balance:678000,r3_balance:591500}},explanation:'現金は資産なので、借方記入で増加し、貸方記入で減少します。したがって残高は順に678,000円、591,500円です。',explanationModel:{sources:[{kind:'table',title:'現金元帳',focus:'直前残高・借方・貸方を上から順に見る',values:[{label:'10月1日',value:'前月繰越 505,000円'},{label:'10月8日',value:'借方 173,000円（現金増加）'},{label:'10月15日',value:'貸方 86,500円（現金減少）'}]}],summary:[{text:'現金は資産。借方記入は残高を増やし、貸方記入は残高を減らす。'},{text:'1行ずつ計算し、その残高を次の行へ引き継ぐ。'}]}},diagnostics:[{kind:'cell',title:'残高は1行ずつ更新',reason:'10月8日の残高を確定してから、10月15日の支払を差し引きます。',nextRule:'途中の残高を飛ばさず「前の残高 → 今回の増減 → 新残高」の順で確認します。'}]}
+};
+const params=new URLSearchParams(location.search),caseId=CASES[params.get('case')]?params.get('case'):'L034',fixture=CASES[caseId];
+document.body.dataset.caseId=caseId;
+document.querySelectorAll('[data-case-link]').forEach(a=>a.setAttribute('aria-current',a.dataset.caseLink===caseId?'page':'false'));
+document.getElementById('case-question').textContent=fixture.question.question;
+const model=window.ExplanationModel.build(fixture.question,{}, {correct:false},{diagnostics:fixture.diagnostics});
+const d=model.mistakes[0],top=document.getElementById('top-diagnostic');
+top.innerHTML='<strong>今回の間違い</strong><span></span>';top.querySelector('span').textContent=d?d.title:'正答との差を順に確認します。';
+const defs=[['見る資料','sources'],['取引・処理の要点','summary'],['計算','calculation'],['仕訳・転記','transfer'],['検算','checks'],['よくあるミス','mistakes']],flow=document.getElementById('flow');
+function div(cls){const x=document.createElement('div');x.className=cls;return x}
+function text(tag,value,cls){const x=document.createElement(tag);if(cls)x.className=cls;x.textContent=value;return x}
+defs.forEach(([title,key],index)=>{const section=document.createElement('section');section.className='section explanation-poc-section';section.dataset.section=key;const head=div('section-head');head.append(text('div',String(index+1),'step'),text('h2',title));section.append(head);const items=model[key]||[];if(!items.length)section.append(text('p','この問題では追加情報はありません。','empty'));
+if(key==='sources')items.forEach(item=>{const card=div('source-card');card.append(text('h3',item.title),text('p',item.focus,'source-focus'));const dl=div('source-values');item.values.forEach(v=>{const row=document.createElement('dl');row.className='source-value';row.append(text('dt',v.label),text('dd',v.value));dl.append(row)});card.append(dl);section.append(card)});
+if(key==='summary'){const list=div('summary-list');items.forEach(item=>list.append(text('div',item.text,'summary-item')));section.append(list)}
+if(key==='calculation')items.forEach(item=>{const card=div('formula');card.append(text('div',item.label,'formula-label'),text('strong',item.expression||('答え：'+(typeof item.result==='number'?item.result.toLocaleString('ja-JP'):item.result))));if(item.operands?.length){const op=div('operands');item.operands.forEach(v=>op.append(text('span',v.label+' '+(typeof v.value==='number'?v.value.toLocaleString('ja-JP'):v.value),'operand')));card.append(op)}section.append(card)});
+if(key==='transfer')items.forEach(item=>{const card=div('transfer-card'),from=div('transfer-from'),to=div('transfer-to');from.append(text('strong',item.from),text('div',item.decision));to.append(text('strong',item.to),text('div',typeof item.value==='number'?item.value.toLocaleString('ja-JP'):item.value));const arrow=text('div','→','arrow');arrow.setAttribute('aria-hidden','true');card.append(from,arrow,to);section.append(card)});
+if(key==='checks'){const list=div('checks');items.forEach(item=>{const card=div('check-item');card.append(text('div','✓','check-mark'));const body=div('check-body');body.append(text('strong',item.label),text('span',item.expected));card.append(body);list.append(card)});section.append(list)}
+if(key==='mistakes')items.forEach(item=>{const card=div('mistake-card');card.append(text('h3',item.title),text('p',item.reason),text('p','直し方：'+item.correction,'mistake-fix'));section.append(card)});
+flow.append(section)});
+</script>
+</body>
+</html>
