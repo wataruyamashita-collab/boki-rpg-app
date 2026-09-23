@@ -158,6 +158,7 @@ async function measure(page, caseName) {
         visibleAmountContextCount:contexts.filter(intersectsViewport).length,
         selectedAccount:account.value,
         selectedContextText:contexts[0]?.textContent || '',
+        selectedContextClipped:contexts[0] ? contexts[0].scrollWidth > contexts[0].clientWidth + 1 : true,
         guidanceVisibleAtRight:intersectsViewport(guidance)
       };
     }

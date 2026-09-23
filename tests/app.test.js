@@ -911,6 +911,8 @@ assert(/\.journal-book-entry \.table-input\s*\{[^}]*display:\s*block/s.test(cssS
 assert(viewSource.includes('元丁：総勘定元帳の転記先を示す番号') && viewSource.includes('横にスクロールして借方・貸方を入力できます。'), '仕訳帳に元丁の意味と横スクロール操作を明示する');
 assert(viewSource.includes("context.className = 'journal-book-amount-context'") && viewSource.includes("amountContext.textContent = name"), '借方・貸方金額欄に選択済み勘定科目の文脈を残す');
 assert(/\.journal-book-guidance\s*\{[^}]*position:\s*sticky[^}]*left:\s*0/s.test(cssSource), '仕訳帳の補助説明は横スクロールしても左端に残す');
+assert(/\.journal-book-amount-cell \.table-input\s*\{[^}]*flex:\s*1 1 0[^}]*width:\s*auto/s.test(cssSource), '仕訳帳の金額入力は科目文脈を押し潰さないflex可変幅にする');
+assert(/\.journal-book-amount-context\s*\{[^}]*flex:\s*0 0 3\.6em[^}]*min-width:\s*3\.6em/s.test(cssSource), '仕訳帳の科目文脈に3文字勘定科目を保持できる固定幅を確保する');
 assert(/@media \(max-width:\s*700px\)\s*\{\s*\.journal-book-scroll-note\s*\{[^}]*display:\s*block/s.test(cssSource), '横スクロール案内は狭い画面だけに表示する');
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
 assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');

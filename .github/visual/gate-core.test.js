@@ -74,7 +74,7 @@ assert(codes(fixture).includes('CARD_TOUCH_TARGET_FAILURE'), 'fixed-asset cards 
   journalBook.case = 'journal-book';
   journalBook.rows = { inputVisualHeight:44,hasEditableControl:true,headerCellCount:5,controlCount:14,journalBookAmountContextCount:4,journalBookFolioHelpCount:1,journalBookScrollNoteVisible:true };
   journalBook.table = { requiresHorizontalScroll:true,horizontalScrollAvailable:true,horizontalOverflow:280,clipped:false };
-  journalBook.journalBookInteraction = { rightScrollLeft:280,rightScrollMaximum:280,visibleAmountContextCount:4,selectedAccount:'売掛金',selectedContextText:'売掛金',guidanceVisibleAtRight:true };
+  journalBook.journalBookInteraction = { rightScrollLeft:280,rightScrollMaximum:280,visibleAmountContextCount:4,selectedAccount:'売掛金',selectedContextText:'売掛金',selectedContextClipped:false,guidanceVisibleAtRight:true };
   assert.deepStrictEqual(codes(journalBook), [], 'formal journal book allows horizontal scrolling while preserving 5 columns, 14 controls, and right-side context');
   journalBook.rows = { ...journalBook.rows,normalRowHeight:62,editableRowHeight:62,expectedNormalRowHeight:59,expectedEditableRowHeight:59 };
   assert(!codes(journalBook).includes('ROW_TOO_TALL'), 'WebKitのborder-collapse/rowspan由来3px差は仕訳帳専用4px許容内とする');
@@ -97,7 +97,9 @@ assert(codes(fixture).includes('CARD_TOUCH_TARGET_FAILURE'), 'fixed-asset cards 
   assert(codes(journalBook).includes('JOURNAL_BOOK_RIGHT_CONTEXT_VISIBILITY_FAILURE'), 'all four amount contexts must remain visible at the right edge');
   journalBook.journalBookInteraction.visibleAmountContextCount = 4; journalBook.journalBookInteraction.selectedContextText = '科目';
   assert(codes(journalBook).includes('JOURNAL_BOOK_CONTEXT_UPDATE_FAILURE'), 'selected account must propagate to the right-side context label');
-  journalBook.journalBookInteraction.selectedContextText = '売掛金'; journalBook.journalBookInteraction.guidanceVisibleAtRight = false;
+  journalBook.journalBookInteraction.selectedContextText = '売掛金'; journalBook.journalBookInteraction.selectedContextClipped = true;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_CONTEXT_CLIPPED'), 'selected journal-book account context must fit without ellipsis');
+  journalBook.journalBookInteraction.selectedContextClipped = false; journalBook.journalBookInteraction.guidanceVisibleAtRight = false;
   assert(codes(journalBook).includes('JOURNAL_BOOK_GUIDANCE_STICKY_FAILURE'), 'journal-book guidance must remain visible after horizontal scrolling');
 }
 for (const cardCase of ['fixed-asset']) {

@@ -85,6 +85,7 @@ function evaluateVisualMetrics(metrics, options = {}) {
     if (!(Number(interaction.rightScrollMaximum) > 0) || Math.abs(Number(interaction.rightScrollLeft) - Number(interaction.rightScrollMaximum)) > 1) violations.push({ code:'JOURNAL_BOOK_RIGHT_SCROLL_FAILURE', interaction });
     if (Number(interaction.visibleAmountContextCount) !== 4) violations.push({ code:'JOURNAL_BOOK_RIGHT_CONTEXT_VISIBILITY_FAILURE', expected:4, actual:interaction.visibleAmountContextCount });
     if (!interaction.selectedAccount || interaction.selectedContextText !== interaction.selectedAccount) violations.push({ code:'JOURNAL_BOOK_CONTEXT_UPDATE_FAILURE', selectedAccount:interaction.selectedAccount, selectedContextText:interaction.selectedContextText });
+    if (interaction.selectedContextClipped) violations.push({ code:'JOURNAL_BOOK_CONTEXT_CLIPPED', selectedAccount:interaction.selectedAccount });
     if (!interaction.guidanceVisibleAtRight) violations.push({ code:'JOURNAL_BOOK_GUIDANCE_STICKY_FAILURE' });
   }
   if (metrics.cardLayout) {
