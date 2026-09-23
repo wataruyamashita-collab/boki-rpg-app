@@ -826,6 +826,17 @@ assert.deepStrictEqual(
 );
 prerequisiteContext.model.state.correctIds = [...requiredBeforeExam];
 assert.strictEqual(examPrototype.unmetExamPrerequisites.call(prerequisiteContext).length, 0, '全前提の正解後に模試ゲートを解放する');
+const firstPrerequisite = requiredBeforeExam[0];
+let prerequisiteStarted = ''; let prerequisiteMode = '';
+const prerequisiteNavigationContext = {
+  questions:browserSandbox.window.QuestionData,
+  examPrerequisiteIds(){return requiredBeforeExam;},
+  showMode(mode){ prerequisiteMode = mode; return true; },
+  start(id){ prerequisiteStarted = id; }
+};
+assert.strictEqual(examPrototype.openExamPrerequisite.call(prerequisiteNavigationContext, firstPrerequisite), true, '模試前提問題から直接学習問題へ遷移できる');
+assert.deepStrictEqual([prerequisiteMode, prerequisiteStarted], ['story', firstPrerequisite], '前提問題はStoryへ切り替えて対象問題を直接開始する');
+assert.strictEqual(examPrototype.openExamPrerequisite.call(prerequisiteNavigationContext, 'NOT-PREREQUISITE'), false, '前提外IDへの直接遷移は拒否する');
 assert.strictEqual(examIds.length, 15, '模試は設計通り15問を選出する');
 const routeRpg = new RPGModel({ getItem(){ return null; }, setItem(){} }, 'route-xp');
 Object.values(browserSandbox.window.QuestionData).forEach(question => routeRpg.reward(question, { correct:true, ratio:1, earned:1, possible:1 }));
@@ -881,6 +892,8 @@ assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の
 assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');
 assert(viewSource.includes("'正しい訂正仕訳' : '正しい仕訳'"), '通常仕訳と訂正仕訳を区別した正解見出しを表示する');
 assert(html.includes('id="answer-comparison"'), '誤答した仕訳を正答と比較する表示領域を設ける');
+assert(html.includes('id="app-notice-items"') && viewSource.includes('itemActionLabel') && viewSource.includes('onItemSelect'), '模試前提不足の通知内に未完了問題への直接導線を表示できる');
+assert(controllerSource.includes("itemActionLabel:'この問題を解く'") && controllerSource.includes('onItemSelect:item => this.openExamPrerequisite(item.id)'), '模試前提不足では未完了問題をその場から直接開ける');
 assert(/\.answer-comparison:empty\s*{[^}]*display:\s*none/s.test(cssSource), '空の誤答比較欄は赤枠ごと非表示にする');
 assert(/\.answer-comparison\[hidden\][\s\S]*?display:\s*none/s.test(cssSource), 'hidden属性でも誤答比較欄を確実に非表示にする');
 assert(viewSource.includes('container.hidden = true') && viewSource.includes('container.hidden = false'), '誤答比較欄は誤答時だけ表示する');

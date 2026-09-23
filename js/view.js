@@ -69,16 +69,31 @@
     showNotice(message, options = {}) {
       const dialog = this.byId('app-notice-dialog'); if (!dialog) return false;
       const title = this.byId('app-notice-title'); const body = this.byId('app-notice-message');
+      const itemsBox = this.byId('app-notice-items');
       const cancel = this.byId('app-notice-cancel'); const confirm = this.byId('app-notice-confirm');
       title.textContent = options.title || 'お知らせ'; body.textContent = String(message ?? '');
       confirm.textContent = options.confirmLabel || '閉じる';
       cancel.hidden = !options.cancelLabel; cancel.textContent = options.cancelLabel || '戻る';
       const close = () => { if (typeof dialog.close === 'function' && dialog.open) dialog.close(); else dialog.removeAttribute('open'); };
+      const noticeItems = Array.isArray(options.items) ? options.items.filter(item => item && item.id) : [];
+      itemsBox.replaceChildren(...noticeItems.map(item => {
+        const card = this.document.createElement('div'); card.className = 'app-notice-item';
+        const copy = this.document.createElement('div'); copy.className = 'app-notice-item-copy';
+        const label = this.document.createElement('strong'); label.textContent = item.label || item.id;
+        const detail = this.document.createElement('p'); detail.textContent = item.detail || '';
+        copy.append(label, detail);
+        const button = this.document.createElement('button'); button.type = 'button'; button.className = 'secondary-button app-notice-item-action';
+        button.textContent = options.itemActionLabel || '開く';
+        button.setAttribute('aria-label', `${label.textContent}を開く`);
+        button.onclick = () => { close(); if (typeof options.onItemSelect === 'function') options.onItemSelect(item); };
+        card.append(copy, button); return card;
+      }));
+      itemsBox.hidden = noticeItems.length === 0;
       cancel.onclick = close;
       confirm.onclick = () => { close(); if (typeof options.onConfirm === 'function') options.onConfirm(); };
       if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); }
       else dialog.setAttribute('open', '');
-      confirm.focus?.(); return true;
+      (itemsBox.querySelector?.('button') || confirm).focus?.(); return true;
     }
     updateRpg(rpg) {
       const status = this.byId('player-status');

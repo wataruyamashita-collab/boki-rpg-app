@@ -168,6 +168,11 @@
       if (!this.questions[id] || this.examCandidateIds().includes(id) || this.questions[id].learningRole === 'review') return false;
       this.model.state.mode = 'training'; this.model.save(); this.renderModes(); this.start(id); return true;
     }
+    openExamPrerequisite(id) {
+      if (!this.questions[id] || !this.examPrerequisiteIds().includes(id)) return false;
+      if (this.showMode('story') === false) return false;
+      this.start(id); return true;
+    }
     finishPlacement() {
       const form = this.document.getElementById('placement-form');
       const unanswered = [...form.querySelectorAll('fieldset')].some(fieldset => !fieldset.querySelector('input:checked'));
@@ -198,7 +203,17 @@
       if (mode === 'exam') {
         const unmet = this.unmetExamPrerequisites();
         if (unmet.length) {
-          this.view.showNotice(`模試の前に基礎演習を完了してください（残り${unmet.length}問）。`, { title:'模試を開始できません' });
+          const items = unmet.map(id => ({
+            id,
+            label:this.questions[id]?.category || id,
+            detail:this.questions[id]?.question || ''
+          }));
+          this.view.showNotice(`模試の前に基礎演習を完了してください（残り${unmet.length}問）。下の未完了問題から進められます。`, {
+            title:'模試を開始できません',
+            items,
+            itemActionLabel:'この問題を解く',
+            onItemSelect:item => this.openExamPrerequisite(item.id)
+          });
           return false;
         }
       }
