@@ -2488,6 +2488,7 @@
         "annualDepreciation": 72000,
         "months": 4,
         "currentDepreciation": 24000,
+        "closingAccumulated": 24000,
         "closingBookValue": 336000
       }
     },

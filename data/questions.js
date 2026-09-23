@@ -4680,7 +4680,7 @@ const QuestionData = {
       },
       "inputMetadata": {
         "currentDepreciation": {
-          "label": "当期減価償却額",
+          "label": "当期減価償却費",
           "semanticType": "amount"
         },
         "closingBookValue": {
@@ -4695,7 +4695,7 @@ const QuestionData = {
         "closingBookValue": 340000
       }
     },
-    "explanation": "取得日は4月1日、取得原価425,000円、残存価額0円、耐用年数5年、定額法です。年額は（425,000円－0円）÷5年＝85,000円。4月1日から3月31日まで12か月なので当期減価償却額は85,000円、期末帳簿価額は425,000円－85,000円＝340,000円です。"
+    "explanation": "取得日は4月1日、取得原価425,000円、残存価額0円、耐用年数5年、定額法です。1年分の減価償却費は（425,000円－0円）÷5年＝85,000円。4月1日から3月31日まで12か月なので当期減価償却費は85,000円、期末帳簿価額は425,000円－85,000円＝340,000円です。"
   },
   "L006": {
     "id": "L006",
@@ -4985,7 +4985,7 @@ const QuestionData = {
       },
       "inputMetadata": {
         "currentDepreciation": {
-          "label": "当期減価償却額",
+          "label": "当期減価償却費",
           "semanticType": "amount"
         },
         "closingAccumulated": {
@@ -5005,7 +5005,7 @@ const QuestionData = {
         "closingBookValue": 270000
       }
     },
-    "explanation": "取得原価450,000円、残存価額0円、耐用年数5年、定額法です。年額は450,000円÷5年＝90,000円で、12か月使用した当期減価償却額は90,000円。期末累計額は期首90,000円＋当期90,000円＝180,000円、期末帳簿価額は450,000円－180,000円＝270,000円です。"
+    "explanation": "取得原価450,000円、残存価額0円、耐用年数5年、定額法です。1年分の減価償却費は450,000円÷5年＝90,000円で、12か月使用した当期減価償却費は90,000円。期末累計額は期首90,000円＋当期90,000円＝180,000円、期末帳簿価額は450,000円－180,000円＝270,000円です。"
   },
   "L011": {
     "id": "L011",
@@ -5254,19 +5254,13 @@ const QuestionData = {
     "scene": "10月・帳簿の照合",
     "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
     "materials": [
-      {
-        "資料": "備品Aの請求書",
-        "取得日": "4/1",
-        "取得原価": 475000,
-        "残存価額": 0,
-        "耐用年数": "5年",
-        "償却方法": "定額法"
-      }
+      {"資料":"備品Aの請求書","取得日":"4/1","取得原価":475000},
+      {"資料":"償却条件","残存価額":0,"耐用年数":"5年","償却方法":"定額法","決算日":"3/31"}
     ],
     "learningRole": "drill",
     "variantGroup": "固定資産台帳",
     "timelineRole": "main",
-    "question": "請求書の内容を固定資産台帳へ転記し、3月31日決算の金額を完成させなさい。",
+    "question": "請求書と償却条件を確認し、備品Aの固定資産台帳を完成させなさい。会計期間は4月1日から翌年3月31日までである。",
     "table": {
       "columns": [
         "asset",
@@ -5306,7 +5300,7 @@ const QuestionData = {
           "semanticType": "amount"
         },
         "currentDepreciation": {
-          "label": "当期減価償却額",
+          "label": "当期減価償却費",
           "semanticType": "amount"
         },
         "closingBookValue": {
@@ -5323,7 +5317,7 @@ const QuestionData = {
         "closingBookValue": 380000
       }
     },
-    "explanation": "請求書から取得日4月1日、取得原価475,000円、残存価額0円、耐用年数5年、定額法を台帳へ移します。年額は475,000円÷5年＝95,000円。4月1日から3月31日まで12か月なので当期減価償却額は95,000円、期末帳簿価額は475,000円－95,000円＝380,000円です。"
+    "explanation": "請求書から取得日4月1日と取得原価475,000円、償却条件から残存価額0円・耐用年数5年・定額法・3月31日決算を確認します。会計期間は4月1日から翌年3月31日までなので12か月使用します。1年分の減価償却費は475,000円÷5年＝95,000円、当期減価償却費は95,000円、期末帳簿価額は475,000円－95,000円＝380,000円です。"
   },
   "L016": {
     "id": "L016",
@@ -5613,7 +5607,7 @@ const QuestionData = {
       },
       "inputMetadata": {
         "currentDepreciation": {
-          "label": "当期減価償却額",
+          "label": "当期減価償却費",
           "semanticType": "amount"
         },
         "closingAccumulated": {
@@ -5633,7 +5627,7 @@ const QuestionData = {
         "closingBookValue": 200000
       }
     },
-    "explanation": "取得原価500,000円、残存価額0円、耐用年数5年、定額法です。年額は500,000円÷5年＝100,000円で、12か月使用した当期減価償却額は100,000円。期末累計額は期首200,000円＋当期100,000円＝300,000円、期末帳簿価額は500,000円－300,000円＝200,000円です。減価償却累計額は取得原価から控除して現在の帳簿価額を示します。"
+    "explanation": "取得原価500,000円、残存価額0円、耐用年数5年、定額法です。1年分の減価償却費は500,000円÷5年＝100,000円で、12か月使用した当期減価償却費は100,000円。期末累計額は期首200,000円＋当期100,000円＝300,000円、期末帳簿価額は500,000円－300,000円＝200,000円です。減価償却累計額は取得原価から控除して現在の帳簿価額を示します。"
   },
   "L021": {
     "id": "L021",
@@ -5927,7 +5921,7 @@ const QuestionData = {
           "semanticType": "months"
         },
         "currentDepreciation": {
-          "label": "当期減価償却額",
+          "label": "当期減価償却費",
           "semanticType": "amount"
         },
         "closingBookValue": {
@@ -5943,7 +5937,7 @@ const QuestionData = {
         "closingBookValue": 420000
       }
     },
-    "explanation": "取得日は10月1日、取得原価480,000円、残存価額0円、耐用年数4年、定額法です。年額は480,000円÷4年＝120,000円。10月から3月まで6か月なので当期減価償却額は120,000円×6÷12＝60,000円、期末帳簿価額は480,000円－60,000円＝420,000円です。"
+    "explanation": "取得日は10月1日、取得原価480,000円、残存価額0円、耐用年数4年、定額法です。1年分の減価償却費は480,000円÷4年＝120,000円。10月から3月まで6か月なので当期減価償却費は120,000円×6÷12＝60,000円、期末帳簿価額は480,000円－60,000円＝420,000円です。"
   },
   "L026": {
     "id": "L026",
@@ -6183,86 +6177,19 @@ const QuestionData = {
     "timelineRole": "main"
   },
   "L030": {
-    "id": "L030",
-    "type": "ledger",
-    "format": "fixed-asset-ledger",
-    "category": "固定資産台帳",
-    "difficulty": 1,
-    "chapter": 7,
-    "scene": "10月・帳簿の照合",
-    "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
-    "materials": [],
-    "learningRole": "drill",
-    "variantGroup": "固定資産台帳",
-    "timelineRole": "main",
-    "question": "12月1日に取得した備品Aについて、3月31日決算の固定資産台帳を完成させなさい。取得原価360,000円、残存価額0円、耐用年数5年、定額法である。",
-    "table": {
-      "columns": [
-        "asset",
-        "acquisitionDate",
-        "acquisitionCost",
-        "residualValue",
-        "life",
-        "method",
-        "annualDepreciation",
-        "months",
-        "currentDepreciation",
-        "closingBookValue"
-      ],
-      "rows": [
-        {
-          "asset": "備品A",
-          "acquisitionDate": "12/1",
-          "acquisitionCost": 360000,
-          "residualValue": 0,
-          "life": 5,
-          "method": "定額法",
-          "annualDepreciation": "入力",
-          "months": "入力",
-          "currentDepreciation": "入力",
-          "closingBookValue": "入力"
-        }
-      ],
-      "inputCells": [
-        "annualDepreciation",
-        "months",
-        "currentDepreciation",
-        "closingBookValue"
-      ],
-      "inputTypes": {
-        "annualDepreciation": "amount",
-        "months": "amount",
-        "currentDepreciation": "amount",
-        "closingBookValue": "amount"
-      },
-      "inputMetadata": {
-        "annualDepreciation": {
-          "label": "年間減価償却額",
-          "semanticType": "amount"
-        },
-        "months": {
-          "label": "使用月数",
-          "semanticType": "months"
-        },
-        "currentDepreciation": {
-          "label": "当期減価償却額",
-          "semanticType": "amount"
-        },
-        "closingBookValue": {
-          "label": "期末帳簿価額",
-          "semanticType": "amount"
-        }
-      }
+    "id":"L030","type":"ledger","format":"fixed-asset-ledger","category":"固定資産台帳","difficulty":1,"chapter":7,
+    "scene":"10月・帳簿の照合","story":"固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。","materials":[],
+    "learningRole":"drill","variantGroup":"固定資産台帳","timelineRole":"main",
+    "question":"備品Aは12月1日に取得した。会計期間は4月1日から翌年3月31日までである。取得原価360,000円、残存価額0円、耐用年数5年、減価償却方法は定額法である。取得月から決算月まで月割計算し、次の固定資産台帳の空欄を完成させなさい。",
+    "table":{
+      "columns":["asset","acquisitionDate","acquisitionCost","residualValue","life","method","annualDepreciation","months","currentDepreciation","closingAccumulated","closingBookValue"],
+      "rows":[{"asset":"備品A","acquisitionDate":"12/1","acquisitionCost":360000,"residualValue":0,"life":5,"method":"定額法","annualDepreciation":"入力","months":"入力","currentDepreciation":"入力","closingAccumulated":"入力","closingBookValue":"入力"}],
+      "inputCells":["annualDepreciation","months","currentDepreciation","closingAccumulated","closingBookValue"],
+      "inputTypes":{"annualDepreciation":"amount","months":"amount","currentDepreciation":"amount","closingAccumulated":"amount","closingBookValue":"amount"},
+      "inputMetadata":{"annualDepreciation":{"label":"1年分の減価償却費","semanticType":"amount"},"months":{"label":"使用月数","semanticType":"months"},"currentDepreciation":{"label":"当期減価償却費","semanticType":"amount"},"closingAccumulated":{"label":"期末減価償却累計額","semanticType":"amount"},"closingBookValue":{"label":"期末帳簿価額","semanticType":"amount"}}
     },
-    "answer": {
-      "cells": {
-        "annualDepreciation": 72000,
-        "months": 4,
-        "currentDepreciation": 24000,
-        "closingBookValue": 336000
-      }
-    },
-    "explanation": "取得日は12月1日、取得原価360,000円、残存価額0円、耐用年数5年、定額法です。年額は360,000円÷5年＝72,000円。12月から3月まで4か月なので当期減価償却額は72,000円×4÷12＝24,000円、期末帳簿価額は360,000円－24,000円＝336,000円です。"
+    "answer":{"cells":{"annualDepreciation":72000,"months":4,"currentDepreciation":24000,"closingAccumulated":24000,"closingBookValue":336000}},
+    "explanation":"会計期間は4月1日から翌年3月31日までで、備品Aは12月1日取得、取得原価360,000円、残存価額0円、耐用年数5年、定額法です。1年分の減価償却費は360,000円÷5年＝72,000円です。取得月を含めて12月・1月・2月・3月の4か月なので、当期減価償却費は72,000円×4÷12＝24,000円です。初年度のため期末減価償却累計額も24,000円、期末帳簿価額は360,000円－24,000円＝336,000円です。よくある誤りは12月から3月までを3か月と数えることですが、取得月の12月を含むため4か月です。"
   },
   "L031": {
     "id": "L031",
@@ -6404,7 +6331,7 @@ const QuestionData = {
     "learningRole": "transfer",
     "variantGroup": "固定資産台帳",
     "timelineRole": "transfer",
-    "question": "請求書を確認し、備品Aの取得から3月31日決算までを固定資産台帳へ記入しなさい。取得月から決算月まで月割計算する。",
+    "question": "会計期間は4月1日から翌年3月31日までである。請求書と償却条件を確認し、備品Aの取得から3月31日決算までを固定資産台帳へ記入しなさい。取得月から決算月まで月割計算する。",
     "table": {
       "columns": [
         "asset",
@@ -6456,7 +6383,7 @@ const QuestionData = {
           "semanticType": "months"
         },
         "currentDepreciation": {
-          "label": "当期減価償却額",
+          "label": "当期減価償却費",
           "semanticType": "amount"
         },
         "closingAccumulated": {
@@ -6479,7 +6406,7 @@ const QuestionData = {
         "closingBookValue": 306000
       }
     },
-    "explanation": "請求書と償却条件から取得日7月1日、取得原価360,000円、残存価額0円、耐用年数5年、定額法を確認します。年額は360,000円÷5年＝72,000円。7月から3月まで9か月なので当期減価償却額は72,000円×9÷12＝54,000円です。初年度の期末減価償却累計額は54,000円、期末帳簿価額は360,000円－54,000円＝306,000円です。"
+    "explanation": "会計期間は4月1日から翌年3月31日までです。請求書から取得日7月1日と取得原価360,000円、償却条件から残存価額0円・耐用年数5年・定額法を確認します。1年分の減価償却費は360,000円÷5年＝72,000円です。7月から3月まで9か月なので当期減価償却費は72,000円×9÷12＝54,000円です。初年度の期末減価償却累計額は54,000円、期末帳簿価額は360,000円－54,000円＝306,000円です。"
   },
   "L034": {
     "id": "L034",
@@ -6907,7 +6834,7 @@ const QuestionData = {
       },
       "inputMetadata": {
         "annualA": {
-          "label": "備品A 年間減価償却額",
+          "label": "備品A 1年分の減価償却費",
           "semanticType": "amount"
         },
         "monthsA": {
@@ -6915,7 +6842,7 @@ const QuestionData = {
           "semanticType": "months"
         },
         "depreciationA": {
-          "label": "備品A 当期減価償却額",
+          "label": "備品A 当期減価償却費",
           "semanticType": "amount"
         },
         "bookA": {
@@ -6927,7 +6854,7 @@ const QuestionData = {
           "semanticType": "amount"
         },
         "annualB": {
-          "label": "備品B 年間減価償却額",
+          "label": "備品B 1年分の減価償却費",
           "semanticType": "amount"
         },
         "monthsB": {
@@ -6935,7 +6862,7 @@ const QuestionData = {
           "semanticType": "months"
         },
         "depreciationB": {
-          "label": "備品B 当期減価償却額",
+          "label": "備品B 当期減価償却費",
           "semanticType": "amount"
         },
         "bookB": {
@@ -6957,7 +6884,7 @@ const QuestionData = {
         "bookB": 255000
       }
     },
-    "explanation": "取得原価・残存価額0円・耐用年数5年・定額法を確認します。備品Aの年額は600,000円÷5年＝120,000円。4月から売却前の9月まで6か月なので当期減価償却額は120,000円×6÷12＝60,000円、売却時帳簿価額は600,000円－60,000円＝540,000円です。売却価額420,000円は帳簿価額より120,000円少ないため固定資産売却損120,000円です。備品Bの年額は300,000円÷5年＝60,000円。7月から3月まで9か月なので当期減価償却額は60,000円×9÷12＝45,000円、期末帳簿価額は300,000円－45,000円＝255,000円です。"
+    "explanation": "取得原価・残存価額0円・耐用年数5年・定額法を確認します。備品Aは10月1日売却なので、本問では売却日前日の9月30日までを償却対象とし、4月から9月までの6か月を使用月数とします。1年分の減価償却費は600,000円÷5年＝120,000円、当期減価償却費は120,000円×6÷12＝60,000円、売却時帳簿価額は600,000円－60,000円＝540,000円です。売却価額420,000円との差額120,000円が固定資産売却損です。備品Bは7月から3月まで9か月で、1年分の減価償却費は300,000円÷5年＝60,000円、当期減価償却費は60,000円×9÷12＝45,000円、期末帳簿価額は300,000円－45,000円＝255,000円です。10月1日売却の備品Aについて10月を使用月数に含めない点に注意します。"
   },
   "L041": {
     "id": "L041",
@@ -14921,7 +14848,7 @@ function answerFingerprint(answer) {
   for (const character of JSON.stringify(answer)) { hash ^= character.charCodeAt(0); hash = Math.imul(hash, 16777619); }
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
-const ReviewedAnswerFingerprints = Object.freeze({"J001":"d8e1c623","J002":"90c0eb06","J003":"000b10fe","J004":"0ec62aa1","J005":"37e4f9a8","J006":"9c615d8f","J007":"4276b057","J008":"eea9a423","J009":"d0284858","J010":"692f6625","J011":"57d82400","J012":"7c3bdf04","J013":"866e6f47","J014":"6a5a27dc","J015":"595da73e","J016":"6b79a2c8","J017":"405975aa","J018":"bcec67cd","J019":"e7cec67c","J020":"e839c7af","J021":"99b7dc60","J022":"13d9868a","J023":"09591681","J024":"cbf936d8","J025":"841a43be","J026":"886fd7d6","J027":"d357bb11","J028":"e921fa24","J029":"1b3d5a5b","J030":"3df1ac2a","J031":"938e7318","J032":"6da3bc3e","J033":"961583ca","J034":"8ad2899a","J035":"f324b1fa","J036":"bd1dd412","J037":"38468aee","J038":"49d23923","J039":"45d064fc","J040":"d708b5ac","J041":"de4d666a","J042":"989c7e9b","J043":"f418c9d5","J044":"991c75d1","J045":"122946f5","J046":"449a7dad","J047":"4faceaa5","J048":"afb7c946","J049":"3a76ef79","J050":"6ff6d32a","J051":"878a4a27","J052":"860f328a","J053":"b4f7e0e6","J054":"d242f36f","J055":"5e10a610","J056":"4dc01d99","J057":"2730b86b","J058":"39d31d01","J059":"7659d404","J060":"3ae1464b","J061":"9e4c0b00","J062":"3c1ca560","J063":"39654e15","J064":"c4f4a63c","J065":"d0a83a90","J066":"d37a3ee4","J067":"1849bd72","J068":"0c3db45f","J069":"32028cba","J070":"e839c7af","J071":"5dede936","J072":"d8c4e847","J073":"1d481c2f","J074":"bdc9bc10","J075":"e6d0ed78","J076":"ec98f716","J077":"5f3566cb","J078":"2c74d912","J079":"79fcdf65","J080":"3df1ac2a","J081":"938e7318","J082":"d5be62b8","J083":"61f51106","J084":"2371a8e4","J085":"d52786f1","J086":"de543e10","J087":"9855dcf6","J088":"0a40e16f","J089":"45d064fc","J090":"b0b067e8","J091":"cdeb5486","J092":"73334d89","J093":"4fe348e3","J094":"165d2583","J095":"a3f7e795","J096":"c4c7c981","J097":"965ce771","J098":"666a41b2","J099":"56d6f7e3","J100":"9427eeec","J101":"1f384c37","J102":"9d4b2846","J103":"d2715cda","J104":"917a6f75","J105":"451accc8","J106":"c045ff8b","J107":"17176333","J108":"f54e1463","J109":"92223788","J110":"44c8eaf7","J111":"c7732388","J112":"2d687d58","J113":"38ddfc8f","J114":"173da264","J115":"493e4aca","J116":"266570a0","J117":"d0b8bcde","J118":"89a1575d","J119":"d5825c78","J120":"e839c7af","J121":"50c52f16","J122":"2ebd6e72","J123":"37907545","J124":"5a31b008","J125":"ff657bc2","J126":"ad424646","J127":"82f029f5","J128":"6d069904","J129":"ad22f837","J130":"3df1ac2a","J131":"5b9288db","J132":"8ff0c342","J133":"858e9406","J134":"e6715465","J135":"24cefe8c","J136":"c173a64a","J137":"8b829b35","J138":"22b7f06b","J139":"45d064fc","J140":"b39d19f4","J141":"86758e3e","J142":"8e2d676f","J143":"241fef41","J144":"7b382d11","J145":"09fb42bd","J146":"517222ad","J147":"95746a79","J148":"b2f45e3c","J149":"70f9a78d","J150":"02b7de4d","L001":"30e8882b","L002":"d9b24adb","L003":"e27e8cf1","L004":"313c9cdb","L005":"b23d0c2d","L006":"c9993f62","L007":"b969a7bd","L008":"01da67d1","L009":"209f326d","L010":"91eb031f","L011":"1415bb03","L012":"8d471f3d","L013":"1fd17166","L014":"639a28e0","L015":"669d77e7","L016":"c8d324a5","L017":"2d43a24e","L018":"2251a2ba","L019":"80737433","L020":"56481a9e","L021":"422c0829","L022":"74dcc52a","L023":"89113099","L024":"45822471","L025":"5c1dcdb2","L026":"79185952","L027":"1f50785d","L028":"940590a5","L029":"9ace9e94","L030":"96b6bd43","L031":"1162b987","L032":"8985aab4","L033":"fcbfdad2","L034":"cf4fc8ca","L035":"588e149b","L036":"458982c2","L037":"aaf34a8e","L038":"dbd65de5","L039":"0109514b","L040":"dd6f0e89","L041":"5b707f77","L042":"165b7152","L043":"48616ca4","L044":"903cf70c","L045":"b521774f","L046":"a2db7875","L047":"4a377801","L048":"91ae93e3","L049":"4392707f","L050":"c64a094d","T001":"5194d1c3","T002":"ac0b810b","T003":"543ad825","T004":"20ae2401","T005":"730bcf49","T006":"7e652a69","T007":"a10e7e61","T008":"cf9a69c3","T009":"e4bd12ed","T010":"9ac2336f","T011":"75ddcef3","T012":"df7fcfa1","T013":"b5919213","T014":"f269f023","T015":"e258a2df","T016":"331b7d99","T017":"09520621","T018":"80a602a7","T019":"ba2db99d","T020":"63c211bb","T021":"5ce3b7e9","T022":"6d1f9313","T023":"e25baa41","T024":"7eb7bc15","T025":"5ef98d01","T026":"713e6b2f","T027":"709d827f","T028":"00dfcac9","T029":"a7afbd81","T030":"24d302a1","T031":"600d6a93","T032":"43551a2f","T033":"4d6dd643","T034":"1c93f1fb","T035":"a492f949","T036":"a837d1f5","T037":"fa5f9aa1","T038":"bed837a1","T039":"f5491dc1","T040":"8310e8e7","E001":"917a82fa","E002":"b9ea9fe4","E003":"e217b7db","E004":"3ec70254","E005":"4b0e4435","E006":"187911d8","E007":"81f3f7a1","E008":"64156aed","E009":"ef9542c7","E010":"d899cdb2","E011":"adec7923","E012":"ee824d83","E013":"f4440ba3","E014":"9796574f","E015":"69f9ae35","E016":"b16f7ae4","E017":"18a8f0d0","E018":"b3355226","E019":"ded867c0","E020":"b24906e4","D001":"9ac7b8d4","D002":"25fc6159","D003":"b81f871d","D004":"3e0f7fbf","D005":"a116e047","D006":"98f50cb8","D007":"7c8018bf","D008":"787ed897","D009":"f8f3242c","D010":"5772d519","D011":"c35ce912","D012":"d40b11e8","D013":"7bcb0b14","D014":"2ca6aba7","D015":"6c4ff213","D016":"b6049069","D017":"8b48d74c","D018":"f754625c","D019":"7619ee65","D020":"8c305999","F001":"60c9a696","F002":"a50f7f00","F003":"1ae6477a","F004":"6c7a1529","F005":"ae5bb262","F006":"14c68a85","F007":"da6ad7d5","F008":"e463d96b","F009":"f3662ec7","F010":"bfe0a46c","C001":"a0f27f54","C002":"d54bf897","C003":"679225b3","C004":"db1d15be","C005":"375dcb65","C006":"e5100f3c","C007":"40d33ebc","C008":"0b26fd79","C009":"d5ff0eb4","C010":"d02182dc"});
+const ReviewedAnswerFingerprints = Object.freeze({"J001":"d8e1c623","J002":"90c0eb06","J003":"000b10fe","J004":"0ec62aa1","J005":"37e4f9a8","J006":"9c615d8f","J007":"4276b057","J008":"eea9a423","J009":"d0284858","J010":"692f6625","J011":"57d82400","J012":"7c3bdf04","J013":"866e6f47","J014":"6a5a27dc","J015":"595da73e","J016":"6b79a2c8","J017":"405975aa","J018":"bcec67cd","J019":"e7cec67c","J020":"e839c7af","J021":"99b7dc60","J022":"13d9868a","J023":"09591681","J024":"cbf936d8","J025":"841a43be","J026":"886fd7d6","J027":"d357bb11","J028":"e921fa24","J029":"1b3d5a5b","J030":"3df1ac2a","J031":"938e7318","J032":"6da3bc3e","J033":"961583ca","J034":"8ad2899a","J035":"f324b1fa","J036":"bd1dd412","J037":"38468aee","J038":"49d23923","J039":"45d064fc","J040":"d708b5ac","J041":"de4d666a","J042":"989c7e9b","J043":"f418c9d5","J044":"991c75d1","J045":"122946f5","J046":"449a7dad","J047":"4faceaa5","J048":"afb7c946","J049":"3a76ef79","J050":"6ff6d32a","J051":"878a4a27","J052":"860f328a","J053":"b4f7e0e6","J054":"d242f36f","J055":"5e10a610","J056":"4dc01d99","J057":"2730b86b","J058":"39d31d01","J059":"7659d404","J060":"3ae1464b","J061":"9e4c0b00","J062":"3c1ca560","J063":"39654e15","J064":"c4f4a63c","J065":"d0a83a90","J066":"d37a3ee4","J067":"1849bd72","J068":"0c3db45f","J069":"32028cba","J070":"e839c7af","J071":"5dede936","J072":"d8c4e847","J073":"1d481c2f","J074":"bdc9bc10","J075":"e6d0ed78","J076":"ec98f716","J077":"5f3566cb","J078":"2c74d912","J079":"79fcdf65","J080":"3df1ac2a","J081":"938e7318","J082":"d5be62b8","J083":"61f51106","J084":"2371a8e4","J085":"d52786f1","J086":"de543e10","J087":"9855dcf6","J088":"0a40e16f","J089":"45d064fc","J090":"b0b067e8","J091":"cdeb5486","J092":"73334d89","J093":"4fe348e3","J094":"165d2583","J095":"a3f7e795","J096":"c4c7c981","J097":"965ce771","J098":"666a41b2","J099":"56d6f7e3","J100":"9427eeec","J101":"1f384c37","J102":"9d4b2846","J103":"d2715cda","J104":"917a6f75","J105":"451accc8","J106":"c045ff8b","J107":"17176333","J108":"f54e1463","J109":"92223788","J110":"44c8eaf7","J111":"c7732388","J112":"2d687d58","J113":"38ddfc8f","J114":"173da264","J115":"493e4aca","J116":"266570a0","J117":"d0b8bcde","J118":"89a1575d","J119":"d5825c78","J120":"e839c7af","J121":"50c52f16","J122":"2ebd6e72","J123":"37907545","J124":"5a31b008","J125":"ff657bc2","J126":"ad424646","J127":"82f029f5","J128":"6d069904","J129":"ad22f837","J130":"3df1ac2a","J131":"5b9288db","J132":"8ff0c342","J133":"858e9406","J134":"e6715465","J135":"24cefe8c","J136":"c173a64a","J137":"8b829b35","J138":"22b7f06b","J139":"45d064fc","J140":"b39d19f4","J141":"86758e3e","J142":"8e2d676f","J143":"241fef41","J144":"7b382d11","J145":"09fb42bd","J146":"517222ad","J147":"95746a79","J148":"b2f45e3c","J149":"70f9a78d","J150":"02b7de4d","L001":"30e8882b","L002":"d9b24adb","L003":"e27e8cf1","L004":"313c9cdb","L005":"b23d0c2d","L006":"c9993f62","L007":"b969a7bd","L008":"01da67d1","L009":"209f326d","L010":"91eb031f","L011":"1415bb03","L012":"8d471f3d","L013":"1fd17166","L014":"639a28e0","L015":"669d77e7","L016":"c8d324a5","L017":"2d43a24e","L018":"2251a2ba","L019":"80737433","L020":"56481a9e","L021":"422c0829","L022":"74dcc52a","L023":"89113099","L024":"45822471","L025":"5c1dcdb2","L026":"79185952","L027":"1f50785d","L028":"940590a5","L029":"9ace9e94","L030":"f23023da","L031":"1162b987","L032":"8985aab4","L033":"fcbfdad2","L034":"cf4fc8ca","L035":"588e149b","L036":"458982c2","L037":"aaf34a8e","L038":"dbd65de5","L039":"0109514b","L040":"dd6f0e89","L041":"5b707f77","L042":"165b7152","L043":"48616ca4","L044":"903cf70c","L045":"b521774f","L046":"a2db7875","L047":"4a377801","L048":"91ae93e3","L049":"4392707f","L050":"c64a094d","T001":"5194d1c3","T002":"ac0b810b","T003":"543ad825","T004":"20ae2401","T005":"730bcf49","T006":"7e652a69","T007":"a10e7e61","T008":"cf9a69c3","T009":"e4bd12ed","T010":"9ac2336f","T011":"75ddcef3","T012":"df7fcfa1","T013":"b5919213","T014":"f269f023","T015":"e258a2df","T016":"331b7d99","T017":"09520621","T018":"80a602a7","T019":"ba2db99d","T020":"63c211bb","T021":"5ce3b7e9","T022":"6d1f9313","T023":"e25baa41","T024":"7eb7bc15","T025":"5ef98d01","T026":"713e6b2f","T027":"709d827f","T028":"00dfcac9","T029":"a7afbd81","T030":"24d302a1","T031":"600d6a93","T032":"43551a2f","T033":"4d6dd643","T034":"1c93f1fb","T035":"a492f949","T036":"a837d1f5","T037":"fa5f9aa1","T038":"bed837a1","T039":"f5491dc1","T040":"8310e8e7","E001":"917a82fa","E002":"b9ea9fe4","E003":"e217b7db","E004":"3ec70254","E005":"4b0e4435","E006":"187911d8","E007":"81f3f7a1","E008":"64156aed","E009":"ef9542c7","E010":"d899cdb2","E011":"adec7923","E012":"ee824d83","E013":"f4440ba3","E014":"9796574f","E015":"69f9ae35","E016":"b16f7ae4","E017":"18a8f0d0","E018":"b3355226","E019":"ded867c0","E020":"b24906e4","D001":"9ac7b8d4","D002":"25fc6159","D003":"b81f871d","D004":"3e0f7fbf","D005":"a116e047","D006":"98f50cb8","D007":"7c8018bf","D008":"787ed897","D009":"f8f3242c","D010":"5772d519","D011":"c35ce912","D012":"d40b11e8","D013":"7bcb0b14","D014":"2ca6aba7","D015":"6c4ff213","D016":"b6049069","D017":"8b48d74c","D018":"f754625c","D019":"7619ee65","D020":"8c305999","F001":"60c9a696","F002":"a50f7f00","F003":"1ae6477a","F004":"6c7a1529","F005":"ae5bb262","F006":"14c68a85","F007":"da6ad7d5","F008":"e463d96b","F009":"f3662ec7","F010":"bfe0a46c","C001":"a0f27f54","C002":"d54bf897","C003":"679225b3","C004":"db1d15be","C005":"375dcb65","C006":"e5100f3c","C007":"40d33ebc","C008":"0b26fd79","C009":"d5ff0eb4","C010":"d02182dc"});
 
 const SemanticJournalAnswerKey = new Map(Object.values(QuestionData)
   .filter(item => item.type === 'journal')
@@ -14981,7 +14908,11 @@ function independentlyDerivedTableCells(item) {
     if(!Number.isInteger(months))return null;
     const depreciation=annual*months/12, base={months,currentDepreciation:depreciation,closingBookValue:cost-depreciation};
     if(item.id==='L025')return base;
-    if(item.id==='L030')return {annualDepreciation:annual,...base};
+    if(item.id==='L030'){
+      const hasAccountingPeriod=/会計期間[^。]*4月1日[^。]*3月31日/u.test(String(item.question||''));
+      if(!hasAccountingPeriod||!parseMonthDay(acquisition))return null;
+      return {annualDepreciation:annual,months,currentDepreciation:depreciation,closingAccumulated:depreciation,closingBookValue:cost-depreciation};
+    }
     if(item.id==='L033')return {acquisitionDate:String(acquisition),acquisitionCost:cost,months,currentDepreciation:depreciation,closingAccumulated:depreciation,closingBookValue:cost-depreciation};
   }
   // A running ledger is derived exclusively from its opening balance and postings.

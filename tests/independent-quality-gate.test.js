@@ -18,11 +18,18 @@ function independentAudit(questions) {
   const l040 = questions.L040;
   for (const key of ['depreciationA', 'depreciationB']) if (l040?.table?.inputMetadata?.[key]?.semanticType !== 'amount') fail('L040', `SEMANTIC_${key}`);
   if (!/60,000円/u.test(l040.explanation) || !/45,000円/u.test(l040.explanation) || /(?:60,000|45,000)か月/u.test(l040.explanation)) fail('L040', 'RENDERED_UNIT');
+  if (l040?.table?.inputMetadata?.annualA?.label !== '備品A 1年分の減価償却費' || l040?.table?.inputMetadata?.annualB?.label !== '備品B 1年分の減価償却費') fail('L040', 'ANNUAL_LABEL');
+  if (!/4月から9月までの6か月/u.test(l040.explanation) || !/10月を使用月数に含めない/u.test(l040.explanation)) fail('L040', 'DISPOSAL_MONTH_REASONING');
+  const l015=questions.L015;
+  if (l015?.materials?.length !== 2 || Object.keys(l015.materials[0]||{}).join(',') !== '資料,取得日,取得原価' || l015.materials[1]?.資料 !== '償却条件') fail('L015','SOURCE_REALISM');
+  if (!/請求書と償却条件/u.test(l015?.question||'') || !/請求書から/u.test(l015?.explanation||'') || !/償却条件から/u.test(l015?.explanation||'')) fail('L015','SOURCE_USAGE');
+  if (!/請求書と償却条件/u.test(questions.L033?.question||'')) fail('L033','SOURCE_USAGE');
+  if (questions.L030?.table?.inputMetadata?.annualDepreciation?.label !== '1年分の減価償却費' || questions.L030?.table?.inputMetadata?.closingAccumulated?.label !== '期末減価償却累計額') fail('L030','PEDAGOGICAL_LABELS');
   for (const question of Object.values(questions)) if (RAW_KEY.test(String(question.explanation || ''))) fail(question.id, 'RAW_INTERNAL_KEY');
   if (/(?:113|401|521|101)円/u.test(questions.L041.explanation)) fail('L041', 'FOLIO_YEN');
   for (const id of FIXED_ASSET_IDS) {
-    const text=questions[id].explanation, ordered=['取得原価','残存価額','耐用年数','定額法','年額'];
-    if (!ordered.every((term,index)=>text.indexOf(term)>=0&&(index===0||text.indexOf(term)>text.indexOf(ordered[index-1]))) || !/当期減価償却額/.test(text) || !/(?:期末帳簿価額|売却時帳簿価額)/.test(text)) fail(id, 'FIXED_ASSET_PATH');
+    const text=questions[id].explanation, ordered=['取得原価','残存価額','耐用年数','定額法','1年分の減価償却費'];
+    if (!ordered.every((term,index)=>text.indexOf(term)>=0&&(index===0||text.indexOf(term)>text.indexOf(ordered[index-1]))) || !/当期減価償却費/.test(text) || /当期減価償却額/.test(text) || !/(?:期末帳簿価額|売却時帳簿価額)/.test(text)) fail(id, 'FIXED_ASSET_PATH');
   }
   return { ok: failures.length === 0, failures };
 }

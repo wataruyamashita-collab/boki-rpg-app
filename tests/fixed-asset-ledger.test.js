@@ -43,11 +43,45 @@ assert.strictEqual(model.state.examSession,null);assert.strictEqual(model.state.
 const compatible={...saved,mode:'exam',drafts:{J001:{debit:[],credit:[]}},examSession:{...saved.examSession,ids:root.ExamPoolDefinition.filter(id=>!['L033','L040'].includes(id)).slice(0,15)}};stored=JSON.stringify(compatible);const compatibleModel=new root.ProgressModel(questions,storage);assert(compatibleModel.state.examSession,'unaffected active exam preserved');
 const legacyBackup={...saved,mode:'story',examSession:null};
 assert.strictEqual(root.ProgressModel.validateBackupState(legacyBackup,questions),true,'legacy backup v1 remains importable');
-assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:2},questions),true,'current content revision accepted');
-assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:3},questions),false,'future content revision rejected');
-const futureState={...saved,contentRevision:3,mode:'exam',currentQuestionId:'L033',answeredIds:['L005'],correctIds:['L005'],incorrectIds:['L010'],drafts:{L033:{cells:{future:1}}},examSession:saved.examSession};
+assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:2},questions),true,'revision 2 backup remains importable');
+assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:3},questions),true,'current content revision accepted');
+assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:4},questions),false,'future content revision rejected');
+const futureState={...saved,contentRevision:4,mode:'exam',currentQuestionId:'L033',answeredIds:['L005'],correctIds:['L005'],incorrectIds:['L010'],drafts:{L033:{cells:{future:1}}},examSession:saved.examSession};
 stored=JSON.stringify(futureState);let futureWrites=0;
 const futureModel=new root.ProgressModel(questions,{getItem:()=>stored,setItem:()=>{futureWrites++;return true;}});
-assert.deepStrictEqual(JSON.parse(JSON.stringify(futureModel.state)),{contentRevision:2,mode:'story',currentQuestionId:null,answeredIds:[],correctIds:[],incorrectIds:[],mistakeCounts:{},reviewSchedule:{},reviewAssignments:{},attempts:[],drafts:{},completed:false,placement:null,examAttempt:0,examSession:null,examHistory:[],lastExamReview:null},'future persisted state leaves the safe default state intact');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(futureModel.state)),{contentRevision:3,mode:'story',currentQuestionId:null,answeredIds:[],correctIds:[],incorrectIds:[],mistakeCounts:{},reviewSchedule:{},reviewAssignments:{},attempts:[],drafts:{},completed:false,placement:null,examAttempt:0,examSession:null,examHistory:[],lastExamReview:null},'future persisted state leaves the safe default state intact');
 assert.strictEqual(futureWrites,0,'future persisted state is not silently downgraded or saved');
+
+for(const id of ids){
+  const q=root.QuestionData[id];
+  assert(!JSON.stringify({question:q.question,table:q.table,explanation:q.explanation}).includes('当期減価償却額'),`${id}: terminology normalized`);
+  assert(q.explanation.includes('1年分の減価償却費'),`${id}: annual depreciation terminology`);
+}
+assert.strictEqual(root.QuestionData.L030.table.inputMetadata.annualDepreciation.label,'1年分の減価償却費');
+assert.strictEqual(root.QuestionData.L040.table.inputMetadata.annualA.label,'備品A 1年分の減価償却費');
+assert.strictEqual(root.QuestionData.L040.table.inputMetadata.annualB.label,'備品B 1年分の減価償却費');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(root.QuestionData.L030.answer.cells)),{annualDepreciation:72000,months:4,currentDepreciation:24000,closingAccumulated:24000,closingBookValue:336000});
+assert.deepStrictEqual(Object.keys(root.QuestionData.L015.materials[0]),['資料','取得日','取得原価']);
+assert.strictEqual(root.QuestionData.L015.materials[1].資料,'償却条件');
+assert(root.QuestionData.L015.question.includes('請求書と償却条件')&&root.QuestionData.L015.explanation.includes('請求書から')&&root.QuestionData.L015.explanation.includes('償却条件から'));
+assert(root.QuestionData.L033.question.includes('請求書と償却条件'));
+assert(root.QuestionData.L040.explanation.includes('4月から9月までの6か月')&&root.QuestionData.L040.explanation.includes('10月を使用月数に含めない'));
+for(const mutate of [
+  q=>{q.question=q.question.replace('会計期間は4月1日から翌年3月31日までである。','');},
+  q=>{q.question=q.question.replace('備品Aは12月1日に取得した。','備品Aを取得した。');delete q.table.rows[0].acquisitionDate;},
+  q=>{q.question=q.question.replace('残存価額0円、','');delete q.table.rows[0].residualValue;},
+  q=>{q.question=q.question.replace('耐用年数5年、','');delete q.table.rows[0].life;},
+  q=>{q.question=q.question.replace('減価償却方法は定額法である。','');delete q.table.rows[0].method;}
+]){
+  const candidate=structuredClone(root.QuestionData.L030);mutate(candidate);
+  assert.strictEqual(root.deriveAccountingExpected('L030',null,candidate).derivable,false);
+}
+const revision2State={...saved,contentRevision:2,mode:'exam',drafts:{L005:{cells:{old:1}},L030:{cells:{old:2}},J001:{debit:[],credit:[]}},examSession:{...saved.examSession,ids:root.ExamPoolDefinition.filter(id=>!['L033','L040'].includes(id)).slice(0,15)}};
+stored=JSON.stringify(revision2State);
+const revision2Model=new root.ProgressModel(questions,storage);
+assert.strictEqual(revision2Model.state.drafts.L030,undefined);
+assert(revision2Model.state.drafts.L005);
+assert(revision2Model.state.drafts.J001);
+assert(revision2Model.state.examSession);
+assert.strictEqual(revision2Model.state.mode,'exam');
 console.log('fixed asset ledger tests: ok');
