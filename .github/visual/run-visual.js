@@ -51,7 +51,7 @@ async function measure(page, caseName) {
     };
     const isJournal = measuredCase === 'journal';
     const isJournalBook = measuredCase === 'journal-book';
-    const cardRoot = document.querySelector(measuredCase === 'fixed-asset' ? '.fixed-asset-ledger' : isJournalBook ? '.visual-journal-book-never-card' : '.bookkeeping-form');
+    const cardRoot = isJournalBook ? null : document.querySelector(measuredCase === 'fixed-asset' ? '.fixed-asset-ledger' : '.bookkeeping-form');
     if (cardRoot) {
       const wrapper = requireElement(document.querySelector('#table-container'), 'wrapper');
       const cards = [...cardRoot.querySelectorAll(measuredCase === 'fixed-asset' ? '.fixed-asset-card' : '.bookkeeping-record')];

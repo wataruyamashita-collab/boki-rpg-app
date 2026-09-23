@@ -38,7 +38,7 @@ assert(runner.includes('headerHorizontalChrome,cellHorizontalChrome,inputChrome,
 assert(runner.includes('editableAnswerWidth > inputInnerWidth + 0.5'), 'editable fit compares text against the actual input inner width with browser tolerance');
 const cardStart = runner.indexOf('if (cardRoot) {'), cardEnd = runner.indexOf('const table = requireElement', cardStart);
 const cardBranch = runner.slice(cardStart, cardEnd);
-assert(runner.includes("const cardRoot = document.querySelector(measuredCase === 'fixed-asset' ? '.fixed-asset-ledger' : '.bookkeeping-form');"), 'the expected-answer card path covers both fixed-asset and bookkeeping cards');
+assert(runner.includes("const cardRoot = isJournalBook ? null : document.querySelector(measuredCase === 'fixed-asset' ? '.fixed-asset-ledger' : '.bookkeeping-form');"), 'the expected-answer card path covers fixed-asset and bookkeeping cards while journal-book stays on its formal table path');
 assert(cardBranch.includes('window.visualHarness.representativeControl(key)') && cardBranch.includes('requiredTextWidth(control, editableAnswers)'), 'card controls measure the exact expected answer using the rendered control font');
 assert(cardBranch.includes('editableAnswerWidth > inputInnerWidth + 0.5'), 'card expected-answer width is compared with usable input inner width');
 assert(cardBranch.includes('answerSource:representative?.answerSource || null') && cardBranch.includes('editableAnswerWidth,inputPadding,inputChrome,inputInnerWidth') && cardBranch.includes('editableFont:'), 'card visual evidence preserves answer source, expected-width, usable-width, chrome, and font diagnostics');
