@@ -15610,7 +15610,7 @@ const answerLabel = Object.freeze({
   unitPrice:'払出単価', currentDepreciation:'当期減価償却費', closingBookValue:'期末帳簿価額', answer:'答え',
   quantity:'数量', life:'耐用年数', folio:'元丁', date:'日付', acquisitionCost:'取得原価', openingAccumulated:'期首減価償却累計額', amount:'金額', description:'摘要', asset:'固定資産',
   item:'項目', recorded:'帳簿の記録', evidence:'証憑', transaction:'取引内容', account:'勘定科目', debit:'借方', credit:'貸方', balance:'残高', before:'整理前金額', tbDebit:'試算表借方', tbCredit:'試算表貸方',
-  acquisitionDate:'取得日', residualValue:'残存価額', method:'償却方法', annualDepreciation:'年間減価償却額', months:'使用月数', closingAccumulated:'期末減価償却累計額', disposalBookValue:'売却時帳簿価額', disposalLoss:'固定資産売却損'
+  acquisitionDate:'取得日', residualValue:'残存価額', method:'償却方法', annualDepreciation:'1年分の減価償却費', months:'使用月数', closingAccumulated:'期末減価償却累計額', disposalBookValue:'売却時帳簿価額', disposalLoss:'固定資産売却損'
 });
 const getDisplayLabel = field => {
   const key = String(field);

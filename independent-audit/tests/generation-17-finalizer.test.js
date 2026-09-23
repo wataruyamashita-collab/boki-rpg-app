@@ -1,0 +1,11 @@
+'use strict';
+const assert=require('assert'),childProcess=require('child_process'),crypto=require('crypto'),fs=require('fs');
+const core=require('../../scripts/qa/audit-core'),lifecycle=require('../../scripts/qa/phase-b-lifecycle'),finalizer=require('../../scripts/qa/finalize-phase-b-generation-17');
+let count=0;const test=(n,f)=>{f();count++;console.log(`ok ${count} - ${n}`);},digest=b=>crypto.createHash('sha256').update(b).digest('hex');
+const authorities=lifecycle.generationAuthorities(),g16=authorities.find(x=>x.document.generation===16),g17=authorities.find(x=>x.document.generation===17);
+test('Generation 17 is discoverable',()=>assert(g17));
+test('Generation 17 predecessor is exact Generation 16',()=>assert.deepStrictEqual(g17.document.predecessor,lifecycle.identity(g16.document)));
+test('committed Generation 17 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+test('duplicate Generation 17 issuance fails',()=>assert.notStrictEqual(childProcess.spawnSync(process.execPath,['scripts/qa/finalize-phase-b-generation-17.js'],{cwd:core.ROOT,encoding:'utf8'}).status,0));
+test('historical authority raw SHA values are pinned',()=>assert.deepStrictEqual(finalizer.authorityPaths.map(f=>digest(fs.readFileSync(f))),finalizer.expectedAuthoritySha256));
+console.log(`Generation 17 finalizer regressions: ${count}/${count}`);

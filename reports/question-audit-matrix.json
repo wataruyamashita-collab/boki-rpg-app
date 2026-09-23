@@ -14044,8 +14044,8 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:de5f5d8b4ab7ada8b29c6bf84330c46f0508211e7b58200ee93a8b1b898f77ce",
-      "answerSchemaHash": "sha256:5dd98f1f838ea810b4e0db2798bcab18227d50f989925b05d1cbc002ec4f1f2f"
+      "sourceHash": "sha256:bbf6602d5ad2bb8be45c8f25617179712d1383c080df660d71aa69bca56300a4",
+      "answerSchemaHash": "sha256:74b1c728481c37a0f6d523ae226ce9b0a204c43cd88dd3dd043c70a10f18ec39"
     },
     {
       "id": "L031",
