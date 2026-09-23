@@ -66,6 +66,20 @@
     byId(id) { return this.document.getElementById(id); }
     tableLabel(value) { return TABLE_LABELS[value] || value; }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
+    showNotice(message, options = {}) {
+      const dialog = this.byId('app-notice-dialog'); if (!dialog) return false;
+      const title = this.byId('app-notice-title'); const body = this.byId('app-notice-message');
+      const cancel = this.byId('app-notice-cancel'); const confirm = this.byId('app-notice-confirm');
+      title.textContent = options.title || 'お知らせ'; body.textContent = String(message ?? '');
+      confirm.textContent = options.confirmLabel || '閉じる';
+      cancel.hidden = !options.cancelLabel; cancel.textContent = options.cancelLabel || '戻る';
+      const close = () => { if (typeof dialog.close === 'function' && dialog.open) dialog.close(); else dialog.removeAttribute('open'); };
+      cancel.onclick = close;
+      confirm.onclick = () => { close(); if (typeof options.onConfirm === 'function') options.onConfirm(); };
+      if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); }
+      else dialog.setAttribute('open', '');
+      confirm.focus?.(); return true;
+    }
     updateRpg(rpg) {
       const status = this.byId('player-status');
       const items = [

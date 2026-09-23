@@ -191,14 +191,14 @@
     }
     showMode(mode) {
       if (mode !== 'exam' && this.hasActiveExamSession()) {
-        root.alert?.('模試中は他のモードへ移動できません。先に試験を終了して採点してください。');
+        this.view.showNotice('模試中は他のモードへ移動できません。先に試験を終了して採点してください。', { title:'模試を継続中です' });
         return false;
       }
       this.document.body?.classList?.remove('placement-active');
       if (mode === 'exam') {
         const unmet = this.unmetExamPrerequisites();
         if (unmet.length) {
-          root.alert?.(`模試の前に基礎演習を完了してください（残り${unmet.length}問）。`);
+          this.view.showNotice(`模試の前に基礎演習を完了してください（残り${unmet.length}問）。`, { title:'模試を開始できません' });
           return false;
         }
       }
@@ -317,13 +317,21 @@
     }
     startExamTimer() { this.stopExamTimer(); this.updateExamStatus(); this.examTimerId = root.setInterval?.(() => this.updateExamStatus(), 1000) || null; }
     stopExamTimer() { if (this.examTimerId !== null) root.clearInterval?.(this.examTimerId); this.examTimerId = null; }
-    finishExam(force, now = Date.now()) {
+    finishExam(force, now = Date.now(), confirmed = false) {
       const session = this.model.state.examSession; if (!session) return false;
       if (session.status === 'FINISHING' || session.status === 'FINISHED') return false;
       const timedOut = force || now >= session.endAt || session.status === 'EXPIRED';
       const unanswered = this.unansweredExamIds();
-      if (!timedOut && unanswered.length) { root.alert?.(`未回答が${unanswered.length}問あります。全問回答後に採点してください。`); this.start(unanswered[0]); return false; }
-      if (!timedOut && root.confirm && !root.confirm('全15問の回答を終了し、採点しますか？')) return false;
+      if (!timedOut && unanswered.length) { this.view.showNotice(`未回答が${unanswered.length}問あります。全問回答後に採点してください。`, { title:'未回答があります' }); this.start(unanswered[0]); return false; }
+      if (!timedOut && !confirmed) {
+        this.view.showNotice('全15問の回答を終了し、採点しますか？', {
+          title:'模試を採点しますか？',
+          cancelLabel:'戻る',
+          confirmLabel:'採点する',
+          onConfirm:() => this.finishExam(false, Date.now(), true)
+        });
+        return false;
+      }
       session.status = 'FINISHING';
       const previousProgress = { level:this.rpg.level, role:this.rpg.role };
       const earned = session.ids.reduce((sum, id, index) => sum + (session.scores[id]?.ratio || 0) * EXAM_POINTS[index], 0);

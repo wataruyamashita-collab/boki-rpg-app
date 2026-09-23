@@ -632,7 +632,7 @@ assert.strictEqual(
 );
 
 for (const targetMode of ['story','training','review','desk']) {
-  let saves=0,stops=0,renders=0,views=0,domMutations=0,alerts=0;
+  let saves=0,stops=0,renders=0,views=0,domMutations=0,notices=0;
   const guardContext={
     model:{
       state:{mode:'exam',examSession:{...activeModeGuardSession}},
@@ -642,7 +642,7 @@ for (const targetMode of ['story','training','review','desk']) {
     isExamExpired(){return false;},
     stopExamTimer(){stops+=1;},
     renderModes(){renders+=1;},
-    view:{show(){views+=1;}},
+    view:{show(){views+=1;},showNotice(message, options){notices+=1; assert(message.includes('模試中は他のモードへ移動できません')); assert.strictEqual(options.title,'模試を継続中です');}},
     document:{
       body:{classList:{
         remove(){domMutations+=1;},
@@ -652,7 +652,7 @@ for (const targetMode of ['story','training','review','desk']) {
       querySelectorAll(){domMutations+=1;return [];}
     }
   };
-  browserSandbox.window.alert=()=>{alerts+=1;};
+  browserSandbox.window.alert=()=>{throw new Error('browser alert must not be used by the exam mode guard');};
 
   assert.strictEqual(
     examPrototype.showMode.call(guardContext,targetMode),
@@ -665,7 +665,7 @@ for (const targetMode of ['story','training','review','desk']) {
     `RUNNING模試中の${targetMode}要求でmodeを書き換えない`
   );
   assert.deepStrictEqual(
-    [saves,stops,renders,views,domMutations,alerts],
+    [saves,stops,renders,views,domMutations,notices],
     [0,0,0,0,0,1],
     `RUNNING模試中の${targetMode}拒否ではsave・timer停止・render・view・DOM変更を行わない`
   );
@@ -774,11 +774,12 @@ assert.strictEqual(examPrototype.unansweredExamIds.call({ model: { state: { exam
 let warned = ''; let redirected = '';
 const incompleteExam = {
   model: { state: { examSession: examState } }, unansweredExamIds: examPrototype.unansweredExamIds,
-  start(id) { redirected = id; }, startExamTimer() {}, questions: {}, rpg: {}, view: {}
+  start(id) { redirected = id; }, startExamTimer() {}, questions: {}, rpg: {},
+  view: { showNotice(message, options) { warned = message; assert.strictEqual(options.title, '未回答があります'); } }
 };
-browserSandbox.window.alert = message => { warned = message; };
+browserSandbox.window.alert = () => { throw new Error('browser alert must not be used for incomplete exam warning'); };
 assert.strictEqual(examPrototype.finishExam.call(incompleteExam, false, 2), false, 'CASE 3: 1問でも未回答なら終了を拒否する');
-assert(warned.includes('未回答が13問') && redirected === 'Q1', 'CASE 3: 未回答数を警告し最初の未回答へ移動する');
+assert(warned.includes('未回答が13問') && redirected === 'Q1', 'CASE 3: アプリ内通知で未回答数を示し最初の未回答へ移動する');
 const completeScores = Object.fromEntries(fifteenIds.map(id => [id, { correct: true, earned: 1, possible: 1, ratio: 1 }]));
 const completedSession = { ids: fifteenIds, startedAt: 1, endAt: 3600001, scores: completeScores };
 let resultScore; let examResultFocused=false; const completeExam = {
@@ -786,8 +787,14 @@ let resultScore; let examResultFocused=false; const completeExam = {
   unansweredExamIds: examPrototype.unansweredExamIds, questions: Object.fromEntries(fifteenIds.map(id => [id, { category: id }])),
   rpg: { recordMastery() {} }, stopExamTimer() {}, view: { examResult(review) { resultScore = { correct: review.passed, earned: review.points, possible: 100 }; }, show() {} }, document: { body: { classList: { remove() {} } }, getElementById(id){return id==='result-status'?{focus(){examResultFocused=true;}}:null;} }
 };
-browserSandbox.window.confirm = () => true;
-assert.strictEqual(examPrototype.finishExam.call(completeExam, false, 2), true, 'CASE 4: 全15問回答後に初めて正式採点する');
+browserSandbox.window.confirm = () => { throw new Error('browser confirm must not be used for exam completion'); };
+let confirmOptions;
+completeExam.view.showNotice = (message, options) => { assert.strictEqual(message, '全15問の回答を終了し、採点しますか？'); confirmOptions = options; };
+assert.strictEqual(examPrototype.finishExam.call(completeExam, false, 2), false, 'CASE 4A: 全15問回答後はアプリ内確認を表示して即採点しない');
+assert.strictEqual(confirmOptions.title, '模試を採点しますか？');
+assert.strictEqual(confirmOptions.cancelLabel, '戻る');
+assert.strictEqual(confirmOptions.confirmLabel, '採点する');
+assert.strictEqual(examPrototype.finishExam.call(completeExam, false, 2, true), true, 'CASE 4B: アプリ内確認後に正式採点する');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(resultScore)), { correct: true, earned: 100, possible: 100 }, '明示配点の合計を100点として採点する');
 assert.strictEqual(examResultFocused,true,'最終模試結果の表示後に結果statusへフォーカスする');
 const examIds = browserSandbox.window.AppController.prototype.buildExamIds.call(examAudit);

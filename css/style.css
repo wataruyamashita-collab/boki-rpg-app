@@ -207,6 +207,13 @@ button.toc-question:hover { color: #fff; background: var(--accent-color); }
 }
 .game-over-dialog { width: min(88vw, 420px); padding: 20px; border: 0; border-radius: 10px; color: var(--primary-color); }
 .game-over-dialog::backdrop { background: rgba(23, 32, 42, .65); }
+.app-notice-dialog { width: min(88vw, 460px); box-sizing: border-box; padding: 20px; border: 0; border-radius: 12px; color: var(--primary-color); box-shadow: 0 24px 80px #0006; }
+.app-notice-dialog::backdrop { background: rgba(23, 32, 42, .65); }
+.app-notice-dialog h2 { margin-top: 0; font-size: 1.1rem; }
+.app-notice-dialog p { line-height: 1.6; }
+.app-notice-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.app-notice-actions button { width: auto; min-width: 96px; margin: 0; }
+.app-notice-actions button[hidden] { display: none; }
 button.secondary-button { color: var(--accent-color); background: #fff; border: 1px solid var(--accent-color); }
 button.secondary-button:hover { color: #fff; }
 
