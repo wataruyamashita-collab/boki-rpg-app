@@ -102,8 +102,10 @@ assert(view.includes("cell.style.setProperty('--column-input-ch'") && view.inclu
 assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
 for (const viewport of [320, 375, 390, 430]) assert(fixedAssetMinimum > viewport && /overflow-x:\s*auto/.test(css), `${viewport}px: fixed-asset content remains wider than its viewport and horizontally scrollable`);
-const accountWidth = Number(css.match(/\.journal-row\s*\{[^}]*minmax\((\d+)px, 3fr\)/s)?.[1]);
-assert(accountWidth >= 240 && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'desktop journal grid integrity remains protected while its instruction stays outside the scroller');
+const desktopJournalMatch = css.match(/\.journal-row\s*\{[^}]*grid-template-columns:\s*(\d+)px\s+(\d+)px\s+(\d+)px\s+(\d+)px/s);
+assert(desktopJournalMatch, 'desktop journal uses explicit compact accounting columns');
+assert.deepStrictEqual(desktopJournalMatch.slice(1).map(Number), [200,120,200,120], 'desktop journal columns remain compact and symmetric');
+assert(/\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'journal grid remains horizontally recoverable when content exceeds its viewport');
 
 const journalQuestions = questions.filter(question => question.type === 'journal');
 const journalAccounts = journalQuestions.flatMap(question =>
@@ -120,23 +122,29 @@ assert.strictEqual(longestJournalAccountGlyphs, 12, 'canonical journal account m
 assert.strictEqual(longestJournalAmountGlyphs, 9, 'canonical formatted journal amount maximum remains 9 glyphs');
 
 const mobileJournalMatch = css.match(
-  /@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*\{\s*grid-template-columns:\s*minmax\((\d+)px,\s*3fr\)\s*minmax\((\d+)px,\s*2fr\)\s*minmax\((\d+)px,\s*3fr\)\s*minmax\((\d+)px,\s*2fr\)/s
+  /@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*\{\s*grid-template-columns:\s*(\d+)px\s+(\d+)px\s+(\d+)px\s+(\d+)px/s
 );
 assert(mobileJournalMatch, 'mobile journal sizing rule is present');
 
 const mobileAccountWidth = Number(mobileJournalMatch[1]);
 const mobileAmountWidth = Number(mobileJournalMatch[2]);
 
-assert.strictEqual(mobileAccountWidth, 232, 'mobile journal account width uses the audited 12-glyph budget');
-assert.strictEqual(mobileAmountWidth, 112, 'mobile journal amount width uses the audited 9-glyph budget');
-assert(mobileAccountWidth >= longestJournalAccountGlyphs * 16 + 40, 'mobile account control preserves text plus native select chrome');
+assert.strictEqual(mobileAccountWidth, 184, 'mobile journal account column avoids the former over-wide 232px floor');
+assert.strictEqual(mobileAmountWidth, 112, 'mobile journal amount width preserves the audited 9-glyph budget');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('仕入'), 16, 'short account names retain the normal readable size');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('クレジット売掛金'), 15, 'six-to-eight glyph accounts compact one step');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('ABCDEFGHI'), 14, 'nine-to-ten glyph accounts compact two steps');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('法人税、住民税及び事業税'), 13, 'the canonical 12-glyph maximum uses the guarded minimum size');
+assert(mobileAccountWidth >= longestJournalAccountGlyphs * 13 + 28, '184px still budgets the longest account at the guarded 13px minimum plus native select chrome');
 assert(mobileAmountWidth >= longestJournalAmountGlyphs * 10 + 22, 'mobile amount control preserves the longest formatted amount');
+assert(/\.journal-row select\s*\{[^}]*text-align:\s*center[^}]*text-align-last:\s*center[^}]*var\(--journal-account-font-size,\s*16px\)/s.test(css), 'selected account names are centered and use adaptive display sizing');
+assert(/\.journal-row select:focus,[\s\S]*?\.journal-row select:active\s*\{[^}]*font-size:\s*16px/s.test(css), 'focused or tapped account selects return to 16px to prevent iPhone zoom');
 
 const mobilePairWidth = mobileAccountWidth + 2 + mobileAmountWidth;
+assert(mobilePairWidth <= 320 - 20, '320px iPhone can show one debit account-and-amount pair without horizontal clipping');
 assert(mobilePairWidth <= 375 - 20, '375px iPhone shows one debit account-and-amount pair without horizontal clipping');
 assert(mobilePairWidth <= 390 - 20, '390px iPhone shows one debit account-and-amount pair without horizontal clipping');
 assert(mobilePairWidth <= 430 - 20, '430px iPhone shows one debit account-and-amount pair without horizontal clipping');
-assert(mobilePairWidth > 320 - 20 && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(css), '320px retains intentional grid scrolling instead of crushing fields');
 const coachingHiddenRule = css.match(/\.confidence-selector\[hidden\],\s*\.question-actions \.save-button\[hidden\],\s*#save-status\[hidden\]\s*\{([^}]*)\}/)?.[1] || '';
 assert(
   /display:\s*none\s*!important/.test(coachingHiddenRule),

@@ -348,14 +348,15 @@ button.secondary-button:hover { color: #fff; }
 
 .journal-header {
   display: grid;
-  grid-template-columns: minmax(240px, 3fr) minmax(120px, 2fr) minmax(240px, 3fr) minmax(120px, 2fr);
+  grid-template-columns: 200px 120px 200px 120px;
   gap: 4px;
   margin-bottom: 4px;
   color: #566573;
   font-size: 0.8rem;
   font-weight: bold;
   text-align: center;
-  min-width: 620px;
+  width: max-content;
+  min-width: 0;
 }
 
 .correction-entry { width: 100%; min-width: 620px; overflow-x: auto; }
@@ -394,19 +395,20 @@ button.secondary-button:hover { color: #fff; }
 
 .journal-row {
   display: grid;
-  grid-template-columns: minmax(240px, 3fr) minmax(120px, 2fr) minmax(240px, 3fr) minmax(120px, 2fr);
+  grid-template-columns: 200px 120px 200px 120px;
   align-items: center;
   gap: 4px;
   margin-bottom: 8px;
   padding-bottom: 8px;
   border-bottom: 1px dashed #ccc;
-  width: 100%;
-  min-width: 620px;
+  width: max-content;
+  min-width: 0;
 }
 
 .journal-row > .credit-account { border-left-width: 2px; border-left-color: #7f8c8d; }
-.journal-row select { overflow: visible; text-overflow: clip; white-space: nowrap; }
-.journal-row select:focus { text-overflow: clip; outline: 3px solid rgba(52, 152, 219, .25); outline-offset: 1px; }
+.journal-row select { overflow: visible; text-overflow: clip; white-space: nowrap; text-align: center; text-align-last: center; font-size: var(--journal-account-font-size, 16px); }
+.journal-row select:focus,
+.journal-row select:active { font-size: 16px; text-overflow: clip; outline: 3px solid rgba(52, 152, 219, .25); outline-offset: 1px; }
 
 select, .amount-input {
   min-width: 0;
@@ -440,7 +442,7 @@ select, .amount-input {
 
   .journal-header,
   .journal-row {
-    grid-template-columns: minmax(232px, 3fr) minmax(112px, 2fr) minmax(232px, 3fr) minmax(112px, 2fr);
+    grid-template-columns: 184px 112px 184px 112px;
     gap: 2px;
   }
 
@@ -456,10 +458,12 @@ select, .amount-input {
   .journal-row select,
   .journal-row .amount-input {
     padding: 8px 2px;
-    /* WebKitのフォーカス自動ズームを避け、列幅と字間でコンパクトさを保つ。 */
-    font-size: 16px;
     letter-spacing: -.035em;
   }
+
+  .journal-row .amount-input { font-size: 16px; }
+  .journal-row select:focus,
+  .journal-row select:active { font-size: 16px; }
 
   .correction-row .table-input {
     padding: 8px 2px;

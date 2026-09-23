@@ -26,6 +26,13 @@
   };
   const yen = value => Number(value).toLocaleString('ja-JP');
   const GENERIC_AMOUNT_CONTENT_GLYPHS = 9;
+  const journalAccountFontSize = value => {
+    const glyphs = [...String(value ?? '').trim()].length;
+    if (!glyphs || glyphs <= 5) return 16;
+    if (glyphs <= 8) return 15;
+    if (glyphs <= 10) return 14;
+    return 13;
+  };
   const genericTableInputCharacters = question => {
     const widths=new Map(); let inputIndex=0;
     for(const row of question.table?.rows||[]) Object.values(row).forEach((value,columnIndex)=>{
@@ -55,6 +62,7 @@
     }
     static genericTableInputCharacters(question) { return genericTableInputCharacters(question); }
     static normalizeShortDateInput(value) { return normalizeShortDateInput(value); }
+    static journalAccountFontSize(value) { return journalAccountFontSize(value); }
     byId(id) { return this.document.getElementById(id); }
     tableLabel(value) { return TABLE_LABELS[value] || value; }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
@@ -153,8 +161,14 @@
       picker.addEventListener('change', () => { const match = picker.value.match(/^\d{4}-(\d{2})-(\d{2})$/u); if (!match) return; input.value = `${Number(match[1])}/${Number(match[2])}`; const EventCtor = input.ownerDocument?.defaultView?.Event || root.Event; if (EventCtor) { input.dispatchEvent(new EventCtor('input', { bubbles:true })); input.dispatchEvent(new EventCtor('change', { bubbles:true })); } });
       control.append(icon, picker); return control;
     }
+    updateJournalAccountPresentation(select) {
+      const value = select.value || '';
+      select.style.setProperty('--journal-account-font-size', `${journalAccountFontSize(value)}px`);
+      select.dataset.accountGlyphs = String([...String(value)].length);
+    }
     updateSelectTitle(select) {
       select.title = select.selectedOptions[0]?.textContent || '';
+      if (select.classList?.contains('debit-account') || select.classList?.contains('credit-account')) this.updateJournalAccountPresentation(select);
     }
     renderJournal(question, draft = {}, mode = 'story') {
       const container = this.byId('journal-container'); container.replaceChildren();
