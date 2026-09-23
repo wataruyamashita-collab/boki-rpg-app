@@ -904,10 +904,14 @@ assert(viewSource.includes("input = this.document.createElement('select'); input
 assert(/\.correction-row\s*\{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\) minmax\(120px, 2fr\) minmax\(240px, 3fr\) minmax\(120px, 2fr\)/s.test(cssSource), '記帳訂正の借方科目・金額と貸方科目・金額を横一列にする');
 assert(viewSource.includes("this.renderJournalBook(question, draft, mode)"), '仕訳帳形式は学習モードを維持して専用帳票で表示する');
 assert(viewSource.includes("['日付', '摘要', '元丁', '借方', '貸方']"), '仕訳帳をTAC標準の5列（日付・摘要・元丁・借方・貸方）で表示する');
-assert(viewSource.includes("select.className = 'table-input journal-book-account'") && viewSource.includes("makeShortDateInput('table-input journal-book-date'") && viewSource.includes('dateCell.rowSpan = 2'), '仕訳帳は日付入力と摘要欄の勘定科目5択を持ち、1取引を借方・貸方の2行で表示する');
+assert(viewSource.includes("select.className = 'table-input journal-book-account'") && viewSource.includes("makeShortDateInput('table-input journal-book-date'") && viewSource.includes("'月/日'") && viewSource.includes('dateCell.rowSpan = 2'), '仕訳帳は中立な月/日入力と摘要欄の勘定科目5択を持ち、1取引を借方・貸方の2行で表示する');
 assert(controllerSource.includes(".journal-row select, .correction-row select, .journal-book-account"), '仕訳帳の勘定科目選択もchange時に下書き保存する');
 assert(/\.journal-book-entry\s*\{[^}]*table-layout:\s*fixed/s.test(cssSource), '仕訳帳の借方列と貸方列を同じ行に固定する');
 assert(/\.journal-book-entry \.table-input\s*\{[^}]*display:\s*block/s.test(cssSource), 'WebKitでも仕訳帳入力のinline baseline余白を発生させない');
+assert(viewSource.includes('元丁：総勘定元帳の転記先を示す番号') && viewSource.includes('横にスクロールして借方・貸方を入力できます。'), '仕訳帳に元丁の意味と横スクロール操作を明示する');
+assert(viewSource.includes("context.className = 'journal-book-amount-context'") && viewSource.includes("amountContext.textContent = name"), '借方・貸方金額欄に選択済み勘定科目の文脈を残す');
+assert(/\.journal-book-guidance\s*\{[^}]*position:\s*sticky[^}]*left:\s*0/s.test(cssSource), '仕訳帳の補助説明は横スクロールしても左端に残す');
+assert(/@media \(max-width:\s*700px\)\s*\{\s*\.journal-book-scroll-note\s*\{[^}]*display:\s*block/s.test(cssSource), '横スクロール案内は狭い画面だけに表示する');
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
 assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');
 assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');

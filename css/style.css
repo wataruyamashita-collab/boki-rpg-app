@@ -395,6 +395,10 @@ button.secondary-button:hover { color: #fff; }
 .correction-row .table-input { width: 100%; min-width: 0; box-sizing: border-box; }
 
 .journal-book-scroll { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+.journal-book-guidance { position: sticky; left: 0; z-index: 2; width: 100%; box-sizing: border-box; margin: 0 0 8px; padding: 8px 10px; border: 1px solid #d5dce0; border-radius: 8px; background: #f8fafb; color: #44515c; }
+.journal-book-guidance p { margin: 0; }
+.journal-book-folio-help { font-size: .78rem; line-height: 1.4; }
+.journal-book-scroll-note { display: none; margin-top: 3px !important; font-size: .76rem; line-height: 1.4; font-weight: 700; }
 .journal-book-entry { width: max(100%, 680px); border-collapse: collapse; table-layout: fixed; }
 .journal-book-entry th,
 .journal-book-entry td { padding: 6px 4px; border: 1px solid #bdc3c7; text-align: center; vertical-align: middle; }
@@ -410,7 +414,9 @@ button.secondary-button:hover { color: #fff; }
 .journal-book-account { min-width: 0; font-size: 16px; }
 .journal-book-credit-row .journal-book-account { padding-left: 18px; }
 .journal-book-folio-cell .folio-input { width: 100%; min-width: 0; text-align: center; font-variant-numeric: tabular-nums; }
-.journal-book-amount-cell .bookkeeping-input-line { justify-content: flex-end; }
+.journal-book-amount-cell .bookkeeping-input-line { justify-content: flex-end; gap: 4px; }
+.journal-book-amount-context { flex: 0 1 4.5em; max-width: 4.5em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #566573; font-size: .7rem; line-height: 1; text-align: left; }
+@media (max-width: 700px) { .journal-book-scroll-note { display: block; } }
 .journal-book-empty-cell { background: #fafafa; }
 
 .journal-row {

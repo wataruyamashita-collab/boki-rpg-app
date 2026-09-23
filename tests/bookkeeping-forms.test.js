@@ -60,8 +60,10 @@ const journalBookEnd = view.indexOf('    renderBookkeepingForm(question', journa
 const journalBookRenderer = view.slice(journalBookStart, journalBookEnd);
 assert(journalBookRenderer.includes("['日付', '摘要', '元丁', '借方', '貸方']"), '仕訳帳はTAC標準5列を使う');
 assert(journalBookRenderer.includes("select.className = 'table-input journal-book-account'") && journalBookRenderer.includes('accountChoices(question, question.answer.cells[cellId], mode)'), '摘要欄の勘定科目は5択で出題する');
-assert(journalBookRenderer.includes("makeShortDateInput('table-input journal-book-date'") && journalBookRenderer.includes('dateCell.rowSpan = 2'), '仕訳帳の日付は短縮日付入力として借方・貸方2行にまたがる');
+assert(journalBookRenderer.includes("makeShortDateInput('table-input journal-book-date'") && journalBookRenderer.includes("'月/日'") && journalBookRenderer.includes('dateCell.rowSpan = 2'), '仕訳帳の日付は問題固有の日付を誤示しない月/日プレースホルダで借方・貸方2行にまたがる');
 assert(journalBookRenderer.includes("credit.className = 'journal-book-credit-row'"), '1取引を借方行・貸方行の2行で記帳する');
+assert(journalBookRenderer.includes('元丁：総勘定元帳の転記先を示す番号') && journalBookRenderer.includes('横にスクロールして借方・貸方を入力できます。'), '元丁の意味とスマホ横スクロールを帳票内で案内する');
+assert(journalBookRenderer.includes("context.className = 'journal-book-amount-context'") && journalBookRenderer.includes("amountContext.textContent = name"), '右側の金額欄でも選択済み勘定科目を文脈表示する');
 const rendererStart = view.indexOf('    renderBookkeepingForm(question');
 const renderer = view.slice(rendererStart, view.indexOf('    accountType(account)', rendererStart));
 assert(renderer.includes('metadata.semanticType') && renderer.includes('makeShortDateInput') && renderer.includes('makeDatePicker') && renderer.includes("semanticType === 'folio'") && renderer.includes("semanticType === 'account'"), 'field-level semantics choose date, folio, account, and optional calendar affordances');

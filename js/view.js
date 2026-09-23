@@ -248,30 +248,37 @@
     renderJournalBook(question, draft = {}, mode = 'story') {
       const container = this.byId('table-container'); container.replaceChildren();
       container.classList.add('journal-book-scroll');
+      const guidance = this.document.createElement('div'); guidance.className = 'journal-book-guidance';
+      const folioHelp = this.document.createElement('p'); folioHelp.id = 'journal-book-folio-help'; folioHelp.className = 'journal-book-folio-help'; folioHelp.textContent = '元丁：総勘定元帳の転記先を示す番号';
+      const scrollHelp = this.document.createElement('p'); scrollHelp.className = 'journal-book-scroll-note'; scrollHelp.textContent = '横にスクロールして借方・貸方を入力できます。';
+      guidance.append(folioHelp, scrollHelp); container.append(guidance);
       const table = this.document.createElement('table'); table.className = 'journal-book-entry';
       const head = table.createTHead().insertRow();
       ['日付', '摘要', '元丁', '借方', '貸方'].forEach(label => {
         const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; head.append(th);
       });
       const body = table.createTBody();
-      const accountControl = cellId => {
+      const accountControl = (cellId, amountContext) => {
         const label = this.cellLabel(question, cellId);
         const select = this.document.createElement('select'); select.className = 'table-input journal-book-account'; select.setAttribute('aria-label', label);
         select.append(new Option('--勘定科目--', ''));
         root.AppController.accountChoices(question, question.answer.cells[cellId], mode).forEach(name => select.append(new Option(name, name)));
         select.value = draft.cells?.[cellId] ?? ''; select.dataset.cellId = cellId; select.dataset.inputType = 'account'; select.dataset.semanticType = 'account';
+        const updateAmountContext = () => { const name = select.value || '科目'; amountContext.textContent = name; amountContext.title = select.value || '勘定科目を選択してください'; };
+        select.addEventListener('change', updateAmountContext); updateAmountContext();
         this.updateSelectTitle(select); return select;
       };
       const folioControl = cellId => {
         const label = this.cellLabel(question, cellId); const input = this.makeText('table-input folio-input', label, draft.cells?.[cellId] ?? '');
-        input.dataset.cellId = cellId; input.dataset.inputType = 'folio'; input.dataset.semanticType = 'folio'; return input;
+        input.dataset.cellId = cellId; input.dataset.inputType = 'folio'; input.dataset.semanticType = 'folio'; input.setAttribute('aria-describedby', folioHelp.id); return input;
       };
       const amountControl = cellId => {
         const label = this.cellLabel(question, cellId); const input = this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[cellId] ?? '');
         input.dataset.cellId = cellId; input.dataset.inputType = 'amount'; input.dataset.semanticType = 'amount'; return input;
       };
-      const appendAmount = (cell, input) => {
-        const line = this.document.createElement('span'); line.className = 'bookkeeping-input-line'; line.append(input);
+      const amountContext = () => { const context = this.document.createElement('span'); context.className = 'journal-book-amount-context'; context.setAttribute('aria-hidden', 'true'); context.textContent = '科目'; return context; };
+      const appendAmount = (cell, input, context) => {
+        const line = this.document.createElement('span'); line.className = 'bookkeeping-input-line'; line.append(context, input);
         const unit = this.document.createElement('span'); unit.className = 'bookkeeping-unit'; unit.textContent = '円'; line.append(unit); cell.append(line);
       };
       for (let index = 1; question.table.inputCells.includes(`d${index}Account`); index += 1) {
@@ -279,18 +286,20 @@
         const dateLabel = this.cellLabel(question, dateId);
         const debit = body.insertRow(); debit.className = 'journal-book-transaction-start';
         const dateCell = debit.insertCell(); dateCell.className = 'journal-book-date-cell'; dateCell.rowSpan = 2;
-        const dateInput = this.makeShortDateInput('table-input journal-book-date', dateLabel, draft.cells?.[dateId] ?? '', '例：4/3');
+        const dateInput = this.makeShortDateInput('table-input journal-book-date', dateLabel, draft.cells?.[dateId] ?? '', '月/日');
         dateInput.dataset.cellId = dateId; dateInput.dataset.inputType = 'date'; dateInput.dataset.semanticType = 'date'; dateCell.append(dateInput);
-        const debitSummary = debit.insertCell(); debitSummary.className = 'journal-book-summary-cell'; debitSummary.append(accountControl(`d${index}Account`));
+        const debitContext = amountContext();
+        const debitSummary = debit.insertCell(); debitSummary.className = 'journal-book-summary-cell'; debitSummary.append(accountControl(`d${index}Account`, debitContext));
         const debitFolio = debit.insertCell(); debitFolio.className = 'journal-book-folio-cell'; debitFolio.append(folioControl(`d${index}Ref`));
-        const debitAmount = debit.insertCell(); debitAmount.className = 'journal-book-amount-cell'; appendAmount(debitAmount, amountControl(`d${index}Amount`));
+        const debitAmount = debit.insertCell(); debitAmount.className = 'journal-book-amount-cell'; appendAmount(debitAmount, amountControl(`d${index}Amount`), debitContext);
         const debitBlank = debit.insertCell(); debitBlank.className = 'journal-book-empty-cell'; debitBlank.setAttribute('aria-hidden', 'true');
 
         const credit = body.insertRow(); credit.className = 'journal-book-credit-row';
-        const creditSummary = credit.insertCell(); creditSummary.className = 'journal-book-summary-cell'; creditSummary.append(accountControl(`c${index}Account`));
+        const creditContext = amountContext();
+        const creditSummary = credit.insertCell(); creditSummary.className = 'journal-book-summary-cell'; creditSummary.append(accountControl(`c${index}Account`, creditContext));
         const creditFolio = credit.insertCell(); creditFolio.className = 'journal-book-folio-cell'; creditFolio.append(folioControl(`c${index}Ref`));
         const creditBlank = credit.insertCell(); creditBlank.className = 'journal-book-empty-cell'; creditBlank.setAttribute('aria-hidden', 'true');
-        const creditAmount = credit.insertCell(); creditAmount.className = 'journal-book-amount-cell'; appendAmount(creditAmount, amountControl(`c${index}Amount`));
+        const creditAmount = credit.insertCell(); creditAmount.className = 'journal-book-amount-cell'; appendAmount(creditAmount, amountControl(`c${index}Amount`), creditContext);
       }
       container.append(table);
     }

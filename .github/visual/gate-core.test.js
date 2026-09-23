@@ -72,7 +72,7 @@ assert(codes(fixture).includes('CARD_TOUCH_TARGET_FAILURE'), 'fixed-asset cards 
 {
   const journalBook = base();
   journalBook.case = 'journal-book';
-  journalBook.rows = { inputVisualHeight:44,hasEditableControl:true,headerCellCount:5,controlCount:14 };
+  journalBook.rows = { inputVisualHeight:44,hasEditableControl:true,headerCellCount:5,controlCount:14,journalBookAmountContextCount:4,journalBookFolioHelpCount:1,journalBookScrollNoteVisible:true };
   journalBook.table = { requiresHorizontalScroll:true,horizontalScrollAvailable:true,horizontalOverflow:280,clipped:false };
   assert.deepStrictEqual(codes(journalBook), [], 'formal journal book allows horizontal scrolling while preserving 5 columns and 14 controls');
   journalBook.rows = { ...journalBook.rows,normalRowHeight:62,editableRowHeight:62,expectedNormalRowHeight:59,expectedEditableRowHeight:59 };
@@ -84,6 +84,12 @@ assert(codes(fixture).includes('CARD_TOUCH_TARGET_FAILURE'), 'fixed-asset cards 
   assert(codes(journalBook).includes('JOURNAL_BOOK_COLUMN_STRUCTURE_FAILURE'), 'journal book rejects regression to a 7-column horizontal entry editor');
   journalBook.rows.headerCellCount = 5; journalBook.rows.controlCount = 12;
   assert(codes(journalBook).includes('JOURNAL_BOOK_CONTROL_STRUCTURE_FAILURE'), 'journal book requires two dates plus twelve account/folio/amount controls');
+  journalBook.rows.controlCount = 14; journalBook.rows.journalBookAmountContextCount = 3;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_AMOUNT_CONTEXT_FAILURE'), 'journal book keeps four visible amount/account context labels');
+  journalBook.rows.journalBookAmountContextCount = 4; journalBook.rows.journalBookFolioHelpCount = 0;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_FOLIO_HELP_FAILURE'), 'journal book keeps one visible 元丁 explanation');
+  journalBook.rows.journalBookFolioHelpCount = 1; journalBook.rows.journalBookScrollNoteVisible = false;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_SCROLL_GUIDANCE_FAILURE'), 'journal book mobile gate requires horizontal-scroll guidance');
 }
 for (const cardCase of ['fixed-asset']) {
   const expectedOverflow = base();

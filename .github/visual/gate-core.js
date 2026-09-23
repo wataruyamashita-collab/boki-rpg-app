@@ -78,6 +78,9 @@ function evaluateVisualMetrics(metrics, options = {}) {
     if (!rows.hasEditableControl || Number(rows.inputVisualHeight) < limits.minimumTouchTargetHeight) violations.push({ code:'JOURNAL_BOOK_TOUCH_TARGET_FAILURE', minimum:limits.minimumTouchTargetHeight, actual:rows.inputVisualHeight });
     if (Number(rows.headerCellCount) !== 5) violations.push({ code:'JOURNAL_BOOK_COLUMN_STRUCTURE_FAILURE', expected:5, actual:rows.headerCellCount });
     if (Number(rows.controlCount) !== 14) violations.push({ code:'JOURNAL_BOOK_CONTROL_STRUCTURE_FAILURE', expected:14, actual:rows.controlCount });
+    if (Number(rows.journalBookAmountContextCount) !== 4) violations.push({ code:'JOURNAL_BOOK_AMOUNT_CONTEXT_FAILURE', expected:4, actual:rows.journalBookAmountContextCount });
+    if (Number(rows.journalBookFolioHelpCount) !== 1) violations.push({ code:'JOURNAL_BOOK_FOLIO_HELP_FAILURE', expected:1, actual:rows.journalBookFolioHelpCount });
+    if (!rows.journalBookScrollNoteVisible) violations.push({ code:'JOURNAL_BOOK_SCROLL_GUIDANCE_FAILURE' });
   }
   if (metrics.cardLayout) {
     if (!rows.hasEditableControl || Number(rows.inputVisualHeight) < limits.minimumTouchTargetHeight) violations.push({ code:'CARD_TOUCH_TARGET_FAILURE', minimum:limits.minimumTouchTargetHeight, actual:rows.inputVisualHeight });
