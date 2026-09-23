@@ -37,7 +37,7 @@ assert.strictEqual(root.AppView.normalizeShortDateInput('１２月１日'),'12/1
 assert.strictEqual(root.AppView.normalizeShortDateInput('1332'),'1332','impossible compact date is not fabricated');
 const shortDateHelperStart=view.indexOf('    makeShortDateInput('),shortDateHelperEnd=view.indexOf('    makeDatePicker(',shortDateHelperStart),shortDateHelperSource=view.slice(shortDateHelperStart,shortDateHelperEnd);
 assert(shortDateHelperStart>=0&&shortDateHelperEnd>shortDateHelperStart&&shortDateHelperSource.includes("input.setAttribute('inputmode', 'numeric')"),'semantic date helper specifically requests a numeric-friendly mobile keyboard');
-assert(/\\.date-picker-control:focus-within\\s*\\{[^}]*outline:\\s*3px solid rgba\\(52,\\s*152,\\s*219,\\s*\\.45\\)[^}]*outline-offset:\\s*2px/s.test(css),'visible calendar wrapper exposes child focus without styling only the transparent native input');
+assert(/\.date-picker-control:focus-within\s*\{[^}]*outline:\s*3px solid rgba\(52,\s*152,\s*219,\s*\.45\)[^}]*outline-offset:\s*2px/s.test(css),'visible calendar wrapper exposes child focus without styling only the transparent native input');
 assert(view.includes("picker.value = match ? `2000-")&&view.includes("input.value = `${Number(match[1])}/${Number(match[2])}`"),'calendar year remains helper-only while learner answer stays M/D');
 const fixedRendererSource=view.slice(view.indexOf('renderFixedAssetLedger'),view.indexOf('positionStickyContextColumns'));
 assert(view.includes("unit.textContent = semanticType === 'amount' ? '円' : 'か月'")&&view.includes("label.htmlFor = `fixed-asset-"),'visible labels and external units');
