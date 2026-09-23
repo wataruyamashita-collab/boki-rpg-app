@@ -404,7 +404,7 @@ button.secondary-button:hover { color: #fff; }
 .journal-book-entry th:nth-child(3) { width: 10%; }
 .journal-book-entry th:nth-child(4),
 .journal-book-entry th:nth-child(5) { width: 22%; }
-.journal-book-entry .table-input { width: 100%; min-width: 0; box-sizing: border-box; }
+.journal-book-entry .table-input { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
 .journal-book-transaction-start > td { border-top-width: 2px; border-top-color: #7f8c8d; }
 .journal-book-date-cell { font-variant-numeric: tabular-nums; font-weight: 700; background: #f8fafb; }
 .journal-book-account { min-width: 0; font-size: 16px; }

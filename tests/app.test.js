@@ -907,6 +907,7 @@ assert(viewSource.includes("['日付', '摘要', '元丁', '借方', '貸方']")
 assert(viewSource.includes("select.className = 'table-input journal-book-account'") && viewSource.includes("makeShortDateInput('table-input journal-book-date'") && viewSource.includes('dateCell.rowSpan = 2'), '仕訳帳は日付入力と摘要欄の勘定科目5択を持ち、1取引を借方・貸方の2行で表示する');
 assert(controllerSource.includes(".journal-row select, .correction-row select, .journal-book-account"), '仕訳帳の勘定科目選択もchange時に下書き保存する');
 assert(/\.journal-book-entry\s*\{[^}]*table-layout:\s*fixed/s.test(cssSource), '仕訳帳の借方列と貸方列を同じ行に固定する');
+assert(/\.journal-book-entry \.table-input\s*\{[^}]*display:\s*block/s.test(cssSource), 'WebKitでも仕訳帳入力のinline baseline余白を発生させない');
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');
 assert(html.includes('id="correct-journal"'), '採点結果に正しい仕訳の表示領域を設ける');
 assert(viewSource.includes('this.renderCorrectJournal(question)'), '正解・不正解のどちらでも正しい仕訳を表示する');
