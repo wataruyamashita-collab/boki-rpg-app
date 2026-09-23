@@ -75,6 +75,11 @@ assert(codes(fixture).includes('CARD_TOUCH_TARGET_FAILURE'), 'fixed-asset cards 
   journalBook.rows = { inputVisualHeight:44,hasEditableControl:true,headerCellCount:5,controlCount:14 };
   journalBook.table = { requiresHorizontalScroll:true,horizontalScrollAvailable:true,horizontalOverflow:280,clipped:false };
   assert.deepStrictEqual(codes(journalBook), [], 'formal journal book allows horizontal scrolling while preserving 5 columns and 14 controls');
+  journalBook.rows = { ...journalBook.rows,normalRowHeight:62,editableRowHeight:62,expectedNormalRowHeight:59,expectedEditableRowHeight:59 };
+  assert(!codes(journalBook).includes('ROW_TOO_TALL'), 'WebKitのborder-collapse/rowspan由来3px差は仕訳帳専用4px許容内とする');
+  journalBook.rows.normalRowHeight = 64;
+  assert(codes(journalBook).includes('ROW_TOO_TALL'), '仕訳帳でも4pxを超える行高増加は検知する');
+  journalBook.rows.normalRowHeight = 62;
   journalBook.rows.headerCellCount = 7;
   assert(codes(journalBook).includes('JOURNAL_BOOK_COLUMN_STRUCTURE_FAILURE'), 'journal book rejects regression to a 7-column horizontal entry editor');
   journalBook.rows.headerCellCount = 5; journalBook.rows.controlCount = 12;

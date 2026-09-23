@@ -1,6 +1,6 @@
 'use strict';
 
-const DEFAULTS = Object.freeze({ maximumYearsWidth: 80, maximumCompactHeaderHeight: 48, maximumCompactNormalRowHeight: 48, maximumCompactEditableRowHeight: 50, minimumTouchTargetHeight: 44, maximumMoneyInputCharacters: 9.5, rowRoundingTolerance: 1, browserRoundingTolerance: 0.5, minimumWasteTolerance: 48, wasteRatio: 0.75 });
+const DEFAULTS = Object.freeze({ maximumYearsWidth: 80, maximumCompactHeaderHeight: 48, maximumCompactNormalRowHeight: 48, maximumCompactEditableRowHeight: 50, minimumTouchTargetHeight: 44, maximumMoneyInputCharacters: 9.5, rowRoundingTolerance: 1, journalBookRowLayoutTolerance: 4, browserRoundingTolerance: 0.5, minimumWasteTolerance: 48, wasteRatio: 0.75 });
 
 function evaluateVisualMetrics(metrics, options = {}) {
   const limits = { ...DEFAULTS, ...options };
@@ -84,9 +84,10 @@ function evaluateVisualMetrics(metrics, options = {}) {
     if (!Number(metrics.cards?.count) || metrics.cards?.clipped) violations.push({ code:'CARD_CONTENT_CLIPPED', cards:metrics.cards });
     if (metrics.table?.requiresHorizontalScroll || metrics.table?.horizontalOverflow > 1) violations.push({ code:'CARD_HORIZONTAL_OVERFLOW', overflow:metrics.table.horizontalOverflow });
   }
+  const rowHeightTolerance = metrics.case === 'journal-book' ? limits.journalBookRowLayoutTolerance : limits.rowRoundingTolerance;
   for (const [key, expectedKey] of [['normalRowHeight','expectedNormalRowHeight'],['editableRowHeight','expectedEditableRowHeight']]) {
     const actual = Number(rows[key]), expected = Number(rows[expectedKey]);
-    if (Number.isFinite(actual) && Number.isFinite(expected) && expected > 0 && actual > expected + limits.rowRoundingTolerance) violations.push({ code:'ROW_TOO_TALL', row:key, actual,expected,chrome:{ paddingTop:rows.paddingTop,paddingBottom:rows.paddingBottom,borderTop:rows.borderTop,borderBottom:rows.borderBottom,inputHeight:rows.inputVisualHeight } });
+    if (Number.isFinite(actual) && Number.isFinite(expected) && expected > 0 && actual > expected + rowHeightTolerance) violations.push({ code:'ROW_TOO_TALL', row:key, actual,expected,tolerance:rowHeightTolerance,chrome:{ paddingTop:rows.paddingTop,paddingBottom:rows.paddingBottom,borderTop:rows.borderTop,borderBottom:rows.borderBottom,inputHeight:rows.inputVisualHeight } });
   }
   const stickyColumns = ['description','quantity'].filter(key => metrics.columns?.[key]); let expectedLeft = 0;
   const date = metrics.columns?.date;

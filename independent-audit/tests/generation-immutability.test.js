@@ -20,7 +20,7 @@ const auditPath=path.join(
 );
 
 const authorityBytes=new Map(
-  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]
+  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33]
     .filter(generation=>fs.existsSync(authorityPath(generation)))
     .map(
       generation=>[
@@ -65,15 +65,15 @@ try{
   const generations=authorities.map(
     item=>item.document.generation
   );
-  const generation32Committed=committed(32);
+  const generation33Committed=committed(33);
 
   test(
-    'authority sequence is [2..31] before Generation 32 or [2..32] after commit',
+    'authority sequence is [2..32] before Generation 33 or [2..33] after commit',
     ()=>assert.deepStrictEqual(
       generations,
-      generation32Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]
-        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
+      generation33Committed
+        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33]
+        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]
     )
   );
 
@@ -143,15 +143,15 @@ try{
 
   const documents=authorities.map(item=>item.document);
 
-  const candidate=generation32Committed
+  const candidate=generation33Committed
     ? documents.at(-1)
     : (
-        fs.existsSync(authorityPath(32))
-          ? JSON.parse(fs.readFileSync(authorityPath(32),'utf8'))
+        fs.existsSync(authorityPath(33))
+          ? JSON.parse(fs.readFileSync(authorityPath(33),'utf8'))
           : lifecycle.createCandidate()
       );
 
-  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]){
+  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33]){
     test(
       `duplicate Generation ${generation} is rejected`,
       ()=>{
@@ -169,16 +169,16 @@ try{
   }
 
   test(
-    'stale-predecessor Generation 33 successor is rejected',
+    'stale-predecessor Generation 34 successor is rejected',
     ()=>{
       const skipped=structuredClone(candidate);
-      skipped.generation=33;
+      skipped.generation=34;
       rejectCandidate(skipped,documents);
     }
   );
 
   test(
-    'competing Generation 32 is rejected',
+    'competing Generation 33 is rejected',
     ()=>{
       const fork=structuredClone(candidate);
       fork.auditHash='f'.repeat(64);
@@ -187,7 +187,7 @@ try{
         candidate,
         [
           ...documents.filter(
-            document=>document.generation<32
+            document=>document.generation<33
           ),
           fork
         ]
@@ -196,7 +196,7 @@ try{
   );
 
   test(
-    'broken Generation 32 predecessor is rejected',
+    'broken Generation 33 predecessor is rejected',
     ()=>{
       const broken=structuredClone(candidate);
       broken.predecessor.canonicalDocumentSha256='0'.repeat(64);
@@ -204,7 +204,7 @@ try{
       rejectCandidate(
         broken,
         documents.filter(
-          document=>document.generation<32
+          document=>document.generation<33
         )
       );
     }
@@ -248,9 +248,9 @@ try{
     }
   );
 
-  if(generation32Committed){
+  if(generation33Committed){
     test(
-      'committed Generation 32 current integrity passes',
+      'committed Generation 33 current integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCurrent().ok,
         true
@@ -258,7 +258,7 @@ try{
     );
   }else{
     test(
-      'pending Generation 32 candidate integrity passes',
+      'pending Generation 33 candidate integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCandidate(candidate).ok,
         true
