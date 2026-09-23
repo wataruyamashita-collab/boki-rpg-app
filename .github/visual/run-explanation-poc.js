@@ -34,9 +34,13 @@ async function run(){
       try{
         for(const caseId of cases)for(const width of viewports){
           const page=await browser.newPage({viewport:{width,height:900}});
+          const pageErrors=[];
+          page.on('pageerror',error=>pageErrors.push(String(error?.stack||error?.message||error)));
           try{
             await page.goto(base+'?case='+caseId,{waitUntil:'load'});
+            await page.waitForTimeout(25);
             const m=await measure(page,caseId,width);
+            m.pageErrors=pageErrors;
             const expectedHeadings=['見る資料','取引・処理の要点','計算','仕訳・転記','検算','よくあるミス'];
             const violations=[];
             if(m.overflow)violations.push('PAGE_HORIZONTAL_OVERFLOW');
@@ -46,6 +50,7 @@ async function run(){
             if(m.sourceCards<1||m.transferCards<1||m.checks<1||m.mistakes<1)violations.push('REQUIRED_VISUAL_COMPONENT_MISSING');
             if(m.touchTargets.some(x=>x.height<44))violations.push('TOUCH_TARGET_LT_44');
             if(m.currentLink!==caseId)violations.push('CASE_NAV_STATE');
+            if(m.pageErrors.length)violations.push('PAGE_SCRIPT_ERROR');
             fs.mkdirSync(path.join(OUTPUT,browserName),{recursive:true});
             await page.screenshot({path:path.join(OUTPUT,browserName,caseId+'-'+width+'.png'),fullPage:true});
             evidence.reports.push({browser:browserName,...m,violations});
