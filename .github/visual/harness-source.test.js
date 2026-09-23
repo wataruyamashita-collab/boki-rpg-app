@@ -18,7 +18,8 @@ assert(harness.includes('visibleValues') && harness.includes('editableAnswers'),
 assert(harness.includes('requiredInputCharacters'), 'representative profiles expose exact-column input character requirements');
 assert(runner.includes('VISUAL_HARNESS_MISSING_ELEMENT:${measuredCase}:${questionId}:${name}'), 'missing required DOM reports case, question, and element');
 assert(runner.includes("const isJournal = measuredCase === 'journal'"), 'journal measurement has an explicit case branch');
-assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table')"), 'table or journal surface is required explicitly');
+assert(runner.includes("const isJournalBook = measuredCase === 'journal-book'"), 'journal-book measurement has an explicit case branch');
+assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : isJournalBook ? '#table-container .journal-book-entry' : '.answer-table'), 'table')"), 'table, journal, or journal-book surface is required explicitly');
 assert(runner.includes("isJournalBook ? '#table-container .journal-book-entry' : '.answer-table'"), 'journal-book measurement targets the formal journal-book table');
 assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container .journal-grid-scroll' : '#table-container'), 'wrapper')"), 'journal measurement uses the inner grid scroller while other cases use the table container');
 assert(!runner.includes("isJournal ? '#journal-container' : '#table-container'"), 'journal measurement cannot regress to the outer instruction container');

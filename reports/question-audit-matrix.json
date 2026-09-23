@@ -14293,31 +14293,31 @@
       },
       "questionText": {
         "status": "VERIFIED",
-        "finding": "要求は「二つの証憑を日付順に仕訳帳へ記入し、摘要・元丁・借方合計・貸方合計を完成しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。」。解答対象と取引条件を表示資料と突合した。"
+        "finding": "要求は「二つの証憑を日付順に仕訳帳へ記帳しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。」。解答対象と取引条件を表示資料と突合した。"
       },
       "materials": {
         "status": "VERIFIED",
-        "finding": "表示資料2件と入力キー5個を照合し、記帳対象・計算条件・固定情報の欠落がないことを確認した。"
+        "finding": "表示資料2件と入力キー14個（日付2、勘定科目4、元丁4、金額4）を照合し、仕訳帳の記帳対象・日付・転記先・金額の欠落がないことを確認した。"
       },
       "solvability": {
         "status": "VERIFIED",
-        "finding": "answerを期待値の出発点にせず、設問・materials・固定セルから5個の解答要素を再導出。一意解を阻む欠落条件はなかった。"
+        "finding": "answerを期待値の出発点にせず、設問・materials・元丁指定から14個の解答要素を再導出。一意解を阻む欠落条件はなかった。"
       },
       "accountingOracle": {
         "status": "VERIFIED",
-        "finding": "表示事実からの独立導出値と一致：date1=8/2、summary1=掛売上、folio1=113・401、debitTotal=102,000、creditTotal=102,000。"
+        "finding": "表示事実からの独立導出値と一致：date1=8/2、売掛金113／売上401を各90,000円、date2=8/6、通信費521／現金101を各12,000円。"
       },
       "answerCorrectness": {
         "status": "VERIFIED",
-        "finding": "各セルを資料から再計算し、著者解「date1=8/2、summary1=掛売上、folio1=113・401、debitTotal=102,000、creditTotal=102,000」と一致した。"
+        "finding": "日付・科目・元丁・借方金額・貸方金額の14セルを資料から再導出し、著者解と一致した。"
       },
       "explanationCorrectness": {
         "status": "VERIFIED",
-        "finding": "解説「売掛金／売上90,000円、通信費／現金12,000円で、貸借合計は102,000円です。」を取引事実と計算結果に逆照合し、著者解との矛盾がないことを確認した。"
+        "finding": "解説「仕訳帳は日付、摘要欄の勘定科目、元丁、借方・貸方金額を日付順に記入します。8月2日は売掛金／売上90,000円、8月6日は通信費／現金12,000円です。」を取引事実と逆照合し、矛盾がないことを確認した。"
       },
       "explanationQuality": {
         "status": "VERIFIED",
-        "finding": "「売掛金／売上90,000円、通信費／現金12,000円で、貸借合計は102,000円です。」を実査。問題固有の選別根拠または計算過程を含み、循環説明だけではない。"
+        "finding": "「仕訳帳は日付、摘要欄の勘定科目、元丁、借方・貸方金額を日付順に記入します。8月2日は売掛金／売上90,000円、8月6日は通信費／現金12,000円です。」を取引事実と逆照合し、矛盾がないことを確認した。"
       },
       "wrongAnswerFeedback": {
         "status": "VERIFIED",
@@ -14356,8 +14356,8 @@
         "finding": "scene「本試験第2問・構造転移」とstoryを照合し、証憑から帳簿を完成する業務上の役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:54ff436a9a337e8170186bee1f62bb3da8d7bc37cbda97fcba1d66e73297b771",
-      "answerSchemaHash": "sha256:94ed33b279ab65d62e908f39af0071bdb996f05a497717ed45e332b651e2a508"
+      "sourceHash": "sha256:2778794a8af042ae24fd7a98d39292f046b3045b5259edd4a9f57ef96e5200c2",
+      "answerSchemaHash": "sha256:30d6004673c21246114c2e53150dd626f2fae3653d8feeea5f83ee395c9ef3cd"
     },
     {
       "id": "L035",
@@ -14839,31 +14839,31 @@
       },
       "questionText": {
         "status": "VERIFIED",
-        "finding": "要求は「取引資料を仕訳帳へ記帳しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。」。解答対象と取引条件を表示資料と突合した。"
+        "finding": "要求は「取引資料を日付順に仕訳帳へ記帳しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。」。解答対象と取引条件を表示資料と突合した。"
       },
       "materials": {
         "status": "VERIFIED",
-        "finding": "表示資料14行（うち解答欄12行）と入力キー12個を一対一で照合した。"
+        "finding": "表示資料2件と入力キー14個（日付2、勘定科目4、元丁4、金額4）を照合し、仕訳帳の記帳対象・日付・転記先・金額の欠落がないことを確認した。"
       },
       "solvability": {
         "status": "VERIFIED",
-        "finding": "answerを期待値の出発点にせず、設問・materials・固定セルから12個の解答要素を再導出。一意解を阻む欠落条件はなかった。"
+        "finding": "answerを期待値の出発点にせず、設問・materials・元丁指定から14個の解答要素を再導出。一意解を阻む欠落条件はなかった。"
       },
       "accountingOracle": {
         "status": "VERIFIED",
-        "finding": "表示事実からの独立導出値と一致：d1Account=売掛金、d1Ref=113、d1Amount=90,000、c1Account=売上、c1Ref=401、c1Amount=90,000、d2Account=通信費、d2Ref=521、d2Amount=12,000、c2Account=現金、c2Ref=101、c2Amount=12,000。"
+        "finding": "表示事実からの独立導出値と一致：date1=4/3、売掛金113／売上401を各90,000円、date2=4/8、通信費521／現金101を各12,000円。"
       },
       "answerCorrectness": {
         "status": "VERIFIED",
-        "finding": "科目・方向・金額または各セルを再計算し、著者解「d1Account=売掛金、d1Ref=113、d1Amount=90,000、c1Account=売上、c1Ref=401、c1Amount=90,000、d2Account=通信費、d2Ref=521、d2Amount=12,000、c2Account=現金、c2Ref=101、c2Amount=12,000」と一致した。"
+        "finding": "日付・科目・元丁・借方金額・貸方金額の14セルを資料から再導出し、著者解と一致した。"
       },
       "explanationCorrectness": {
         "status": "VERIFIED",
-        "finding": "解説を取引事実、会計上の増減、計算結果と逆照合し、著者解との矛盾がないことを確認した。"
+        "finding": "解説「仕訳帳は日付、摘要欄の勘定科目、元丁、借方・貸方金額を日付順に記入します。4月3日は売掛金／売上90,000円、4月8日は通信費／現金12,000円です。」を取引事実と逆照合し、矛盾がないことを確認した。"
       },
       "explanationQuality": {
         "status": "VERIFIED",
-        "finding": "「仕訳帳は日付順に、借方・貸方の科目、元丁、金額を記入します。4月3日は売掛金／売上90,000円、4月8日は通信費／現金12,000円です。」を実査。問題固有の根拠または計算過程を含み、循環説明だけではない。"
+        "finding": "「仕訳帳は日付、摘要欄の勘定科目、元丁、借方・貸方金額を日付順に記入します。4月3日は売掛金／売上90,000円、4月8日は通信費／現金12,000円です。」を取引事実と逆照合し、矛盾がないことを確認した。"
       },
       "wrongAnswerFeedback": {
         "status": "VERIFIED",
@@ -14902,8 +14902,8 @@
         "finding": "scene「本試験第2問・実地記帳」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a50e0c94a7c3bbcd39badf40cb4d752971ee4066c2a44c61c6d84bc007c948bd",
-      "answerSchemaHash": "sha256:8e68a7ccbf96ab2d461285e4036e9cfe9d2484e57d85fe2861af8fca218632c3"
+      "sourceHash": "sha256:ed5005877685942b526d079c7462616eb802eeb6837a176d2e1647662c96ed8b",
+      "answerSchemaHash": "sha256:525bb2b1b18c59bac6134b89b3f8b299d2d0e86c7fae32fd27e1414b4b7a6929"
     },
     {
       "id": "L042",
