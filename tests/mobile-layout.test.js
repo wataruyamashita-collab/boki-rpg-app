@@ -73,7 +73,21 @@ assert(!/\.answer-table th:first-child,[^{]+\{[^}]*min-width:\s*110px/s.test(css
 assert(/\.table-question-wrap\s*\{[^}]*overflow-x:\s*auto/.test(css), 'the existing single wrapper scrolls content-required wide tables');
 assert(/\[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(css), 'semantic context columns use rendered cumulative sticky offsets');
 assert(view.includes("const keys = ['description','quantity']") && view.includes("--sticky-left") && view.includes('getBoundingClientRect().width'), 'description and quantity sticky offsets derive from rendered widths without pinning date');
-assert(view.includes("--column-input-ch") && view.includes("--table-input-ch") && view.includes('Math.min(9, Math.max(4') && view.includes('Math.max(...inputCharacters.values())'), 'renderer supplies bounded per-column budgets and one shared compact numeric-input width per ordinary table');
+const widthFixture = {
+  table: {
+    columns:['floor','middle','ceiling'],
+    rows:[{floor:'入力',middle:'入力',ceiling:'入力'},{floor:1,middle:123456,ceiling:1234567}],
+    inputCells:['floorCell','middleCell','ceilingCell'],
+    inputTypes:{floorCell:'amount',middleCell:'amount',ceilingCell:'amount'}
+  }
+};
+Object.defineProperty(widthFixture, 'answer', { get() { throw new Error('generic width profiling must not read hidden answers'); } });
+assert.deepStrictEqual(
+  Object.fromEntries(sandbox.window.AppView.genericTableInputCharacters(widthFixture)),
+  { floor:7, middle:8, ceiling:9 },
+  'visible numeric values use the bounded 7ch floor, intermediate 8ch budget, and 9ch ceiling without reading hidden answers'
+);
+assert(view.includes("cell.style.setProperty('--column-input-ch'") && view.includes("table.style.setProperty('--table-input-ch'"), 'renderer applies bounded per-column budgets and one shared compact numeric-input width per ordinary table');
 assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
 for (const viewport of [320, 375, 390, 430]) assert(fixedAssetMinimum > viewport && /overflow-x:\s*auto/.test(css), `${viewport}px: fixed-asset content remains wider than its viewport and horizontally scrollable`);
