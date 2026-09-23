@@ -81,6 +81,11 @@ function evaluateVisualMetrics(metrics, options = {}) {
     if (Number(rows.journalBookAmountContextCount) !== 4) violations.push({ code:'JOURNAL_BOOK_AMOUNT_CONTEXT_FAILURE', expected:4, actual:rows.journalBookAmountContextCount });
     if (Number(rows.journalBookFolioHelpCount) !== 1) violations.push({ code:'JOURNAL_BOOK_FOLIO_HELP_FAILURE', expected:1, actual:rows.journalBookFolioHelpCount });
     if (!rows.journalBookScrollNoteVisible) violations.push({ code:'JOURNAL_BOOK_SCROLL_GUIDANCE_FAILURE' });
+    const interaction = metrics.journalBookInteraction || {};
+    if (!(Number(interaction.rightScrollMaximum) > 0) || Math.abs(Number(interaction.rightScrollLeft) - Number(interaction.rightScrollMaximum)) > 1) violations.push({ code:'JOURNAL_BOOK_RIGHT_SCROLL_FAILURE', interaction });
+    if (Number(interaction.visibleAmountContextCount) !== 4) violations.push({ code:'JOURNAL_BOOK_RIGHT_CONTEXT_VISIBILITY_FAILURE', expected:4, actual:interaction.visibleAmountContextCount });
+    if (!interaction.selectedAccount || interaction.selectedContextText !== interaction.selectedAccount) violations.push({ code:'JOURNAL_BOOK_CONTEXT_UPDATE_FAILURE', selectedAccount:interaction.selectedAccount, selectedContextText:interaction.selectedContextText });
+    if (!interaction.guidanceVisibleAtRight) violations.push({ code:'JOURNAL_BOOK_GUIDANCE_STICKY_FAILURE' });
   }
   if (metrics.cardLayout) {
     if (!rows.hasEditableControl || Number(rows.inputVisualHeight) < limits.minimumTouchTargetHeight) violations.push({ code:'CARD_TOUCH_TARGET_FAILURE', minimum:limits.minimumTouchTargetHeight, actual:rows.inputVisualHeight });

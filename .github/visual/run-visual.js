@@ -139,12 +139,35 @@ async function measure(page, caseName) {
     const inputHeight = rect(editableRow?.querySelector('input,select'))?.height || 0;
     const lineHeight = computedCell ? parseFloat(computedCell.lineHeight) || parseFloat(computedCell.fontSize) * 1.2 : 0;
     const headerRow = isJournal ? wrapper.querySelector('.journal-header') : table.tHead?.rows?.[0];
+    let journalBookInteraction = null;
+    if (isJournalBook) {
+      const account = requireElement(table.querySelector('.journal-book-account'), 'journal-book-account');
+      const option = [...account.options].find(item => item.value);
+      if (!option) throw new Error(`VISUAL_HARNESS_MISSING_ACCOUNT_OPTION:${measuredCase}:${questionId}`);
+      account.value = option.value; account.dispatchEvent(new Event('change', { bubbles:true }));
+      await new Promise(requestAnimationFrame);
+      const maximumScrollLeft = Math.max(0, wrapper.scrollWidth - wrapper.clientWidth);
+      wrapper.scrollLeft = maximumScrollLeft; await new Promise(requestAnimationFrame);
+      const viewportRect = wrapper.getBoundingClientRect();
+      const intersectsViewport = element => { const value = element.getBoundingClientRect(); return value.right > viewportRect.left + 1 && value.left < viewportRect.right - 1 && value.bottom > viewportRect.top + 1 && value.top < viewportRect.bottom - 1; };
+      const contexts = [...table.querySelectorAll('.journal-book-amount-context')];
+      const guidance = requireElement(document.querySelector('.journal-book-guidance'), 'journal-book-guidance');
+      journalBookInteraction = {
+        rightScrollLeft:wrapper.scrollLeft,
+        rightScrollMaximum:maximumScrollLeft,
+        visibleAmountContextCount:contexts.filter(intersectsViewport).length,
+        selectedAccount:account.value,
+        selectedContextText:contexts[0]?.textContent || '',
+        guidanceVisibleAtRight:intersectsViewport(guidance)
+      };
+    }
     return {
       questionId:document.body.dataset.questionId,
       table:{ ...dimensions(table),wrapper:dimensions(wrapper),horizontalOverflow:Math.max(0,(table?.scrollWidth || 0)-(wrapper?.clientWidth || 0)),requiresHorizontalScroll:(table?.scrollWidth || 0)>(wrapper?.clientWidth || 0),horizontalScrollAvailable:getComputedStyle(wrapper).overflowX !== 'visible',clipped:(wrapper?.scrollWidth || 0) < (table?.scrollWidth || 0) },
       columns,
       rows:{ headerRowHeight:rect(headerRow)?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,journalRowHeight:isJournal ? rect(editableRow)?.height || 0 : 0,inputVisualHeight:inputHeight,hasEditableControl:Boolean(editableRow?.querySelector('input,select')),controlCount:table.querySelectorAll('input,select').length,headerCellCount:table.tHead?.rows?.[0]?.cells?.length || 0,journalBookAmountContextCount:isJournalBook ? table.querySelectorAll('.journal-book-amount-context').length : 0,journalBookFolioHelpCount:isJournalBook ? document.querySelectorAll('#journal-book-folio-help').length : 0,journalBookScrollNoteVisible:isJournalBook ? getComputedStyle(requireElement(document.querySelector('.journal-book-scroll-note'), 'scroll-guidance')).display !== 'none' : false,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom },
-      sticky:{ viewportWidth:wrapper.clientWidth,scrollLeft:wrapper.scrollLeft,contextWidth:parseFloat(getComputedStyle(table).getPropertyValue('--sticky-context-width')) || 0 }
+      sticky:{ viewportWidth:wrapper.clientWidth,scrollLeft:wrapper.scrollLeft,contextWidth:parseFloat(getComputedStyle(table).getPropertyValue('--sticky-context-width')) || 0 },
+      journalBookInteraction
     };
   }, caseName);
 }
@@ -177,6 +200,11 @@ async function run() {
               const representative = await page.evaluate(name => window.visualHarness.render(name), caseName);
               const directory = path.join(OUTPUT,browserName); fs.mkdirSync(directory,{ recursive:true });
               const metrics = { browser:browserName,viewport,case:caseName,representative,...await measure(page,caseName) };
+              if (caseName === 'journal-book') {
+                await page.screenshot({ path:path.join(directory,`${caseName}-right-${viewport.width}.png`),fullPage:true });
+                await page.evaluate(() => { const wrapper = document.querySelector('#table-container'); if (wrapper) wrapper.scrollLeft = 0; });
+                await new Promise(resolve => setTimeout(resolve, 0));
+              }
               await page.screenshot({ path:path.join(directory,`${caseName}-${viewport.width}.png`),fullPage:true });
               metrics.violations = evaluateVisualMetrics(metrics); metrics.knownGeneration10Violation = caseName === 'fixed-asset' && detectGeneration10KnownViolation(metrics);
               evidence.reports.push(metrics);
