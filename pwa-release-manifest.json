@@ -1,8 +1,8 @@
 {
-  "release": "20260923-95",
-  "previousRelease": "20260923-94",
+  "release": "20260923-96",
+  "previousRelease": "20260923-95",
   "assets": {
-    "css/style.css": "77b06fc99d8fb7f7b160986bd7b3c328c2fa731db19d2a8fedd0590300c0ebaa",
+    "css/style.css": "669e0f0ade9b2db31fc979f596face2aa63db0bf5144910d889b24310ccb4f4f",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
     "data/questions.js": "7d625d1c99c5a828df798c4f798291ce9ffcd262b3252aff2bc3b2f018943692",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",

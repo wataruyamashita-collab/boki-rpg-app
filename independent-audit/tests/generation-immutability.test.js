@@ -20,7 +20,7 @@ const auditPath=path.join(
 );
 
 const authorityBytes=new Map(
-  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
+  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
     .filter(generation=>fs.existsSync(authorityPath(generation)))
     .map(
       generation=>[
@@ -65,15 +65,15 @@ try{
   const generations=authorities.map(
     item=>item.document.generation
   );
-  const generation22Committed=committed(22);
+  const generation23Committed=committed(23);
 
   test(
-    'authority sequence is [2..21] before Generation 22 or [2..22] after commit',
+    'authority sequence is [2..22] before Generation 23 or [2..23] after commit',
     ()=>assert.deepStrictEqual(
       generations,
-      generation22Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
-        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]
+      generation23Committed
+        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
+        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
     )
   );
 
@@ -143,17 +143,17 @@ try{
 
   const documents=authorities.map(item=>item.document);
 
-  const candidate=generation22Committed
+  const candidate=generation23Committed
     ? documents.at(-1)
     : (
-        fs.existsSync(authorityPath(22))
+        fs.existsSync(authorityPath(23))
           ? JSON.parse(
               fs.readFileSync(authorityPath(22),'utf8')
             )
           : lifecycle.createCandidate()
       );
 
-  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]){
+  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]){
     test(
       `duplicate Generation ${generation} is rejected`,
       ()=>{
@@ -171,16 +171,16 @@ try{
   }
 
   test(
-    'stale-predecessor Generation 23 successor is rejected',
+    'stale-predecessor Generation 24 successor is rejected',
     ()=>{
       const skipped=structuredClone(candidate);
-      skipped.generation=23;
+      skipped.generation=24;
       rejectCandidate(skipped,documents);
     }
   );
 
   test(
-    'competing Generation 22 is rejected',
+    'competing Generation 23 is rejected',
     ()=>{
       const fork=structuredClone(candidate);
       fork.auditHash='f'.repeat(64);
@@ -189,7 +189,7 @@ try{
         candidate,
         [
           ...documents.filter(
-            document=>document.generation<22
+            document=>document.generation<23
           ),
           fork
         ]
@@ -198,7 +198,7 @@ try{
   );
 
   test(
-    'broken Generation 22 predecessor is rejected',
+    'broken Generation 23 predecessor is rejected',
     ()=>{
       const broken=structuredClone(candidate);
       broken.predecessor.canonicalDocumentSha256='0'.repeat(64);
@@ -206,7 +206,7 @@ try{
       rejectCandidate(
         broken,
         documents.filter(
-          document=>document.generation<22
+          document=>document.generation<23
         )
       );
     }
@@ -250,9 +250,9 @@ try{
     }
   );
 
-  if(generation22Committed){
+  if(generation23Committed){
     test(
-      'committed Generation 22 current integrity passes',
+      'committed Generation 23 current integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCurrent().ok,
         true
@@ -260,7 +260,7 @@ try{
     );
   }else{
     test(
-      'pending Generation 22 candidate integrity passes',
+      'pending Generation 23 candidate integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCandidate(candidate).ok,
         true

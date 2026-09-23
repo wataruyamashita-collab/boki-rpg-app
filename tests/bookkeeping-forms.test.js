@@ -50,7 +50,9 @@ assert(journal.includes('grid.append(header)') && journal.includes('grid.append(
 const rendererStart = view.indexOf('    renderBookkeepingForm(question');
 const renderer = view.slice(rendererStart, view.indexOf('    accountType(account)', rendererStart));
 assert(renderer.includes('metadata.semanticType') && renderer.includes('makeShortDateInput') && renderer.includes('makeDatePicker') && renderer.includes("semanticType === 'folio'") && renderer.includes("semanticType === 'account'"), 'field-level semantics choose date, folio, account, and optional calendar affordances');
-assert(view.includes("input.setAttribute('inputmode', 'numeric')"), 'bookkeeping semantic dates use a numeric-friendly keyboard while retaining a text answer control');
+const shortDateHelperStart=view.indexOf('    makeShortDateInput('),shortDateHelperEnd=view.indexOf('    makeDatePicker(',shortDateHelperStart),shortDateHelperSource=view.slice(shortDateHelperStart,shortDateHelperEnd);
+assert(shortDateHelperStart>=0&&shortDateHelperEnd>shortDateHelperStart&&shortDateHelperSource.includes("input.setAttribute('inputmode', 'numeric')"), 'bookkeeping semantic dates specifically inherit numeric inputmode from the shared date helper while retaining a text answer control');
+assert(/\\.date-picker-control:focus-within\\s*\\{[^}]*outline:\\s*3px solid rgba\\(52,\\s*152,\\s*219,\\s*\\.45\\)[^}]*outline-offset:\\s*2px/s.test(css), 'bookkeeping calendar affordance visibly mirrors focus from its transparent native child');
 assert(view.includes("picker.type = 'date'") && view.includes("input.value = `${Number(match[1])}/${Number(match[2])}`"), 'optional calendar selection converts back to the short M/D learner answer');
 assert(!/semanticType === 'folio'[^\n]*inputMode/.test(renderer), 'compound and individual folios keep a separator-capable text keyboard');
 assert(renderer.includes("record.className = 'bookkeeping-record'") && renderer.includes("fields.className = 'bookkeeping-record-fields'"), 'related fields are grouped into coherent bookkeeping records');
