@@ -30,6 +30,8 @@ for(const phrase of ['株主から現金3,020,000円の追加払込みを受け�
   const cash=structuredClone(root.QuestionData.L034);cash.materials[0].内容=cash.materials[0].内容.replace('掛販売','現金販売');
   const expected=root.deriveAccountingExpected('L034',null,cash).expected.cells;
   assert.deepStrictEqual({debit:expected.d1Account,credit:expected.c1Account,dRef:expected.d1Ref,cRef:expected.c1Ref},{debit:'現金',credit:'売上',dRef:101,cRef:401},'L034 account and folio cells follow transaction semantics');
+  const dated=structuredClone(root.QuestionData.L034);dated.materials[0].日付='8/3';
+  assert.strictEqual(root.deriveAccountingExpected('L034',null,dated).expected.cells.date1,'8/3','L034 date follows source evidence');
 }
 {
   const question=structuredClone(root.QuestionData.L037),last=question.materials.at(-1);
@@ -48,6 +50,8 @@ for(const phrase of ['株主から現金3,020,000円の追加払込みを受け�
   const cash=structuredClone(root.QuestionData.L041);cash.materials[0].取引=cash.materials[0].取引.replace('掛販売','現金販売');
   const expected=root.deriveAccountingExpected('L041',null,cash).expected.cells;
   assert.deepStrictEqual({debit:expected.d1Account,credit:expected.c1Account},{debit:'現金',credit:'売上'});
+  const dated=structuredClone(root.QuestionData.L041);dated.materials[1].日付='4/9';
+  assert.strictEqual(root.deriveAccountingExpected('L041',null,dated).expected.cells.date2,'4/9','L041 date follows source evidence');
   const unknown=structuredClone(root.QuestionData.L041);unknown.materials[0].取引='商品90,000円を未知の手段で取引';
   assert.strictEqual(root.deriveAccountingExpected('L041',null,unknown).status,'UNKNOWN_SOURCE');
 }

@@ -11,13 +11,13 @@ const expectedFormats = {
   L047:'bookkeeping-purchase-book', L048:'bookkeeping-sales-book', L049:'bookkeeping-inventory-ledger', L050:'bookkeeping-voucher-entry'
 };
 const expectedAnswers = {
-  L034:{d1Account:'売掛金',d1Ref:113,d1Amount:90000,c1Account:'売上',c1Ref:401,c1Amount:90000,d2Account:'通信費',d2Ref:521,d2Amount:12000,c2Account:'現金',c2Ref:101,c2Amount:12000},
+  L034:{date1:'8/2',d1Account:'売掛金',d1Ref:113,d1Amount:90000,c1Account:'売上',c1Ref:401,c1Amount:90000,date2:'8/6',d2Account:'通信費',d2Ref:521,d2Amount:12000,c2Account:'現金',c2Ref:101,c2Amount:12000},
   L035:{received:'6/2',due:'10/31',drawer:'青空商店・森物産・星商会',total:200000},
   L036:{issued:'7/3',due:'11/30',payee:'若葉物産・山川商事',total:200000},
   L037:{date:'4/20',counterpart:'現金',side:'貸方',balance:70000},
   L038:{date:'5/27',counterpart:'仕入',balanceSide:'貸方',balance:120000},
   L039:{priorAccrual:9000,reversal:9000,annualPayment:18000,currentAccrual:9000,profitTransfer:18000,nextBalance:0},
-  L041:{d1Account:'売掛金',d1Ref:113,d1Amount:90000,c1Account:'売上',c1Ref:401,c1Amount:90000,d2Account:'通信費',d2Ref:521,d2Amount:12000,c2Account:'現金',c2Ref:101,c2Amount:12000},
+  L041:{date1:'4/3',d1Account:'売掛金',d1Ref:113,d1Amount:90000,c1Account:'売上',c1Ref:401,c1Amount:90000,date2:'4/8',d2Account:'通信費',d2Ref:521,d2Amount:12000,c2Account:'現金',c2Ref:101,c2Amount:12000},
   L042:{received1:'6/5',drawer1:'青空商店',drawn1:'6/4',due1:'8/31',bank1:'東都銀行',description1:'売掛金回収',amount1:180000,received2:'6/20',drawer2:'港屋',drawn2:'6/20',due2:'9/30',bank2:'中央銀行',description2:'商品売上',amount2:120000,total:300000},
   L043:{drawn1:'7/10',payee1:'若葉物産',due1:'10/31',bank1:'東都銀行',description1:'買掛金支払',amount1:150000,drawn2:'7/25',payee2:'北星商事',due2:'11/30',bank2:'東都銀行',description2:'商品仕入',amount2:90000,total:240000},
   L044:{value1:50000,value2:18000,value3:32000}, L045:{value1:300000,value2:85000,value3:215000},
@@ -32,7 +32,7 @@ for (const [id, format] of Object.entries(expectedFormats)) {
   assert.strictEqual(derived.sourceValid, true, `${id}: visible evidence remains independently derivable`);
   assert.deepStrictEqual(JSON.parse(JSON.stringify(derived.expected.cells)), expectedAnswers[id], `${id}: derivation still matches reviewed answer`);
 }
-for (const id of ['L034','L035','L036','L037','L038','L042','L043']) {
+for (const id of ['L034','L035','L036','L037','L038','L041','L042','L043']) {
   const dateCells = Object.entries(root.QuestionData[id].table.inputMetadata).filter(([,meta]) => meta.semanticType === 'date');
   assert(dateCells.length > 0 && dateCells.every(([cell]) => root.QuestionData[id].table.inputTypes[cell] === 'text'), `${id}: dates retain text controls`);
 }
@@ -42,7 +42,8 @@ for (const cell of ['d1Ref','c1Ref','d2Ref','c2Ref']) {
 }
 for (const id of ['L034','L041']) {
   assert.strictEqual(root.QuestionData[id].format, 'journal-book', `${id}: Chapter 8 journal-book variants share one formal renderer`);
-  assert.deepStrictEqual([...root.QuestionData[id].table.inputCells], ['d1Account','d1Ref','d1Amount','c1Account','c1Ref','c1Amount','d2Account','d2Ref','d2Amount','c2Account','c2Ref','c2Amount'], `${id}: two complete debit/credit transactions are recorded`);
+  assert.deepStrictEqual([...root.QuestionData[id].table.inputCells], ['date1','d1Account','d1Ref','d1Amount','c1Account','c1Ref','c1Amount','date2','d2Account','d2Ref','d2Amount','c2Account','c2Ref','c2Amount'], `${id}: date plus two complete debit/credit transactions are recorded`);
+  for (const cell of ['date1','date2']) assert.strictEqual(root.QuestionData[id].table.inputMetadata[cell].semanticType, 'date', `${id}/${cell}: 日付 is an editable date field`);
   for (const cell of ['d1Account','c1Account','d2Account','c2Account']) assert.strictEqual(root.QuestionData[id].table.inputMetadata[cell].semanticType, 'account', `${id}/${cell}: 摘要欄 is an account control`);
   for (const cell of ['d1Ref','c1Ref','d2Ref','c2Ref']) assert.strictEqual(root.QuestionData[id].table.inputMetadata[cell].semanticType, 'folio', `${id}/${cell}: 元丁 is not currency semantics`);
 }
@@ -59,7 +60,8 @@ const journalBookEnd = view.indexOf('    renderBookkeepingForm(question', journa
 const journalBookRenderer = view.slice(journalBookStart, journalBookEnd);
 assert(journalBookRenderer.includes("['日付', '摘要', '元丁', '借方', '貸方']"), '仕訳帳はTAC標準5列を使う');
 assert(journalBookRenderer.includes("select.className = 'table-input journal-book-account'") && journalBookRenderer.includes('accountChoices(question, question.answer.cells[cellId], mode)'), '摘要欄の勘定科目は5択で出題する');
-assert(journalBookRenderer.includes('dateCell.rowSpan = 2') && journalBookRenderer.includes("credit.className = 'journal-book-credit-row'"), '1取引を借方行・貸方行の2行で記帳する');
+assert(journalBookRenderer.includes("makeShortDateInput('table-input journal-book-date'") && journalBookRenderer.includes('dateCell.rowSpan = 2'), '仕訳帳の日付は短縮日付入力として借方・貸方2行にまたがる');
+assert(journalBookRenderer.includes("credit.className = 'journal-book-credit-row'"), '1取引を借方行・貸方行の2行で記帳する');
 const rendererStart = view.indexOf('    renderBookkeepingForm(question');
 const renderer = view.slice(rendererStart, view.indexOf('    accountType(account)', rendererStart));
 assert(renderer.includes('metadata.semanticType') && renderer.includes('makeShortDateInput') && renderer.includes('makeDatePicker') && renderer.includes("semanticType === 'folio'") && renderer.includes("semanticType === 'account'"), 'field-level semantics choose date, folio, account, and optional calendar affordances');

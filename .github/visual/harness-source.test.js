@@ -19,6 +19,7 @@ assert(harness.includes('requiredInputCharacters'), 'representative profiles exp
 assert(runner.includes('VISUAL_HARNESS_MISSING_ELEMENT:${measuredCase}:${questionId}:${name}'), 'missing required DOM reports case, question, and element');
 assert(runner.includes("const isJournal = measuredCase === 'journal'"), 'journal measurement has an explicit case branch');
 assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table')"), 'table or journal surface is required explicitly');
+assert(runner.includes("isJournalBook ? '#table-container .journal-book-entry' : '.answer-table'"), 'journal-book measurement targets the formal journal-book table');
 assert(runner.includes("requireElement(document.querySelector(isJournal ? '#journal-container .journal-grid-scroll' : '#table-container'), 'wrapper')"), 'journal measurement uses the inner grid scroller while other cases use the table container');
 assert(!runner.includes("isJournal ? '#journal-container' : '#table-container'"), 'journal measurement cannot regress to the outer instruction container');
 const tableGuard = runner.indexOf("const table = requireElement"), wrapperGuard = runner.indexOf("const wrapper = requireElement", tableGuard);
@@ -42,3 +43,5 @@ assert(cardBranch.includes('editableAnswerWidth > inputInnerWidth + 0.5'), 'card
 assert(cardBranch.includes('answerSource:representative?.answerSource || null') && cardBranch.includes('editableAnswerWidth,inputPadding,inputChrome,inputInnerWidth') && cardBranch.includes('editableFont:'), 'card visual evidence preserves answer source, expected-width, usable-width, chrome, and font diagnostics');
 assert(!cardBranch.includes('control.scrollWidth > control.clientWidth'), 'card fit cannot regress to measuring an empty control scroll box');
 console.log('visual harness source checks: dependencies, order, diagnostics, representatives: ok');
+
+assert(runner.includes("headerCellCount:table.tHead?.rows?.[0]?.cells?.length || 0") && runner.includes("controlCount:table.querySelectorAll('input,select').length"), 'visual evidence records journal-book column and control topology');

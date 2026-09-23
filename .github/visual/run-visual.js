@@ -50,7 +50,8 @@ async function measure(page, caseName) {
       probe.remove(); return { width:maximum,actualFont:fontProperties(style),probeFont };
     };
     const isJournal = measuredCase === 'journal';
-    const cardRoot = document.querySelector(measuredCase === 'fixed-asset' ? '.fixed-asset-ledger' : '.bookkeeping-form');
+    const isJournalBook = measuredCase === 'journal-book';
+    const cardRoot = document.querySelector(measuredCase === 'fixed-asset' ? '.fixed-asset-ledger' : isJournalBook ? '.visual-journal-book-never-card' : '.bookkeeping-form');
     if (cardRoot) {
       const wrapper = requireElement(document.querySelector('#table-container'), 'wrapper');
       const cards = [...cardRoot.querySelectorAll(measuredCase === 'fixed-asset' ? '.fixed-asset-card' : '.bookkeeping-record')];
@@ -81,7 +82,7 @@ async function measure(page, caseName) {
         cards:{count:cards.length,clipped:cards.some(card=>card.scrollWidth>card.clientWidth+1),maximumHeight:Math.max(0,...cards.map(card=>card.getBoundingClientRect().height))},
         rows:{inputVisualHeight:Math.min(...controls.map(control=>control.getBoundingClientRect().height)),hasEditableControl:controls.length>0},sticky:{viewportWidth:wrapper.clientWidth,scrollLeft:wrapper.scrollLeft,contextWidth:0} };
     }
-    const table = requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : '.answer-table'), 'table');
+    const table = requireElement(document.querySelector(isJournal ? '#journal-container .journal-row' : isJournalBook ? '#table-container .journal-book-entry' : '.answer-table'), 'table');
     const wrapper = requireElement(document.querySelector(isJournal ? '#journal-container .journal-grid-scroll' : '#table-container'), 'wrapper');
     const wrapperLeft = wrapper.getBoundingClientRect().left;
     const naturalViewportLefts = new Map(isJournal ? [] : [...table.querySelectorAll('thead [data-column-key]')].map(header => [header.dataset.columnKey, header.getBoundingClientRect().left-wrapperLeft]));
@@ -142,7 +143,7 @@ async function measure(page, caseName) {
       questionId:document.body.dataset.questionId,
       table:{ ...dimensions(table),wrapper:dimensions(wrapper),horizontalOverflow:Math.max(0,(table?.scrollWidth || 0)-(wrapper?.clientWidth || 0)),requiresHorizontalScroll:(table?.scrollWidth || 0)>(wrapper?.clientWidth || 0),horizontalScrollAvailable:getComputedStyle(wrapper).overflowX !== 'visible',clipped:(wrapper?.scrollWidth || 0) < (table?.scrollWidth || 0) },
       columns,
-      rows:{ headerRowHeight:rect(headerRow)?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,journalRowHeight:isJournal ? rect(editableRow)?.height || 0 : 0,inputVisualHeight:inputHeight,hasEditableControl:Boolean(editableRow?.querySelector('input,select')),paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom },
+      rows:{ headerRowHeight:rect(headerRow)?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,journalRowHeight:isJournal ? rect(editableRow)?.height || 0 : 0,inputVisualHeight:inputHeight,hasEditableControl:Boolean(editableRow?.querySelector('input,select')),controlCount:table.querySelectorAll('input,select').length,headerCellCount:table.tHead?.rows?.[0]?.cells?.length || 0,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom },
       sticky:{ viewportWidth:wrapper.clientWidth,scrollLeft:wrapper.scrollLeft,contextWidth:parseFloat(getComputedStyle(table).getPropertyValue('--sticky-context-width')) || 0 }
     };
   }, caseName);

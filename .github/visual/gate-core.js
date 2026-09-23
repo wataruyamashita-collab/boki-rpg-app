@@ -74,6 +74,11 @@ function evaluateVisualMetrics(metrics, options = {}) {
     }
   }
   const rows = metrics.rows || {};
+  if (metrics.case === 'journal-book') {
+    if (!rows.hasEditableControl || Number(rows.inputVisualHeight) < limits.minimumTouchTargetHeight) violations.push({ code:'JOURNAL_BOOK_TOUCH_TARGET_FAILURE', minimum:limits.minimumTouchTargetHeight, actual:rows.inputVisualHeight });
+    if (Number(rows.headerCellCount) !== 5) violations.push({ code:'JOURNAL_BOOK_COLUMN_STRUCTURE_FAILURE', expected:5, actual:rows.headerCellCount });
+    if (Number(rows.controlCount) !== 14) violations.push({ code:'JOURNAL_BOOK_CONTROL_STRUCTURE_FAILURE', expected:14, actual:rows.controlCount });
+  }
   if (metrics.cardLayout) {
     if (!rows.hasEditableControl || Number(rows.inputVisualHeight) < limits.minimumTouchTargetHeight) violations.push({ code:'CARD_TOUCH_TARGET_FAILURE', minimum:limits.minimumTouchTargetHeight, actual:rows.inputVisualHeight });
     if (!Number(metrics.cards?.count) || metrics.cards?.clipped) violations.push({ code:'CARD_CONTENT_CLIPPED', cards:metrics.cards });

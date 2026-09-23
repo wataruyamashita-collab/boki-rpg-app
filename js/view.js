@@ -275,9 +275,12 @@
         const unit = this.document.createElement('span'); unit.className = 'bookkeeping-unit'; unit.textContent = '円'; line.append(unit); cell.append(line);
       };
       for (let index = 1; question.table.inputCells.includes(`d${index}Account`); index += 1) {
-        const date = question.table.inputMetadata?.[`d${index}Account`]?.label?.split(' ')[0] || '';
+        const dateId = `date${index}`;
+        const dateLabel = this.cellLabel(question, dateId);
         const debit = body.insertRow(); debit.className = 'journal-book-transaction-start';
-        const dateCell = debit.insertCell(); dateCell.className = 'journal-book-date-cell'; dateCell.rowSpan = 2; dateCell.textContent = date;
+        const dateCell = debit.insertCell(); dateCell.className = 'journal-book-date-cell'; dateCell.rowSpan = 2;
+        const dateInput = this.makeShortDateInput('table-input journal-book-date', dateLabel, draft.cells?.[dateId] ?? '', '例：4/3');
+        dateInput.dataset.cellId = dateId; dateInput.dataset.inputType = 'date'; dateInput.dataset.semanticType = 'date'; dateCell.append(dateInput);
         const debitSummary = debit.insertCell(); debitSummary.className = 'journal-book-summary-cell'; debitSummary.append(accountControl(`d${index}Account`));
         const debitFolio = debit.insertCell(); debitFolio.className = 'journal-book-folio-cell'; debitFolio.append(folioControl(`d${index}Ref`));
         const debitAmount = debit.insertCell(); debitAmount.className = 'journal-book-amount-cell'; appendAmount(debitAmount, amountControl(`d${index}Amount`));

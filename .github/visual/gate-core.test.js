@@ -69,7 +69,18 @@ fixture.cards.clipped = false;
 fixture.rows.inputVisualHeight = 43;
 assert(codes(fixture).includes('CARD_TOUCH_TARGET_FAILURE'), 'fixed-asset cards retain the 44px touch-target requirement');
 
-for (const cardCase of ['fixed-asset','journal-book']) {
+{
+  const journalBook = base();
+  journalBook.case = 'journal-book';
+  journalBook.rows = { inputVisualHeight:44,hasEditableControl:true,headerCellCount:5,controlCount:14 };
+  journalBook.table = { requiresHorizontalScroll:true,horizontalScrollAvailable:true,horizontalOverflow:280,clipped:false };
+  assert.deepStrictEqual(codes(journalBook), [], 'formal journal book allows horizontal scrolling while preserving 5 columns and 14 controls');
+  journalBook.rows.headerCellCount = 7;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_COLUMN_STRUCTURE_FAILURE'), 'journal book rejects regression to a 7-column horizontal entry editor');
+  journalBook.rows.headerCellCount = 5; journalBook.rows.controlCount = 12;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_CONTROL_STRUCTURE_FAILURE'), 'journal book requires two dates plus twelve account/folio/amount controls');
+}
+for (const cardCase of ['fixed-asset']) {
   const expectedOverflow = base();
   expectedOverflow.case = cardCase;
   expectedOverflow.cardLayout = true;

@@ -904,7 +904,7 @@ assert(viewSource.includes("input = this.document.createElement('select'); input
 assert(/\.correction-row\s*\{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\) minmax\(120px, 2fr\) minmax\(240px, 3fr\) minmax\(120px, 2fr\)/s.test(cssSource), '記帳訂正の借方科目・金額と貸方科目・金額を横一列にする');
 assert(viewSource.includes("this.renderJournalBook(question, draft, mode)"), '仕訳帳形式は学習モードを維持して専用帳票で表示する');
 assert(viewSource.includes("['日付', '摘要', '元丁', '借方', '貸方']"), '仕訳帳をTAC標準の5列（日付・摘要・元丁・借方・貸方）で表示する');
-assert(viewSource.includes("select.className = 'table-input journal-book-account'") && viewSource.includes('dateCell.rowSpan = 2'), '仕訳帳は摘要欄の勘定科目を5択で入力し、1取引を借方・貸方の2行で表示する');
+assert(viewSource.includes("select.className = 'table-input journal-book-account'") && viewSource.includes("makeShortDateInput('table-input journal-book-date'") && viewSource.includes('dateCell.rowSpan = 2'), '仕訳帳は日付入力と摘要欄の勘定科目5択を持ち、1取引を借方・貸方の2行で表示する');
 assert(controllerSource.includes(".journal-row select, .correction-row select, .journal-book-account"), '仕訳帳の勘定科目選択もchange時に下書き保存する');
 assert(/\.journal-book-entry\s*\{[^}]*table-layout:\s*fixed/s.test(cssSource), '仕訳帳の借方列と貸方列を同じ行に固定する');
 assert(/button,\s*select,\s*input\s*{[^}]*min-height:\s*44px/s.test(cssSource), 'フォーム部品のタップ領域を44px以上にする');

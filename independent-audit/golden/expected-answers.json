@@ -2516,12 +2516,14 @@
     },
     "L034": {
       "cells": {
+        "date1": "8/2",
         "d1Account": "売掛金",
         "d1Ref": 113,
         "d1Amount": 90000,
         "c1Account": "売上",
         "c1Ref": 401,
         "c1Amount": 90000,
+        "date2": "8/6",
         "d2Account": "通信費",
         "d2Ref": 521,
         "d2Amount": 12000,
@@ -2587,12 +2589,14 @@
     },
     "L041": {
       "cells": {
+        "date1": "4/3",
         "d1Account": "売掛金",
         "d1Ref": 113,
         "d1Amount": 90000,
         "c1Account": "売上",
         "c1Ref": 401,
         "c1Amount": 90000,
+        "date2": "4/8",
         "d2Account": "通信費",
         "d2Ref": 521,
         "d2Amount": 12000,
