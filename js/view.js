@@ -4,6 +4,26 @@
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
   const validAmountText = value => value === '' || /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(value);
+  const normalizeShortDateInput = value => {
+    const original = String(value ?? '').trim();
+    const normalized = original
+      .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
+      .replace(/／/g, '/')
+      .replace(/年/g, '/')
+      .replace(/月/g, '/')
+      .replace(/日/g, '')
+      .replace(/-/g, '/');
+    let month; let day;
+    const explicit = normalized.match(/^(\d{1,2})\/(\d{1,2})$/u);
+    if (explicit) { month = Number(explicit[1]); day = Number(explicit[2]); }
+    else if (/^\d{3,4}$/u.test(normalized)) {
+      const split = normalized.length === 3 ? 1 : 2;
+      month = Number(normalized.slice(0, split)); day = Number(normalized.slice(split));
+    } else return original;
+    const monthDays = [31,29,31,30,31,30,31,31,30,31,30,31];
+    if (!Number.isInteger(month) || !Number.isInteger(day) || month < 1 || month > 12 || day < 1 || day > monthDays[month - 1]) return original;
+    return `${month}/${day}`;
+  };
   const yen = value => Number(value).toLocaleString('ja-JP');
   const GENERIC_AMOUNT_CONTENT_GLYPHS = 9;
   const genericTableInputCharacters = question => {
@@ -34,6 +54,7 @@
       return environment.matchMedia?.('(hover: none) and (pointer: coarse)').matches === true;
     }
     static genericTableInputCharacters(question) { return genericTableInputCharacters(question); }
+    static normalizeShortDateInput(value) { return normalizeShortDateInput(value); }
     byId(id) { return this.document.getElementById(id); }
     tableLabel(value) { return TABLE_LABELS[value] || value; }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
@@ -117,6 +138,20 @@
     makeText(className, label, value = '') {
       const input = this.document.createElement('input'); input.type = 'text'; input.className = `${className} table-text-input`;
       input.setAttribute('aria-label', label); input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocomplete', 'off'); input.maxLength = 120; input.value = value; return input;
+    }
+    makeShortDateInput(className, label, value = '', placeholder = '例：7/1') {
+      const input = this.makeText(className, label, value); input.classList.add('short-date-input'); input.setAttribute('inputmode', 'numeric'); input.maxLength = 8; input.placeholder = placeholder;
+      const normalize = () => { const next = normalizeShortDateInput(input.value); if (next !== input.value) { input.value = next; const EventCtor = input.ownerDocument?.defaultView?.Event || root.Event; if (EventCtor) input.dispatchEvent(new EventCtor('input', { bubbles:true })); } };
+      input.addEventListener('blur', normalize); input.addEventListener('change', normalize); return input;
+    }
+    makeDatePicker(input, label) {
+      const control = this.document.createElement('span'); control.className = 'date-picker-control';
+      const icon = this.document.createElement('span'); icon.className = 'date-picker-icon'; icon.setAttribute('aria-hidden', 'true'); icon.textContent = '📅';
+      const picker = this.document.createElement('input'); picker.type = 'date'; picker.className = 'date-picker-native'; picker.setAttribute('aria-label', `カレンダーから${label}を選ぶ`);
+      const sync = () => { const value = normalizeShortDateInput(input.value); const match = value.match(/^(\d{1,2})\/(\d{1,2})$/u); picker.value = match ? `2000-${String(Number(match[1])).padStart(2,'0')}-${String(Number(match[2])).padStart(2,'0')}` : ''; };
+      input.addEventListener('blur', sync); input.addEventListener('change', sync); sync();
+      picker.addEventListener('change', () => { const match = picker.value.match(/^\d{4}-(\d{2})-(\d{2})$/u); if (!match) return; input.value = `${Number(match[1])}/${Number(match[2])}`; const EventCtor = input.ownerDocument?.defaultView?.Event || root.Event; if (EventCtor) { input.dispatchEvent(new EventCtor('input', { bubbles:true })); input.dispatchEvent(new EventCtor('change', { bubbles:true })); } });
+      control.append(icon, picker); return control;
     }
     updateSelectTitle(select) {
       select.title = select.selectedOptions[0]?.textContent || '';
@@ -214,12 +249,11 @@
         const field = this.document.createElement('div'); field.className = 'bookkeeping-field'; field.dataset.semanticType = semanticType; field.dataset.cell = cellId;
         const label = this.document.createElement('label'); label.textContent = metadata.label || fallbackLabels[cellId] || this.tableLabel(cellId); label.htmlFor = `bookkeeping-${question.id}-${cellId}`;
         const amountLike = semanticType === 'amount' || semanticType === 'unitPrice';
-        const input = amountLike ? this.makeAmount('table-input bookkeeping-input', `${label.textContent}（金額）`, draft.cells?.[cellId] ?? '') : this.makeText('table-input bookkeeping-input', label.textContent, draft.cells?.[cellId] ?? '');
+        const input = amountLike ? this.makeAmount('table-input bookkeeping-input', `${label.textContent}（金額）`, draft.cells?.[cellId] ?? '') : semanticType === 'date' ? this.makeShortDateInput('table-input bookkeeping-input', label.textContent, draft.cells?.[cellId] ?? '', '例：6/5') : this.makeText('table-input bookkeeping-input', label.textContent, draft.cells?.[cellId] ?? '');
         input.id = label.htmlFor; input.dataset.cellId = cellId; input.dataset.inputType = semanticType; input.dataset.semanticType = semanticType;
-        if (semanticType === 'date') input.placeholder = '例：6/5';
         if (semanticType === 'folio') input.classList.add('folio-input');
         if (semanticType === 'account') input.classList.add('account-input');
-        const line = this.document.createElement('div'); line.className = 'bookkeeping-input-line'; line.append(input);
+        const line = this.document.createElement('div'); line.className = 'bookkeeping-input-line'; if (semanticType === 'date') line.append(input, this.makeDatePicker(input, label.textContent)); else line.append(input);
         const units = { amount:'円', unitPrice:'円', months:'か月', years:'年' };
         if (units[semanticType]) { const unit = this.document.createElement('span'); unit.className = 'bookkeeping-unit'; unit.textContent = units[semanticType]; line.append(unit); }
         field.append(label, line); fields.append(field);
@@ -290,10 +324,10 @@
           if (value === '入力') {
             const id = question.table.inputCells[inputIndex++]; const inputType = question.table.inputTypes?.[id] || 'amount';
             const metadata = question.table.inputMetadata?.[id]; const label = metadata?.label || this.cellLabel(question, id);
-            const input = inputType === 'amount' ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[id] ?? '') : this.makeText('table-input', label, draft.cells?.[id] ?? '');
+            const input = inputType === 'amount' ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[id] ?? '') : inputType === 'date' ? this.makeShortDateInput('table-input', label, draft.cells?.[id] ?? '') : this.makeText('table-input', label, draft.cells?.[id] ?? '');
             if (inputType === 'amount') cell.classList.add('amount-cell');
             if (inputType === 'amount') cell.style.setProperty('--column-input-ch', `${inputCharacters.get(question.table.columns[columnIndex]) || 9}ch`);
-            input.dataset.cellId = id; input.dataset.inputType = inputType; cell.append(input);
+            input.dataset.cellId = id; input.dataset.inputType = inputType; if (inputType === 'date') { const line = this.document.createElement('div'); line.className = 'table-date-input-line'; line.append(input, this.makeDatePicker(input, label)); cell.append(line); } else cell.append(input);
           }
           else { cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value); if (typeof value === 'number') cell.classList.add('amount-cell'); }
         });
@@ -314,11 +348,10 @@
             const cellId = question.table.inputCells[inputIndex++]; const metadata = question.table.inputMetadata?.[cellId] || {};
             const semanticType = metadata.semanticType || 'amount'; const label = this.document.createElement('label');
             label.textContent = metadata.label || this.tableLabel(key); label.htmlFor = `fixed-asset-${question.id}-${cellId}`;
-            const input = semanticType === 'amount' ? this.makeAmount('table-input fixed-asset-input', `${label.textContent}（金額）`, draft.cells?.[cellId] ?? '') : this.makeText('table-input fixed-asset-input', label.textContent, draft.cells?.[cellId] ?? '');
+            const input = semanticType === 'amount' ? this.makeAmount('table-input fixed-asset-input', `${label.textContent}（金額）`, draft.cells?.[cellId] ?? '') : semanticType === 'date' ? this.makeShortDateInput('table-input fixed-asset-input', label.textContent, draft.cells?.[cellId] ?? '', '例：7/1') : this.makeText('table-input fixed-asset-input', label.textContent, draft.cells?.[cellId] ?? '');
             input.id = label.htmlFor; input.dataset.cellId = cellId; input.dataset.inputType = question.table.inputTypes?.[cellId] || 'text'; input.dataset.semanticType = semanticType;
-            if (semanticType === 'date') input.placeholder = '例：7/1';
             if (semanticType === 'months') input.inputMode = 'numeric';
-            const line = this.document.createElement('div'); line.className = 'fixed-asset-input-line'; line.append(input);
+            const line = this.document.createElement('div'); line.className = 'fixed-asset-input-line'; if (semanticType === 'date') line.append(input, this.makeDatePicker(input, label.textContent)); else line.append(input);
             if (semanticType === 'amount' || semanticType === 'months') { const unit = this.document.createElement('span'); unit.className = 'fixed-asset-unit'; unit.textContent = semanticType === 'amount' ? '円' : 'か月'; line.append(unit); }
             field.append(label, line);
           } else {
