@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('assert'),childProcess=require('child_process'),crypto=require('crypto'),fs=require('fs');
+const core=require('../../scripts/qa/audit-core'),lifecycle=require('../../scripts/qa/phase-b-lifecycle'),finalizer=require('../../scripts/qa/finalize-phase-b-generation-39');
+let count=0;const test=(name,fn)=>{fn();count++;console.log(`ok ${count} - ${name}`);};const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const authorities=lifecycle.generationAuthorities(),g38=authorities.find(x=>x.document.generation===38),g39=authorities.find(x=>x.document.generation===39);
+test('Generation 39 is discoverable',()=>assert(g39));
+test('Generation 39 predecessor is exact Generation 38',()=>assert.deepStrictEqual(g39.document.predecessor,lifecycle.identity(g38.document)));
+test('Generation 39 production identity changes for final-runtime explanation integration',()=>assert.notStrictEqual(g39.document.baselineIdentity,g38.document.baselineIdentity));
+test('committed Generation 39 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+test('duplicate Generation 39 issuance fails',()=>assert.notStrictEqual(childProcess.spawnSync(process.execPath,['scripts/qa/finalize-phase-b-generation-39.js'],{cwd:core.ROOT,encoding:'utf8'}).status,0));
+test('historical authority raw SHA values are pinned',()=>assert.deepStrictEqual(finalizer.authorityPaths.map(f=>digest(fs.readFileSync(f))),finalizer.expectedAuthoritySha256));
+console.log(`Generation 39 finalizer regressions: ${count}/${count}`);
