@@ -92,11 +92,11 @@ jobs:
           write('package.json',JSON.stringify(pkg,null,2)+'\n');
 
           let auto=read('scripts/qa/validate-auto-gate.js');
-          const seq43=seq(43);
+          const seq43Auto=seq(43);
           const legal=/const legalSequences=(\[[^\n]+\]);/u.exec(auto);
           if(!legal)throw new Error('legalSequences definition not found');
-          if(!legal[1].includes(seq43)){
-            const extended=legal[1].slice(0,-1)+','+seq43+']';
+          if(!legal[1].includes(seq43Auto)){
+            const extended=legal[1].slice(0,-1)+','+seq43Auto+']';
             auto=auto.replace(legal[1],extended);
           }
           auto=must(auto,'through at most Generation 42','through at most Generation 43','auto-gate generation label');
