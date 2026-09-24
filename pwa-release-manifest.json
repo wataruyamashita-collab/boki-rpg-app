@@ -1,6 +1,6 @@
 {
-  "release": "20260924-108",
-  "previousRelease": "20260924-107",
+  "release": "20260924-109",
+  "previousRelease": "20260924-108",
   "assets": {
     "css/style.css": "5132258b88c0aca4dddea1b3ef1d1a51cad8d0db02ce0f040837a8fd8273febc",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
@@ -11,7 +11,7 @@
     "js/rpg.js": "fcc89d34b4a6773ecf33c3004997482a12e5444062e2e41b2b1f31d7c4742410",
     "js/engine.js": "a0f94eaa142ce19c07da284d3777a23a2c7af38c7b1eb6591e982ab48de50f78",
     "js/feedback.js": "8c04b1847aca22a44d48b5f0dc636cec47519b4d6c6f454333e3113cd8710b5f",
-    "js/view.js": "f4a1dbab23d015b87e100dc0408e5a355e31fd3f8bd7ac0effedfb2fb73ec75b",
+    "js/view.js": "774506b309b35aa8be92401ebe81f5d9250807046f4d7ff42723c9aa65d604f2",
     "js/controller.js": "ebc57c540d86f98afa49ec019ae86e1cefa829c6acc3304b8829c4785769fb92",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
     "js/explanation-model.js": "cf965784cc64919226b7b12a77a5d10af5c8f00820b4a1d09281e9e9c7b01930"

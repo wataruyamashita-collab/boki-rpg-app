@@ -709,9 +709,27 @@
       if (score.correct || !question.explanationModel || !root.ExplanationModel?.build) return null;
       const model = root.ExplanationModel.build(question, userAnswer || {}, score);
       const valueText = value => typeof value === 'number' ? `${yen(value)}円` : value === true ? '確認' : String(value ?? '');
-      const flow = this.document.createElement('section'); flow.className = 'explanation-flow'; flow.setAttribute('aria-label', '資料から答えまでの解き直し');
-      const intro = this.document.createElement('h4'); intro.className = 'explanation-flow-title'; intro.textContent = '資料から答えまで、順番にほどく'; flow.append(intro);
-      const definitions = [['見る資料','sources'],['取引・処理の要点','summary'],['計算','calculation'],['仕訳・転記','transfer'],['検算','checks'],['よくあるミス','mistakes']];
+      const flow = this.document.createElement('section'); flow.className = 'explanation-flow'; flow.setAttribute('aria-label', 'この問題をもう一度解く手順');
+      const intro = this.document.createElement('h4'); intro.className = 'explanation-flow-title'; intro.textContent = 'この問題をもう一度解く手順'; flow.append(intro);
+      const journalBook = question.type === 'journal' || question.format === 'journal-book' || /仕訳帳/u.test(question.category || '');
+      const hasMeaningfulCalculation = (model.calculation || []).some(item => /[×÷＋+−\-＝=]/u.test(String(item.expression || '')));
+      const teachingProfile = {
+        journal:{summary:'どういう取引か考える',transfer:'借方・貸方を決めて仕訳する'},
+        ledger:{summary:journalBook?'どういう取引か考える':'増減の流れをつかむ',transfer:journalBook?'借方・貸方を決めて仕訳帳に記入する':'帳簿に記入する'},
+        trial_balance:{summary:'残高の置き場所を決める',transfer:'試算表に記入する'},
+        correction:{summary:'どこが違うか整理する',transfer:'訂正仕訳を書く'},
+        worksheet:{summary:'決算整理を反映する',transfer:'精算表に記入する'},
+        financial_statement:{summary:'どの区分に入るか決める',transfer:'財務諸表に記入する'},
+        comprehensive:{summary:'処理の順番を整理する',transfer:'答えに反映する'}
+      }[question.type] || {summary:'処理のポイントをつかむ',transfer:'答えに書き込む'};
+      const definitions = [
+        ['まずここを確認','sources'],
+        [teachingProfile.summary,'summary'],
+        ...(hasMeaningfulCalculation ? [['必要な金額を出す','calculation']] : []),
+        [teachingProfile.transfer,'transfer'],
+        ['最後に確認','checks'],
+        ['間違えやすいところ','mistakes']
+      ];
       const element = (tag, className, text) => { const node = this.document.createElement(tag); if (className) node.className = className; if (text != null) node.textContent = text; return node; };
       definitions.forEach(([label, key], index) => {
         const section = element('section', 'explanation-flow-section'); section.dataset.section = key;
