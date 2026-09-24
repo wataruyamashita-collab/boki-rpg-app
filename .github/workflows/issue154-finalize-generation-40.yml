@@ -1,0 +1,126 @@
+name: Issue 154 finalize Generation 40
+on:
+  push:
+    branches:
+      - codex/issue-154-explanation-ux-integration
+
+permissions:
+  contents: write
+
+jobs:
+  finalize-generation-40:
+    if: github.event.head_commit.message == 'Prepare remote Generation 40 finalization'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/issue-154-explanation-ux-integration
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Generate Generation 40 finalization support
+        shell: bash
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs=require('fs'),crypto=require('crypto'),childProcess=require('child_process');
+          const core=require('./scripts/qa/audit-core'),lifecycle=require('./scripts/qa/phase-b-lifecycle');
+          const read=f=>fs.readFileSync(f,'utf8'),write=(f,s)=>fs.writeFileSync(f,s);
+          const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
+          const git=args=>childProcess.execFileSync('git',args,{encoding:'utf8'}).trim();
+          const must=(s,a,b,label)=>{if(!s.includes(a))throw new Error('missing '+label);return s.replace(a,b);};
+          const approvedHead=git(['rev-parse','HEAD']),approvedTree=git(['rev-parse','HEAD^{tree}']);
+          const authorityRel=[lifecycle.ROOT_LOCK,...Array.from({length:38},(_,i)=>`reports/auto-gate/audit-locks/phase-b-generation-${i+2}.json`)];
+          const expectedAuthoritySha256=authorityRel.map(f=>digest(fs.readFileSync(f)));
+          const productionFiles=['css/style.css','data/questions.js','index.html','js/explanation-model.js','js/view.js','pwa-release-manifest.json','service-worker.js'];
+          const finalProductionSha256=Object.fromEntries(productionFiles.map(f=>[f,core.sha(f)]));
+          const finalizer=`'use strict';
+          const childProcess=require('child_process'),crypto=require('crypto'),fs=require('fs'),path=require('path'),core=require('./audit-core'),lifecycle=require('./phase-b-lifecycle');
+          const output=path.join(core.ROOT,'reports/auto-gate/audit-locks/phase-b-generation-40.json');
+          const authorityPaths=[lifecycle.ROOT_LOCK,...Array.from({length:38},(_,i)=>\`reports/auto-gate/audit-locks/phase-b-generation-\${i+2}.json\`)].map(f=>path.join(core.ROOT,f));
+          const expectedAuthoritySha256=${JSON.stringify(expectedAuthoritySha256)};
+          const approvedHead='${approvedHead}',approvedTree='${approvedTree}';
+          const finalProductionSha256=${JSON.stringify(finalProductionSha256)};
+          const requiredDirty=new Set(['independent-audit/tests/generation-40-finalizer.test.js','independent-audit/tests/generation-immutability.test.js','package.json','scripts/qa/finalize-phase-b-generation-40.js','scripts/qa/validate-auto-gate.js']);
+          const NEW_RELEASE='20260924-109',PREVIOUS_RELEASE='20260924-108';
+          const fail=m=>{console.error(\`PHASE_B_GENERATION_40_FINALIZATION_REFUSED: \${m}\`);process.exitCode=1;return false;};
+          const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
+          const git=a=>childProcess.execFileSync('git',a,{cwd:core.ROOT,encoding:'utf8'}).trim();
+          const changedFiles=()=>git(['status','--porcelain','--untracked-files=all']).split(/\\n/u).filter(Boolean).map(l=>l.slice(2).trim());
+          function validateRelease(){const m=JSON.parse(fs.readFileSync(path.join(core.ROOT,'pwa-release-manifest.json'),'utf8')),w=fs.readFileSync(path.join(core.ROOT,'service-worker.js'),'utf8'),i=fs.readFileSync(path.join(core.ROOT,'index.html'),'utf8');if(m.release!==NEW_RELEASE||m.previousRelease!==PREVIOUS_RELEASE)throw Error('release manifest version mismatch');if(!w.includes(\`const RELEASE = '\${NEW_RELEASE}';\`))throw Error('service worker release mismatch');if(i.includes(\`?v=\${PREVIOUS_RELEASE}\`)||(i.match(new RegExp(\`\\\\?v=\${NEW_RELEASE}\`,'g'))||[]).length!==13)throw Error('index release tokens mismatch');for(const[f,s]of Object.entries(m.assets))if(core.sha(f)!==s)throw Error(\`release asset hash mismatch: \${f}\`);}
+          function finalize(){if(fs.existsSync(output)||lifecycle.generationAuthorities().some(x=>x.document.generation===40))return fail('Generation 40 already exists');if(authorityPaths.some((f,i)=>!fs.existsSync(f)||digest(fs.readFileSync(f))!==expectedAuthoritySha256[i]))return fail('historical authority raw bytes changed');if(git(['rev-parse','HEAD'])!==approvedHead||git(['rev-parse','HEAD^{tree}'])!==approvedTree)return fail('approved Generation 39 successor baseline mismatch');const d=changedFiles();if(d.length!==requiredDirty.size||d.some(f=>!requiredDirty.has(f))||[...requiredDirty].some(f=>!d.includes(f)))return fail(\`dirty scope mismatch: \${d.join(', ')}\`);try{validateRelease();}catch(e){return fail(e.message);}for(const[f,s]of Object.entries(finalProductionSha256))if(core.sha(f)!==s)return fail(\`final Production hash mismatch: \${f}\`);const a=lifecycle.generationAuthorities();if(JSON.stringify(a.map(x=>x.document.generation))!==JSON.stringify(Array.from({length:38},(_,i)=>i+2)))return fail('authority sequence must be exactly [2..39]');let c;try{c=lifecycle.createCandidate();}catch(e){return fail(e.message);}if(c.generation!==40||JSON.stringify(c.predecessor)!==JSON.stringify(lifecycle.identity(a.at(-1).document)))return fail('candidate predecessor or generation mismatch');const v=lifecycle.verifyCandidate(c);if(!v.ok)return fail(v.errors.join(', '));fs.writeFileSync(output,JSON.stringify(c,null,2)+'\\n',{flag:'wx'});console.log(\`FINALIZED \${path.relative(core.ROOT,output)}\`);return true;}
+          if(require.main===module){if(!finalize())process.exit(1);}module.exports={finalProductionSha256,NEW_RELEASE,PREVIOUS_RELEASE,approvedHead,approvedTree,authorityPaths,expectedAuthoritySha256,finalize,output,validateRelease};
+          `;
+          write('scripts/qa/finalize-phase-b-generation-40.js',finalizer);
+
+          const finalizerTest=`'use strict';
+          const assert=require('assert'),childProcess=require('child_process'),crypto=require('crypto'),fs=require('fs');
+          const core=require('../../scripts/qa/audit-core'),lifecycle=require('../../scripts/qa/phase-b-lifecycle'),finalizer=require('../../scripts/qa/finalize-phase-b-generation-40');
+          let count=0;const test=(name,fn)=>{fn();count++;console.log(\`ok \${count} - \${name}\`);};const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+          const authorities=lifecycle.generationAuthorities(),g39=authorities.find(x=>x.document.generation===39),g40=authorities.find(x=>x.document.generation===40);
+          test('Generation 40 is discoverable',()=>assert(g40));
+          test('Generation 40 predecessor is exact Generation 39',()=>assert.deepStrictEqual(g40.document.predecessor,lifecycle.identity(g39.document)));
+          test('Generation 40 production identity changes for learner-oriented explanation headings',()=>assert.notStrictEqual(g40.document.baselineIdentity,g39.document.baselineIdentity));
+          test('committed Generation 40 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+          test('duplicate Generation 40 issuance fails',()=>assert.notStrictEqual(childProcess.spawnSync(process.execPath,['scripts/qa/finalize-phase-b-generation-40.js'],{cwd:core.ROOT,encoding:'utf8'}).status,0));
+          test('historical authority raw SHA values are pinned',()=>assert.deepStrictEqual(finalizer.authorityPaths.map(f=>digest(fs.readFileSync(f))),finalizer.expectedAuthoritySha256));
+          console.log(\`Generation 40 finalizer regressions: \${count}/\${count}\`);
+          `;
+          write('independent-audit/tests/generation-40-finalizer.test.js',finalizerTest);
+
+          let imm=read('independent-audit/tests/generation-immutability.test.js');
+          const seq39='['+Array.from({length:38},(_,i)=>i+2).join(',')+']';
+          const seq40='['+Array.from({length:39},(_,i)=>i+2).join(',')+']';
+          imm=imm.replaceAll(seq39,seq40);
+          imm=imm.replaceAll('generation39Committed','generation40Committed');
+          imm=must(imm,'committed(39)','committed(40)','committed generation');
+          imm=imm.replaceAll('Generation 39','Generation 40');
+          imm=must(imm,'stale-predecessor Generation 40 successor is rejected','stale-predecessor Generation 41 successor is rejected','stale successor label');
+          imm=must(imm,'skipped.generation=40','skipped.generation=41','stale successor generation');
+          imm=imm.replaceAll('authorityPath(39)','authorityPath(40)');
+          imm=imm.replaceAll('document.generation<39','document.generation<40');
+          write('independent-audit/tests/generation-immutability.test.js',imm);
+
+          const pkg=JSON.parse(read('package.json'));
+          if(!pkg.scripts['qa:test'].includes('generation-40-finalizer.test.js'))pkg.scripts['qa:test']+=' && node independent-audit/tests/generation-40-finalizer.test.js';
+          pkg.scripts['qa:finalize:phase-b-generation-40']='node scripts/qa/finalize-phase-b-generation-40.js';
+          write('package.json',JSON.stringify(pkg,null,2)+'\n');
+
+          let auto=read('scripts/qa/validate-auto-gate.js');
+          const seq40Text='['+Array.from({length:39},(_,i)=>i+2).join(',')+']';
+          const legal=/const legalSequences=(\[[^\n]+\]);/u.exec(auto);
+          if(!legal)throw new Error('legalSequences definition not found');
+          if(!legal[1].includes(seq40Text)){
+            const extended=legal[1].slice(0,-1)+','+seq40Text+']';
+            auto=auto.replace(legal[1],extended);
+          }
+          auto=must(auto,'through at most Generation 39','through at most Generation 40','auto-gate generation label');
+          write('scripts/qa/validate-auto-gate.js',auto);
+
+          console.log(JSON.stringify({approvedHead,approvedTree,expectedAuthorityCount:expectedAuthoritySha256.length,finalProductionSha256},null,2));
+          NODE
+      - name: Confirm exact dirty finalization scope
+        run: |
+          git status --short
+          test "$(git status --porcelain --untracked-files=all | wc -l)" -eq 5
+      - name: Finalize Generation 40
+        run: node scripts/qa/finalize-phase-b-generation-40.js
+      - name: Verify Generation 40
+        run: |
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+      - name: Commit finalized authority and remove helper workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/issue154-finalize-generation-40.yml
+          git add -A
+          git commit -m "Finalize Generation 40 for learner-oriented explanations"
+          git push origin HEAD:codex/issue-154-explanation-ux-integration
