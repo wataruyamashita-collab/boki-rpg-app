@@ -15,9 +15,13 @@ assert(view.includes("...(hasMeaningfulCalculation ? [['必要な金額を出す
 assert(view.includes('score.correct || !question.explanationModel'),'構造化解説は誤答かつ対象問題だけに限定する');
 assert(view.includes('appendAuthoredExplanation(question, container, authoredOnly = false)'),'authored proseだけを分離表示できる');
 assert(view.includes("const markers = ['【この問題への当てはめ】','【使用する資料】']"),'旧生成長文をstructured PoCへ重複表示しない');
-assert(view.includes('this.appendAuthoredExplanation(question, container, true)'),'structured pathはauthored prefixだけを保持する');
+assert(view.includes('renderLearningTakeaway(question, container)'),'構造化解説の最後は学習持ち帰りカードにする');
+assert(view.includes('この問題で覚えること'),'持ち帰りカードの見出しを持つ');
+assert(view.includes('元丁には総勘定元帳の転記先を示す番号'),'仕訳帳の元丁の意味を一般化して説明する');
+assert(view.includes('証憑に金額が示されている場合は、その金額をそのまま記入'),'直接記載額と計算問題を見分ける原則を持つ');
+assert(!view.includes('this.appendAuthoredExplanation(question, container, true)'),'構造化解説では旧authored解説を重複表示しない');
 assert(/\.explanation-formula strong\s*\{[^}]*overflow-wrap:\s*anywhere/s.test(css),'計算ブロックをiPhoneでクリップしない');
-const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-109'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-109'),viewIndex=html.indexOf('js/view.js?v=20260924-109');
+const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-110'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-110'),viewIndex=html.indexOf('js/view.js?v=20260924-110');
 assert(feedbackIndex>=0&&feedbackIndex<modelIndex&&modelIndex<viewIndex,'feedback→explanation model→viewの順に読み込む');
 assert(worker.includes("'./js/explanation-model.js'"),'PWAキャッシュへexplanation modelを含める');
 console.log('explanation integration tests: PASS');

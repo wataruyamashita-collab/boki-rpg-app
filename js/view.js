@@ -746,6 +746,55 @@
       });
       return flow;
     }
+    renderLearningTakeaway(question, container) {
+      const journalBook = question.type === 'journal' || question.format === 'journal-book' || /仕訳帳/u.test(question.category || '');
+      const rules = journalBook
+        ? [
+            '仕訳帳は、取引を日付順に記録します。',
+            '摘要欄には勘定科目、元丁には総勘定元帳の転記先を示す番号、借方・貸方には証憑に基づく金額を記入します。',
+            '証憑に金額が示されている場合は、その金額をそのまま記入し、計算が必要かどうかを先に見分けます。'
+          ]
+        : ({
+            journal:[
+              '取引で何が増え、何が減ったかを確認してから勘定科目を決めます。',
+              '資産・費用の増加は借方、負債・純資産・収益の増加は貸方に置き、減少は反対側に置きます。',
+              '最後に借方合計と貸方合計が一致しているか確認します。'
+            ],
+            ledger:[
+              '元帳は、仕訳の相手勘定と金額を該当する勘定へ転記します。',
+              '残高は直前残高に増減を反映して更新し、日付・相手勘定・残高を順に確認します。'
+            ],
+            trial_balance:[
+              '各勘定の最終残高を、残高方向に応じて借方列または貸方列へ一度だけ集計します。',
+              '借方合計と貸方合計の一致は、転記漏れや二重計上を見つける重要な確認です。'
+            ],
+            correction:[
+              '訂正では、まず誤った仕訳と本来の正しい仕訳を分けて考えます。',
+              '誤りを取り消したうえで、最終的に正しい残高になるよう訂正仕訳を作ります。'
+            ],
+            worksheet:[
+              '精算表は、整理前残高に決算整理を反映し、損益計算書と貸借対照表へ振り分けます。',
+              'どの欄へ移すかは、勘定科目の性質と決算整理後の残高で判断します。'
+            ],
+            financial_statement:[
+              '財務諸表は、確定した残高を収益・費用・資産・負債・純資産の区分へ正しく表示します。',
+              '計算だけでなく、表示区分を間違えないことが得点につながります。'
+            ],
+            comprehensive:[
+              '総合問題は、資料ごとに仕訳し、転記・集計・決算整理の順に処理すると混乱しにくくなります。',
+              '各段階で貸借や残高を確認してから次へ進みます。'
+            ]
+          }[question.type] || [
+            '問題文の条件を整理し、必要な会計処理を一つずつ決めます。',
+            '答えを書いた後は、資料の条件と整合しているかを確認します。'
+          ]);
+      const card = this.document.createElement('section'); card.className = 'explanation-card explanation-takeaway';
+      const heading = this.document.createElement('h4'); heading.textContent = 'この問題で覚えること';
+      const list = this.document.createElement('ul'); list.className = 'explanation-takeaway-list';
+      rules.forEach(rule => { const item = this.document.createElement('li'); item.textContent = rule; list.append(item); });
+      card.append(heading, list); container.append(card);
+      this.renderKnowledgeLinks(question, container);
+    }
     appendAuthoredExplanation(question, container, authoredOnly = false) {
       if (question.npcDialogue) { const dialogue = this.document.createElement('blockquote'); dialogue.className = 'npc-dialogue'; dialogue.textContent = question.npcDialogue; container.append(dialogue); }
       if (question.type === 'journal' && question.answer) { const badges = this.document.createElement('div'); badges.className = 'explanation-accounts'; [...question.answer.debit, ...question.answer.credit].forEach(item => badges.append(this.accountLabel(item.account))); container.append(badges); }
@@ -766,7 +815,7 @@
         : 'もう一歩です。誤答の原因から正しい考え方へつなげ、実務と試験で使える判断手順まで一続きで確認しましょう。';
       container.append(lead);
       const structured = this.renderStructuredExplanation(question, userAnswer, score);
-      if (structured) { container.append(structured); this.appendAuthoredExplanation(question, container, true); return; }
+      if (structured) { container.append(structured); this.renderLearningTakeaway(question, container); return; }
       const solution = this.document.createElement('section'); solution.className = 'solution-steps';
       const solutionHeading = this.document.createElement('h4'); solutionHeading.textContent = '解き方（この順番で考える）';
       const list = this.document.createElement('ol');
