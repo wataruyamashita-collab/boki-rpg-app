@@ -38,8 +38,8 @@ document.body.dataset.caseId=caseId;
 document.querySelectorAll('[data-case-link]').forEach(a=>a.setAttribute('aria-current',a.dataset.caseLink===caseId?'page':'false'));
 document.getElementById('case-question').textContent=fixture.question.question;
 const model=window.ExplanationModel.build(fixture.question,{}, {correct:false},{diagnostics:fixture.diagnostics});
-const d=model.mistakes[0],top=document.getElementById('top-diagnostic');
-top.innerHTML='<strong>今回の間違い</strong><span></span>';top.querySelector('span').textContent=d?d.title:'正答との差を順に確認します。';
+const d=model.mistakes[0],topDiagnostic=document.getElementById('top-diagnostic');
+topDiagnostic.innerHTML='<strong>今回の間違い</strong><span></span>';topDiagnostic.querySelector('span').textContent=d?d.title:'正答との差を順に確認します。';
 const defs=[['見る資料','sources'],['取引・処理の要点','summary'],['計算','calculation'],['仕訳・転記','transfer'],['検算','checks'],['よくあるミス','mistakes']],flow=document.getElementById('flow');
 function div(cls){const x=document.createElement('div');x.className=cls;return x}
 function text(tag,value,cls){const x=document.createElement(tag);if(cls)x.className=cls;x.textContent=value;return x}
