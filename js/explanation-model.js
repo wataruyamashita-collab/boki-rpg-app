@@ -9,7 +9,7 @@
   'use strict';
   const SCHEMA_VERSION=1;
   const REQUIRED_SECTIONS=Object.freeze(['sources','summary','calculation','transfer','checks','mistakes']);
-  const labels={date:'日付',description:'摘要',quantity:'数量',unitPrice:'単価',amount:'金額',debit:'借方',credit:'貸方',balance:'残高',asset:'固定資産',acquisitionDate:'取得日',acquisitionCost:'取得原価',life:'耐用年数',months:'使用月数',openingAccumulated:'期首減価償却累計額',currentDepreciation:'当期減価償却費',closingAccumulated:'期末減価償却累計額',closingBookValue:'期末帳簿価額'};
+  const labels={date:'日付',description:'摘要',account:'勘定科目',item:'項目',quantity:'数量',unitPrice:'単価',amount:'金額',debit:'借方',credit:'貸方',balance:'残高',asset:'固定資産',acquisitionDate:'取得日',acquisitionCost:'取得原価',life:'耐用年数',months:'使用月数',openingAccumulated:'期首減価償却累計額',currentDepreciation:'当期減価償却費',closingAccumulated:'期末減価償却累計額',closingBookValue:'期末帳簿価額'};
   const obj=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
   const arr=v=>Array.isArray(v)?v:(v==null?[]:[v]);
   const clone=v=>v==null?v:JSON.parse(JSON.stringify(v));

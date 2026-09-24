@@ -38,4 +38,11 @@ for(const [id,formula] of Object.entries(formulas)){
   const model=ExplanationModel.build(sandbox.window.QuestionData[id],{cells:{}},{correct:false});
   assert(model.calculation.some(item=>item.expression===formula),`${id}: expected formula ${formula}`);
 }
+const voucherModel=ExplanationModel.build(sandbox.window.QuestionData.L050,{cells:{}},{correct:false});
+assert.strictEqual(voucherModel.sources.length,3,'L050は3取引を資料として表示する');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(voucherModel.sources.map(source=>source.title))),['取引1','取引2','取引3'],'L050の資料見出しは取引1〜3');
+assert(voucherModel.sources.some(source=>source.values.some(value=>value.value==='商品を現金で販売')),'L050は現金売上取引を資料に含む');
+assert(voucherModel.sources.some(source=>source.values.some(value=>value.value==='備品を現金で購入')),'L050は備品現金購入を資料に含む');
+assert(voucherModel.sources.some(source=>source.values.some(value=>value.value==='商品を掛けで仕入')),'L050は掛仕入取引を資料に含む');
+assert(!/\b(?:item|account):/u.test(JSON.stringify(voucherModel.sources)),'L050の資料表示へ内部英語キーを漏らさない');
 console.log('Chapter 8 structured explanation tests: PASS');
