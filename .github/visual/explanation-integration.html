@@ -14,7 +14,7 @@
 <script src="../../js/explanation-model.js"></script>
 <script src="../../js/view.js"></script>
 <script>
-const params=new URLSearchParams(location.search),caseId=['L034','L041'].includes(params.get('case'))?params.get('case'):'L034';
+const params=new URLSearchParams(location.search),requested=params.get('case'),candidate=window.QuestionData[requested],caseId=candidate?.chapter===8?requested:'L034';
 document.body.dataset.caseId=caseId;
 const question=window.QuestionData[caseId],wrong={cells:Object.fromEntries(question.table.inputCells.map(id=>[id,'']))};
 new window.AppView(document).renderExplanation(question,{correct:false},wrong);
