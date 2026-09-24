@@ -705,6 +705,35 @@
       const next = this.document.createElement('p'); next.className = 'diagnostic-next'; next.textContent = `次の確認：${diagnostic.nextRule}`; section.append(next);
       return section;
     }
+    renderStructuredExplanation(question, userAnswer, score) {
+      if (score.correct || !question.explanationModel || !root.ExplanationModel?.build) return null;
+      const model = root.ExplanationModel.build(question, userAnswer || {}, score);
+      const valueText = value => typeof value === 'number' ? `${yen(value)}円` : value === true ? '確認' : String(value ?? '');
+      const flow = this.document.createElement('section'); flow.className = 'explanation-flow'; flow.setAttribute('aria-label', '資料から答えまでの解き直し');
+      const intro = this.document.createElement('h4'); intro.className = 'explanation-flow-title'; intro.textContent = '資料から答えまで、順番にほどく'; flow.append(intro);
+      const definitions = [['見る資料','sources'],['取引・処理の要点','summary'],['計算','calculation'],['仕訳・転記','transfer'],['検算','checks'],['よくあるミス','mistakes']];
+      const element = (tag, className, text) => { const node = this.document.createElement(tag); if (className) node.className = className; if (text != null) node.textContent = text; return node; };
+      definitions.forEach(([label, key], index) => {
+        const section = element('section', 'explanation-flow-section'); section.dataset.section = key;
+        const head = element('div', 'explanation-flow-head'); head.append(element('div', 'explanation-flow-step', String(index + 1)), element('h5', '', label)); section.append(head);
+        const items = model[key] || [];
+        if (!items.length) section.append(element('p', 'explanation-flow-empty', 'この問題では追加情報はありません。'));
+        if (key === 'sources') items.forEach(item => { const card = element('article', 'explanation-source-card'); card.append(element('h6', '', item.title), element('p', 'explanation-source-focus', item.focus)); const list = element('dl', 'explanation-source-values'); (item.values || []).forEach(value => { const row = element('div', 'explanation-source-value'); row.append(element('dt', '', value.label), element('dd', '', valueText(value.value))); list.append(row); }); card.append(list); section.append(card); });
+        if (key === 'summary') { const list = element('div', 'explanation-summary-list'); items.forEach(item => list.append(element('p', 'explanation-summary-item', item.text))); section.append(list); }
+        if (key === 'calculation') items.forEach(item => { const card = element('article', 'explanation-formula'); card.append(element('div', 'explanation-formula-label', item.label), element('strong', '', item.expression || `答え：${valueText(item.result)}`)); if (item.operands?.length) { const operands = element('div', 'explanation-operands'); item.operands.forEach(value => operands.append(element('span', 'explanation-operand', `${value.label} ${valueText(value.value)}`))); card.append(operands); } section.append(card); });
+        if (key === 'transfer') items.forEach(item => { const card = element('article', 'explanation-transfer-card'), from = element('div', 'explanation-transfer-from'), to = element('div', 'explanation-transfer-to'); from.append(element('strong', '', item.from), element('div', '', item.decision)); to.append(element('strong', '', item.to), element('div', '', valueText(item.value))); const arrow = element('div', 'explanation-transfer-arrow', '→'); arrow.setAttribute('aria-hidden', 'true'); card.append(from, arrow, to); section.append(card); });
+        if (key === 'checks') { const list = element('div', 'explanation-checks'); items.forEach(item => { const card = element('article', 'explanation-check-item'); card.append(element('div', 'explanation-check-mark', '✓')); const body = element('div', 'explanation-check-body'); body.append(element('strong', '', item.label), element('span', '', valueText(item.expected))); card.append(body); list.append(card); }); section.append(list); }
+        if (key === 'mistakes') items.forEach(item => { const card = element('article', 'explanation-mistake-card'); card.append(element('h6', '', item.title), element('p', '', item.reason), element('p', 'explanation-mistake-fix', `直し方：${item.correction}`)); section.append(card); });
+        flow.append(section);
+      });
+      return flow;
+    }
+    appendAuthoredExplanation(question, container) {
+      if (question.npcDialogue) { const dialogue = this.document.createElement('blockquote'); dialogue.className = 'npc-dialogue'; dialogue.textContent = question.npcDialogue; container.append(dialogue); }
+      if (question.type === 'journal' && question.answer) { const badges = this.document.createElement('div'); badges.className = 'explanation-accounts'; [...question.answer.debit, ...question.answer.credit].forEach(item => badges.append(this.accountLabel(item.account))); container.append(badges); }
+      this.explanationSections(question.explanation).forEach(section => { const card = this.document.createElement('section'); card.className = `explanation-card explanation-card-${section.kind}`; const title = this.document.createElement('h4'); title.textContent = section.label; const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = section.text; card.append(title, text); container.append(card); });
+      this.renderKnowledgeLinks(question, container);
+    }
     renderExplanation(question, score, userAnswer) {
       const container = this.byId('explanation'); container.replaceChildren();
       const heading = this.document.createElement('h3'); heading.textContent = '今回の解説'; container.append(heading);
@@ -713,6 +742,8 @@
         ? '正解です。答えの根拠、実務での使い方、試験での見分け方を順に確認しましょう。'
         : 'もう一歩です。誤答の原因から正しい考え方へつなげ、実務と試験で使える判断手順まで一続きで確認しましょう。';
       container.append(lead);
+      const structured = this.renderStructuredExplanation(question, userAnswer, score);
+      if (structured) { container.append(structured); this.appendAuthoredExplanation(question, container); return; }
       const solution = this.document.createElement('section'); solution.className = 'solution-steps';
       const solutionHeading = this.document.createElement('h4'); solutionHeading.textContent = '解き方（この順番で考える）';
       const list = this.document.createElement('ol');
@@ -729,19 +760,7 @@
       solution.append(solutionHeading, list); container.append(solution);
       const diagnostics = this.renderDiagnostics(question, userAnswer, score);
       if (diagnostics) container.append(diagnostics);
-      if (question.npcDialogue) { const dialogue = this.document.createElement('blockquote'); dialogue.className = 'npc-dialogue'; dialogue.textContent = question.npcDialogue; container.append(dialogue); }
-      if (question.type === 'journal' && question.answer) {
-        const badges = this.document.createElement('div'); badges.className = 'explanation-accounts';
-        [...question.answer.debit, ...question.answer.credit].forEach(item => badges.append(this.accountLabel(item.account)));
-        container.append(badges);
-      }
-      this.explanationSections(question.explanation).forEach(section => {
-        const card = this.document.createElement('section'); card.className = `explanation-card explanation-card-${section.kind}`;
-        const title = this.document.createElement('h4'); title.textContent = section.label;
-        const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = section.text;
-        card.append(title, text); container.append(card);
-      });
-      this.renderKnowledgeLinks(question, container);
+      this.appendAuthoredExplanation(question, container);
     }
     renderKnowledgeLinks(question, container) {
       const links = question.knowledgeLinks;

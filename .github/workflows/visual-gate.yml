@@ -26,6 +26,8 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
       - name: Run strict physical-recovery gate in real browsers
         run: node .github/visual/run-visual.js strict
+      - name: Run explanation integration gate in real browsers
+        run: node .github/visual/run-explanation-integration.js
       - name: Upload screenshots and DOM metrics
         if: always()
         uses: actions/upload-artifact@v4

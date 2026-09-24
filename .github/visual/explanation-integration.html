@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Explanation integration visual gate</title>
+<link rel="stylesheet" href="../../css/style.css">
+<style>body{background:#fff}.visual-shell{max-width:760px;margin:0 auto;padding:12px}</style>
+</head>
+<body>
+<main class="visual-shell"><section id="explanation"></section></main>
+<script src="../../data/questions.js"></script>
+<script src="../../js/feedback.js"></script>
+<script src="../../js/explanation-model.js"></script>
+<script src="../../js/view.js"></script>
+<script>
+const params=new URLSearchParams(location.search),caseId=['L034','L041'].includes(params.get('case'))?params.get('case'):'L034';
+document.body.dataset.caseId=caseId;
+const question=window.QuestionData[caseId],wrong={cells:Object.fromEntries(question.table.inputCells.map(id=>[id,'']))};
+new window.AppView(document).renderExplanation(question,{correct:false},wrong);
+</script>
+</body>
+</html>

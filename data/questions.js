@@ -6496,6 +6496,13 @@ const QuestionData = {
       }
     },
     "explanation": "先入先出法では古い単価1,200円の商品から払い出します。払出額は25×1,200＝30,000円、残高は49個×1,200円＋20個×1,500円＝88,800円です。",
+    "explanationModel": {
+      "sources": [{"kind":"table","title":"商品有高帳","focus":"10月20日の払出行と、10月31日の残高行を見る","values":[{"label":"前月繰越","value":"74個 × 1,200円"},{"label":"10月9日 仕入","value":"20個 × 1,500円"},{"label":"10月20日 払出","value":"25個を先入先出法で払出"},{"label":"10月31日 残高","value":"69個"}]}],
+      "summary": [{"text":"先に入った1,200円の商品から25個を払い出す。"},{"text":"払出後は1,200円の商品49個と、1,500円の商品20個が残る。"}],
+      "calculation": [{"label":"払出額","expression":"25 × 1,200 = 30,000","result":30000,"operands":[{"label":"払出数量","value":25},{"label":"先に入った単価","value":1200}]},{"label":"期末残高","expression":"49 × 1,200 + 20 × 1,500 = 88,800","result":88800,"operands":[{"label":"旧在庫","value":58800},{"label":"新在庫","value":30000}]}],
+      "transfer": [{"from":"10月20日 払出","decision":"先入先出法の単価 1,200円","to":"払出単価・払出額","value":"1,200円 / 30,000円"},{"from":"10月31日 残高","decision":"49個@1,200円 + 20個@1,500円","to":"残高金額","value":"88,800円"}],
+      "checks": [{"label":"払出数量","expected":"25個を古い層から使用"},{"label":"残った数量","expected":"49個 + 20個 = 69個"},{"label":"残高金額","expected":"58,800円 + 30,000円 = 88,800円"}]
+    },
     "learningRole": "review",
     "variantGroup": "商品有高帳",
     "timelineRole": "main"
@@ -6965,6 +6972,10 @@ const QuestionData = {
       }
     },
     "explanation": "現金は資産なので、借方記入で増加し、貸方記入で減少します。したがって残高は順に678,000円、591,500円です。",
+    "explanationModel": {
+      "sources": [{"kind":"table","title":"現金元帳","focus":"直前残高・借方・貸方を上から順に見る","values":[{"label":"10月1日","value":"前月繰越 505,000円"},{"label":"10月8日","value":"借方 173,000円（現金増加）"},{"label":"10月15日","value":"貸方 86,500円（現金減少）"}]}],
+      "summary": [{"text":"現金は資産。借方記入は残高を増やし、貸方記入は残高を減らす。"},{"text":"1行ずつ計算し、その残高を次の行へ引き継ぐ。"}]
+    },
     "learningRole": "transfer",
     "variantGroup": "総勘定元帳（現金）",
     "timelineRole": "main"

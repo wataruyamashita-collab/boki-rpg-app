@@ -732,3 +732,43 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
   width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
+/* Issue #154: structured wrong-answer explanation */
+.explanation-flow { display:grid; gap:10px; margin:16px 0; min-width:0; }
+.explanation-flow-title { margin:0; padding:0 2px; font-size:1.05rem; }
+.explanation-flow-section { min-width:0; padding:14px; border:1px solid #d5dce0; border-radius:12px; background:#fff; }
+.explanation-flow-head { display:flex; gap:10px; align-items:flex-start; margin:0 0 10px; }
+.explanation-flow-step { flex:0 0 32px; width:32px; height:32px; display:grid; place-items:center; border:2px solid var(--accent-color); border-radius:50%; font-weight:800; line-height:1; }
+.explanation-flow-head h5 { margin:4px 0 0; font-size:1rem; }
+.explanation-source-card,.explanation-formula,.explanation-transfer-card,.explanation-check-item,.explanation-mistake-card,.explanation-summary-item { min-width:0; padding:12px; border:1px solid #dbe4ea; border-radius:10px; background:#f8fafb; }
+.explanation-source-card h6,.explanation-mistake-card h6 { margin:0 0 6px; font-size:.95rem; }
+.explanation-source-focus { margin:0 0 10px; font-weight:800; }
+.explanation-source-values,.explanation-summary-list,.explanation-checks { display:grid; gap:8px; margin:0; }
+.explanation-source-value { display:grid; grid-template-columns:minmax(72px,.8fr) minmax(0,2fr); gap:8px; padding-top:6px; border-top:1px dashed #d5dce0; }
+.explanation-source-value:first-child { padding-top:0; border-top:0; }
+.explanation-source-value dt { font-weight:800; }
+.explanation-source-value dd { min-width:0; margin:0; overflow-wrap:anywhere; }
+.explanation-summary-item { margin:0; line-height:1.55; }
+.explanation-formula { font-variant-numeric:tabular-nums; }
+.explanation-formula-label { margin-bottom:5px; font-size:.8rem; font-weight:800; }
+.explanation-formula strong { display:block; min-width:0; font-size:1.08rem; line-height:1.45; white-space:normal; overflow-wrap:anywhere; }
+.explanation-operands { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.explanation-operand { max-width:100%; padding:3px 8px; border:1px solid #cbd5dc; border-radius:999px; font-size:.8rem; overflow-wrap:anywhere; }
+.explanation-transfer-card { display:grid; grid-template-columns:minmax(0,1fr) 24px minmax(0,1.2fr); gap:6px; align-items:center; }
+.explanation-transfer-from,.explanation-transfer-to { min-width:0; overflow-wrap:anywhere; }
+.explanation-transfer-from strong,.explanation-transfer-to strong { display:block; }
+.explanation-transfer-arrow { text-align:center; font-weight:900; }
+.explanation-check-item { display:grid; grid-template-columns:24px minmax(0,1fr); gap:8px; align-items:start; }
+.explanation-check-mark { font-weight:900; }
+.explanation-check-body strong,.explanation-check-body span { display:block; }
+.explanation-check-body span { margin-top:2px; font-size:.86rem; }
+.explanation-mistake-card p { margin:.35rem 0; }
+.explanation-mistake-fix { font-weight:800; }
+.explanation-flow-empty { margin:0; font-size:.9rem; }
+@media (max-width:480px) {
+  .explanation-flow-section { padding:12px; }
+  .explanation-transfer-card { grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr); }
+  .explanation-source-value { grid-template-columns:minmax(68px,.8fr) minmax(0,2fr); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .explanation-flow * { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
+}
