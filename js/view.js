@@ -705,23 +705,79 @@
       const next = this.document.createElement('p'); next.className = 'diagnostic-next'; next.textContent = `次の確認：${diagnostic.nextRule}`; section.append(next);
       return section;
     }
+    explanationTeachingProfile(question) {
+      const format = question.format || '', category = String(question.category || '');
+      const profile = (summary, transfer, takeaway) => ({summary, transfer, takeaway});
+      if (question.type === 'journal') return profile('どういう取引か考える','借方・貸方を決めて仕訳する',[
+        '取引で何が増え、何が減ったかを確認してから勘定科目を決めます。',
+        '資産・費用の増加は借方、負債・純資産・収益の増加は貸方に置き、減少は反対側に置きます。',
+        '最後に借方合計と貸方合計が一致しているか確認します。'
+      ]);
+      if (format === 'journal-book' || /仕訳帳/u.test(category)) return profile('どういう取引か考える','借方・貸方を決めて仕訳帳に記入する',[
+        '仕訳帳は、取引を日付順に記録します。',
+        '摘要欄には勘定科目、元丁には総勘定元帳の転記先を示す番号、借方・貸方には証憑に基づく金額を記入します。',
+        '証憑に金額が示されている場合は、その金額をそのまま記入し、計算が必要かどうかを先に見分けます。'
+      ]);
+      if (format === 'fixed-asset-ledger' || /固定資産台帳/u.test(category)) return profile('償却条件を整理する','固定資産台帳に記入する',[
+        '定額法では、まず取得原価と耐用年数から1年分の減価償却費を求めます。',
+        '期中取得・売却があるときは使用月数を確認し、年額を月割りします。',
+        '帳簿価額は取得原価から減価償却累計額を差し引いて求めます。'
+      ]);
+      if (format === 'bookkeeping-notes-receivable') return profile('記帳する受取手形を選ぶ','受取手形記入帳に記入する',[
+        '受取手形記入帳には、受け取った約束手形を受取日順に記録します。',
+        '小切手など対象外の資料を混ぜず、振出人・満期日・支払場所・金額を手形ごとに確認します。'
+      ]);
+      if (format === 'bookkeeping-notes-payable') return profile('記帳する支払手形を選ぶ','支払手形記入帳に記入する',[
+        '支払手形記入帳には、自店が振り出した約束手形を振出日順に記録します。',
+        '他店振出手形の受取などを混ぜず、受取人・満期日・支払場所・金額を確認します。'
+      ]);
+      if (format === 'bookkeeping-cash-book') return profile('受入と支払を分ける','現金出納帳に記入する',[
+        '現金出納帳は、現金の受入と支払を日付順に記録します。',
+        '残高は、受入を加え、支払を差し引いて更新します。'
+      ]);
+      if (format === 'bookkeeping-checking-book') return profile('預入と引出を分ける','当座預金出納帳に記入する',[
+        '当座預金出納帳は、預入と引出を日付順に記録します。',
+        '残高は、預入を加え、引出を差し引いて更新します。'
+      ]);
+      if (format === 'bookkeeping-petty-cash-book') return profile('支払内容を科目に分ける','小口現金出納帳に記入する',[
+        '小口現金の支払は、領収証や精算書の内容から費用科目を判断します。',
+        '定額資金前渡法で支払額と同額を補給する場合、補給額はその期間の支払合計になります。'
+      ]);
+      if (format === 'bookkeeping-purchase-book') return profile('仕入と返品を分ける','仕入帳に記入する',[
+        '仕入帳では仕入と仕入返品を区別して記録します。',
+        '純仕入高は、総仕入高から仕入返品を差し引いて求めます。'
+      ]);
+      if (format === 'bookkeeping-sales-book') return profile('売上と返品を分ける','売上帳に記入する',[
+        '売上帳では売上と売上返品を区別して記録します。',
+        '純売上高は、総売上高から売上返品を差し引いて求めます。'
+      ]);
+      if (format === 'bookkeeping-inventory-ledger' || /商品有高帳/u.test(category)) return profile('数量と単価の動きを整理する','商品有高帳に記入する',[
+        '商品有高帳では、数量と単価を分けて追います。',
+        '払出単価は問題で指定された方法に従い、払出後の数量と金額まで連続して確認します。'
+      ]);
+      if (format === 'bookkeeping-voucher-entry') return profile('取引を伝票の種類に分ける','該当する伝票に記入する',[
+        '現金の受取は入金伝票、現金の支払は出金伝票に記入します。',
+        '現金を伴わない取引は振替伝票に記入します。'
+      ]);
+      if (format === 'bookkeeping-general-ledger' || format === 'bookkeeping-account-ledger' || /元帳/u.test(category)) return profile('増減と相手勘定を整理する','元帳に転記する',[
+        '元帳では、その勘定が借方・貸方のどちらで増えるかを先に確認します。',
+        '取引ごとに相手勘定と金額を転記し、残高を順に更新します。'
+      ]);
+      if (question.type === 'trial_balance') return profile('残高の置き場所を決める','試算表に記入する',['各勘定の最終残高を残高方向に応じて借方列または貸方列へ集計します。','借方合計と貸方合計の一致で転記漏れや二重計上を確認します。']);
+      if (question.type === 'correction') return profile('どこが違うか整理する','訂正仕訳を書く',['まず誤った仕訳と本来の正しい仕訳を分けて考えます。','誤りを取り消し、最終的に正しい残高になるよう訂正仕訳を作ります。']);
+      if (question.type === 'worksheet') return profile('決算整理を反映する','精算表に記入する',['整理前残高に決算整理を反映し、損益計算書と貸借対照表へ振り分けます。','どの欄へ移すかは勘定科目の性質と決算整理後の残高で判断します。']);
+      if (question.type === 'financial_statement') return profile('どの区分に入るか決める','財務諸表に記入する',['確定した残高を収益・費用・資産・負債・純資産の区分へ正しく表示します。','計算だけでなく表示区分を間違えないことが重要です。']);
+      if (question.type === 'comprehensive') return profile('処理の順番を整理する','答えに反映する',['資料ごとに仕訳し、転記・集計・決算整理の順に処理します。','各段階で貸借や残高を確認してから次へ進みます。']);
+      return profile('処理のポイントをつかむ','答えに書き込む',['問題文の条件を整理し、必要な会計処理を一つずつ決めます。','答えを書いた後は資料の条件と整合しているかを確認します。']);
+    }
     renderStructuredExplanation(question, userAnswer, score) {
       if (score.correct || !question.explanationModel || !root.ExplanationModel?.build) return null;
       const model = root.ExplanationModel.build(question, userAnswer || {}, score);
       const valueText = value => typeof value === 'number' ? `${yen(value)}円` : value === true ? '確認' : String(value ?? '');
       const flow = this.document.createElement('section'); flow.className = 'explanation-flow'; flow.setAttribute('aria-label', 'この問題をもう一度解く手順');
       const intro = this.document.createElement('h4'); intro.className = 'explanation-flow-title'; intro.textContent = 'この問題をもう一度解く手順'; flow.append(intro);
-      const journalBook = question.type === 'journal' || question.format === 'journal-book' || /仕訳帳/u.test(question.category || '');
       const hasMeaningfulCalculation = (model.calculation || []).some(item => /[×÷＋+−\-＝=]/u.test(String(item.expression || '')));
-      const teachingProfile = {
-        journal:{summary:'どういう取引か考える',transfer:'借方・貸方を決めて仕訳する'},
-        ledger:{summary:journalBook?'どういう取引か考える':'増減の流れをつかむ',transfer:journalBook?'借方・貸方を決めて仕訳帳に記入する':'帳簿に記入する'},
-        trial_balance:{summary:'残高の置き場所を決める',transfer:'試算表に記入する'},
-        correction:{summary:'どこが違うか整理する',transfer:'訂正仕訳を書く'},
-        worksheet:{summary:'決算整理を反映する',transfer:'精算表に記入する'},
-        financial_statement:{summary:'どの区分に入るか決める',transfer:'財務諸表に記入する'},
-        comprehensive:{summary:'処理の順番を整理する',transfer:'答えに反映する'}
-      }[question.type] || {summary:'処理のポイントをつかむ',transfer:'答えに書き込む'};
+      const teachingProfile = this.explanationTeachingProfile(question);
       const definitions = [
         ['まずここを確認','sources'],
         [teachingProfile.summary,'summary'],
@@ -747,47 +803,7 @@
       return flow;
     }
     renderLearningTakeaway(question, container) {
-      const journalBook = question.type === 'journal' || question.format === 'journal-book' || /仕訳帳/u.test(question.category || '');
-      const rules = journalBook
-        ? [
-            '仕訳帳は、取引を日付順に記録します。',
-            '摘要欄には勘定科目、元丁には総勘定元帳の転記先を示す番号、借方・貸方には証憑に基づく金額を記入します。',
-            '証憑に金額が示されている場合は、その金額をそのまま記入し、計算が必要かどうかを先に見分けます。'
-          ]
-        : ({
-            journal:[
-              '取引で何が増え、何が減ったかを確認してから勘定科目を決めます。',
-              '資産・費用の増加は借方、負債・純資産・収益の増加は貸方に置き、減少は反対側に置きます。',
-              '最後に借方合計と貸方合計が一致しているか確認します。'
-            ],
-            ledger:[
-              '元帳は、仕訳の相手勘定と金額を該当する勘定へ転記します。',
-              '残高は直前残高に増減を反映して更新し、日付・相手勘定・残高を順に確認します。'
-            ],
-            trial_balance:[
-              '各勘定の最終残高を、残高方向に応じて借方列または貸方列へ一度だけ集計します。',
-              '借方合計と貸方合計の一致は、転記漏れや二重計上を見つける重要な確認です。'
-            ],
-            correction:[
-              '訂正では、まず誤った仕訳と本来の正しい仕訳を分けて考えます。',
-              '誤りを取り消したうえで、最終的に正しい残高になるよう訂正仕訳を作ります。'
-            ],
-            worksheet:[
-              '精算表は、整理前残高に決算整理を反映し、損益計算書と貸借対照表へ振り分けます。',
-              'どの欄へ移すかは、勘定科目の性質と決算整理後の残高で判断します。'
-            ],
-            financial_statement:[
-              '財務諸表は、確定した残高を収益・費用・資産・負債・純資産の区分へ正しく表示します。',
-              '計算だけでなく、表示区分を間違えないことが得点につながります。'
-            ],
-            comprehensive:[
-              '総合問題は、資料ごとに仕訳し、転記・集計・決算整理の順に処理すると混乱しにくくなります。',
-              '各段階で貸借や残高を確認してから次へ進みます。'
-            ]
-          }[question.type] || [
-            '問題文の条件を整理し、必要な会計処理を一つずつ決めます。',
-            '答えを書いた後は、資料の条件と整合しているかを確認します。'
-          ]);
+      const rules = this.explanationTeachingProfile(question).takeaway;
       const card = this.document.createElement('section'); card.className = 'explanation-card explanation-takeaway';
       const heading = this.document.createElement('h4'); heading.textContent = 'この問題で覚えること';
       const list = this.document.createElement('ul'); list.className = 'explanation-takeaway-list';
