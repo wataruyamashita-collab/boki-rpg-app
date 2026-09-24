@@ -73,9 +73,11 @@ jobs:
           write('independent-audit/tests/generation-40-finalizer.test.js',finalizerTest);
 
           let imm=read('independent-audit/tests/generation-immutability.test.js');
+          const seq38='['+Array.from({length:37},(_,i)=>i+2).join(',')+']';
           const seq39='['+Array.from({length:38},(_,i)=>i+2).join(',')+']';
           const seq40='['+Array.from({length:39},(_,i)=>i+2).join(',')+']';
           imm=imm.replaceAll(seq39,seq40);
+          imm=imm.replaceAll(seq38,seq39);
           imm=imm.replaceAll('generation39Committed','generation40Committed');
           imm=must(imm,'committed(39)','committed(40)','committed generation');
           imm=imm.replaceAll('Generation 39','Generation 40');
@@ -109,13 +111,7 @@ jobs:
           test "$(git status --porcelain --untracked-files=all | wc -l)" -eq 5
       - name: Finalize Generation 40
         run: node scripts/qa/finalize-phase-b-generation-40.js
-      - name: Verify Generation 40
-        run: |
-          npm run qa:test
-          npm run qa:integrity
-          npm run verify
-          git diff --check
-      - name: Commit finalized authority and remove helper workflow
+      - name: Commit Generation 40 locally and remove helper workflow
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -123,4 +119,12 @@ jobs:
           git rm .github/workflows/issue154-finalize-generation-40.yml
           git add -A
           git commit -m "Finalize Generation 40 for learner-oriented explanations"
-          git push origin HEAD:codex/issue-154-explanation-ux-integration
+      - name: Verify committed Generation 40
+        run: |
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+          test -z "$(git status --porcelain)"
+      - name: Publish verified Generation 40
+        run: git push origin HEAD:codex/issue-154-explanation-ux-integration
