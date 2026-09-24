@@ -1,0 +1,68 @@
+'use strict';
+const fs=require('fs'),http=require('http'),path=require('path');
+const { chromium,webkit }=require('playwright');
+const ROOT=path.resolve(__dirname,'../..'),OUTPUT=path.join(ROOT,'artifacts','explanation-poc');
+const engines={chromium,webkit},viewports=[320,375,390,430],cases=['L034','L041'];
+const expected={
+  L034:['25 × 1,200 = 30,000','49 × 1,200 + 20 × 1,500 = 88,800'],
+  L041:['505,000 + 173,000 = 678,000','678,000 − 86,500 = 591,500']
+};
+const evidence={status:'RUNNING',reports:[],failures:[]};
+const mime={'.css':'text/css','.html':'text/html','.js':'text/javascript','.json':'application/json'};
+function write(){fs.mkdirSync(OUTPUT,{recursive:true});fs.writeFileSync(path.join(OUTPUT,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');}
+const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname,relative=pathname==='/'?'.github/visual/explanation-poc.html':pathname.slice(1),file=path.resolve(ROOT,relative);if(!file.startsWith(ROOT+path.sep)||!fs.existsSync(file)||fs.statSync(file).isDirectory()){res.writeHead(404);return res.end('not found');}res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file));});
+async function measure(page,caseId,width){return page.evaluate(({caseId,width,expected})=>{
+  const qs=s=>[...document.querySelectorAll(s)],rect=e=>e.getBoundingClientRect();
+  const sections=qs('.explanation-poc-section'),headings=sections.map(s=>s.querySelector('h2')?.textContent),formulas=qs('.formula strong');
+  const overflow=document.documentElement.scrollWidth>window.innerWidth+1||document.body.scrollWidth>window.innerWidth+1;
+  const clipped=formulas.filter(e=>e.scrollWidth>e.clientWidth+1||rect(e).right>window.innerWidth+1).map(e=>e.textContent);
+  const switchTargets=qs('.case-switch a').map(e=>({text:e.textContent,height:rect(e).height,width:rect(e).width}));
+  return {
+    caseId,width,overflow,sectionCount:sections.length,headings,
+    formulaTexts:formulas.map(e=>e.textContent),clipped,
+    sourceCards:qs('.source-card').length,transferCards:qs('.transfer-card').length,checks:qs('.check-item').length,mistakes:qs('.mistake-card').length,
+    touchTargets:switchTargets,
+    currentLink:document.querySelector('.case-switch a[aria-current="page"]')?.dataset.caseLink||null,
+    expectedFormulaPresence:expected.every(v=>formulas.some(e=>e.textContent===v))
+  };
+},{caseId,width,expected:expected[caseId]});}
+async function run(){
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port+'/.github/visual/explanation-poc.html';write();
+  try{
+    for(const [browserName,launcher] of Object.entries(engines)){
+      const browser=await launcher.launch();
+      try{
+        for(const caseId of cases)for(const width of viewports){
+          const page=await browser.newPage({viewport:{width,height:900}});
+          const pageErrors=[];
+          page.on('pageerror',error=>pageErrors.push(String(error?.stack||error?.message||error)));
+          try{
+            await page.goto(base+'?case='+caseId,{waitUntil:'load'});
+            await page.waitForTimeout(25);
+            const m=await measure(page,caseId,width);
+            m.pageErrors=pageErrors;
+            const expectedHeadings=['見る資料','取引・処理の要点','計算','仕訳・転記','検算','よくあるミス'];
+            const violations=[];
+            if(m.overflow)violations.push('PAGE_HORIZONTAL_OVERFLOW');
+            if(m.sectionCount!==6||JSON.stringify(m.headings)!==JSON.stringify(expectedHeadings))violations.push('SECTION_ORDER');
+            if(m.clipped.length)violations.push('FORMULA_CLIPPED');
+            if(!m.expectedFormulaPresence)violations.push('EXPECTED_FORMULA_MISSING');
+            if(m.sourceCards<1||m.transferCards<1||m.checks<1||m.mistakes<1)violations.push('REQUIRED_VISUAL_COMPONENT_MISSING');
+            if(m.touchTargets.some(x=>x.height<44))violations.push('TOUCH_TARGET_LT_44');
+            if(m.currentLink!==caseId)violations.push('CASE_NAV_STATE');
+            if(m.pageErrors.length)violations.push('PAGE_SCRIPT_ERROR');
+            fs.mkdirSync(path.join(OUTPUT,browserName),{recursive:true});
+            await page.screenshot({path:path.join(OUTPUT,browserName,caseId+'-'+width+'.png'),fullPage:true});
+            evidence.reports.push({browser:browserName,...m,violations});
+            if(violations.length)evidence.failures.push(browserName+'/'+caseId+'/'+width+': '+violations.join(','));
+            write();
+          }finally{await page.close();}
+        }
+      }finally{await browser.close();}
+    }
+    if(evidence.failures.length)throw new Error(evidence.failures.join('\n'));
+    evidence.status='PASS';write();console.log('EXPLANATION_POC_VISUAL_PASS');
+  }catch(error){evidence.status='FAIL';evidence.error=error.message;write();throw error;}
+  finally{await new Promise(r=>server.close(r));}
+}
+run().catch(error=>{console.error(error.stack||error);process.exitCode=1;});
