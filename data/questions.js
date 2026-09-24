@@ -4636,47 +4636,66 @@ const QuestionData = {
   "L005": {
     "id": "L005",
     "type": "ledger",
+    "format": "fixed-asset-ledger",
     "category": "固定資産台帳",
     "difficulty": 1,
     "chapter": 7,
     "scene": "10月・帳簿の照合",
-    "story": "10月、元帳の残高を自分で追えるようになった。水野は「転記したら残高まで確認する」と繰り返す。 「固定資産台帳」に関する証憑と帳簿を突き合わせ、判断の根拠を水野先輩へ報告する。",
-    "question": "固定資産台帳を更新する。取得原価・耐用年数・期首減価償却累計額から、当期償却額と期末帳簿価額を求めなさい。",
+    "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
     "materials": [],
+    "learningRole": "drill",
+    "variantGroup": "固定資産台帳",
+    "timelineRole": "main",
+    "question": "4月1日に取得した備品Aの固定資産台帳を、3月31日決算で完成させなさい。取得原価425,000円、残存価額0円、耐用年数5年、定額法で、当期は1年間使用している。",
     "table": {
       "columns": [
         "asset",
+        "acquisitionDate",
         "acquisitionCost",
+        "residualValue",
         "life",
-        "openingAccumulated",
+        "method",
         "currentDepreciation",
         "closingBookValue"
       ],
       "rows": [
         {
           "asset": "備品A",
+          "acquisitionDate": "4/1",
           "acquisitionCost": 425000,
+          "residualValue": 0,
           "life": 5,
-          "openingAccumulated": 85000,
+          "method": "定額法",
           "currentDepreciation": "入力",
           "closingBookValue": "入力"
         }
       ],
       "inputCells": [
-        "r1_currentDepreciation",
-        "r1_closingBookValue"
-      ]
+        "currentDepreciation",
+        "closingBookValue"
+      ],
+      "inputTypes": {
+        "currentDepreciation": "amount",
+        "closingBookValue": "amount"
+      },
+      "inputMetadata": {
+        "currentDepreciation": {
+          "label": "当期減価償却費",
+          "semanticType": "amount"
+        },
+        "closingBookValue": {
+          "label": "期末帳簿価額",
+          "semanticType": "amount"
+        }
+      }
     },
     "answer": {
       "cells": {
-        "r1_currentDepreciation": 85000,
-        "r1_closingBookValue": 255000
+        "currentDepreciation": 85000,
+        "closingBookValue": 340000
       }
     },
-    "explanation": "残存価額ゼロ・定額法の年額は取得原価÷5年＝85,000円です。期末帳簿価額は取得原価から前期までと当期の償却額を控除した255,000円です。",
-    "learningRole": "drill",
-    "variantGroup": "固定資産台帳",
-    "timelineRole": "main"
+    "explanation": "取得日は4月1日、取得原価425,000円、残存価額0円、耐用年数5年、定額法です。1年分の減価償却費は（425,000円－0円）÷5年＝85,000円。4月1日から3月31日まで12か月なので当期減価償却費は85,000円、期末帳簿価額は425,000円－85,000円＝340,000円です。"
   },
   "L006": {
     "id": "L006",
@@ -4918,47 +4937,75 @@ const QuestionData = {
   "L010": {
     "id": "L010",
     "type": "ledger",
+    "format": "fixed-asset-ledger",
     "category": "固定資産台帳",
     "difficulty": 1,
     "chapter": 7,
     "scene": "10月・帳簿の照合",
-    "story": "10月、元帳の残高を自分で追えるようになった。水野は「転記したら残高まで確認する」と繰り返す。 「固定資産台帳」に関する証憑と帳簿を突き合わせ、判断の根拠を水野先輩へ報告する。",
-    "question": "備品は残存価額ゼロ、定額法で償却している。1年分の減価償却費と期末帳簿価額を求めなさい。",
+    "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
     "materials": [],
+    "learningRole": "drill",
+    "variantGroup": "固定資産台帳",
+    "timelineRole": "main",
+    "question": "備品Aは取得原価450,000円、残存価額0円、耐用年数5年、定額法である。期首減価償却累計額90,000円、当期は1年間使用した。3月31日の台帳を完成させなさい。",
     "table": {
       "columns": [
         "asset",
         "acquisitionCost",
+        "residualValue",
         "life",
+        "method",
         "openingAccumulated",
         "currentDepreciation",
+        "closingAccumulated",
         "closingBookValue"
       ],
       "rows": [
         {
           "asset": "備品A",
           "acquisitionCost": 450000,
+          "residualValue": 0,
           "life": 5,
+          "method": "定額法",
           "openingAccumulated": 90000,
           "currentDepreciation": "入力",
+          "closingAccumulated": "入力",
           "closingBookValue": "入力"
         }
       ],
       "inputCells": [
-        "r1_currentDepreciation",
-        "r1_closingBookValue"
-      ]
+        "currentDepreciation",
+        "closingAccumulated",
+        "closingBookValue"
+      ],
+      "inputTypes": {
+        "currentDepreciation": "amount",
+        "closingAccumulated": "amount",
+        "closingBookValue": "amount"
+      },
+      "inputMetadata": {
+        "currentDepreciation": {
+          "label": "当期減価償却費",
+          "semanticType": "amount"
+        },
+        "closingAccumulated": {
+          "label": "期末減価償却累計額",
+          "semanticType": "amount"
+        },
+        "closingBookValue": {
+          "label": "期末帳簿価額",
+          "semanticType": "amount"
+        }
+      }
     },
     "answer": {
       "cells": {
-        "r1_currentDepreciation": 90000,
-        "r1_closingBookValue": 270000
+        "currentDepreciation": 90000,
+        "closingAccumulated": 180000,
+        "closingBookValue": 270000
       }
     },
-    "explanation": "残存価額ゼロ・定額法の年額は取得原価÷5年＝90,000円です。期末帳簿価額は取得原価から前期までと当期の償却額を控除した270,000円です。",
-    "learningRole": "drill",
-    "variantGroup": "固定資産台帳",
-    "timelineRole": "main"
+    "explanation": "取得原価450,000円、残存価額0円、耐用年数5年、定額法です。1年分の減価償却費は450,000円÷5年＝90,000円で、12か月使用した当期減価償却費は90,000円。期末累計額は期首90,000円＋当期90,000円＝180,000円、期末帳簿価額は450,000円－180,000円＝270,000円です。"
   },
   "L011": {
     "id": "L011",
@@ -5200,47 +5247,88 @@ const QuestionData = {
   "L015": {
     "id": "L015",
     "type": "ledger",
+    "format": "fixed-asset-ledger",
     "category": "固定資産台帳",
     "difficulty": 1,
     "chapter": 7,
     "scene": "10月・帳簿の照合",
-    "story": "10月、元帳の残高を自分で追えるようになった。水野は「転記したら残高まで確認する」と繰り返す。 「固定資産台帳」に関する証憑と帳簿を突き合わせ、判断の根拠を水野先輩へ報告する。",
-    "question": "定額法による固定資産台帳の更新を行う。1年分の償却額を計算し、累計額控除後の期末帳簿価額を求めなさい。",
-    "materials": [],
+    "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
+    "materials": [
+      {
+        "資料": "備品Aの請求書",
+        "取得日": "4/1",
+        "取得原価": 475000
+      },
+      {
+        "資料": "償却条件",
+        "残存価額": 0,
+        "耐用年数": "5年",
+        "償却方法": "定額法",
+        "決算日": "3/31",
+        "会計期間": "4月1日から翌年3月31日まで"
+      }
+    ],
+    "learningRole": "drill",
+    "variantGroup": "固定資産台帳",
+    "timelineRole": "main",
+    "question": "請求書と償却条件を確認し、備品Aの固定資産台帳を完成させなさい。会計期間は4月1日から翌年3月31日までである。",
     "table": {
       "columns": [
         "asset",
+        "acquisitionDate",
         "acquisitionCost",
-        "life",
-        "openingAccumulated",
         "currentDepreciation",
         "closingBookValue"
       ],
       "rows": [
         {
           "asset": "備品A",
-          "acquisitionCost": 475000,
-          "life": 5,
-          "openingAccumulated": 95000,
+          "acquisitionDate": "入力",
+          "acquisitionCost": "入力",
           "currentDepreciation": "入力",
           "closingBookValue": "入力"
         }
       ],
       "inputCells": [
-        "r1_currentDepreciation",
-        "r1_closingBookValue"
-      ]
+        "acquisitionDate",
+        "acquisitionCost",
+        "currentDepreciation",
+        "closingBookValue"
+      ],
+      "inputTypes": {
+        "acquisitionDate": "text",
+        "acquisitionCost": "amount",
+        "currentDepreciation": "amount",
+        "closingBookValue": "amount"
+      },
+      "inputMetadata": {
+        "acquisitionDate": {
+          "label": "取得日",
+          "semanticType": "date"
+        },
+        "acquisitionCost": {
+          "label": "取得原価",
+          "semanticType": "amount"
+        },
+        "currentDepreciation": {
+          "label": "当期減価償却費",
+          "semanticType": "amount"
+        },
+        "closingBookValue": {
+          "label": "期末帳簿価額",
+          "semanticType": "amount"
+        }
+      }
     },
     "answer": {
       "cells": {
-        "r1_currentDepreciation": 95000,
-        "r1_closingBookValue": 285000
+        "acquisitionDate": "4/1",
+        "acquisitionCost": 475000,
+        "currentDepreciation": 95000,
+        "closingBookValue": 380000
       }
     },
-    "explanation": "残存価額ゼロ・定額法の年額は取得原価÷5年＝95,000円です。期末帳簿価額は取得原価から前期までと当期の償却額を控除した285,000円です。",
-    "learningRole": "drill",
-    "variantGroup": "固定資産台帳",
-    "timelineRole": "main"
+    "explanation": "請求書から取得日4月1日と取得原価475,000円を確認し、償却条件から残存価額0円、耐用年数5年、定額法、3月31日決算を確認します。会計期間は4月1日から翌年3月31日までなので使用月数は12か月です。1年分の減価償却費は475,000円÷5年＝95,000円、当期減価償却費は95,000円、期末帳簿価額は475,000円－95,000円＝380,000円です。"
   },
   "L016": {
     "id": "L016",
@@ -5482,47 +5570,75 @@ const QuestionData = {
   "L020": {
     "id": "L020",
     "type": "ledger",
+    "format": "fixed-asset-ledger",
     "category": "固定資産台帳",
     "difficulty": 1,
     "chapter": 7,
     "scene": "10月・帳簿の照合",
-    "story": "10月、元帳の残高を自分で追えるようになった。水野は「転記したら残高まで確認する」と繰り返す。 「固定資産台帳」に関する証憑と帳簿を突き合わせ、判断の根拠を水野先輩へ報告する。",
-    "question": "固定資産台帳を更新する。取得原価・耐用年数・期首減価償却累計額から、当期償却額と期末帳簿価額を求めなさい。",
+    "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
     "materials": [],
+    "learningRole": "drill",
+    "variantGroup": "固定資産台帳",
+    "timelineRole": "main",
+    "question": "備品Aは取得原価500,000円、残存価額0円、耐用年数5年、定額法である。期首減価償却累計額200,000円、当期は1年間使用した。3月31日の台帳を完成させなさい。",
     "table": {
       "columns": [
         "asset",
         "acquisitionCost",
+        "residualValue",
         "life",
+        "method",
         "openingAccumulated",
         "currentDepreciation",
+        "closingAccumulated",
         "closingBookValue"
       ],
       "rows": [
         {
           "asset": "備品A",
           "acquisitionCost": 500000,
+          "residualValue": 0,
           "life": 5,
-          "openingAccumulated": 100000,
+          "method": "定額法",
+          "openingAccumulated": 200000,
           "currentDepreciation": "入力",
+          "closingAccumulated": "入力",
           "closingBookValue": "入力"
         }
       ],
       "inputCells": [
-        "r1_currentDepreciation",
-        "r1_closingBookValue"
-      ]
+        "currentDepreciation",
+        "closingAccumulated",
+        "closingBookValue"
+      ],
+      "inputTypes": {
+        "currentDepreciation": "amount",
+        "closingAccumulated": "amount",
+        "closingBookValue": "amount"
+      },
+      "inputMetadata": {
+        "currentDepreciation": {
+          "label": "当期減価償却費",
+          "semanticType": "amount"
+        },
+        "closingAccumulated": {
+          "label": "期末減価償却累計額",
+          "semanticType": "amount"
+        },
+        "closingBookValue": {
+          "label": "期末帳簿価額",
+          "semanticType": "amount"
+        }
+      }
     },
     "answer": {
       "cells": {
-        "r1_currentDepreciation": 100000,
-        "r1_closingBookValue": 300000
+        "currentDepreciation": 100000,
+        "closingAccumulated": 300000,
+        "closingBookValue": 200000
       }
     },
-    "explanation": "残存価額ゼロ・定額法の年額は取得原価÷5年＝100,000円です。期末帳簿価額は取得原価から前期までと当期の償却額を控除した300,000円です。",
-    "learningRole": "drill",
-    "variantGroup": "固定資産台帳",
-    "timelineRole": "main"
+    "explanation": "取得原価500,000円、残存価額0円、耐用年数5年、定額法です。1年分の減価償却費は500,000円÷5年＝100,000円で、12か月使用した当期減価償却費は100,000円。期末累計額は期首200,000円＋当期100,000円＝300,000円、期末帳簿価額は500,000円－300,000円＝200,000円です。減価償却累計額は取得原価から控除して現在の帳簿価額を示します。"
   },
   "L021": {
     "id": "L021",
@@ -5764,47 +5880,75 @@ const QuestionData = {
   "L025": {
     "id": "L025",
     "type": "ledger",
+    "format": "fixed-asset-ledger",
     "category": "固定資産台帳",
-    "difficulty": 2,
+    "difficulty": 1,
     "chapter": 7,
     "scene": "10月・帳簿の照合",
-    "story": "10月後半、補助簿と総勘定元帳の照合を任される。残高の変化を取引の原因までたどる練習を重ねる。 「固定資産台帳」に関する証憑と帳簿を突き合わせ、判断の根拠を水野先輩へ報告する。",
-    "question": "備品は残存価額ゼロ、定額法で償却している。1年分の減価償却費と期末帳簿価額を求めなさい。",
+    "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
     "materials": [],
+    "learningRole": "drill",
+    "variantGroup": "固定資産台帳",
+    "timelineRole": "main",
+    "question": "10月1日に取得した備品Aについて、3月31日決算の固定資産台帳を完成させなさい。取得原価480,000円、残存価額0円、耐用年数4年、定額法である。使用月数は10月から決算月まで数える。",
     "table": {
       "columns": [
         "asset",
+        "acquisitionDate",
         "acquisitionCost",
+        "residualValue",
         "life",
-        "openingAccumulated",
+        "method",
+        "months",
         "currentDepreciation",
         "closingBookValue"
       ],
       "rows": [
         {
           "asset": "備品A",
-          "acquisitionCost": 525000,
-          "life": 5,
-          "openingAccumulated": 105000,
+          "acquisitionDate": "10/1",
+          "acquisitionCost": 480000,
+          "residualValue": 0,
+          "life": 4,
+          "method": "定額法",
+          "months": "入力",
           "currentDepreciation": "入力",
           "closingBookValue": "入力"
         }
       ],
       "inputCells": [
-        "r1_currentDepreciation",
-        "r1_closingBookValue"
-      ]
+        "months",
+        "currentDepreciation",
+        "closingBookValue"
+      ],
+      "inputTypes": {
+        "months": "amount",
+        "currentDepreciation": "amount",
+        "closingBookValue": "amount"
+      },
+      "inputMetadata": {
+        "months": {
+          "label": "使用月数",
+          "semanticType": "months"
+        },
+        "currentDepreciation": {
+          "label": "当期減価償却費",
+          "semanticType": "amount"
+        },
+        "closingBookValue": {
+          "label": "期末帳簿価額",
+          "semanticType": "amount"
+        }
+      }
     },
     "answer": {
       "cells": {
-        "r1_currentDepreciation": 105000,
-        "r1_closingBookValue": 315000
+        "months": 6,
+        "currentDepreciation": 60000,
+        "closingBookValue": 420000
       }
     },
-    "explanation": "残存価額ゼロ・定額法の年額は取得原価÷5年＝105,000円です。期末帳簿価額は取得原価から前期までと当期の償却額を控除した315,000円です。",
-    "learningRole": "review",
-    "variantGroup": "固定資産台帳",
-    "timelineRole": "main"
+    "explanation": "取得日は10月1日、取得原価480,000円、残存価額0円、耐用年数4年、定額法です。1年分の減価償却費は480,000円÷4年＝120,000円。10月から3月まで6か月なので当期減価償却費は120,000円×6÷12＝60,000円、期末帳簿価額は480,000円－60,000円＝420,000円です。"
   },
   "L026": {
     "id": "L026",
@@ -6046,47 +6190,32 @@ const QuestionData = {
   "L030": {
     "id": "L030",
     "type": "ledger",
+    "format": "fixed-asset-ledger",
     "category": "固定資産台帳",
-    "difficulty": 2,
-    "chapter": 8,
-    "scene": "11月・残高の点検",
-    "story": "10月後半、補助簿と総勘定元帳の照合を任される。残高の変化を取引の原因までたどる練習を重ねる。 「固定資産台帳」に関する証憑と帳簿を突き合わせ、判断の根拠を水野先輩へ報告する。",
-    "question": "定額法による固定資産台帳の更新を行う。1年分の償却額を計算し、累計額控除後の期末帳簿価額を求めなさい。",
+    "difficulty": 1,
+    "chapter": 7,
+    "scene": "10月・帳簿の照合",
+    "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
     "materials": [],
+    "learningRole": "drill",
+    "variantGroup": "固定資産台帳",
+    "timelineRole": "main",
+    "question": "備品Aは12月1日に取得した。会計期間は4月1日から翌年3月31日までである。取得原価360,000円、残存価額0円、耐用年数5年、減価償却方法は定額法である。取得月から決算月まで月割計算し、次の固定資産台帳の空欄を完成させなさい。",
     "table": {
-      "columns": [
-        "asset",
-        "acquisitionCost",
-        "life",
-        "openingAccumulated",
-        "currentDepreciation",
-        "closingBookValue"
-      ],
-      "rows": [
-        {
-          "asset": "備品A",
-          "acquisitionCost": 550000,
-          "life": 5,
-          "openingAccumulated": 110000,
-          "currentDepreciation": "入力",
-          "closingBookValue": "入力"
-        }
-      ],
-      "inputCells": [
-        "r1_currentDepreciation",
-        "r1_closingBookValue"
-      ]
-    },
-    "answer": {
-      "cells": {
-        "r1_currentDepreciation": 110000,
-        "r1_closingBookValue": 330000
+      "columns": ["asset","acquisitionDate","acquisitionCost","residualValue","life","method","annualDepreciation","months","currentDepreciation","closingAccumulated","closingBookValue"],
+      "rows": [{"asset":"備品A","acquisitionDate":"12/1","acquisitionCost":360000,"residualValue":0,"life":5,"method":"定額法","annualDepreciation":"入力","months":"入力","currentDepreciation":"入力","closingAccumulated":"入力","closingBookValue":"入力"}],
+      "inputCells": ["annualDepreciation","months","currentDepreciation","closingAccumulated","closingBookValue"],
+      "inputTypes": {"annualDepreciation":"amount","months":"amount","currentDepreciation":"amount","closingAccumulated":"amount","closingBookValue":"amount"},
+      "inputMetadata": {
+        "annualDepreciation":{"label":"1年分の減価償却費","semanticType":"amount"},
+        "months":{"label":"使用月数","semanticType":"months"},
+        "currentDepreciation":{"label":"当期減価償却費","semanticType":"amount"},
+        "closingAccumulated":{"label":"期末減価償却累計額","semanticType":"amount"},
+        "closingBookValue":{"label":"期末帳簿価額","semanticType":"amount"}
       }
     },
-    "explanation": "残存価額ゼロ・定額法の年額は取得原価÷5年＝110,000円です。期末帳簿価額は取得原価から前期までと当期の償却額を控除した330,000円です。",
-    "learningRole": "review",
-    "variantGroup": "固定資産台帳",
-    "timelineRole": "main"
+    "answer":{"cells":{"annualDepreciation":72000,"months":4,"currentDepreciation":24000,"closingAccumulated":24000,"closingBookValue":336000}},
+    "explanation":"会計期間は4月1日から翌年3月31日までで、備品Aは12月1日取得、取得原価360,000円、残存価額0円、耐用年数5年、定額法です。1年分の減価償却費は360,000円÷5年＝72,000円です。取得月を含めて12月・1月・2月・3月の4か月なので、当期減価償却費は72,000円×4÷12＝24,000円です。初年度のため期末減価償却累計額も24,000円、期末帳簿価額は360,000円－24,000円＝336,000円です。12月から3月までを3か月と数えず、取得月の12月を含めて4か月と数えます。"
   },
   "L031": {
     "id": "L031",
@@ -6205,59 +6334,105 @@ const QuestionData = {
   "L033": {
     "id": "L033",
     "type": "ledger",
-    "category": "買掛金元帳（若葉物産）",
+    "format": "fixed-asset-ledger",
+    "category": "固定資産台帳（取得・月割）",
     "difficulty": 2,
     "chapter": 8,
-    "scene": "11月・残高の点検",
-    "story": "10月後半、補助簿と総勘定元帳の照合を任される。残高の変化を取引の原因までたどる練習を重ねる。 「固定資産台帳（月割・売却）」に関する証憑と帳簿を突き合わせ、判断の根拠を水野先輩へ報告する。",
-    "question": "仕入先別残高を照合する。掛仕入と支払を反映し、各時点の残高を入力しなさい。",
-    "materials": [],
+    "scene": "10月・帳簿の照合",
+    "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
+    "materials": [
+      {
+        "資料": "備品Aの請求書",
+        "取得日": "7/1",
+        "取得原価": 360000
+      },
+      {
+        "資料": "償却条件",
+        "償却方法": "定額法",
+        "残存価額": 0,
+        "耐用年数": "5年",
+        "決算日": "3/31"
+      }
+    ],
+    "learningRole": "transfer",
+    "variantGroup": "固定資産台帳",
+    "timelineRole": "transfer",
+    "question": "会計期間は4月1日から翌年3月31日までである。請求書と償却条件を確認し、備品Aの取得から3月31日決算までを固定資産台帳へ記入しなさい。取得月から決算月まで月割計算する。",
     "table": {
       "columns": [
-        "date",
-        "description",
-        "debit",
-        "credit",
-        "balance"
+        "asset",
+        "acquisitionDate",
+        "acquisitionCost",
+        "months",
+        "currentDepreciation",
+        "closingAccumulated",
+        "closingBookValue"
       ],
       "rows": [
         {
-          "date": "10月1日",
-          "description": "前月繰越",
-          "debit": null,
-          "credit": 465000,
-          "balance": 465000
-        },
-        {
-          "date": "10月12日",
-          "description": "掛仕入",
-          "debit": null,
-          "credit": 149000,
-          "balance": "入力"
-        },
-        {
-          "date": "10月28日",
-          "description": "支払",
-          "debit": 74500,
-          "credit": null,
-          "balance": "入力"
+          "asset": "備品A",
+          "acquisitionDate": "入力",
+          "acquisitionCost": "入力",
+          "months": "入力",
+          "currentDepreciation": "入力",
+          "closingAccumulated": "入力",
+          "closingBookValue": "入力"
         }
       ],
       "inputCells": [
-        "r2_balance",
-        "r3_balance"
-      ]
+        "acquisitionDate",
+        "acquisitionCost",
+        "months",
+        "currentDepreciation",
+        "closingAccumulated",
+        "closingBookValue"
+      ],
+      "inputTypes": {
+        "acquisitionDate": "text",
+        "acquisitionCost": "amount",
+        "months": "amount",
+        "currentDepreciation": "amount",
+        "closingAccumulated": "amount",
+        "closingBookValue": "amount"
+      },
+      "inputMetadata": {
+        "acquisitionDate": {
+          "label": "取得日",
+          "semanticType": "date"
+        },
+        "acquisitionCost": {
+          "label": "取得原価",
+          "semanticType": "amount"
+        },
+        "months": {
+          "label": "使用月数",
+          "semanticType": "months"
+        },
+        "currentDepreciation": {
+          "label": "当期減価償却費",
+          "semanticType": "amount"
+        },
+        "closingAccumulated": {
+          "label": "期末減価償却累計額",
+          "semanticType": "amount"
+        },
+        "closingBookValue": {
+          "label": "期末帳簿価額",
+          "semanticType": "amount"
+        }
+      }
     },
     "answer": {
       "cells": {
-        "r2_balance": 614000,
-        "r3_balance": 539500
+        "acquisitionDate": "7/1",
+        "acquisitionCost": 360000,
+        "months": 9,
+        "currentDepreciation": 54000,
+        "closingAccumulated": 54000,
+        "closingBookValue": 306000
       }
     },
-    "explanation": "買掛金は負債なので貸方で増え、借方で減ります。残高は順に614,000円、539,500円です。",
-    "learningRole": "review",
-    "variantGroup": "買掛金元帳（若葉物産）",
-    "timelineRole": "main"
+    "explanation": "会計期間は4月1日から翌年3月31日までです。請求書から取得日7月1日と取得原価360,000円、償却条件から残存価額0円・耐用年数5年・定額法を確認します。1年分の減価償却費は360,000円÷5年＝72,000円です。7月から3月まで9か月なので当期減価償却費は72,000円×9÷12＝54,000円です。初年度の期末減価償却累計額は54,000円、期末帳簿価額は360,000円－54,000円＝306,000円です。"
   },
   "L034": {
     "id": "L034",
@@ -6610,47 +6785,132 @@ const QuestionData = {
   "L040": {
     "id": "L040",
     "type": "ledger",
+    "format": "fixed-asset-ledger",
     "category": "固定資産台帳",
     "difficulty": 2,
     "chapter": 8,
-    "scene": "11月・残高の点検",
-    "story": "10月後半、補助簿と総勘定元帳の照合を任される。残高の変化を取引の原因までたどる練習を重ねる。 「固定資産台帳（月割・途中売却）」に関する証憑と帳簿を突き合わせ、判断の根拠を水野先輩へ報告する。",
-    "question": "備品は残存価額ゼロ、定額法で償却している。1年分の減価償却費と期末帳簿価額を求めなさい。",
-    "materials": [],
+    "scene": "10月・帳簿の照合",
+    "story": "固定資産の証憑と台帳を照合し、取得から決算までの計算根拠を確認する。",
+    "materials": [
+      {
+        "固定資産": "備品A",
+        "取得日": "4/1",
+        "取得原価": 600000,
+        "売却日": "10/1",
+        "売却価額": 420000
+      },
+      {
+        "固定資産": "備品B",
+        "取得日": "7/1",
+        "取得原価": 300000,
+        "決算日": "3/31"
+      }
+    ],
+    "learningRole": "transfer",
+    "variantGroup": "固定資産台帳",
+    "timelineRole": "transfer",
+    "question": "2つの備品を固定資産台帳で管理する。いずれも残存価額0円、耐用年数5年、定額法である。Aは4月1日取得、10月1日に420,000円で売却した。Bは7月1日取得で、3月31日決算まで使用している。各欄を完成させなさい。",
     "table": {
       "columns": [
         "asset",
-        "acquisitionCost",
-        "life",
-        "openingAccumulated",
+        "annualDepreciation",
+        "months",
         "currentDepreciation",
-        "closingBookValue"
+        "disposalBookValue",
+        "disposalLoss"
       ],
       "rows": [
         {
           "asset": "備品A",
-          "acquisitionCost": 600000,
-          "life": 5,
-          "openingAccumulated": 120000,
+          "annualDepreciation": "入力",
+          "months": "入力",
+          "currentDepreciation": "入力",
+          "disposalBookValue": "入力",
+          "disposalLoss": "入力"
+        },
+        {
+          "asset": "備品B",
+          "annualDepreciation": "入力",
+          "months": "入力",
           "currentDepreciation": "入力",
           "closingBookValue": "入力"
         }
       ],
       "inputCells": [
-        "r1_currentDepreciation",
-        "r1_closingBookValue"
-      ]
+        "annualA",
+        "monthsA",
+        "depreciationA",
+        "bookA",
+        "lossA",
+        "annualB",
+        "monthsB",
+        "depreciationB",
+        "bookB"
+      ],
+      "inputTypes": {
+        "annualA": "amount",
+        "monthsA": "amount",
+        "depreciationA": "amount",
+        "bookA": "amount",
+        "lossA": "amount",
+        "annualB": "amount",
+        "monthsB": "amount",
+        "depreciationB": "amount",
+        "bookB": "amount"
+      },
+      "inputMetadata": {
+        "annualA": {
+          "label": "備品A 1年分の減価償却費",
+          "semanticType": "amount"
+        },
+        "monthsA": {
+          "label": "備品A 使用月数",
+          "semanticType": "months"
+        },
+        "depreciationA": {
+          "label": "備品A 当期減価償却費",
+          "semanticType": "amount"
+        },
+        "bookA": {
+          "label": "備品A 売却時帳簿価額",
+          "semanticType": "amount"
+        },
+        "lossA": {
+          "label": "備品A 固定資産売却損",
+          "semanticType": "amount"
+        },
+        "annualB": {
+          "label": "備品B 1年分の減価償却費",
+          "semanticType": "amount"
+        },
+        "monthsB": {
+          "label": "備品B 使用月数",
+          "semanticType": "months"
+        },
+        "depreciationB": {
+          "label": "備品B 当期減価償却費",
+          "semanticType": "amount"
+        },
+        "bookB": {
+          "label": "備品B 期末帳簿価額",
+          "semanticType": "amount"
+        }
+      }
     },
     "answer": {
       "cells": {
-        "r1_currentDepreciation": 120000,
-        "r1_closingBookValue": 360000
+        "annualA": 120000,
+        "monthsA": 6,
+        "depreciationA": 60000,
+        "bookA": 540000,
+        "lossA": 120000,
+        "annualB": 60000,
+        "monthsB": 9,
+        "depreciationB": 45000,
+        "bookB": 255000
       }
     },
-    "explanation": "残存価額ゼロ・定額法の年額は取得原価÷5年＝120,000円です。期末帳簿価額は取得原価から前期までと当期の償却額を控除した360,000円です。",
-    "learningRole": "review",
-    "variantGroup": "固定資産台帳",
-    "timelineRole": "main"
+    "explanation": "取得原価・残存価額0円・耐用年数5年・定額法を確認します。備品Aは10月1日売却なので、本問では売却日前日の9月30日までを償却対象とし、4月から9月までの6か月を使用月数とします。1年分の減価償却費は600,000円÷5年＝120,000円、当期減価償却費は120,000円×6÷12＝60,000円、売却時帳簿価額は600,000円－60,000円＝540,000円です。売却価額420,000円との差額120,000円が固定資産売却損です。備品Bは7月から3月まで9か月で、1年分の減価償却費は300,000円÷5年＝60,000円、当期減価償却費は60,000円×9÷12＝45,000円、期末帳簿価額は300,000円－45,000円＝255,000円です。10月1日売却の備品Aについて10月を使用月数に含めない点に注意します。"
   },
   "L041": {
     "id": "L041",
@@ -14488,21 +14748,11 @@ QuestionData.L039 = practicalLedger('L039','支払利息勘定（複数年度・
   ['前期末の未払利息','当期首の再振替額','9月30日の年間支払額','当期末の未払利息','当期支払利息（損益振替額）','支払利息勘定の次期繰越額'],
   {priorAccrual:9000,reversal:9000,annualPayment:18000,currentAccrual:9000,profitTransfer:18000,nextBalance:0},
   '600,000×3%＝年18,000円、6か月分は9,000円です。前期末に未払計上し、当期首に再振替、9月30日に1年分を支払い、当期末に再び6か月分を見越します。費用勘定は18,000円を損益へ振り替えて次期繰越0円、未払利息9,000円は負債として次期へ繰り越します。');
-QuestionData.L040 = practicalLedger('L040','固定資産台帳（月割・途中売却）','4月1日取得の備品Aと7月1日取得の備品Bを定額法（残存価額0、耐用年数5年、月割）で記帳する。備品Aは10月1日に420,000円で売却した。取得年度の台帳を完成しなさい。',
-  [{資産:'備品A',取得日:'4/1',取得原価:600000,売却日:'10/1',売却価額:420000},{資産:'備品B',取得日:'7/1',取得原価:300000,決算日:'3/31'}],
-  ['Aの年額減価償却費','Aの当期月割償却（6か月）','Aの売却時帳簿価額','Aの固定資産売却損','Bの当期月割償却（9か月）','Bの期末帳簿価額'],
-  {annualA:120000,depreciationA:60000,bookA:540000,lossA:120000,depreciationB:45000,bookB:255000},
-  'Aは年額120,000円、6か月分60,000円を償却し、帳簿価額540,000円と売却価額420,000円との差120,000円が売却損です。Bは年額60,000円の9か月分45,000円を償却し、帳簿価額は255,000円です。');
-QuestionData.L040.table.inputMetadata = {
-  ...QuestionData.L040.table.inputMetadata,
-  depreciationA: { label:'Aの当期月割償却（6か月）の金額', semanticType:'amount' },
-  depreciationB: { label:'Bの当期月割償却（9か月）の金額', semanticType:'amount' }
-};
-QuestionData.L041 = practicalLedger('L041','仕訳帳','取引資料を仕訳帳へ記帳しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。',
+QuestionData.L041 = practicalLedger('L041','仕訳帳','取引資料を日付順に仕訳帳へ記帳しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。',
   [{日付:'4/3',取引:'商品90,000円を掛販売'},{日付:'4/8',取引:'通信費12,000円を現金払い'}],
-  ['4/3 借方科目','4/3 借方元丁','4/3 借方金額','4/3 貸方科目','4/3 貸方元丁','4/3 貸方金額','4/8 借方科目','4/8 借方元丁','4/8 借方金額','4/8 貸方科目','4/8 貸方元丁','4/8 貸方金額'],
-  {d1Account:'売掛金',d1Ref:113,d1Amount:90000,c1Account:'売上',c1Ref:401,c1Amount:90000,d2Account:'通信費',d2Ref:521,d2Amount:12000,c2Account:'現金',c2Ref:101,c2Amount:12000},
-  '仕訳帳は日付順に、借方・貸方の科目、元丁、金額を記入します。4月3日は売掛金／売上90,000円、4月8日は通信費／現金12,000円です。');
+  ['第1取引日','4/3 借方科目','4/3 借方元丁','4/3 借方金額','4/3 貸方科目','4/3 貸方元丁','4/3 貸方金額','第2取引日','4/8 借方科目','4/8 借方元丁','4/8 借方金額','4/8 貸方科目','4/8 貸方元丁','4/8 貸方金額'],
+  {date1:'4/3',d1Account:'売掛金',d1Ref:113,d1Amount:90000,c1Account:'売上',c1Ref:401,c1Amount:90000,date2:'4/8',d2Account:'通信費',d2Ref:521,d2Amount:12000,c2Account:'現金',c2Ref:101,c2Amount:12000},
+  '仕訳帳は日付、摘要欄の勘定科目、元丁、借方・貸方金額を日付順に記入します。4月3日は売掛金／売上90,000円、4月8日は通信費／現金12,000円です。');
 QuestionData.L042 = practicalLedger('L042','受取手形記入帳','受け取った約束手形を受取手形記入帳へ記帳し、手形金額合計を求めなさい。',
   [{受取日:'6/5',振出人:'青空商店',振出日:'6/4',満期日:'8/31',支払場所:'東都銀行',摘要:'売掛金回収',金額:180000},{受取日:'6/20',振出人:'港屋',振出日:'6/20',満期日:'9/30',支払場所:'中央銀行',摘要:'商品売上',金額:120000}],
   ['1行目 受取日','1行目 振出人','1行目 振出日','1行目 満期日','1行目 支払場所','1行目 摘要','1行目 金額','2行目 受取日','2行目 振出人','2行目 振出日','2行目 満期日','2行目 支払場所','2行目 摘要','2行目 金額','受取手形合計'],
@@ -14549,8 +14799,7 @@ const examLedgerVariant = (id, category, variant, question, materials, cells, la
   answer:{cells}, explanation, learningRole:'transfer', timelineRole:'transfer', variantGroup:`${category}:${variant}`,
   structuralProfile:{concept:category,materialSchema:Object.keys(materials[0]||{}),inputSchema:labels,reasoningSteps:['記帳対象選別','日付順整列','帳簿転記','検算'],calculationPath:variant,context:'証憑から本試験帳簿'}
 });
-QuestionData.L033=examLedgerVariant('L033','固定資産台帳（月割・売却）','取得と期末簿価','7月1日取得の備品について、取得日・取得原価・当期償却額・期末帳簿価額を固定資産台帳へ記入しなさい。定額法、残存価額0、耐用年数5年、決算日は3月31日とし、取得年度の使用期間は9か月である。',[{証憑:'納品書',取得日:'7/1',取得原価:360000}],{date:'7/1',cost:360000,depreciation:54000,bookValue:306000},['取得日','取得原価','当期償却額','期末帳簿価額'],'年額72,000円の9か月分54,000円を償却し、帳簿価額は306,000円です。');
-QuestionData.L034=examLedgerVariant('L034','仕訳帳','複合仕訳','二つの証憑を日付順に仕訳帳へ記入し、摘要・元丁・借方合計・貸方合計を完成しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。',[{日付:'8/2',証憑:'売上票',内容:'商品90,000円を掛販売'},{日付:'8/6',証憑:'領収証',内容:'通信費12,000円を現金払い'}],{date1:'8/2',summary1:'掛売上',folio1:'113・401',debitTotal:102000,creditTotal:102000},['第1取引日','第1摘要','第1元丁','借方合計','貸方合計'],'売掛金／売上90,000円、通信費／現金12,000円で、貸借合計は102,000円です。');
+QuestionData.L034=examLedgerVariant('L034','仕訳帳','複合仕訳','二つの証憑を日付順に仕訳帳へ記帳しなさい。元丁は現金101、売掛金113、売上401、通信費521とする。',[{日付:'8/2',証憑:'売上票',内容:'商品90,000円を掛販売'},{日付:'8/6',証憑:'領収証',内容:'通信費12,000円を現金払い'}],{date1:'8/2',d1Account:'売掛金',d1Ref:113,d1Amount:90000,c1Account:'売上',c1Ref:401,c1Amount:90000,date2:'8/6',d2Account:'通信費',d2Ref:521,d2Amount:12000,c2Account:'現金',c2Ref:101,c2Amount:12000},['第1取引日','8/2 借方科目','8/2 借方元丁','8/2 借方金額','8/2 貸方科目','8/2 貸方元丁','8/2 貸方金額','第2取引日','8/6 借方科目','8/6 借方元丁','8/6 借方金額','8/6 貸方科目','8/6 貸方元丁','8/6 貸方金額'],'仕訳帳は日付、摘要欄の勘定科目、元丁、借方・貸方金額を日付順に記入します。8月2日は売掛金／売上90,000円、8月6日は通信費／現金12,000円です。');
 QuestionData.L035=examLedgerVariant('L035','受取手形記入帳','選別と三件満期','四つの資料から受取手形記入帳の対象だけを選び、最初の受取日、最終満期日、振出人、手形合計を記入しなさい。',[{日付:'6/2',種類:'約束手形受取',振出人:'青空商店',支払場所:'東銀行',満期日:'8/31',金額:70000},{日付:'6/9',種類:'小切手受取',振出人:'港商事',支払場所:'西銀行',満期日:'—',金額:20000},{日付:'6/12',種類:'約束手形受取',振出人:'森物産',支払場所:'北銀行',満期日:'9/30',金額:85000},{日付:'6/20',種類:'約束手形受取',振出人:'星商会',支払場所:'南銀行',満期日:'10/31',金額:45000}],{received:'6/2',due:'10/31',drawer:'青空商店・森物産・星商会',total:200000},['最初の受取日','最終満期日','振出人（受取順）','手形金額合計'],'小切手は除外し、約束手形3件の合計は200,000円です。');
 QuestionData.L036=examLedgerVariant('L036','支払手形記入帳','更新手形と二件','資料から自店振出の約束手形だけを選び、振出日、最終満期日、受取人、手形合計を記入しなさい。',[{日付:'7/3',種類:'約束手形振出',受取人:'若葉物産',摘要:'仕入代金',満期日:'9/30',金額:110000},{日付:'7/15',種類:'他店振出手形受取',受取人:'当店',摘要:'売掛金',満期日:'10/15',金額:60000},{日付:'7/25',種類:'約束手形振出',受取人:'山川商事',摘要:'旧手形の更新',満期日:'11/30',金額:90000}],{issued:'7/3',due:'11/30',payee:'若葉物産・山川商事',total:200000},['最初の振出日','最終満期日','受取人（振出順）','手形金額合計'],'受取手形は除外し、自店振出2件を記帳するため合計200,000円です。');
 QuestionData.L037=examLedgerVariant('L037','総勘定元帳（売掛金）','個別転記','売掛金勘定へ日付・相手勘定・借貸位置を転記し、期末残高を求めなさい。期首残高40,000円。',[{日付:'4/8',取引:'掛売上',相手勘定:'売上',借方:120000,貸方:'—'},{日付:'4/20',取引:'現金回収',相手勘定:'現金',借方:'—',貸方:90000}],{date:'4/20',counterpart:'現金',side:'貸方',balance:70000},['最終取引日','最終相手勘定','最終転記の借貸位置','期末残高'],'40,000＋120,000－90,000＝70,000円。回収は売掛金勘定の貸方です。');
@@ -14565,6 +14814,18 @@ Object.assign(QuestionData.L036, { variantGroup:'支払手形記入帳:段階転
 Object.assign(QuestionData.L041, { variantGroup:'仕訳帳:段階転移2', curriculumPrerequisites:['J004','J005','J038'] });
 Object.assign(QuestionData.L042, { variantGroup:'受取手形記入帳:段階転移2', curriculumPrerequisites:['J005','J148','J150'] });
 Object.assign(QuestionData.L043, { variantGroup:'支払手形記入帳:段階転移2', curriculumPrerequisites:['J004','J149','J150'] });
+
+// Preserve each bookkeeping form's identity instead of presenting every ledger
+// as a generic label/value list. These formats affect presentation only: cell
+// IDs, answers, and independent derivation remain unchanged.
+const BookkeepingFormats = {
+  L034:'journal-book', L035:'bookkeeping-notes-receivable', L036:'bookkeeping-notes-payable',
+  L037:'bookkeeping-general-ledger', L038:'bookkeeping-general-ledger', L039:'bookkeeping-account-ledger',
+  L041:'journal-book', L042:'bookkeeping-notes-receivable', L043:'bookkeeping-notes-payable',
+  L044:'bookkeeping-cash-book', L045:'bookkeeping-checking-book', L046:'bookkeeping-petty-cash-book',
+  L047:'bookkeeping-purchase-book', L048:'bookkeeping-sales-book', L049:'bookkeeping-inventory-ledger', L050:'bookkeeping-voucher-entry'
+};
+Object.entries(BookkeepingFormats).forEach(([id, format]) => { QuestionData[id].format = format; });
 
 ['J145','J146','J147'].forEach(id => Object.assign(QuestionData[id], { learningRole:'transfer', timelineRole:'transfer', materials:[{資料種別:'独立取引資料',取引内容:QuestionData[id].question}] }));
 
@@ -14613,7 +14874,7 @@ function answerFingerprint(answer) {
   for (const character of JSON.stringify(answer)) { hash ^= character.charCodeAt(0); hash = Math.imul(hash, 16777619); }
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
-const ReviewedAnswerFingerprints = Object.freeze({"J001":"d8e1c623","J002":"90c0eb06","J003":"000b10fe","J004":"0ec62aa1","J005":"37e4f9a8","J006":"9c615d8f","J007":"4276b057","J008":"eea9a423","J009":"d0284858","J010":"692f6625","J011":"57d82400","J012":"7c3bdf04","J013":"866e6f47","J014":"6a5a27dc","J015":"595da73e","J016":"6b79a2c8","J017":"405975aa","J018":"bcec67cd","J019":"e7cec67c","J020":"e839c7af","J021":"99b7dc60","J022":"13d9868a","J023":"09591681","J024":"cbf936d8","J025":"841a43be","J026":"886fd7d6","J027":"d357bb11","J028":"e921fa24","J029":"1b3d5a5b","J030":"3df1ac2a","J031":"938e7318","J032":"6da3bc3e","J033":"961583ca","J034":"8ad2899a","J035":"f324b1fa","J036":"bd1dd412","J037":"38468aee","J038":"49d23923","J039":"45d064fc","J040":"d708b5ac","J041":"de4d666a","J042":"989c7e9b","J043":"f418c9d5","J044":"991c75d1","J045":"122946f5","J046":"449a7dad","J047":"4faceaa5","J048":"afb7c946","J049":"3a76ef79","J050":"6ff6d32a","J051":"878a4a27","J052":"860f328a","J053":"b4f7e0e6","J054":"d242f36f","J055":"5e10a610","J056":"4dc01d99","J057":"2730b86b","J058":"39d31d01","J059":"7659d404","J060":"3ae1464b","J061":"9e4c0b00","J062":"3c1ca560","J063":"39654e15","J064":"c4f4a63c","J065":"d0a83a90","J066":"d37a3ee4","J067":"1849bd72","J068":"0c3db45f","J069":"32028cba","J070":"e839c7af","J071":"5dede936","J072":"d8c4e847","J073":"1d481c2f","J074":"bdc9bc10","J075":"e6d0ed78","J076":"ec98f716","J077":"5f3566cb","J078":"2c74d912","J079":"79fcdf65","J080":"3df1ac2a","J081":"938e7318","J082":"d5be62b8","J083":"61f51106","J084":"2371a8e4","J085":"d52786f1","J086":"de543e10","J087":"9855dcf6","J088":"0a40e16f","J089":"45d064fc","J090":"b0b067e8","J091":"cdeb5486","J092":"73334d89","J093":"4fe348e3","J094":"165d2583","J095":"a3f7e795","J096":"c4c7c981","J097":"965ce771","J098":"666a41b2","J099":"56d6f7e3","J100":"9427eeec","J101":"1f384c37","J102":"9d4b2846","J103":"d2715cda","J104":"917a6f75","J105":"451accc8","J106":"c045ff8b","J107":"17176333","J108":"f54e1463","J109":"92223788","J110":"44c8eaf7","J111":"c7732388","J112":"2d687d58","J113":"38ddfc8f","J114":"173da264","J115":"493e4aca","J116":"266570a0","J117":"d0b8bcde","J118":"89a1575d","J119":"d5825c78","J120":"e839c7af","J121":"50c52f16","J122":"2ebd6e72","J123":"37907545","J124":"5a31b008","J125":"ff657bc2","J126":"ad424646","J127":"82f029f5","J128":"6d069904","J129":"ad22f837","J130":"3df1ac2a","J131":"5b9288db","J132":"8ff0c342","J133":"858e9406","J134":"e6715465","J135":"24cefe8c","J136":"c173a64a","J137":"8b829b35","J138":"22b7f06b","J139":"45d064fc","J140":"b39d19f4","J141":"86758e3e","J142":"8e2d676f","J143":"241fef41","J144":"7b382d11","J145":"09fb42bd","J146":"517222ad","J147":"95746a79","J148":"b2f45e3c","J149":"70f9a78d","J150":"02b7de4d","L001":"30e8882b","L002":"d9b24adb","L003":"e27e8cf1","L004":"313c9cdb","L005":"c9e1f030","L006":"c9993f62","L007":"b969a7bd","L008":"01da67d1","L009":"209f326d","L010":"f2aaeddd","L011":"1415bb03","L012":"8d471f3d","L013":"1fd17166","L014":"639a28e0","L015":"c540fa8e","L016":"c8d324a5","L017":"2d43a24e","L018":"2251a2ba","L019":"80737433","L020":"69c5934b","L021":"422c0829","L022":"74dcc52a","L023":"89113099","L024":"45822471","L025":"1c19bb3e","L026":"79185952","L027":"1f50785d","L028":"940590a5","L029":"9ace9e94","L030":"a663fcc3","L031":"1162b987","L032":"8985aab4","L033":"26a5b48c","L034":"cf4fc8ca","L035":"588e149b","L036":"458982c2","L037":"aaf34a8e","L038":"dbd65de5","L039":"0109514b","L040":"6bb39ff4","L041":"5b707f77","L042":"165b7152","L043":"48616ca4","L044":"903cf70c","L045":"b521774f","L046":"a2db7875","L047":"4a377801","L048":"91ae93e3","L049":"4392707f","L050":"c64a094d","T001":"5194d1c3","T002":"ac0b810b","T003":"543ad825","T004":"20ae2401","T005":"730bcf49","T006":"7e652a69","T007":"a10e7e61","T008":"cf9a69c3","T009":"e4bd12ed","T010":"9ac2336f","T011":"75ddcef3","T012":"df7fcfa1","T013":"b5919213","T014":"f269f023","T015":"e258a2df","T016":"331b7d99","T017":"09520621","T018":"80a602a7","T019":"ba2db99d","T020":"63c211bb","T021":"5ce3b7e9","T022":"6d1f9313","T023":"e25baa41","T024":"7eb7bc15","T025":"5ef98d01","T026":"713e6b2f","T027":"709d827f","T028":"00dfcac9","T029":"a7afbd81","T030":"24d302a1","T031":"600d6a93","T032":"43551a2f","T033":"4d6dd643","T034":"1c93f1fb","T035":"a492f949","T036":"a837d1f5","T037":"fa5f9aa1","T038":"bed837a1","T039":"f5491dc1","T040":"8310e8e7","E001":"917a82fa","E002":"b9ea9fe4","E003":"e217b7db","E004":"3ec70254","E005":"4b0e4435","E006":"187911d8","E007":"81f3f7a1","E008":"64156aed","E009":"ef9542c7","E010":"d899cdb2","E011":"adec7923","E012":"ee824d83","E013":"f4440ba3","E014":"9796574f","E015":"69f9ae35","E016":"b16f7ae4","E017":"18a8f0d0","E018":"b3355226","E019":"ded867c0","E020":"b24906e4","D001":"9ac7b8d4","D002":"25fc6159","D003":"b81f871d","D004":"3e0f7fbf","D005":"a116e047","D006":"98f50cb8","D007":"7c8018bf","D008":"787ed897","D009":"f8f3242c","D010":"5772d519","D011":"c35ce912","D012":"d40b11e8","D013":"7bcb0b14","D014":"2ca6aba7","D015":"6c4ff213","D016":"b6049069","D017":"8b48d74c","D018":"f754625c","D019":"7619ee65","D020":"8c305999","F001":"60c9a696","F002":"a50f7f00","F003":"1ae6477a","F004":"6c7a1529","F005":"ae5bb262","F006":"14c68a85","F007":"da6ad7d5","F008":"e463d96b","F009":"f3662ec7","F010":"bfe0a46c","C001":"a0f27f54","C002":"d54bf897","C003":"679225b3","C004":"db1d15be","C005":"375dcb65","C006":"e5100f3c","C007":"40d33ebc","C008":"0b26fd79","C009":"d5ff0eb4","C010":"d02182dc"});
+const ReviewedAnswerFingerprints = Object.freeze({"J001":"d8e1c623","J002":"90c0eb06","J003":"000b10fe","J004":"0ec62aa1","J005":"37e4f9a8","J006":"9c615d8f","J007":"4276b057","J008":"eea9a423","J009":"d0284858","J010":"692f6625","J011":"57d82400","J012":"7c3bdf04","J013":"866e6f47","J014":"6a5a27dc","J015":"595da73e","J016":"6b79a2c8","J017":"405975aa","J018":"bcec67cd","J019":"e7cec67c","J020":"e839c7af","J021":"99b7dc60","J022":"13d9868a","J023":"09591681","J024":"cbf936d8","J025":"841a43be","J026":"886fd7d6","J027":"d357bb11","J028":"e921fa24","J029":"1b3d5a5b","J030":"3df1ac2a","J031":"938e7318","J032":"6da3bc3e","J033":"961583ca","J034":"8ad2899a","J035":"f324b1fa","J036":"bd1dd412","J037":"38468aee","J038":"49d23923","J039":"45d064fc","J040":"d708b5ac","J041":"de4d666a","J042":"989c7e9b","J043":"f418c9d5","J044":"991c75d1","J045":"122946f5","J046":"449a7dad","J047":"4faceaa5","J048":"afb7c946","J049":"3a76ef79","J050":"6ff6d32a","J051":"878a4a27","J052":"860f328a","J053":"b4f7e0e6","J054":"d242f36f","J055":"5e10a610","J056":"4dc01d99","J057":"2730b86b","J058":"39d31d01","J059":"7659d404","J060":"3ae1464b","J061":"9e4c0b00","J062":"3c1ca560","J063":"39654e15","J064":"c4f4a63c","J065":"d0a83a90","J066":"d37a3ee4","J067":"1849bd72","J068":"0c3db45f","J069":"32028cba","J070":"e839c7af","J071":"5dede936","J072":"d8c4e847","J073":"1d481c2f","J074":"bdc9bc10","J075":"e6d0ed78","J076":"ec98f716","J077":"5f3566cb","J078":"2c74d912","J079":"79fcdf65","J080":"3df1ac2a","J081":"938e7318","J082":"d5be62b8","J083":"61f51106","J084":"2371a8e4","J085":"d52786f1","J086":"de543e10","J087":"9855dcf6","J088":"0a40e16f","J089":"45d064fc","J090":"b0b067e8","J091":"cdeb5486","J092":"73334d89","J093":"4fe348e3","J094":"165d2583","J095":"a3f7e795","J096":"c4c7c981","J097":"965ce771","J098":"666a41b2","J099":"56d6f7e3","J100":"9427eeec","J101":"1f384c37","J102":"9d4b2846","J103":"d2715cda","J104":"917a6f75","J105":"451accc8","J106":"c045ff8b","J107":"17176333","J108":"f54e1463","J109":"92223788","J110":"44c8eaf7","J111":"c7732388","J112":"2d687d58","J113":"38ddfc8f","J114":"173da264","J115":"493e4aca","J116":"266570a0","J117":"d0b8bcde","J118":"89a1575d","J119":"d5825c78","J120":"e839c7af","J121":"50c52f16","J122":"2ebd6e72","J123":"37907545","J124":"5a31b008","J125":"ff657bc2","J126":"ad424646","J127":"82f029f5","J128":"6d069904","J129":"ad22f837","J130":"3df1ac2a","J131":"5b9288db","J132":"8ff0c342","J133":"858e9406","J134":"e6715465","J135":"24cefe8c","J136":"c173a64a","J137":"8b829b35","J138":"22b7f06b","J139":"45d064fc","J140":"b39d19f4","J141":"86758e3e","J142":"8e2d676f","J143":"241fef41","J144":"7b382d11","J145":"09fb42bd","J146":"517222ad","J147":"95746a79","J148":"b2f45e3c","J149":"70f9a78d","J150":"02b7de4d","L001":"30e8882b","L002":"d9b24adb","L003":"e27e8cf1","L004":"313c9cdb","L005":"b23d0c2d","L006":"c9993f62","L007":"b969a7bd","L008":"01da67d1","L009":"209f326d","L010":"91eb031f","L011":"1415bb03","L012":"8d471f3d","L013":"1fd17166","L014":"639a28e0","L015":"669d77e7","L016":"c8d324a5","L017":"2d43a24e","L018":"2251a2ba","L019":"80737433","L020":"56481a9e","L021":"422c0829","L022":"74dcc52a","L023":"89113099","L024":"45822471","L025":"5c1dcdb2","L026":"79185952","L027":"1f50785d","L028":"940590a5","L029":"9ace9e94","L030":"f23023da","L031":"1162b987","L032":"8985aab4","L033":"fcbfdad2","L034":"ba91544a","L035":"588e149b","L036":"458982c2","L037":"aaf34a8e","L038":"dbd65de5","L039":"0109514b","L040":"dd6f0e89","L041":"557937c9","L042":"165b7152","L043":"48616ca4","L044":"903cf70c","L045":"b521774f","L046":"a2db7875","L047":"4a377801","L048":"91ae93e3","L049":"4392707f","L050":"c64a094d","T001":"5194d1c3","T002":"ac0b810b","T003":"543ad825","T004":"20ae2401","T005":"730bcf49","T006":"7e652a69","T007":"a10e7e61","T008":"cf9a69c3","T009":"e4bd12ed","T010":"9ac2336f","T011":"75ddcef3","T012":"df7fcfa1","T013":"b5919213","T014":"f269f023","T015":"e258a2df","T016":"331b7d99","T017":"09520621","T018":"80a602a7","T019":"ba2db99d","T020":"63c211bb","T021":"5ce3b7e9","T022":"6d1f9313","T023":"e25baa41","T024":"7eb7bc15","T025":"5ef98d01","T026":"713e6b2f","T027":"709d827f","T028":"00dfcac9","T029":"a7afbd81","T030":"24d302a1","T031":"600d6a93","T032":"43551a2f","T033":"4d6dd643","T034":"1c93f1fb","T035":"a492f949","T036":"a837d1f5","T037":"fa5f9aa1","T038":"bed837a1","T039":"f5491dc1","T040":"8310e8e7","E001":"917a82fa","E002":"b9ea9fe4","E003":"e217b7db","E004":"3ec70254","E005":"4b0e4435","E006":"187911d8","E007":"81f3f7a1","E008":"64156aed","E009":"ef9542c7","E010":"d899cdb2","E011":"adec7923","E012":"ee824d83","E013":"f4440ba3","E014":"9796574f","E015":"69f9ae35","E016":"b16f7ae4","E017":"18a8f0d0","E018":"b3355226","E019":"ded867c0","E020":"b24906e4","D001":"9ac7b8d4","D002":"25fc6159","D003":"b81f871d","D004":"3e0f7fbf","D005":"a116e047","D006":"98f50cb8","D007":"7c8018bf","D008":"787ed897","D009":"f8f3242c","D010":"5772d519","D011":"c35ce912","D012":"d40b11e8","D013":"7bcb0b14","D014":"2ca6aba7","D015":"6c4ff213","D016":"b6049069","D017":"8b48d74c","D018":"f754625c","D019":"7619ee65","D020":"8c305999","F001":"60c9a696","F002":"a50f7f00","F003":"1ae6477a","F004":"6c7a1529","F005":"ae5bb262","F006":"14c68a85","F007":"da6ad7d5","F008":"e463d96b","F009":"f3662ec7","F010":"bfe0a46c","C001":"a0f27f54","C002":"d54bf897","C003":"679225b3","C004":"db1d15be","C005":"375dcb65","C006":"e5100f3c","C007":"40d33ebc","C008":"0b26fd79","C009":"d5ff0eb4","C010":"d02182dc"});
 
 const SemanticJournalAnswerKey = new Map(Object.values(QuestionData)
   .filter(item => item.type === 'journal')
@@ -14648,6 +14909,74 @@ function chronologicalRows(rows,dateKey) {
 function independentlyDerivedTableCells(item) {
   const rows=item?.table?.rows || [];
   const numeric=value => typeof value === 'number' ? value : 0;
+  if (item?.format === 'fixed-asset-ledger') {
+    if(item.id==='L030'){
+      const questionText=String(item.question||''),row=rows[0]||{};
+      const normalizeNumber=value=>{
+        if(value===null||value===undefined||value==='')return null;
+        const normalized=String(value).normalize('NFKC').replace(/,/g,'').trim();
+        if(!/^-?\d+(?:\.\d+)?$/u.test(normalized))return null;
+        const number=Number(normalized);
+        return Number.isFinite(number)?number:null;
+      };
+      const normalizeMethod=value=>{
+        const normalized=String(value??'').normalize('NFKC').trim();
+        return normalized==='定額法'||normalized==='定率法'?normalized:null;
+      };
+      const reconcile=(leftRaw,rightRaw,normalize,equal=(left,right)=>left===right)=>{
+        const leftPresent=leftRaw!==null&&leftRaw!==undefined&&leftRaw!=='';
+        const rightPresent=rightRaw!==null&&rightRaw!==undefined&&rightRaw!=='';
+        if(!leftPresent&&!rightPresent)return {ok:false,value:null};
+        const left=leftPresent?normalize(leftRaw):null,right=rightPresent?normalize(rightRaw):null;
+        if((leftPresent&&left===null)||(rightPresent&&right===null))return {ok:false,value:null};
+        if(leftPresent&&rightPresent&&!equal(left,right))return {ok:false,value:null};
+        return {ok:true,value:leftPresent?left:right};
+      };
+      const questionNumber=label=>questionText.match(new RegExp(`${label}\\s*([0-9０-９,，]+)`,'u'))?.[1]??null;
+      const questionAcquisitionText=questionText.match(/([0-9０-９]{1,2}(?:月|[\/.\-])[0-9０-９]{1,2}日?)(?:に)?取得/u)?.[1]||questionText.match(/取得日(?:は|：|:)?\s*([0-9０-９]{1,2}(?:月|[\/.\-])[0-9０-９]{1,2}日?)/u)?.[1]||null;
+      const questionMethod=questionText.match(/減価償却方法(?:は)?[^。]*(定額法|定率法)/u)?.[1]||null;
+      const acquisition=reconcile(questionAcquisitionText,row.acquisitionDate,parseMonthDay,(left,right)=>left.month===right.month&&left.day===right.day);
+      const costEvidence=reconcile(questionNumber('取得原価'),row.acquisitionCost,normalizeNumber);
+      const residualEvidence=reconcile(questionNumber('残存価額'),row.residualValue,normalizeNumber);
+      const lifeEvidence=reconcile(questionNumber('耐用年数'),row.life,normalizeNumber);
+      const methodEvidence=reconcile(questionMethod,row.method,normalizeMethod);
+      if(!/会計期間[^。]*4月1日[^。]*3月31日/u.test(questionText))return null;
+      if(!acquisition.ok||!costEvidence.ok||!residualEvidence.ok||!lifeEvidence.ok||!methodEvidence.ok)return null;
+      const cost=costEvidence.value,residual=residualEvidence.value,life=lifeEvidence.value,method=methodEvidence.value;
+      if(method!=='定額法'||residual!==0||!Number.isFinite(cost)||!Number.isFinite(life)||life<=0)return null;
+      const annual=(cost-residual)/life;
+      if(!Number.isFinite(annual))return null;
+      const months=monthDistance(`${acquisition.value.month}/${acquisition.value.day}`,'3/31',{inclusiveEnd:true});
+      if(!Number.isInteger(months))return null;
+      const depreciation=annual*months/12;
+      return {annualDepreciation:annual,months,currentDepreciation:depreciation,closingAccumulated:depreciation,closingBookValue:cost-depreciation};
+    }
+    const visible=JSON.stringify({question:item.question,materials:item.materials,rows:item.table?.rows});
+    const numberAfter=label=>Number(visible.match(new RegExp(`${label}[^0-9]*([0-9,]+)`))?.[1].replace(/,/g,''));
+    const method=/定額法/.test(visible), residual=numberAfter('残存価額'), life=numberAfter('耐用年数');
+    if(!method||residual!==0||!Number.isFinite(life)||life<=0)return null;
+    const cost=numberAfter('取得原価'), annual=(cost-residual)/life;
+    if(!Number.isFinite(cost)||!Number.isFinite(annual))return null;
+    if(item.id==='L005')return {currentDepreciation:annual,closingBookValue:cost-annual};
+    if(item.id==='L010'||item.id==='L020'){
+      const opening=numberAfter('期首減価償却累計額'),closing=opening+annual;
+      return {currentDepreciation:annual,closingAccumulated:closing,closingBookValue:cost-closing};
+    }
+    if(item.id==='L015')return {acquisitionDate:String(item.materials?.[0]?.['取得日']),acquisitionCost:cost,currentDepreciation:annual,closingBookValue:cost-annual};
+    const acquisition=item.materials?.[0]?.['取得日']||rows[0]?.acquisitionDate||String(item.question).match(/([0-9]{1,2}月[0-9]{1,2}日)/)?.[1];
+    if(item.id==='L040'){
+      const [a,b]=item.materials||[], costA=Number(a?.['取得原価']),costB=Number(b?.['取得原価']);
+      const monthsA=monthDistance(a?.['取得日'],a?.['売却日']),monthsB=monthDistance(b?.['取得日'],b?.['決算日'],{inclusiveEnd:true});
+      if(!Number.isInteger(monthsA)||!Number.isInteger(monthsB))return null;
+      const annualA=costA/life,annualB=costB/life,depreciationA=annualA*monthsA/12,depreciationB=annualB*monthsB/12,bookA=costA-depreciationA;
+      return {annualA,monthsA,depreciationA,bookA,lossA:bookA-Number(a?.['売却価額']),annualB,monthsB,depreciationB,bookB:costB-depreciationB};
+    }
+    const closing=item.materials?.find(row=>row['決算日'])?.['決算日']||'3/31',months=monthDistance(acquisition,closing,{inclusiveEnd:true});
+    if(!Number.isInteger(months))return null;
+    const depreciation=annual*months/12, base={months,currentDepreciation:depreciation,closingBookValue:cost-depreciation};
+    if(item.id==='L025')return base;
+    if(item.id==='L033')return {acquisitionDate:String(acquisition),acquisitionCost:cost,months,currentDepreciation:depreciation,closingAccumulated:depreciation,closingBookValue:cost-depreciation};
+  }
   // A running ledger is derived exclusively from its opening balance and postings.
   if (item?.type === 'ledger' && item.table?.inputCells?.join(',') === 'r2_balance,r3_balance' && rows.length === 3) {
     let balance=Number(rows[0].balance);
@@ -14741,7 +15070,7 @@ function independentlyDerivedTableCells(item) {
       return null;
     });
     if(entries.some(entry=>!entry||!Number.isFinite(entry.amount)))return null;
-    return {d1Account:entries[0].d,d1Ref:folios[entries[0].d],d1Amount:entries[0].amount,c1Account:entries[0].c,c1Ref:folios[entries[0].c],c1Amount:entries[0].amount,d2Account:entries[1].d,d2Ref:folios[entries[1].d],d2Amount:entries[1].amount,c2Account:entries[1].c,c2Ref:folios[entries[1].c],c2Amount:entries[1].amount};
+    return {date1:item.materials[0].日付,d1Account:entries[0].d,d1Ref:folios[entries[0].d],d1Amount:entries[0].amount,c1Account:entries[0].c,c1Ref:folios[entries[0].c],c1Amount:entries[0].amount,date2:item.materials[1].日付,d2Account:entries[1].d,d2Ref:folios[entries[1].d],d2Amount:entries[1].amount,c2Account:entries[1].c,c2Ref:folios[entries[1].c],c2Amount:entries[1].amount};
   }
   if (item?.type === 'ledger' && item.materials?.length && item.table?.inputCells?.includes('date1')) {
     const folios=Object.fromEntries([...String(item.question).matchAll(/(現金|売掛金|売上|通信費)([0-9]+)/g)].map(match=>[match[1],match[2]]));
@@ -15294,7 +15623,8 @@ const SEMANTIC_SUFFIX = Object.freeze({ amount:'円', quantity:'個', years:'年
 const formatSemanticValue = (value, semanticType = 'text') => {
   if (value == null) return '—';
   const rendered = typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value);
-  return `${rendered}${SEMANTIC_SUFFIX[semanticType] ?? ''}`;
+  const suffix = SEMANTIC_SUFFIX[semanticType] ?? '';
+  return `${rendered}${suffix && !rendered.endsWith(suffix) ? suffix : ''}`;
 };
 const yenText = value => formatSemanticValue(value, 'amount');
 const semanticTypeForLabel = (label, value) => {
@@ -15313,7 +15643,8 @@ const answerLabel = Object.freeze({
   debitAccount:'借方科目', debitAmount:'借方金額', creditAccount:'貸方科目', creditAmount:'貸方金額',
   unitPrice:'払出単価', currentDepreciation:'当期減価償却費', closingBookValue:'期末帳簿価額', answer:'答え',
   quantity:'数量', life:'耐用年数', folio:'元丁', date:'日付', acquisitionCost:'取得原価', openingAccumulated:'期首減価償却累計額', amount:'金額', description:'摘要', asset:'固定資産',
-  item:'項目', recorded:'帳簿の記録', evidence:'証憑', transaction:'取引内容', account:'勘定科目', debit:'借方', credit:'貸方', balance:'残高', before:'整理前金額', tbDebit:'試算表借方', tbCredit:'試算表貸方'
+  item:'項目', recorded:'帳簿の記録', evidence:'証憑', transaction:'取引内容', account:'勘定科目', debit:'借方', credit:'貸方', balance:'残高', before:'整理前金額', tbDebit:'試算表借方', tbCredit:'試算表貸方',
+  acquisitionDate:'取得日', residualValue:'残存価額', method:'償却方法', annualDepreciation:'1年分の減価償却費', months:'使用月数', closingAccumulated:'期末減価償却累計額', disposalBookValue:'売却時帳簿価額', disposalLoss:'固定資産売却損'
 });
 const getDisplayLabel = field => {
   const key = String(field);
@@ -15325,7 +15656,7 @@ const answerFieldLabel = (item, key) => {
   if (answerLabel[key]) return answerLabel[key];
   const keyLabel = getDisplayLabel(key);
   const metadata = item.table?.inputMetadata?.[key]?.label;
-  if (metadata && metadata !== key && !/[A-Z_]|unitPrice|currentDepreciation|closingBookValue|answer/u.test(metadata)) return String(metadata);
+  if (metadata && metadata !== key && !/unitPrice|currentDepreciation|closingBookValue|answer/u.test(metadata)) return String(metadata);
   const inputIndex = item.table?.inputCells?.indexOf(key) ?? -1; let cursor = -1;
   for (const row of item.table?.rows || []) for (const [column, value] of Object.entries(row)) if (value === '入力' && ++cursor === inputIndex) {
     const subject = ['account','item','description'].map(name => row[name]).find(value => value && value !== '入力' && value !== '—');
@@ -15535,11 +15866,13 @@ Object.values(QuestionData).forEach((item, index) => {
     for (const key of item.table.inputCells) {
       const value = item.answer?.cells?.[key];
       const label = answerFieldLabel(item, key);
-      const explicitSemanticType = item.id === 'L040' && ['depreciationA', 'depreciationB'].includes(key) ? 'amount' : null;
-      const semanticType = explicitSemanticType || semanticTypeForLabel(label, value) || item.table.inputMetadata[key]?.semanticType;
+      const inferredSemanticType = semanticTypeForLabel(label, value);
+      const semanticType = inferredSemanticType !== 'amount' ? inferredSemanticType : (item.table.inputMetadata[key]?.semanticType || inferredSemanticType);
       item.table.inputMetadata[key] = { ...item.table.inputMetadata[key], label, semanticType };
       item.table.controlTypes ||= {};
-      item.table.controlTypes[key] = typeof value === 'number' ? 'numeric' : 'text';
+      item.table.controlTypes[key] = ['amount','unitPrice','months','years'].includes(semanticType) ? 'numeric' : semanticType;
+      // inputTypes remains the legacy grading transport contract (numeric/text),
+      // while controlTypes carries the authoritative user-facing semantics.
       item.table.inputTypes[key] = typeof value === 'number' ? 'amount' : 'text';
     }
   }

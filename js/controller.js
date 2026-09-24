@@ -49,7 +49,17 @@
     }
     static accountChoices(question, correct, mode = 'story') {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
-      if (mode === 'exam') return all.sort((a, b) => a.localeCompare(b, 'ja'));
+      if (mode === 'exam') {
+        const required = question.type === 'journal'
+          ? [...new Set(['debit', 'credit'].flatMap(side => (question.answer?.[side] || []).map(item => item.account)).filter(Boolean))]
+          : question.format === 'journal-book'
+            ? [...new Set(Object.entries(question.answer?.cells || {}).filter(([key]) => /^[dc]\d+Account$/.test(key)).map(([, account]) => account).filter(Boolean))]
+            : [correct].filter(Boolean);
+        const related = [...new Set(required.flatMap(account => JOURNAL_GROUPS.find(group => group.includes(account)) || []))];
+        const seed = `${question.id}:exam`;
+        const distractors = Controller.seededShuffle([...new Set([...related, ...all])].filter(name => !required.includes(name)), seed);
+        return Controller.seededShuffle([...required, ...distractors].slice(0, 5), seed);
+      }
       const related = JOURNAL_GROUPS.find(group => group.includes(correct)) || [];
       const seed = `${question.id}:${correct}`;
       const choices = Controller.seededShuffle([...new Set([correct, ...related, ...all])].slice(0, 5), seed);
@@ -72,20 +82,21 @@
       this.bindEvents(); this.populateAccountFilter(); this.renderModes(); this.view.updateRpg(this.rpg);
       this.model.migrateLegacyPlacement();
       if (!this.model.state.placement) { this.showPlacement(); return; }
-      const mode = ['story', 'training', 'review', 'exam', 'desk'].includes(route.mode) ? route.mode : 'story';
+      const requestedMode = ['story', 'training', 'review', 'exam', 'desk'].includes(route.mode) ? route.mode : 'story';
+      const mode = this.hasActiveExamSession() ? 'exam' : requestedMode;
       if (this.showMode(mode) === false) return;
       if (typeof route.questionId === 'string' && this.questions[route.questionId] && (mode !== 'exam' || this.modeIds().includes(route.questionId))) this.start(route.questionId);
     }
     bindEvents() {
       this.document.addEventListener('click', event => {
         const action = event.target.closest('[data-action]'); if (!action) return;
-      const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'hint-1': () => this.showHint(1), 'hint-2': () => this.showHint(2), 'coaching-retry': () => this.beginCoachingRetry(), 'reveal-answer': () => this.revealAnswer(), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
+      const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'hint-1': () => this.showHint(1), 'hint-2': () => this.showHint(2), 'coaching-retry': () => this.beginCoachingRetry(), 'coaching-retry-result': () => this.beginCoachingRetry(), 'reveal-answer': () => this.revealAnswer(), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target, event); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
       this.document.addEventListener('pointerdown', event => { if (event.target.matches('.amount-input[readonly]:not(:disabled)')) this.selectCalculatorTarget(event.target); });
       this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
-      this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select, .correction-row select')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
+      this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select, .correction-row select, .journal-book-account')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
       this.document.getElementById('filter-query').addEventListener('input', event => { this.filters.query = event.target.value; this.renderModes(); });
       ['filter-account', 'filter-mistakes'].forEach(id => this.document.getElementById(id).addEventListener('change', event => { this.filters[id === 'filter-account' ? 'account' : 'mistakes'] = event.target.value; this.renderModes(); }));
       this.document.getElementById('question-form').addEventListener('submit', event => {
@@ -167,6 +178,11 @@
       if (!this.questions[id] || this.examCandidateIds().includes(id) || this.questions[id].learningRole === 'review') return false;
       this.model.state.mode = 'training'; this.model.save(); this.renderModes(); this.start(id); return true;
     }
+    openExamPrerequisite(id) {
+      if (!this.questions[id] || !this.examPrerequisiteIds().includes(id)) return false;
+      if (this.showMode('story') === false) return false;
+      this.start(id); return true;
+    }
     finishPlacement() {
       const form = this.document.getElementById('placement-form');
       const unanswered = [...form.querySelectorAll('fieldset')].some(fieldset => !fieldset.querySelector('input:checked'));
@@ -180,19 +196,44 @@
       this.document.body?.classList?.remove('placement-active');
       this.document.querySelector('.mode-nav').hidden = false; this.renderModes(); this.start(startId); return startId;
     }
+    hasActiveExamSession(now = Date.now()) {
+      const session = this.model.state.examSession;
+      return Boolean(
+        session &&
+        (session.status || 'RUNNING') === 'RUNNING' &&
+        !this.isExamExpired(now, session)
+      );
+    }
     showMode(mode) {
+      if (mode !== 'exam' && this.hasActiveExamSession()) {
+        this.view.showNotice('模試中は他のモードへ移動できません。先に試験を終了して採点してください。', { title:'模試を継続中です' });
+        return false;
+      }
       this.document.body?.classList?.remove('placement-active');
       if (mode === 'exam') {
         const unmet = this.unmetExamPrerequisites();
         if (unmet.length) {
-          root.alert?.(`模試の前に基礎演習を完了してください（残り${unmet.length}問）。`);
+          const items = unmet.map(id => ({
+            id,
+            label:this.questions[id]?.category || id,
+            detail:this.questions[id]?.question || ''
+          }));
+          this.view.showNotice(`模試の前に基礎演習を完了してください（残り${unmet.length}問）。下の未完了問題から進められます。`, {
+            title:'模試を開始できません',
+            items,
+            itemActionLabel:'この問題を解く',
+            onItemSelect:item => this.openExamPrerequisite(item.id)
+          });
           return false;
         }
       }
+      if (mode === 'exam') this.clearOrdinaryFilters();
       this.model.state.mode = mode;
       if (mode === 'exam') this.ensureExamSession();
       else this.stopExamTimer();
-      this.model.save(); this.view.show(`view-${mode}`); this.document.getElementById('question-filters').hidden = mode === 'exam' || mode === 'desk';
+      this.model.save();
+      this.renderModes();
+      this.view.show(`view-${mode}`); this.document.getElementById('question-filters').hidden = mode === 'exam' || mode === 'desk';
       this.document.body?.classList?.toggle('exam-active', mode === 'exam');
       this.document.querySelectorAll('[data-action="mode"]').forEach(button => button.setAttribute('aria-current', button.dataset.mode === mode ? 'page' : 'false'));
       if (mode === 'exam') { this.updateExamStatus(); this.startExamTimer(); }
@@ -301,13 +342,21 @@
     }
     startExamTimer() { this.stopExamTimer(); this.updateExamStatus(); this.examTimerId = root.setInterval?.(() => this.updateExamStatus(), 1000) || null; }
     stopExamTimer() { if (this.examTimerId !== null) root.clearInterval?.(this.examTimerId); this.examTimerId = null; }
-    finishExam(force, now = Date.now()) {
+    finishExam(force, now = Date.now(), confirmed = false) {
       const session = this.model.state.examSession; if (!session) return false;
       if (session.status === 'FINISHING' || session.status === 'FINISHED') return false;
       const timedOut = force || now >= session.endAt || session.status === 'EXPIRED';
       const unanswered = this.unansweredExamIds();
-      if (!timedOut && unanswered.length) { root.alert?.(`未回答が${unanswered.length}問あります。全問回答後に採点してください。`); this.start(unanswered[0]); return false; }
-      if (!timedOut && root.confirm && !root.confirm('全15問の回答を終了し、採点しますか？')) return false;
+      if (!timedOut && unanswered.length) { this.view.showNotice(`未回答が${unanswered.length}問あります。全問回答後に採点してください。`, { title:'未回答があります' }); this.start(unanswered[0]); return false; }
+      if (!timedOut && !confirmed) {
+        this.view.showNotice('全15問の回答を終了し、採点しますか？', {
+          title:'模試を採点しますか？',
+          cancelLabel:'戻る',
+          confirmLabel:'採点する',
+          onConfirm:() => this.finishExam(false, Date.now(), true)
+        });
+        return false;
+      }
       session.status = 'FINISHING';
       const previousProgress = { level:this.rpg.level, role:this.rpg.role };
       const earned = session.ids.reduce((sum, id, index) => sum + (session.scores[id]?.ratio || 0) * EXAM_POINTS[index], 0);
@@ -325,9 +374,17 @@
       this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); return true;
     }
     questionAccounts(question) { return question.type === 'journal' ? [...question.answer.debit, ...question.answer.credit].map(item => item.account) : []; }
-    populateAccountFilter() {
+    populateAccountFilter(ids = this.modeIds()) {
       const select = this.document.getElementById('filter-account');
-      [...new Set(this.ids.flatMap(id => this.questionAccounts(this.questions[id])))].sort((a, b) => a.localeCompare(b, 'ja')).forEach(account => select.append(new Option(account, account)));
+      const accounts = [...new Set(ids.flatMap(id => this.questionAccounts(this.questions[id])))].sort((a, b) => a.localeCompare(b, 'ja'));
+      const current = this.filters.account;
+      select.replaceChildren(new Option(accounts.length ? 'すべての勘定科目' : 'このモードでは勘定科目検索なし', ''));
+      accounts.forEach(account => select.append(new Option(account, account)));
+      this.filters.account = current && accounts.includes(current) ? current : '';
+      select.value = this.filters.account;
+      select.disabled = accounts.length === 0;
+      const query = this.document.getElementById('filter-query');
+      if (query) query.placeholder = accounts.length ? '問題文・カテゴリ・勘定科目' : '問題文・カテゴリ';
     }
     filteredIds(ids) {
       const normalized = this.filters.query.trim().toLocaleLowerCase('ja');
@@ -344,15 +401,35 @@
       if (this.filters.mistakes === 'frequent') matches.sort((a, b) => (this.model.state.mistakeCounts[b] || 0) - (this.model.state.mistakeCounts[a] || 0));
       return matches;
     }
-    resetFilters() {
+    clearOrdinaryFilters() {
       this.filters = { query: '', account: '', mistakes: 'all' };
-      this.document.getElementById('filter-query').value = ''; this.document.getElementById('filter-account').value = ''; this.document.getElementById('filter-mistakes').value = 'all'; this.renderModes();
+      [['filter-query', ''], ['filter-account', ''], ['filter-mistakes', 'all']].forEach(([id, value]) => {
+        const control = this.document.getElementById(id);
+        if (control) control.value = value;
+      });
     }
+    resetFilters() { this.clearOrdinaryFilters(); this.renderModes(); }
+    visibleIdsForMode(ids, mode) { return mode === 'exam' ? [...ids] : this.filteredIds(ids); }
     renderModes() {
-      const render = (id, ids) => { const filtered = this.filteredIds(ids); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; const mistakes = this.model.state.mistakeCounts[qid] || 0; button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}`; return button; })); return filtered.length; };
-      const counts = [render('story-list', this.storyIds()), render('training-list', this.learningIds().filter(id => this.questions[id].type !== 'journal')), render('review-list', this.reviewIds()), render('exam-list', this.buildExamIds())];
-      const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode); const count = modeIndex < 0 ? 0 : counts[modeIndex]; this.document.getElementById('filter-status').textContent = `${count}問を表示しています。`;
+      const render = (id, ids, mode) => { const filtered = this.visibleIdsForMode(ids, mode); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; const mistakes = this.model.state.mistakeCounts[qid] || 0; button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}`; return button; })); return filtered.length; };
       const storyIds = this.storyIds();
+      const trainingIds = this.learningIds().filter(id => this.questions[id].type !== 'journal');
+      const reviewIds = this.reviewIds();
+      const examIds = this.model.state.examSession?.ids || this.buildExamIds();
+      const pools = [storyIds, trainingIds, reviewIds, examIds];
+      const modeIndex = ['story', 'training', 'review', 'exam'].indexOf(this.model.state.mode);
+      this.populateAccountFilter(modeIndex < 0 ? [] : pools[modeIndex]);
+      const counts = [
+        render('story-list', storyIds, 'story'),
+        render('training-list', trainingIds, 'training'),
+        render('review-list', reviewIds, 'review'),
+        render('exam-list', examIds, 'exam')
+      ];
+      const count = modeIndex < 0 ? 0 : counts[modeIndex];
+      const hasActiveFilter = Boolean(this.filters.query.trim() || this.filters.account || this.filters.mistakes !== 'all');
+      this.document.getElementById('filter-status').textContent = count === 0 && hasActiveFilter
+        ? 'このモードには条件に一致する問題がありません。'
+        : `${count}問を表示しています。`;
       const nextId = storyIds.find(id => !this.model.state.answeredIds.includes(id)) || this.model.state.currentQuestionId || storyIds[0];
       const next = this.questions[nextId]; const chapterIds = storyIds.filter(id => this.questions[id].chapter === next.chapter);
       this.document.getElementById('resume-scene').textContent = `第${next.chapter}章｜${next.scene}`;
@@ -410,10 +487,10 @@
       this.view.updateRpg(this.rpg);
       if (!score.correct) {
         this.learningFlow.phase = 'W'; this.learningFlow.gameOverPending = this.rpg.state.companyHP === 0;
-        this.view.setAnswerMode?.('protected'); this.view.protectedResult(confidence, false); this.view.show('view-question');
+        this.view.result(question, score, answer, confidence, achievement, true); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
         return;
       }
-      this.learningFlow.phase = 'C'; this.view.result(question, score, answer, confidence, achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
+      this.learningFlow.phase = 'C'; this.view.result(question, score, answer, confidence, achievement, false); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
     }
     static journalRetryDraft(answer, expected) {
       const matchSide = side => { const remaining = [...(expected?.[side] || [])]; return (answer?.[side] || []).map(item => { const amount = Number(item?.amount); const index = remaining.findIndex(row => row.account === item?.account && Number.isFinite(amount) && row.amount === amount); if (index < 0) return { account:'', amount:'' }; remaining.splice(index, 1); return { account:item.account, amount:item.amount }; }); };
@@ -435,7 +512,7 @@
       return `「${evidence}」を根拠に、①条件と数値を拾う ②${procedure}する ③自分の入力を問題文へ戻って検算しましょう。`;
     }
     showHint(stage) {
-      const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase) || stage < 1 || stage > 2 || stage > flow.hintStage + 1) return false;
+      const flow = this.learningFlow; if (!flow || flow.phase !== 'I' || stage < 1 || stage > 2 || stage > flow.hintStage + 1) return false;
       const context = this.hintContext(this.questions[this.currentId], stage); flow.hintStage = stage;
       const text = Controller.hintText(context, stage);
       this.view.renderHint(stage, text, context); return true;
@@ -444,28 +521,36 @@
       const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase)) return false;
       const question = this.questions[this.currentId];
       const draft = flow.coachingAnswer || (question.type === 'journal' ? Controller.journalRetryDraft(flow.authoritativeAnswer, question.answer) : Controller.tableRetryDraft(flow.authoritativeAnswer, flow.authoritativeScore?.details));
-      flow.phase = 'R'; flow.coachingAnswer = draft; this.submitting = false; this.view.applyRetryDraft(question, draft); this.view.setAnswerMode?.('coaching'); this.view.protectedResult(flow.confidence, true); this.view.show('view-question');
-      const first = [...this.document.querySelectorAll('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)')].find(input => !input.value) || this.document.querySelector('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)'); first?.focus?.(); return true;
+      flow.phase = 'R'; flow.coachingAnswer = draft; this.submitting = false; this.view.applyRetryDraft(question, draft); this.view.setAnswerMode?.('coaching'); this.view.hideProtectedResult?.(); this.view.show('view-question');
+      const first = [...this.document.querySelectorAll('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)')].find(input => !input.value) || this.document.querySelector('.journal-row select:not(:disabled), .journal-row input:not(:disabled), .table-input:not(:disabled)');
+      if (first?.tagName === 'SELECT' && this.view?.calculatorFirstInput) this.document.getElementById?.('q-text')?.focus?.();
+      else first?.focus?.();
+      return true;
     }
     finishCoachingRetry(question, answer, score) {
       const flow = this.learningFlow; flow.retryCount += 1; this.submitting = false;
       if (!score.correct) {
         flow.coachingAnswer = question.type === 'journal' ? Controller.journalRetryDraft(answer, question.answer) : Controller.tableRetryDraft(answer, score.details);
-        flow.phase = 'W'; this.view.applyRetryDraft(question, flow.coachingAnswer); this.view.setAnswerMode?.('protected'); this.view.protectedResult(flow.confidence, true); return false;
+        flow.phase = 'W'; this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, true); this.view.show('view-result'); this.document?.getElementById?.('result-status')?.focus(); return false;
       }
-      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement); const status = this.document.getElementById('result-status');
+      flow.phase = 'D';
+      this.view.hideProtectedResult?.();
+      this.view.result(question, score, answer, flow.confidence, flow.achievement, false);
+      this.view.renderAnswerComparison?.(question, flow.authoritativeScore, flow.authoritativeAnswer);
+      const status = this.document.getElementById('result-status');
       const note = this.document.createElement('span'); note.className = 'coaching-success'; note.textContent = '練習で修正できました。最初の回答は誤答として記録されています。'; status?.append(note); this.view.show('view-result'); status?.focus?.(); this.dispatchPendingGameOver(); return true;
     }
     revealAnswer() {
       const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase)) return false;
-      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(this.questions[this.currentId], flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); this.dispatchPendingGameOver(); return true;
+      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(this.questions[this.currentId], flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, false); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); this.dispatchPendingGameOver(); return true;
     }
     dispatchPendingGameOver() { const flow = this.learningFlow; if (flow?.gameOverPending && !flow.gameOverDispatched) { flow.gameOverDispatched = true; this.showGameOver(); } }
     next() {
       const lifecycleManaged = Object.prototype.hasOwnProperty.call(this, 'learningFlow');
       if (this.model.state.mode !== 'exam' && lifecycleManaged) {
         const flow = this.learningFlow;
-        if (!flow || !['C','D'].includes(flow.phase) || flow.nextConsumed) return false;
+        if (!flow || !['W','C','D'].includes(flow.phase) || flow.nextConsumed) return false;
+        if (flow.gameOverPending) { this.dispatchPendingGameOver(); return false; }
         flow.nextConsumed = true;
       }
       if (this.model.state.mode === 'exam' && !this.model.state.examSession) return this.leaveExamResult('story');

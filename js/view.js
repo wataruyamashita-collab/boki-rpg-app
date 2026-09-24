@@ -4,16 +4,54 @@
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
   const validAmountText = value => value === '' || /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(value);
+  const normalizeShortDateInput = value => {
+    const original = String(value ?? '').trim();
+    const normalized = original
+      .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
+      .replace(/／/g, '/')
+      .replace(/年/g, '/')
+      .replace(/月/g, '/')
+      .replace(/日/g, '')
+      .replace(/-/g, '/');
+    let month; let day;
+    const explicit = normalized.match(/^(\d{1,2})\/(\d{1,2})$/u);
+    if (explicit) { month = Number(explicit[1]); day = Number(explicit[2]); }
+    else if (/^\d{3,4}$/u.test(normalized)) {
+      const split = normalized.length === 3 ? 1 : 2;
+      month = Number(normalized.slice(0, split)); day = Number(normalized.slice(split));
+    } else return original;
+    const monthDays = [31,29,31,30,31,30,31,31,30,31,30,31];
+    if (!Number.isInteger(month) || !Number.isInteger(day) || month < 1 || month > 12 || day < 1 || day > monthDays[month - 1]) return original;
+    return `${month}/${day}`;
+  };
   const yen = value => Number(value).toLocaleString('ja-JP');
+  const GENERIC_AMOUNT_CONTENT_GLYPHS = 9;
+  const journalAccountFontSize = value => {
+    const glyphs = [...String(value ?? '').trim()].length;
+    if (!glyphs || glyphs <= 5) return 16;
+    if (glyphs <= 8) return 15;
+    if (glyphs <= 10) return 14;
+    return 13;
+  };
+  const genericTableInputCharacters = question => {
+    const widths=new Map(); let inputIndex=0;
+    for(const row of question.table?.rows||[]) Object.values(row).forEach((value,columnIndex)=>{
+      if(value!=='入力')return;
+      const column=question.table.columns[columnIndex],cellId=question.table.inputCells[inputIndex++];
+      if((question.table.inputTypes?.[cellId]||'amount')!=='amount')return;
+      widths.set(column,GENERIC_AMOUNT_CONTENT_GLYPHS);
+    });
+    return widths;
+  };
   // accounting-domain.js is the production source of truth.  The two special
   // values below only keep isolated view unit tests fail-safe when scripts are
   // intentionally evaluated without the application bootstrap.
   const DOMAIN = root.AccountingDomain || { accountType: account => ({ '現金過不足':'temporary', '損益':'closing' })[account] || 'unknown', typeLabels:{ temporary:'仮勘定', closing:'決算勘定' } };
   const TABLE_LABELS = {
-    account: '勘定科目', acquisitionCost: '取得原価', amount: '金額', answer: '解答', asset: '固定資産',
-    balance: '残高', closingBookValue: '期末帳簿価額', credit: '貸方', currentDepreciation: '当期減価償却額',
+    account: '勘定科目', acquisitionCost: '取得原価', acquisitionDate: '取得日', amount: '金額', answer: '解答', asset: '固定資産',
+    annualDepreciation: '年間減価償却額', balance: '残高', closingAccumulated: '期末減価償却累計額', closingBookValue: '期末帳簿価額', credit: '貸方', currentDepreciation: '当期減価償却額',
     date: '日付', debit: '借方', debitAccount: '借方科目', debitAmount: '借方金額', description: '摘要',
-    evidence: '証憑', item: '項目', life: '耐用年数', openingAccumulated: '期首減価償却累計額', quantity: '数量',
+    disposalBookValue: '売却時帳簿価額', disposalLoss: '固定資産売却損', evidence: '証憑', item: '項目', life: '耐用年数', method: '償却方法', months: '使用月数', openingAccumulated: '期首減価償却累計額', quantity: '数量', residualValue: '残存価額',
     recorded: '帳簿の記録', section: '区分', transaction: '取引内容', unitPrice: '単価', value: '内容',
     creditAccount: '貸方科目', creditAmount: '貸方金額'
   };
@@ -22,9 +60,41 @@
     static prefersCalculatorFirst(environment) {
       return environment.matchMedia?.('(hover: none) and (pointer: coarse)').matches === true;
     }
+    static genericTableInputCharacters(question) { return genericTableInputCharacters(question); }
+    static normalizeShortDateInput(value) { return normalizeShortDateInput(value); }
+    static journalAccountFontSize(value) { return journalAccountFontSize(value); }
     byId(id) { return this.document.getElementById(id); }
     tableLabel(value) { return TABLE_LABELS[value] || value; }
     show(id) { this.document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id)); }
+    showNotice(message, options = {}) {
+      const dialog = this.byId('app-notice-dialog'); if (!dialog) return false;
+      const title = this.byId('app-notice-title'); const body = this.byId('app-notice-message');
+      const itemsBox = this.byId('app-notice-items');
+      const cancel = this.byId('app-notice-cancel'); const confirm = this.byId('app-notice-confirm');
+      title.textContent = options.title || 'お知らせ'; body.textContent = String(message ?? '');
+      confirm.textContent = options.confirmLabel || '閉じる';
+      cancel.hidden = !options.cancelLabel; cancel.textContent = options.cancelLabel || '戻る';
+      const close = () => { if (typeof dialog.close === 'function' && dialog.open) dialog.close(); else dialog.removeAttribute('open'); };
+      const noticeItems = Array.isArray(options.items) ? options.items.filter(item => item && item.id) : [];
+      itemsBox.replaceChildren(...noticeItems.map(item => {
+        const card = this.document.createElement('div'); card.className = 'app-notice-item';
+        const copy = this.document.createElement('div'); copy.className = 'app-notice-item-copy';
+        const label = this.document.createElement('strong'); label.textContent = item.label || item.id;
+        const detail = this.document.createElement('p'); detail.textContent = item.detail || '';
+        copy.append(label, detail);
+        const button = this.document.createElement('button'); button.type = 'button'; button.className = 'secondary-button app-notice-item-action';
+        button.textContent = options.itemActionLabel || '開く';
+        button.setAttribute('aria-label', `${label.textContent}を開く`);
+        button.onclick = () => { close(); if (typeof options.onItemSelect === 'function') options.onItemSelect(item); };
+        card.append(copy, button); return card;
+      }));
+      itemsBox.hidden = noticeItems.length === 0;
+      cancel.onclick = close;
+      confirm.onclick = () => { close(); if (typeof options.onConfirm === 'function') options.onConfirm(); };
+      if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); }
+      else dialog.setAttribute('open', '');
+      (itemsBox.querySelector?.('button') || confirm).focus?.(); return true;
+    }
     updateRpg(rpg) {
       const status = this.byId('player-status');
       const items = [
@@ -64,6 +134,8 @@
       }));
     }
     renderQuestion(question, draft, mode = 'story') {
+      this.questionMode = mode;
+      const hintSupport = this.byId('protected-learning'); if (hintSupport) hintSupport.hidden = mode === 'exam';
       this.byId('q-category').textContent = `第${question.chapter}章｜${question.category}`;
       const story = this.byId('q-story'); story.hidden = mode !== 'story';
       if (!story.hidden) { this.byId('q-scene').textContent = question.scene; this.byId('q-context').textContent = question.story; this.byId('q-task').textContent = `今回の仕事：${question.category}`; }
@@ -73,8 +145,10 @@
       this.byId('table-container').hidden = question.type === 'journal';
       if (question.type === 'journal') this.renderJournal(question, draft, mode);
       else if (question.type === 'correction') this.renderCorrection(question, draft);
-      else if (question.category === '仕訳帳' && question.table?.inputCells?.includes('d1Account')) this.renderJournalBook(question, draft);
+      else if (question.format === 'journal-book' && question.table?.inputCells?.includes('d1Account')) this.renderJournalBook(question, draft, mode);
+      else if (question.format?.startsWith('bookkeeping-')) this.renderBookkeepingForm(question, draft);
       else if (question.format === 'balance-sheet') this.renderBalanceSheet(question, draft);
+      else if (question.format === 'fixed-asset-ledger') this.renderFixedAssetLedger(question, draft);
       else this.renderTable(question, draft);
     }
     renderMaterials(question) {
@@ -82,7 +156,7 @@
       if (!container) { container = this.document.createElement('section'); container.id = 'question-materials'; container.className = 'question-materials'; this.byId('q-text').after(container); }
       container.replaceChildren(); container.hidden = !Array.isArray(question.materials) || question.materials.length === 0;
       if (container.hidden) return;
-      const heading = this.document.createElement('h3'); heading.textContent = '解答資料';
+      const heading = this.document.createElement('h3'); heading.textContent = question.materialTitle || '資料';
       const wrap = this.document.createElement('div'); wrap.className = 'materials-table-wrap';
       const table = this.document.createElement('table'); table.className = 'materials-table';
       const columns = [...new Set(question.materials.flatMap(row => Object.keys(row)))];
@@ -102,8 +176,28 @@
       const input = this.document.createElement('input'); input.type = 'text'; input.className = `${className} table-text-input`;
       input.setAttribute('aria-label', label); input.setAttribute('enterkeyhint', 'done'); input.setAttribute('autocomplete', 'off'); input.maxLength = 120; input.value = value; return input;
     }
+    makeShortDateInput(className, label, value = '', placeholder = '例：7/1') {
+      const input = this.makeText(className, label, value); input.classList.add('short-date-input'); input.setAttribute('inputmode', 'numeric'); input.maxLength = 8; input.placeholder = placeholder;
+      const normalize = () => { const next = normalizeShortDateInput(input.value); if (next !== input.value) { input.value = next; const EventCtor = input.ownerDocument?.defaultView?.Event || root.Event; if (EventCtor) input.dispatchEvent(new EventCtor('input', { bubbles:true })); } };
+      input.addEventListener('blur', normalize); input.addEventListener('change', normalize); return input;
+    }
+    makeDatePicker(input, label) {
+      const control = this.document.createElement('span'); control.className = 'date-picker-control';
+      const icon = this.document.createElement('span'); icon.className = 'date-picker-icon'; icon.setAttribute('aria-hidden', 'true'); icon.textContent = '📅';
+      const picker = this.document.createElement('input'); picker.type = 'date'; picker.className = 'date-picker-native'; picker.setAttribute('aria-label', `カレンダーから${label}を選ぶ`);
+      const sync = () => { const value = normalizeShortDateInput(input.value); const match = value.match(/^(\d{1,2})\/(\d{1,2})$/u); picker.value = match ? `2000-${String(Number(match[1])).padStart(2,'0')}-${String(Number(match[2])).padStart(2,'0')}` : ''; };
+      input.addEventListener('blur', sync); input.addEventListener('change', sync); sync();
+      picker.addEventListener('change', () => { const match = picker.value.match(/^\d{4}-(\d{2})-(\d{2})$/u); if (!match) return; input.value = `${Number(match[1])}/${Number(match[2])}`; const EventCtor = input.ownerDocument?.defaultView?.Event || root.Event; if (EventCtor) { input.dispatchEvent(new EventCtor('input', { bubbles:true })); input.dispatchEvent(new EventCtor('change', { bubbles:true })); } });
+      control.append(icon, picker); return control;
+    }
+    updateJournalAccountPresentation(select) {
+      const value = select.value || '';
+      select.style.setProperty('--journal-account-font-size', `${journalAccountFontSize(value)}px`);
+      select.dataset.accountGlyphs = String([...String(value)].length);
+    }
     updateSelectTitle(select) {
       select.title = select.selectedOptions[0]?.textContent || '';
+      if (select.classList?.contains('debit-account') || select.classList?.contains('credit-account')) this.updateJournalAccountPresentation(select);
     }
     renderJournal(question, draft = {}, mode = 'story') {
       const container = this.byId('journal-container'); container.replaceChildren();
@@ -111,7 +205,8 @@
         const instruction = this.document.createElement('p'); instruction.className = 'journal-instruction';
         instruction.textContent = '必要な行だけ入力し、不要な行は空欄のままにしてください。'; container.append(instruction);
       }
-      const header = this.document.createElement('div'); header.className = 'journal-header'; header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'; container.append(header);
+      const grid = this.document.createElement('div'); grid.className = 'journal-grid-scroll';
+      const header = this.document.createElement('div'); header.className = 'journal-header'; header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'; grid.append(header);
       const count = mode === 'exam' ? 3 : Math.max(question.answer.debit.length, question.answer.credit.length);
       for (let index = 0; index < count; index += 1) {
         const row = this.document.createElement('div'); row.className = 'journal-row';
@@ -126,8 +221,9 @@
           const amount = this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : '');
           if (!enabled) amount.disabled = true;
           row.append(select, amount);
-        }); container.append(row);
+        }); grid.append(row);
       }
+      container.append(grid);
     }
     renderCorrection(question, draft = {}) {
       const container = this.byId('table-container'); container.replaceChildren();
@@ -149,27 +245,97 @@
       });
       entry.append(header, row); container.append(entry);
     }
-    renderJournalBook(question, draft = {}) {
+    renderJournalBook(question, draft = {}, mode = 'story') {
       const container = this.byId('table-container'); container.replaceChildren();
       container.classList.add('journal-book-scroll');
+      const guidance = this.document.createElement('div'); guidance.className = 'journal-book-guidance';
+      const folioHelp = this.document.createElement('p'); folioHelp.id = 'journal-book-folio-help'; folioHelp.className = 'journal-book-folio-help'; folioHelp.textContent = '元丁：総勘定元帳の転記先を示す番号';
+      const scrollHelp = this.document.createElement('p'); scrollHelp.className = 'journal-book-scroll-note'; scrollHelp.textContent = '横にスクロールして借方・貸方を入力できます。';
+      guidance.append(folioHelp, scrollHelp); container.append(guidance);
       const table = this.document.createElement('table'); table.className = 'journal-book-entry';
       const head = table.createTHead().insertRow();
-      ['日付', '借方科目', '元丁', '借方金額', '貸方科目', '元丁', '貸方金額'].forEach(label => {
-        const th = this.document.createElement('th'); th.textContent = label; head.append(th);
+      ['日付', '摘要', '元丁', '借方', '貸方'].forEach(label => {
+        const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; head.append(th);
       });
       const body = table.createTBody();
+      const accountControl = (cellId, amountContext) => {
+        const label = this.cellLabel(question, cellId);
+        const select = this.document.createElement('select'); select.className = 'table-input journal-book-account'; select.setAttribute('aria-label', label);
+        select.append(new Option('--勘定科目--', ''));
+        root.AppController.accountChoices(question, question.answer.cells[cellId], mode).forEach(name => select.append(new Option(name, name)));
+        select.value = draft.cells?.[cellId] ?? ''; select.dataset.cellId = cellId; select.dataset.inputType = 'account'; select.dataset.semanticType = 'account';
+        const updateAmountContext = () => { const name = select.value || '科目'; amountContext.textContent = name; amountContext.title = select.value || '勘定科目を選択してください'; };
+        select.addEventListener('change', updateAmountContext); updateAmountContext();
+        this.updateSelectTitle(select); return select;
+      };
+      const folioControl = cellId => {
+        const label = this.cellLabel(question, cellId); const input = this.makeText('table-input folio-input', label, draft.cells?.[cellId] ?? '');
+        input.dataset.cellId = cellId; input.dataset.inputType = 'folio'; input.dataset.semanticType = 'folio'; input.setAttribute('aria-describedby', folioHelp.id); return input;
+      };
+      const amountControl = cellId => {
+        const label = this.cellLabel(question, cellId); const input = this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[cellId] ?? '');
+        input.dataset.cellId = cellId; input.dataset.inputType = 'amount'; input.dataset.semanticType = 'amount'; return input;
+      };
+      const amountContext = () => { const context = this.document.createElement('span'); context.className = 'journal-book-amount-context'; context.setAttribute('aria-hidden', 'true'); context.textContent = '科目'; return context; };
+      const appendAmount = (cell, input, context) => {
+        const line = this.document.createElement('span'); line.className = 'bookkeeping-input-line'; line.append(context, input);
+        const unit = this.document.createElement('span'); unit.className = 'bookkeeping-unit'; unit.textContent = '円'; line.append(unit); cell.append(line);
+      };
       for (let index = 1; question.table.inputCells.includes(`d${index}Account`); index += 1) {
-        const row = body.insertRow(); const date = question.table.inputMetadata?.[`d${index}Account`]?.label?.split(' ')[0] || '';
-        const dateCell = row.insertCell(); dateCell.textContent = date;
-        [`d${index}Account`, `d${index}Ref`, `d${index}Amount`, `c${index}Account`, `c${index}Ref`, `c${index}Amount`].forEach(cellId => {
-          const cell = row.insertCell(); const inputType = question.table.inputTypes?.[cellId]; const label = this.cellLabel(question, cellId);
-          const input = inputType === 'amount'
-            ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[cellId] ?? '')
-            : this.makeText('table-input', label, draft.cells?.[cellId] ?? '');
-          input.dataset.cellId = cellId; input.dataset.inputType = inputType; cell.append(input);
-        });
+        const dateId = `date${index}`;
+        const dateLabel = this.cellLabel(question, dateId);
+        const debit = body.insertRow(); debit.className = 'journal-book-transaction-start';
+        const dateCell = debit.insertCell(); dateCell.className = 'journal-book-date-cell'; dateCell.rowSpan = 2;
+        const dateInput = this.makeShortDateInput('table-input journal-book-date', dateLabel, draft.cells?.[dateId] ?? '', '月/日');
+        dateInput.dataset.cellId = dateId; dateInput.dataset.inputType = 'date'; dateInput.dataset.semanticType = 'date'; dateCell.append(dateInput);
+        const debitContext = amountContext();
+        const debitSummary = debit.insertCell(); debitSummary.className = 'journal-book-summary-cell'; debitSummary.append(accountControl(`d${index}Account`, debitContext));
+        const debitFolio = debit.insertCell(); debitFolio.className = 'journal-book-folio-cell'; debitFolio.append(folioControl(`d${index}Ref`));
+        const debitAmount = debit.insertCell(); debitAmount.className = 'journal-book-amount-cell'; appendAmount(debitAmount, amountControl(`d${index}Amount`), debitContext);
+        const debitBlank = debit.insertCell(); debitBlank.className = 'journal-book-empty-cell'; debitBlank.setAttribute('aria-hidden', 'true');
+
+        const credit = body.insertRow(); credit.className = 'journal-book-credit-row';
+        const creditContext = amountContext();
+        const creditSummary = credit.insertCell(); creditSummary.className = 'journal-book-summary-cell'; creditSummary.append(accountControl(`c${index}Account`, creditContext));
+        const creditFolio = credit.insertCell(); creditFolio.className = 'journal-book-folio-cell'; creditFolio.append(folioControl(`c${index}Ref`));
+        const creditBlank = credit.insertCell(); creditBlank.className = 'journal-book-empty-cell'; creditBlank.setAttribute('aria-hidden', 'true');
+        const creditAmount = credit.insertCell(); creditAmount.className = 'journal-book-amount-cell'; appendAmount(creditAmount, amountControl(`c${index}Amount`), creditContext);
       }
       container.append(table);
+    }
+    renderBookkeepingForm(question, draft = {}) {
+      const wrap = this.byId('table-container'); wrap.replaceChildren();
+      wrap.classList.remove('worksheet-scroll', 'journal-book-scroll');
+      const book = this.document.createElement('section'); book.className = `bookkeeping-form ${question.format}`; book.setAttribute('aria-label', question.category);
+      const heading = this.document.createElement('h3'); heading.className = 'bookkeeping-form-title'; heading.textContent = question.category; book.append(heading);
+      const cells = question.table.inputCells || [];
+      const fallbackLabels = Object.fromEntries(cells.map((id, index) => [id, Object.values(question.table.rows?.[index] || {})[0]]));
+      const numberedRecords = /^bookkeeping-notes-/.test(question.format) && cells.some(id => /1$/.test(id))
+        ? [['手形1', cells.filter(id => /1$/.test(id))], ['手形2', cells.filter(id => /2$/.test(id))], ['合計', cells.filter(id => !/[12]$/.test(id))]]
+        : [[question.format === 'bookkeeping-account-ledger' ? '勘定の流れ' : '記入する帳簿行', cells]];
+      const records = this.document.createElement('div'); records.className = 'bookkeeping-records';
+      for (const [recordTitle, recordCells] of numberedRecords.filter(([, ids]) => ids.length)) {
+        const record = this.document.createElement('section'); record.className = 'bookkeeping-record';
+        const recordHeading = this.document.createElement('h4'); recordHeading.className = 'bookkeeping-record-title'; recordHeading.textContent = recordTitle; record.append(recordHeading);
+        const fields = this.document.createElement('div'); fields.className = 'bookkeeping-record-fields';
+        for (const cellId of recordCells) {
+        const metadata = question.table.inputMetadata?.[cellId] || {};
+        const semanticType = metadata.semanticType || question.table.inputTypes?.[cellId] || 'text';
+        const field = this.document.createElement('div'); field.className = 'bookkeeping-field'; field.dataset.semanticType = semanticType; field.dataset.cell = cellId;
+        const label = this.document.createElement('label'); label.textContent = metadata.label || fallbackLabels[cellId] || this.tableLabel(cellId); label.htmlFor = `bookkeeping-${question.id}-${cellId}`;
+        const amountLike = semanticType === 'amount' || semanticType === 'unitPrice';
+        const input = amountLike ? this.makeAmount('table-input bookkeeping-input', `${label.textContent}（金額）`, draft.cells?.[cellId] ?? '') : semanticType === 'date' ? this.makeShortDateInput('table-input bookkeeping-input', label.textContent, draft.cells?.[cellId] ?? '', '例：6/5') : this.makeText('table-input bookkeeping-input', label.textContent, draft.cells?.[cellId] ?? '');
+        input.id = label.htmlFor; input.dataset.cellId = cellId; input.dataset.inputType = semanticType; input.dataset.semanticType = semanticType;
+        if (semanticType === 'folio') input.classList.add('folio-input');
+        if (semanticType === 'account') input.classList.add('account-input');
+        const line = this.document.createElement('div'); line.className = 'bookkeeping-input-line'; if (semanticType === 'date') line.append(input, this.makeDatePicker(input, label.textContent)); else line.append(input);
+        const units = { amount:'円', unitPrice:'円', months:'か月', years:'年' };
+        if (units[semanticType]) { const unit = this.document.createElement('span'); unit.className = 'bookkeeping-unit'; unit.textContent = units[semanticType]; line.append(unit); }
+        field.append(label, line); fields.append(field);
+        }
+        record.append(fields); records.append(record);
+      }
+      book.append(records); wrap.append(book);
     }
     accountType(account) {
       return DOMAIN.accountType(account);
@@ -191,6 +357,7 @@
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
       const columnTypes = new Map((question.table.columns || []).map(column => [column, 'text']));
+      const inputCharacters = genericTableInputCharacters(question);
       if (question.format !== 'eight-column-worksheet') {
         let profileInputIndex = 0;
         for (const row of question.table.rows || []) Object.values(row).forEach((value, columnIndex) => {
@@ -201,9 +368,14 @@
           } else if (typeof value === 'number' && columnTypes.get(column) === 'text') columnTypes.set(column, 'numeric');
         });
         for (const column of question.table.columns || []) {
-          if (column === 'date') columnTypes.set(column, 'date');
+          if (column === 'life') columnTypes.set(column, 'years');
+          else if (column === 'date') columnTypes.set(column, 'date');
+          else if (column === 'quantity') columnTypes.set(column, 'quantity');
+          else if (column === 'unitPrice') columnTypes.set(column, 'unit-price');
+          else if (column === 'description') columnTypes.set(column, 'description');
           else if (/account/i.test(column) || column === 'account') columnTypes.set(column, 'account');
         }
+        if (inputCharacters.size) table.style.setProperty('--table-input-ch', `${Math.max(...inputCharacters.values())}ch`);
         table.dataset.sizing = 'semantic-content';
       }
       if (question.format === 'eight-column-worksheet') table.setAttribute('role', 'grid');
@@ -227,13 +399,65 @@
           if (value === '入力') {
             const id = question.table.inputCells[inputIndex++]; const inputType = question.table.inputTypes?.[id] || 'amount';
             const metadata = question.table.inputMetadata?.[id]; const label = metadata?.label || this.cellLabel(question, id);
-            const input = inputType === 'amount' ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[id] ?? '') : this.makeText('table-input', label, draft.cells?.[id] ?? '');
+            const input = inputType === 'amount' ? this.makeAmount('table-input', `${label}（金額）`, draft.cells?.[id] ?? '') : inputType === 'date' ? this.makeShortDateInput('table-input', label, draft.cells?.[id] ?? '') : this.makeText('table-input', label, draft.cells?.[id] ?? '');
             if (inputType === 'amount') cell.classList.add('amount-cell');
-            input.dataset.cellId = id; input.dataset.inputType = inputType; cell.append(input);
+            if (inputType === 'amount') cell.style.setProperty('--column-input-ch', `${inputCharacters.get(question.table.columns[columnIndex]) || 9}ch`);
+            input.dataset.cellId = id; input.dataset.inputType = inputType; if (inputType === 'date') { const line = this.document.createElement('div'); line.className = 'table-date-input-line'; line.append(input, this.makeDatePicker(input, label)); cell.append(line); } else cell.append(input);
           }
           else { cell.textContent = value == null ? '' : typeof value === 'number' ? yen(value) : this.tableLabel(value); if (typeof value === 'number') cell.classList.add('amount-cell'); }
         });
-      }); wrap.append(table);
+      }); wrap.append(table); if (question.format !== 'eight-column-worksheet') this.positionStickyContextColumns(table);
+    }
+    renderFixedAssetLedger(question, draft = {}) {
+      const wrap = this.byId('table-container'); wrap.replaceChildren();
+      wrap.classList.remove('worksheet-scroll', 'journal-book-scroll');
+      const ledger = this.document.createElement('div'); ledger.className = 'fixed-asset-ledger'; let inputIndex = 0;
+      for (const [rowIndex, row] of question.table.rows.entries()) {
+        const section = this.document.createElement('section'); section.className = 'fixed-asset-card';
+        const title = this.document.createElement('h3'); title.textContent = row.asset || `固定資産${rowIndex + 1}`; section.append(title);
+        const fields = this.document.createElement('div'); fields.className = 'fixed-asset-fields';
+        for (const [key, value] of Object.entries(row)) {
+          if (key === 'asset') continue;
+          const field = this.document.createElement('div'); field.className = 'fixed-asset-field'; field.dataset.field = key;
+          if (value === '入力') {
+            const cellId = question.table.inputCells[inputIndex++]; const metadata = question.table.inputMetadata?.[cellId] || {};
+            const semanticType = metadata.semanticType || 'amount'; const label = this.document.createElement('label');
+            label.textContent = metadata.label || this.tableLabel(key); label.htmlFor = `fixed-asset-${question.id}-${cellId}`;
+            const input = semanticType === 'amount' ? this.makeAmount('table-input fixed-asset-input', `${label.textContent}（金額）`, draft.cells?.[cellId] ?? '') : semanticType === 'date' ? this.makeShortDateInput('table-input fixed-asset-input', label.textContent, draft.cells?.[cellId] ?? '', '例：7/1') : this.makeText('table-input fixed-asset-input', label.textContent, draft.cells?.[cellId] ?? '');
+            input.id = label.htmlFor; input.dataset.cellId = cellId; input.dataset.inputType = question.table.inputTypes?.[cellId] || 'text'; input.dataset.semanticType = semanticType;
+            if (semanticType === 'months') input.inputMode = 'numeric';
+            const line = this.document.createElement('div'); line.className = 'fixed-asset-input-line'; if (semanticType === 'date') line.append(input, this.makeDatePicker(input, label.textContent)); else line.append(input);
+            if (semanticType === 'amount' || semanticType === 'months') { const unit = this.document.createElement('span'); unit.className = 'fixed-asset-unit'; unit.textContent = semanticType === 'amount' ? '円' : 'か月'; line.append(unit); }
+            field.append(label, line);
+          } else {
+            const label = this.document.createElement('span'); label.className = 'fixed-asset-label'; label.textContent = this.tableLabel(key);
+            const shown = this.document.createElement('strong'); shown.textContent = typeof value === 'number' ? yen(value) : String(value ?? '—');
+            const unit = ['acquisitionCost','residualValue','openingAccumulated','salePrice'].includes(key) ? '円' : key === 'life' ? '年' : ''; if (unit) shown.textContent += unit;
+            field.append(label, shown);
+          }
+          fields.append(field);
+        }
+        section.append(fields); ledger.append(section);
+      }
+      wrap.append(ledger);
+    }
+    positionStickyContextColumns(table) {
+      this.stickyContextObserver?.disconnect();
+      const update = () => this.updateStickyContextColumns(table);
+      update();
+      if (root.ResizeObserver) {
+        this.stickyContextObserver = new root.ResizeObserver(update);
+        this.stickyContextObserver.observe(table);
+      }
+    }
+    updateStickyContextColumns(table) {
+      const keys = ['description','quantity']; let left = 0;
+      for (const key of keys) {
+        const cells = [...table.querySelectorAll(`[data-column-key="${key}"]`)]; if (!cells.length) continue;
+        cells.forEach(cell => { cell.dataset.stickyContext = 'true'; cell.style.setProperty('--sticky-left', `${left}px`); });
+        left += cells[0].getBoundingClientRect().width;
+      }
+      table.style.setProperty('--sticky-context-width', `${left}px`);
     }
     renderBalanceSheet(question, draft = {}, comparison = null) {
       const wrap = comparison ? this.document.createElement('div') : this.byId('table-container');
@@ -289,9 +513,11 @@
       }).filter(item => item.attempted).map(({ account, amount }) => ({ account, amount }));
       return { debit: side('debit'), credit: side('credit') };
     }
-    result(question, score, userAnswer, confidence = 'unsure', achievement = {}) {
+    result(question, score, userAnswer, confidence = 'unsure', achievement = {}, retryAuthorized = false) {
       const standardActions = this.byId('standard-result-actions'); const examActions = this.byId('exam-result-actions');
       if (standardActions) standardActions.hidden = false; if (examActions) examActions.hidden = true;
+      const retryAction = this.document.querySelector('[data-action="coaching-retry-result"]');
+      if (retryAction) retryAction.hidden = !retryAuthorized;
       const topActions = this.byId('top-result-actions'); if (topActions) topActions.hidden = false;
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
       const calibration = confidence === 'sure'
@@ -309,6 +535,7 @@
     protectedResult(confidence = 'unsure', retry = false) {
       const panel = this.byId('protected-learning'); const status = this.byId('protected-status');
       panel.hidden = false;
+      status.hidden = false;
       status.replaceChildren();
       const headline = this.document.createElement('strong'); headline.className = 'result-headline'; headline.textContent = retry ? '練習の回答はまだ要確認です' : '最初の回答はもう一歩です';
       const guidance = this.document.createElement('span'); guidance.className = 'confidence-feedback'; guidance.textContent = confidence === 'sure' ? '自信ありとして記録しました。根拠を順に確認しましょう。' : 'まだ自信なしとして記録しました。ヒントを使って確認できます。';
@@ -325,18 +552,22 @@
       this.document.querySelectorAll('.table-input').forEach(input => { input.value = draft.cells?.[input.dataset.cellId] ?? ''; if (input.tagName === 'SELECT') this.updateSelectTitle(input); });
     }
     setAnswerMode(mode) {
-      const form = this.byId('question-form'); const locked = mode === 'protected';
+      const form = this.byId('question-form'); const locked = mode === 'protected'; const coaching = mode === 'coaching';
       form?.querySelectorAll('input, select, textarea').forEach(field => {
         if (locked && !field.disabled) { field.dataset.flowLocked = 'true'; field.disabled = true; }
         else if (!locked && field.dataset.flowLocked === 'true') { field.disabled = false; delete field.dataset.flowLocked; }
       });
       const actions = form?.querySelector('.question-actions'); if (actions) actions.hidden = locked;
-      const submit = form?.querySelector('button[type="submit"]'); if (submit) submit.textContent = mode === 'coaching' ? '練習回答を確認する' : '回答を確定する';
+      const confidence = form?.querySelector('.confidence-selector'); if (confidence) confidence.hidden = coaching;
+      const save = form?.querySelector('.save-button'); if (save) save.hidden = coaching;
+      const saveStatus = this.byId('save-status'); if (saveStatus) saveStatus.hidden = coaching;
+      const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = coaching || this.questionMode === 'exam';
+      const submit = form?.querySelector('button[type="submit"]'); if (submit) submit.textContent = coaching ? '練習回答を確認する' : '回答を確定する';
       form?.setAttribute('data-answer-mode', mode);
     }
     resetLearningSurfaces() {
-      const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = true;
-      const protectedStatus = this.byId('protected-status'); protectedStatus?.replaceChildren();
+      const protectedPanel = this.byId('protected-learning'); if (protectedPanel) protectedPanel.hidden = false;
+      const protectedStatus = this.byId('protected-status'); if (protectedStatus) { protectedStatus.hidden = true; protectedStatus.replaceChildren(); }
       const hintPanel = this.byId('hint-panel'); if (hintPanel) hintPanel.hidden = true;
       const heading = this.byId('hint-heading'); if (heading) heading.textContent = '';
       const text = this.byId('hint-text'); if (text) text.textContent = '';
@@ -345,7 +576,7 @@
       ['result-status','answer-comparison','correct-journal','explanation'].forEach(id => this.byId(id)?.replaceChildren());
       const top = this.byId('top-result-actions'); if (top) top.hidden = true;
     }
-    hideProtectedResult() { const panel = this.byId('protected-learning'); if (panel) panel.hidden = true; }
+    hideProtectedResult() { const panel = this.byId('protected-learning'); if (panel) panel.hidden = true; const status = this.byId('protected-status'); if (status) { status.hidden = true; status.replaceChildren(); } }
     renderHint(stage, text) {
       const panel = this.byId('hint-panel'); const heading = this.byId('hint-heading');
       panel.hidden = false; heading.textContent = `ヒント ${stage}`; this.byId('hint-text').textContent = text;
@@ -436,31 +667,31 @@
       container.hidden = false;
       const heading = this.document.createElement('h3');
       if (question.type === 'journal') {
-        heading.textContent = 'あなたの仕訳（誤答）';
+        heading.textContent = '最初の仕訳（誤答）';
         const note = this.document.createElement('p'); note.textContent = '下の「正しい仕訳」と、科目・貸借・金額を一つずつ見比べましょう。';
         container.append(heading, note, this.journalTable(userAnswer));
         return;
       }
       if (question.type === 'correction') {
-        heading.textContent = 'あなたの訂正仕訳（誤答）';
+        heading.textContent = '最初の訂正仕訳（誤答）';
         const note = this.document.createElement('p'); note.textContent = '下の「正しい訂正仕訳」と、借方・貸方の科目と金額を見比べましょう。';
         container.append(heading, note, this.journalTable(this.correctionJournal(userAnswer)));
         return;
       }
       if (question.type === 'worksheet') {
-        heading.textContent = '決算整理表で回答を比較';
+        heading.textContent = '最初の回答を決算整理表で比較';
         const note = this.document.createElement('p'); note.textContent = '問題と同じ行・列の中で、入力した値と正解を横に見比べましょう。';
         container.append(heading, note, this.worksheetAnswerComparison(question, score, userAnswer));
         return;
       }
       if (question.format === 'balance-sheet') {
-        heading.textContent = '貸借対照表で回答を比較';
+        heading.textContent = '最初の回答を貸借対照表で比較';
         const note = this.document.createElement('p'); note.textContent = '資産と負債・純資産の左右を保ったまま、入力と正解を見比べましょう。';
         container.append(heading, note, this.renderBalanceSheet(question, {}, { user:userAnswer, score }));
         return;
       }
-      heading.textContent = 'あなたの解答と正しい解答';
-      const note = this.document.createElement('p'); note.textContent = '「要確認」の項目を横に見比べて、入力と正解の違いを確認しましょう。';
+      heading.textContent = '最初の解答と正しい解答';
+      const note = this.document.createElement('p'); note.textContent = '「要確認」は最初の回答時の判定です。最初の入力と正解の違いを確認しましょう。';
       container.append(heading, note, this.tableAnswerComparison(question, score, userAnswer));
     }
     renderDiagnostics(question, answer, score) {

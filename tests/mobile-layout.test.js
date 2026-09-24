@@ -36,26 +36,118 @@ const fixed = ordinary.find(question => fixedKeys.every(key => question.table.co
 assert(fixed, 'a canonical fixed-asset register contains all six semantic columns');
 assert.deepStrictEqual(fixedKeys.map(label), ['固定資産','取得原価','耐用年数','期首減価償却累計額','当期減価償却額','期末帳簿価額']);
 for (const key of ['currentDepreciation','closingBookValue']) assert(audit.get(key).editable.some(item => item.type === 'amount'), `${key}: fixed-asset amount is editable and included in width budgeting`);
+assert(audit.get('life').visible.every(item => Number.isInteger(item.value) && item.value >= 1 && item.value <= 99), 'canonical useful-life values fit the one-to-two digit years contract');
 
 const tableRule = css.match(/\.answer-table\s*\{([^}]*)\}/)?.[1] || '';
 const headRule = css.match(/\.answer-table th\s*\{([^}]*)\}/)?.[1] || '';
 const numericRule = css.match(/\[data-sizing="semantic-content"\] \[data-column-type="numeric"\]\s*\{([^}]*)\}/)?.[1] || '';
-const numericInputRule = css.match(/\[data-sizing="semantic-content"\] td\[data-column-type="numeric"\] \.table-input\s*\{([^}]*)\}/)?.[1] || '';
+const numericCellRule = css.match(/\[data-sizing="semantic-content"\] td\.amount-cell\s*\{([^}]*)\}/)?.[1] || '';
+const numericInputRule = css.match(/\[data-sizing="semantic-content"\] \.table-input\[data-input-type="amount"\]\s*\{([^}]*)\}/)?.[1] || '';
+const desktopYearsHeaderRule = css.match(/@media\s*\(min-width:\s*431px\)\s*\{\s*\.answer-table:not\(\.eight-column-worksheet\)\[data-sizing="semantic-content"\] th\[data-column-type="years"\]\s*\{([^}]*)\}/)?.[1] || '';
 assert(/width:\s*max-content/.test(tableRule) && /min-width:\s*100%/.test(tableRule) && !/600px/.test(tableRule), 'ordinary tables fill small containers but grow to content width without a fixed 600px floor');
 assert(/overflow-wrap:\s*normal/.test(headRule) && /word-break:\s*keep-all/.test(headRule) && /white-space:\s*nowrap/.test(headRule), 'complete Japanese headers cannot clip, ellipsize, or stack one glyph per line');
 assert(!/(?:overflow:\s*hidden|text-overflow:\s*ellipsis)/.test(headRule), 'semantic headers never conceal authored labels');
-assert(/min-width:\s*calc\(11ch \+ 26px\)/.test(numericRule) && /white-space:\s*nowrap/.test(numericRule), 'numeric cells budget nine formatted digits plus caret, input chrome, and cell padding');
-assert(/width:\s*100%/.test(numericInputRule) && /min-width:\s*11ch/.test(numericInputRule) && /font-variant-numeric:\s*tabular-nums/.test(numericInputRule), 'editable numeric controls expose the entire safe digit budget');
-assert(glyphs(String(maximumEditable.answer)) <= 11 && glyphs(formatted(maximumEditable.answer)) <= 11, 'raw and comma-formatted canonical maxima fit the numeric content budget');
+assert(/white-space:\s*nowrap/.test(numericRule) && !/min-width/.test(numericRule), 'static numeric cells use intrinsic content width instead of inheriting the editable money floor');
+assert(/th\[data-column-type="numeric"\]\s*\{[^}]*min-width:\s*max-content/.test(css), 'numeric headers impose their intrinsic rendered label width without per-column pixel constants');
+assert(/th\[data-column-key="currentDepreciation"\],[\s\S]*th\[data-column-key="closingBookValue"\],[\s\S]*td\[data-column-key="currentDepreciation"\],[\s\S]*td\[data-column-key="closingBookValue"\]\s*\{[^}]*box-sizing:\s*content-box[^}]*width:\s*calc\(7ic \+ 3px\)[^}]*min-width:\s*calc\(7ic \+ 3px\)[^}]*max-width:\s*calc\(7ic \+ 3px\)/s.test(css), 'fixed-asset current-depreciation and closing-book-value headers and cells share the verified seven-ideograph width plus cross-browser safety margin');
+assert(/\[data-column-type="years"\]\s*\{[^}]*width:\s*calc\(4em \+ 14px\)[^}]*max-width:\s*calc\(4em \+ 14px\)/s.test(css), 'years use a dedicated four-glyph header plus cell-chrome width instead of the money floor');
+assert(/padding-inline:\s*6px/.test(desktopYearsHeaderRule), 'above 430px only the semantic years header uses compact six-pixel inline padding');
+assert(!/@media\s*\(max-width:\s*430px\)[\s\S]*th\[data-column-type="years"\]/.test(css), 'at 430px and below the years header keeps the established mobile behavior');
+const desktopLife = { actualWidth:78,headerTextWidth:64,headerHorizontalChrome:6 + 6 + 1 };
+assert(desktopLife.headerTextWidth + desktopLife.headerHorizontalChrome <= desktopLife.actualWidth && desktopLife.actualWidth <= 80, 'desktop life header content and 13px chrome fit the measured 78px column within the 80px contract');
+assert(/white-space:\s*nowrap/.test(css.match(/\[data-column-type="years"\]\s*\{([^}]*)\}/)?.[1] || ''), 'life header remains one line without clipping or glyph stacking');
+assert(/min-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericCellRule), 'editable numeric cells preserve the nine-glyph content floor while the control carries its own chrome');
+assert(/box-sizing:\s*content-box/.test(numericInputRule) && /width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule) && /min-width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule) && /max-width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule), 'editable numeric controls reserve exactly nine content glyphs and let the actual padding and borders provide control chrome');
+assert(/td\[data-column-key="currentDepreciation"\] \.table-input\[data-input-type="amount"\],[\s\S]*td\[data-column-key="closingBookValue"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%/s.test(css), 'fixed-asset editable amount controls fill their equal-width table cells instead of using the table-level compact width');
+assert(glyphs(String(maximumEditable.answer)) <= 9 && glyphs(formatted(maximumEditable.answer)) <= 9, 'raw and comma-formatted canonical maxima fit the nine-character numeric content budget');
+assert(/td\s*\{\s*padding:\s*0 3px/.test(css) && /\[data-column-type="date"\],[^}]+\[data-column-type="description"\]\s*\{[^}]*padding-right:\s*6px[^}]*padding-left:\s*6px/s.test(css), 'mobile money cells lose excess chrome while accepted date and description spacing remains unchanged');
+assert(/td\[data-column-type="numeric"\]\s*\{[^}]*padding-right:\s*1px[^}]*padding-left:\s*1px/.test(css), 'mobile numeric body cells retain only the chrome needed to separate cell content');
+assert(!/th\[data-column-type="numeric"\]\s*\{[^}]*padding-(?:right|left):\s*1px/.test(css), 'mobile numeric headers retain readable horizontal spacing');
+assert(/th,\s*\.answer-table:not\(\.eight-column-worksheet\) td\s*\{\s*padding:\s*0 3px/.test(css), 'long numeric headers inherit the readable three-pixel mobile spacing');
+assert(!/data-column-key="balance"\][^{]+\.table-input\s*\{[^}]*width:\s*100%/s.test(css), 'balance cannot override its exact-column input budget with a cyclic 100% width');
 assert(view.includes("table.dataset.sizing = 'semantic-content'") && view.includes('th.dataset.columnType = columnTypes.get(column)') && view.includes('cell.dataset.columnType = columnTypes.get(question.table.columns[columnIndex])'), 'renderer exposes content-derived semantic types on ordinary headers and cells');
+assert(view.includes("if (column === 'life') columnTypes.set(column, 'years')"), 'life receives the years semantic type before generic numeric sizing');
 assert(view.includes('th.dataset.columnKey = column') && view.includes('cell.dataset.columnKey = question.table.columns[columnIndex]'), 'semantic column keys remain the selector authority');
 assert(!/answer-table[^\n{]*:nth-child[^\n{]*(?:date|description|quantity|unitPrice|amount|openingAccumulated|currentDepreciation|closingBookValue)/.test(css), 'ordinary sizing never guesses meaning from column position');
+assert(!/\.answer-table th:first-child,[^{]+\{[^}]*min-width:\s*110px/s.test(css), 'sticky first columns use semantic content instead of a global 110px floor');
 assert(/\.table-question-wrap\s*\{[^}]*overflow-x:\s*auto/.test(css), 'the existing single wrapper scrolls content-required wide tables');
-assert(/\.answer-table th:first-child,\s*\.answer-table td:first-child\s*\{[^}]*position:\s*sticky[^}]*left:\s*0/s.test(css), 'sticky first-column behavior remains present');
+assert(/\[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(css), 'semantic context columns use rendered cumulative sticky offsets');
+assert(view.includes("const keys = ['description','quantity']") && view.includes("--sticky-left") && view.includes('getBoundingClientRect().width'), 'description and quantity sticky offsets derive from rendered widths without pinning date');
+assert(/\[data-column-type="quantity"\]\s*\{[^}]*width:\s*calc\(2em \+ 17px\)[^}]*min-width:\s*calc\(2em \+ 17px\)[^}]*max-width:\s*calc\(2em \+ 17px\)/s.test(css), 'quantity context column cannot absorb unrelated table surplus width');
+const widthFixture = {
+  table: {
+    columns:['floor','middle','ceiling'],
+    rows:[{floor:'入力',middle:'入力',ceiling:'入力'},{floor:1,middle:123456,ceiling:1234567}],
+    inputCells:['floorCell','middleCell','ceilingCell'],
+    inputTypes:{floorCell:'amount',middleCell:'amount',ceilingCell:'amount'}
+  }
+};
+Object.defineProperty(widthFixture, 'answer', { get() { throw new Error('generic width profiling must not read hidden answers'); } });
+assert.deepStrictEqual(
+  Object.fromEntries(sandbox.window.AppView.genericTableInputCharacters(widthFixture)),
+  { floor:9, middle:9, ceiling:9 },
+  'all generic amount inputs reserve the canonical nine-glyph content bound without reading hidden answers'
+);
+const c001 = questions.find(question => question.id === 'C001');
+const t001 = questions.find(question => question.id === 'T001');
+assert(c001 && t001, 'canonical C001 and T001 sizing regressions are present');
+assert.strictEqual(glyphs(formatted(c001.answer.cells.sales)), 9, 'C001 maximum formatted amount requires nine glyphs');
+assert.strictEqual(glyphs(formatted(t001.answer.cells.total_debit)), 9, 'T001 total 1,024,000 requires nine glyphs');
+const c001Widths=sandbox.window.AppView.genericTableInputCharacters(c001),t001Widths=sandbox.window.AppView.genericTableInputCharacters(t001);
+assert(c001Widths.size>0&&[...c001Widths.values()].every(width => width === 9), 'C001 input-only amount column reserves nine content glyphs');
+assert(t001Widths.size>0&&[...t001Widths.values()].every(width => width === 9), 'T001 total amount columns reserve nine content glyphs');
+assert(/min-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericCellRule), 'ordinary amount cells keep the nine-glyph semantic floor without double-counting input chrome');
+assert(/box-sizing:\s*content-box/.test(numericInputRule) && /width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule), 'ordinary amount controls reserve nine content glyphs with padding and borders outside that content box');
+assert(view.includes("cell.style.setProperty('--column-input-ch'") && view.includes("table.style.setProperty('--table-input-ch'"), 'renderer applies bounded per-column budgets and one shared compact numeric-input width per ordinary table');
 assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
 for (const viewport of [320, 375, 390, 430]) assert(fixedAssetMinimum > viewport && /overflow-x:\s*auto/.test(css), `${viewport}px: fixed-asset content remains wider than its viewport and horizontally scrollable`);
-const accountWidth = Number(css.match(/\.journal-row\s*\{[^}]*minmax\((\d+)px, 3fr\)/s)?.[1]);
-assert(accountWidth >= 240 && /\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'horizontal journal entry integrity remains protected');
-for (const viewport of [320, 375, 390, 430]) assert(accountWidth * 2 + 120 * 2 > viewport, `${viewport}px journals scroll rather than collapse four fields`);
+const desktopJournalMatch = css.match(/\.journal-row\s*\{[^}]*grid-template-columns:\s*(\d+)px\s+(\d+)px\s+(\d+)px\s+(\d+)px/s);
+assert(desktopJournalMatch, 'desktop journal uses explicit compact accounting columns');
+assert.deepStrictEqual(desktopJournalMatch.slice(1).map(Number), [200,120,200,120], 'desktop journal columns remain compact and symmetric');
+assert(/\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(css), 'journal grid remains horizontally recoverable when content exceeds its viewport');
+
+const journalQuestions = questions.filter(question => question.type === 'journal');
+const journalAccounts = journalQuestions.flatMap(question =>
+  ['debit', 'credit'].flatMap(side => (question.answer?.[side] || []).map(item => String(item.account || '')))
+).filter(Boolean);
+const journalAmounts = journalQuestions.flatMap(question =>
+  ['debit', 'credit'].flatMap(side => (question.answer?.[side] || []).map(item => Number(item.amount)))
+).filter(Number.isFinite);
+
+const longestJournalAccountGlyphs = Math.max(...journalAccounts.map(glyphs));
+const longestJournalAmountGlyphs = Math.max(...journalAmounts.map(value => glyphs(formatted(value))));
+
+assert.strictEqual(longestJournalAccountGlyphs, 12, 'canonical journal account maximum remains 12 glyphs');
+assert.strictEqual(longestJournalAmountGlyphs, 9, 'canonical formatted journal amount maximum remains 9 glyphs');
+
+const mobileJournalMatch = css.match(
+  /@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*\{\s*grid-template-columns:\s*(\d+)px\s+(\d+)px\s+(\d+)px\s+(\d+)px/s
+);
+assert(mobileJournalMatch, 'mobile journal sizing rule is present');
+
+const mobileAccountWidth = Number(mobileJournalMatch[1]);
+const mobileAmountWidth = Number(mobileJournalMatch[2]);
+
+assert.strictEqual(mobileAccountWidth, 184, 'mobile journal account column avoids the former over-wide 232px floor');
+assert.strictEqual(mobileAmountWidth, 112, 'mobile journal amount width preserves the audited 9-glyph budget');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('仕入'), 16, 'short account names retain the normal readable size');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('クレジット売掛金'), 15, 'six-to-eight glyph accounts compact one step');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('ABCDEFGHI'), 14, 'nine-to-ten glyph accounts compact two steps');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('法人税、住民税及び事業税'), 13, 'the canonical 12-glyph maximum uses the guarded minimum size');
+assert(mobileAccountWidth >= longestJournalAccountGlyphs * 13 + 28, '184px still budgets the longest account at the guarded 13px minimum plus native select chrome');
+assert(mobileAmountWidth >= longestJournalAmountGlyphs * 10 + 22, 'mobile amount control preserves the longest formatted amount');
+assert(/\.journal-row select\s*\{[^}]*text-align:\s*center[^}]*text-align-last:\s*center[^}]*var\(--journal-account-font-size,\s*16px\)/s.test(css), 'selected account names are centered and use adaptive display sizing');
+assert(/\.journal-row select:focus,[\s\S]*?\.journal-row select:active\s*\{[^}]*font-size:\s*16px/s.test(css), 'focused or tapped account selects return to 16px to prevent iPhone zoom');
+
+const mobilePairWidth = mobileAccountWidth + 2 + mobileAmountWidth;
+assert(mobilePairWidth <= 320 - 20, '320px iPhone can show one debit account-and-amount pair without horizontal clipping');
+assert(mobilePairWidth <= 375 - 20, '375px iPhone shows one debit account-and-amount pair without horizontal clipping');
+assert(mobilePairWidth <= 390 - 20, '390px iPhone shows one debit account-and-amount pair without horizontal clipping');
+assert(mobilePairWidth <= 430 - 20, '430px iPhone shows one debit account-and-amount pair without horizontal clipping');
+const coachingHiddenRule = css.match(/\.confidence-selector\[hidden\],\s*\.question-actions \.save-button\[hidden\],\s*#save-status\[hidden\]\s*\{([^}]*)\}/)?.[1] || '';
+assert(
+  /display:\s*none\s*!important/.test(coachingHiddenRule),
+  'coaching retry explicitly hides confidence, save button, and save status in WebKit'
+);
 console.log(`mobile layout semantic audit: ${questions.length} questions, ${ordinary.length} ordinary tables, ${columns.length} unique columns (320/375/390/430): ok`);

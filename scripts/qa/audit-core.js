@@ -62,7 +62,7 @@ const mutationCases=[
  ['FIFO_TO_MOVING_AVERAGE','data/questions.js','FIFO_METHOD',s=>s.replace('商品有高帳を先入先出法で完成させなさい。','商品有高帳を移動平均法で完成させなさい。')],
  ['MOVING_AVERAGE_TO_FIFO','data/questions.js','FIFO_CONTAMINATION',s=>mutateQuestionBlock(s,'L004',b=>b.replace('"explanation": "','"explanation": "移動平均 '))],
  ['QUANTITY_TO_YEN','data/questions.js','QUANTITY_AS_YEN',s=>s.replace('"quantity": 44,','"quantity": "44円",')],
- ['LIFE_TO_YEN','data/questions.js','LIFE_AS_YEN',s=>s.replace('取得原価・耐用年数・期首減価償却累計額から','取得原価・耐用年数5円・期首減価償却累計額から')],
+ ['LIFE_TO_YEN','data/questions.js','LIFE_AS_YEN',s=>mutateQuestionBlock(s,'L005',b=>b.replace('耐用年数5年','耐用年数5円'))],
  ['FOLIO_TO_YEN','data/questions.js','FOLIO_AS_YEN',s=>s.replace('元丁は現金101、売掛金113、売上401、通信費521','元丁は現金101、売掛金113円、売上401、通信費521')],
  ['AMOUNT_TO_MONTH','data/questions.js','AMOUNT_AS_MONTH',s=>appendProductionMutation(s,"QuestionData.L040.answer.cells.depreciationA = '60,000か月';")],
  ['PROFIT_TO_EQUITY','data/accounting-domain.js','PROFIT_CLASSIFICATION',s=>s.replace("closing: ['損益']","closing: [], equity: ['損益']")],

@@ -5,7 +5,7 @@ const vm = require('vm');
 const { loadQuestions } = require('../scripts/audit-matrix');
 
 const FIFO_IDS = ['L004', 'L009', 'L014', 'L019', 'L024', 'L029'];
-const FIXED_ASSET_IDS = ['L005', 'L010', 'L015', 'L020', 'L025', 'L030'];
+const FIXED_ASSET_IDS = ['L005', 'L010', 'L015', 'L020', 'L025', 'L030', 'L033', 'L040'];
 const RAW_KEY = /(?:^|[^A-Za-z])(?:item|recorded|evidence|transaction|account|debit|credit|balance|tbDebit|tbCredit|before)\d*(?=[^A-Za-z]|$)/u;
 
 function independentAudit(questions) {
@@ -20,7 +20,10 @@ function independentAudit(questions) {
   if (!/60,000円/u.test(l040.explanation) || !/45,000円/u.test(l040.explanation) || /(?:60,000|45,000)か月/u.test(l040.explanation)) fail('L040', 'RENDERED_UNIT');
   for (const question of Object.values(questions)) if (RAW_KEY.test(String(question.explanation || ''))) fail(question.id, 'RAW_INTERNAL_KEY');
   if (/(?:113|401|521|101)円/u.test(questions.L041.explanation)) fail('L041', 'FOLIO_YEN');
-  for (const id of FIXED_ASSET_IDS) if (!/取得原価.*(?:－|から).*期首減価償却累計額.*(?:－|差し引).*当期減価償却費.*(?:＝|求め).*期末帳簿価額/su.test(questions[id].explanation)) fail(id, 'FIXED_ASSET_PATH');
+  for (const id of FIXED_ASSET_IDS) {
+    const text=questions[id].explanation, ordered=['取得原価','残存価額','耐用年数','定額法','1年分の減価償却費'];
+    if (!ordered.every((term,index)=>text.indexOf(term)>=0&&(index===0||text.indexOf(term)>text.indexOf(ordered[index-1]))) || !/当期減価償却費/.test(text) || !/(?:期末帳簿価額|売却時帳簿価額)/.test(text)) fail(id, 'FIXED_ASSET_PATH');
+  }
   return { ok: failures.length === 0, failures };
 }
 

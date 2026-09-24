@@ -26,10 +26,12 @@ assert(viewSource.includes("question.table.rows.filter(row => row.section === '�
 assert(viewSource.includes("question.format === 'balance-sheet'") && viewSource.includes("this.renderBalanceSheet(question, {}, { user:userAnswer, score })"), 'wrong-answer comparison preserves balance sheet');
 const css = fs.readFileSync('css/style.css','utf8');
 assert(/\.balance-sheet-table\s*\{[^}]*min-width:\s*680px[^}]*table-layout:\s*fixed/s.test(css));
-assert(/\.journal-entry-area\s*\{[^}]*overflow-x:\s*auto/s.test(css));
-assert(/\.journal-row\s*\{[^}]*grid-template-columns:\s*minmax\(240px, 3fr\).*minmax\(120px, 2fr\).*minmax\(240px, 3fr\).*minmax\(120px, 2fr\)/s.test(css));
+assert(/\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(css));
+assert(/\.journal-row\s*\{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+120px/s.test(css), 'journal columns use the compact symmetric desktop contract');
 assert(!/\.journal-row select\s*\{[^}]*text-overflow:\s*ellipsis/s.test(css));
-assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-row select,\s*\.journal-row \.amount-input\s*\{[^}]*font-size:\s*16px/s.test(css));
+assert(/\.journal-row select\s*\{[^}]*text-align:\s*center[^}]*text-align-last:\s*center[^}]*font-size:\s*var\(--journal-account-font-size,\s*16px\)/s.test(css), 'selected journal accounts are centered and adapt their display size');
+assert(/\.journal-row select:focus,[\s\S]*?\.journal-row select:active\s*\{[^}]*font-size:\s*16px/s.test(css), 'focused or tapped journal accounts remain 16px for iPhone zoom safety');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*\{[^}]*grid-template-columns:\s*184px\s+112px\s+184px\s+112px/s.test(css), 'mobile journal uses the compact 184/112 pair');
 console.log('quality regression tests: ok');
 for (const id of Array.from({ length: 9 }, (_, index) => `F${String(index + 2).padStart(3, '0')}`)) {
   const q = questions[id];
@@ -46,7 +48,7 @@ for (const id of Array.from({ length: 9 }, (_, index) => `F${String(index + 2).p
 }
 assert(!viewSource.includes("row.account === '繰越利益剰余金'"), 'balance-sheet renderer must not infer input IDs from account names');
 assert(viewSource.includes('row.inputCellId'), 'balance-sheet renderer consumes declarative input cell mapping');
-assert(css.includes('minmax(240px, 3fr)'), 'account columns reserve enough width for 法人税、住民税及び事業税');
+assert(viewSource.includes('journalAccountFontSize') && viewSource.includes('if (glyphs <= 8) return 15') && viewSource.includes('if (glyphs <= 10) return 14') && viewSource.includes('return 13'), 'long journal account names use bounded 13-16px adaptive sizing instead of widening every account column');
 {
   const mutated = structuredClone(questions.F003);
   delete mutated.table.rows.find(row => row.amount === '入力').inputCellId;

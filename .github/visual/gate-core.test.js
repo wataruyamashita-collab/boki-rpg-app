@@ -3,19 +3,153 @@ const assert = require('assert');
 const { detectGeneration10KnownViolation, evaluateVisualMetrics } = require('./gate-core');
 
 const base = () => ({
-  columns:{ value:{ width:100, requiredWidth:90, clipped:false, headerLineCount:1, headerGlyphStacked:false } },
-  rows:{ normalRowHeight:44, editableRowHeight:52 },
-  table:{ requiresHorizontalScroll:false, horizontalScrollAvailable:true, clipped:false }
+  viewport:{ width:390 }, case:'ledger',
+  columns:{ value:{ width:100,actualWidth:100,representativeRequiredWidth:90,occupiedWidth:90,contentWaste:10,classification:'numeric',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false } },
+  rows:{ normalRowHeight:61,editableRowHeight:61,inputVisualHeight:44,paddingTop:'8px',paddingBottom:'8px',borderTop:0,borderBottom:1,expectedNormalRowHeight:61,expectedEditableRowHeight:61 },
+  table:{ requiresHorizontalScroll:false,horizontalScrollAvailable:true,clipped:false }
 });
 const codes = input => evaluateVisualMetrics(input).map(item => item.code);
-assert.deepStrictEqual(codes(base()), [], 'a reasonably fitted table passes');
-let fixture = base(); fixture.columns.value.width = 70; assert(codes(fixture).includes('COLUMN_TOO_NARROW'));
-fixture = base(); fixture.columns.value.width = 180; assert(codes(fixture).includes('COLUMN_TOO_WIDE'));
-fixture = base(); fixture.rows.editableRowHeight = 72; assert(codes(fixture).includes('ROW_TOO_TALL'));
-fixture = base(); fixture.columns.value.clipped = true; assert(codes(fixture).includes('CONTENT_CLIPPED'));
-fixture = base(); fixture.table = { requiresHorizontalScroll:true, horizontalScrollAvailable:false }; assert(codes(fixture).includes('HORIZONTAL_OVERFLOW_UNAVAILABLE'));
-fixture = base(); fixture.columns.value.headerLineCount = 5; fixture.columns.value.headerGlyphStacked = true; assert(codes(fixture).includes('UNREADABLE_HEADER_WRAP'));
+
+assert.deepStrictEqual(codes(base()), [], 'representative content and desktop measured chrome fit');
+let fixture = base(); fixture.columns.value.globalCanonicalRequiredWidth = 200; assert.deepStrictEqual(codes(fixture), [], 'an unrelated global canonical value cannot fail this representative');
+fixture = base(); fixture.columns.value.headerClipped = true; assert(codes(fixture).includes('COLUMN_TOO_NARROW') && codes(fixture).includes('CONTENT_CLIPPED'), 'actual header clipping fails');
+fixture = base(); fixture.columns.value.cellClipped = true; assert(codes(fixture).includes('COLUMN_TOO_NARROW') && codes(fixture).includes('CONTENT_CLIPPED'), 'actual body clipping fails');
+fixture = base(); fixture.columns.value.editableAnswerFitFailure = true; assert(codes(fixture).includes('COLUMN_TOO_NARROW'), 'representative editable answer overflow fails');
+fixture = base(); Object.assign(fixture.columns.value,{ headerTextWidth:112,headerHorizontalChrome:3,actualWidth:101,headerClipped:false }); let violation = evaluateVisualMetrics(fixture).find(item => item.code === 'COLUMN_TOO_NARROW'); assert(violation && violation.requiredHeaderWidth === 115 && violation.deficit === 14, '101px rendered column fails its 115px intrinsic header requirement with complete evidence');
+assert(!codes(fixture).includes('CONTENT_CLIPPED'), 'a semantic header-width deficit alone does not claim actual clipping');
+fixture = base(); Object.assign(fixture.columns.value,{ headerTextWidth:112,headerHorizontalChrome:3,actualWidth:115,headerClipped:false }); assert(!codes(fixture).includes('COLUMN_TOO_NARROW'), '115px rendered column satisfies its 115px intrinsic header requirement');
+fixture = base(); Object.assign(fixture.columns.value,{ headerTextWidth:144,headerHorizontalChrome:3,actualWidth:129,headerClipped:false }); assert(codes(fixture).includes('COLUMN_TOO_NARROW'), '129px rendered column fails its 147px intrinsic long-header requirement');
+fixture = base(); Object.assign(fixture.columns.value,{ headerTextWidth:96,headerHorizontalChrome:3,actualWidth:87,headerClipped:true }); assert(codes(fixture).includes('COLUMN_TOO_NARROW') && codes(fixture).includes('CONTENT_CLIPPED'), '87px rendered column with actual clipping emits both violations');
+fixture = base(); fixture.table.clipped = true; assert(codes(fixture).includes('TABLE_CLIPPED') && evaluateVisualMetrics(fixture).some(item => item.code === 'CONTENT_CLIPPED' && item.scope === 'table'), 'table clipping emits table and table-scope content evidence');
+fixture = base(); fixture.table.requiresHorizontalScroll = true; fixture.columns.value.width = 220; fixture.columns.value.contentWaste = 130; assert(codes(fixture).includes('COLUMN_TOO_WIDE'), 'large content waste that contributes to scrolling fails');
+fixture = base(); fixture.table.requiresHorizontalScroll = true; fixture.columns.value.width = 112; fixture.columns.value.contentWaste = 22; assert(!codes(fixture).includes('COLUMN_TOO_WIDE'), 'small form-control whitespace does not fail by generic ratio');
+fixture = base(); fixture.columns.value.editable = true; fixture.columns.value.inputCharacterCapacity = 11; assert(codes(fixture).includes('COLUMN_TOO_WIDE'), 'generic money controls wider than the canonical character budget fail');
+fixture = base(); fixture.columns.value.editable = true; fixture.columns.value.inputCharacterCapacity = 9; assert(!codes(fixture).includes('COLUMN_TOO_WIDE'), 'nine-character money controls pass');
+fixture = base(); fixture.columns = { date:{ width:75,renderedWidth:75,sticky:false },description:{ width:139,renderedWidth:139,sticky:true,stickyLeft:0,naturalViewportLeft:76,stickyViewportLeft:0 },quantity:{ width:44.1875,renderedWidth:44.1875,sticky:true,stickyLeft:139,naturalViewportLeft:215,stickyViewportLeft:139 } }; fixture.sticky={ contextWidth:183.1875,viewportWidth:300,scrollLeft:120 }; assert.deepStrictEqual(codes(fixture), [], 'inventory context excludes date, keeps description and quantity at rendered offsets, and leaves at least 44px editable space at 320px');
+for (const viewportWidth of [300,355,370,410]) { fixture.sticky.viewportWidth = viewportWidth; assert(!codes(fixture).includes('STICKY_CONTEXT_OCCUPIES_VIEWPORT'), `${viewportWidth + 20}px inventory viewport retains a touch-target-wide editable area`); }
+fixture = base(); fixture.columns = { description:{ width:139,renderedWidth:139,sticky:true,stickyLeft:0,naturalViewportLeft:76,stickyViewportLeft:47 } }; fixture.sticky={ contextWidth:139,viewportWidth:355,scrollLeft:29 }; assert.deepStrictEqual(codes(fixture), [], 'description follows its natural position before reaching the sticky threshold at 375px');
+fixture.columns.description.stickyViewportLeft = 62; fixture.sticky.scrollLeft = 14; assert.deepStrictEqual(codes(fixture), [], 'description follows its natural position before reaching the sticky threshold at 390px');
+fixture.columns.description.stickyViewportLeft = 0; fixture.sticky.scrollLeft = 84; assert.deepStrictEqual(codes(fixture), [], 'description pins at zero after crossing its sticky threshold at 320px');
+fixture = base(); fixture.columns = { description:{ width:139,renderedWidth:139,sticky:true,stickyLeft:0,naturalViewportLeft:76,stickyViewportLeft:47 },quantity:{ width:44,renderedWidth:44,sticky:true,stickyLeft:139,naturalViewportLeft:215,stickyViewportLeft:186 } }; fixture.sticky={ contextWidth:183,viewportWidth:355,scrollLeft:29 }; assert.deepStrictEqual(codes(fixture), [], 'quantity preserves its cumulative offset while both sticky columns are pre-threshold');
+fixture.columns.quantity.stickyLeft = 142; assert(codes(fixture).includes('STICKY_CONTEXT_FAILURE'), 'incorrect cumulative CSS sticky offset still fails');
+fixture = base(); fixture.columns = { date:{ width:75,renderedWidth:75,sticky:true,stickyLeft:0 },description:{ width:97,renderedWidth:97,sticky:true,stickyLeft:0 } }; fixture.sticky={ contextWidth:97,viewportWidth:300 }; assert(codes(fixture).includes('STICKY_CONTEXT_FAILURE'), 'date must scroll instead of joining the sticky context');
+fixture = base(); fixture.columns = { description:{ width:97,renderedWidth:97,sticky:false,stickyLeft:0 } }; fixture.sticky={ contextWidth:97,viewportWidth:300 }; assert(codes(fixture).includes('STICKY_CONTEXT_FAILURE'), 'missing description sticky context fails');
+fixture = base(); fixture.columns = { description:{ width:97,renderedWidth:97,sticky:true,stickyLeft:0 },quantity:{ width:40,renderedWidth:40,sticky:true,stickyLeft:70 } }; fixture.sticky={ contextWidth:137,viewportWidth:300 }; assert(codes(fixture).includes('STICKY_CONTEXT_FAILURE'), 'overlapping sticky offsets fail');
+fixture = base(); fixture.columns = { description:{ width:97,renderedWidth:97,sticky:true,stickyLeft:0,stickyViewportLeft:-20 } }; fixture.sticky={ contextWidth:97,viewportWidth:300,scrollLeft:120 }; assert(codes(fixture).includes('STICKY_CONTEXT_FAILURE'), 'a context column that scrolls out of view fails');
+fixture = base(); fixture.columns = { description:{ width:220,renderedWidth:220,sticky:true,stickyLeft:0 },quantity:{ width:45,renderedWidth:45,sticky:true,stickyLeft:220 } }; fixture.sticky={ contextWidth:265,viewportWidth:300 }; assert(codes(fixture).includes('STICKY_CONTEXT_OCCUPIES_VIEWPORT'), 'sticky context must leave a touch-target-wide editable area');
+
+const fixed = base(); fixed.case = 'fixed-asset'; fixed.columns = {
+  life:{ width:68.390625,actualWidth:68.390625,representativeRequiredWidth:68.4,occupiedWidth:68.390625,contentWaste:0,classification:'years',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false },
+  acquisitionCost:{ width:63,occupiedWidth:63,classification:'numeric',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false },
+  currentDepreciation:{ width:105,occupiedWidth:105,classification:'numeric',headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,headerLineCount:1,headerGlyphStacked:false }
+};
+fixed.rows = { headerRowHeight:25.75,normalRowHeight:48,editableRowHeight:48,inputVisualHeight:44,paddingTop:'1.5px',paddingBottom:'1.5px',borderTop:0,borderBottom:1,expectedNormalRowHeight:48,expectedEditableRowHeight:48 };
+assert.deepStrictEqual(codes(fixed), [], 'readable 68.39px years and exact mobile density pass');
+fixture = structuredClone(fixed); fixture.columns.life.width = 81; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'years width above the 80px semantic maximum fails');
+fixture = structuredClone(fixed); fixture.columns.life.width = 68.4; fixture.columns.life.actualWidth = 68.4; assert(!codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), '68.4px years width remains within the 80px semantic maximum');
+fixture = structuredClone(fixed); fixture.columns.life.headerClipped = true; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'years header clipping fails');
+fixture = structuredClone(fixed); fixture.columns.life.headerGlyphStacked = true; assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'stacked years header glyphs fail');
+fixture = structuredClone(fixed); fixture.rows.normalRowHeight = 49; assert(codes(fixture).includes('COMPACT_TABLE_DENSITY_FAILURE'), 'mobile density excessive fails');
+
+fixture = structuredClone(fixed);
+fixture.cardLayout = true;
+fixture.columns.life.width = 240;
+fixture.columns.life.actualWidth = 240;
+fixture.table = { requiresHorizontalScroll:false,horizontalScrollAvailable:true,horizontalOverflow:0,clipped:false };
+fixture.cards = { count:1,clipped:false };
+fixture.rows = { inputVisualHeight:44,hasEditableControl:true };
+assert.deepStrictEqual(codes(fixture), [], 'wide but unclipped fixed-asset card fields are not constrained by the legacy years column or table-density rules');
+
+fixture.table.horizontalOverflow = 2;
+assert(codes(fixture).includes('CARD_HORIZONTAL_OVERFLOW'), 'fixed-asset cards retain strict horizontal-overflow validation');
+fixture.table.horizontalOverflow = 0;
+fixture.cards.clipped = true;
+assert(codes(fixture).includes('CARD_CONTENT_CLIPPED'), 'fixed-asset cards retain strict content-clipping validation');
+fixture.cards.clipped = false;
+fixture.rows.inputVisualHeight = 43;
+assert(codes(fixture).includes('CARD_TOUCH_TARGET_FAILURE'), 'fixed-asset cards retain the 44px touch-target requirement');
+
+{
+  const journalBook = base();
+  journalBook.case = 'journal-book';
+  journalBook.rows = { inputVisualHeight:44,hasEditableControl:true,headerCellCount:5,controlCount:14,journalBookAmountContextCount:4,journalBookFolioHelpCount:1,journalBookScrollNoteVisible:true };
+  journalBook.table = { requiresHorizontalScroll:true,horizontalScrollAvailable:true,horizontalOverflow:280,clipped:false };
+  journalBook.journalBookInteraction = { rightScrollLeft:280,rightScrollMaximum:280,visibleAmountContextCount:4,selectedAccount:'売掛金',selectedContextText:'売掛金',selectedContextClipped:false,guidanceVisibleAtRight:true };
+  assert.deepStrictEqual(codes(journalBook), [], 'formal journal book allows horizontal scrolling while preserving 5 columns, 14 controls, and right-side context');
+  journalBook.rows = { ...journalBook.rows,normalRowHeight:62,editableRowHeight:62,expectedNormalRowHeight:59,expectedEditableRowHeight:59 };
+  assert(!codes(journalBook).includes('ROW_TOO_TALL'), 'WebKitのborder-collapse/rowspan由来3px差は仕訳帳専用4px許容内とする');
+  journalBook.rows.normalRowHeight = 64;
+  assert(codes(journalBook).includes('ROW_TOO_TALL'), '仕訳帳でも4pxを超える行高増加は検知する');
+  journalBook.rows.normalRowHeight = 62;
+  journalBook.rows.headerCellCount = 7;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_COLUMN_STRUCTURE_FAILURE'), 'journal book rejects regression to a 7-column horizontal entry editor');
+  journalBook.rows.headerCellCount = 5; journalBook.rows.controlCount = 12;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_CONTROL_STRUCTURE_FAILURE'), 'journal book requires two dates plus twelve account/folio/amount controls');
+  journalBook.rows.controlCount = 14; journalBook.rows.journalBookAmountContextCount = 3;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_AMOUNT_CONTEXT_FAILURE'), 'journal book keeps four visible amount/account context labels');
+  journalBook.rows.journalBookAmountContextCount = 4; journalBook.rows.journalBookFolioHelpCount = 0;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_FOLIO_HELP_FAILURE'), 'journal book keeps one visible 元丁 explanation');
+  journalBook.rows.journalBookFolioHelpCount = 1; journalBook.rows.journalBookScrollNoteVisible = false;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_SCROLL_GUIDANCE_FAILURE'), 'journal book mobile gate requires horizontal-scroll guidance');
+  journalBook.rows.journalBookScrollNoteVisible = true; journalBook.journalBookInteraction.rightScrollLeft = 0;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_RIGHT_SCROLL_FAILURE'), 'journal book gate requires an actual right-edge scroll observation');
+  journalBook.journalBookInteraction.rightScrollLeft = 280; journalBook.journalBookInteraction.visibleAmountContextCount = 3;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_RIGHT_CONTEXT_VISIBILITY_FAILURE'), 'all four amount contexts must remain visible at the right edge');
+  journalBook.journalBookInteraction.visibleAmountContextCount = 4; journalBook.journalBookInteraction.selectedContextText = '科目';
+  assert(codes(journalBook).includes('JOURNAL_BOOK_CONTEXT_UPDATE_FAILURE'), 'selected account must propagate to the right-side context label');
+  journalBook.journalBookInteraction.selectedContextText = '売掛金'; journalBook.journalBookInteraction.selectedContextClipped = true;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_CONTEXT_CLIPPED'), 'selected journal-book account context must fit without ellipsis');
+  journalBook.journalBookInteraction.selectedContextClipped = false; journalBook.journalBookInteraction.guidanceVisibleAtRight = false;
+  assert(codes(journalBook).includes('JOURNAL_BOOK_GUIDANCE_STICKY_FAILURE'), 'journal-book guidance must remain visible after horizontal scrolling');
+}
+for (const cardCase of ['fixed-asset']) {
+  const expectedOverflow = base();
+  expectedOverflow.case = cardCase;
+  expectedOverflow.cardLayout = true;
+  expectedOverflow.columns = { answer:{ width:96,actualWidth:96,classification:'numeric',headerClipped:false,cellClipped:false,editableAnswerFitFailure:true,headerLineCount:1,headerGlyphStacked:false } };
+  expectedOverflow.rows = { inputVisualHeight:44,hasEditableControl:true };
+  expectedOverflow.cards = { count:1,clipped:false };
+  expectedOverflow.table = { requiresHorizontalScroll:false,horizontalScrollAvailable:true,horizontalOverflow:0,clipped:false };
+  assert(codes(expectedOverflow).includes('COLUMN_TOO_NARROW'), `${cardCase} expected answer wider than its control fails closed`);
+}
+
+fixture.cardLayout = false;
+fixture.rows = structuredClone(fixed.rows);
+assert(codes(fixture).includes('YEARS_COLUMN_EXCESSIVE_WIDTH'), 'the same wide life field still fails in the legacy fixed-asset table layout');
+
+const fixedCellFill = structuredClone(fixed);
+fixedCellFill.columns.currentDepreciation = {
+  width:105,actualWidth:105,occupiedWidth:105,classification:'numeric',
+  editable:true,inputCharacterCapacity:12,
+  headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,
+  headerLineCount:1,headerGlyphStacked:false,
+  cellHorizontalChrome:3,
+  cell:{ rect:{ width:105 } },
+  input:{ rect:{ width:102 } }
+};
+fixedCellFill.columns.closingBookValue = {
+  width:105,actualWidth:105,occupiedWidth:105,classification:'numeric',
+  editable:true,inputCharacterCapacity:12,
+  headerClipped:false,cellClipped:false,editableAnswerFitFailure:false,
+  headerLineCount:1,headerGlyphStacked:false,
+  cellHorizontalChrome:3,
+  cell:{ rect:{ width:105 } },
+  input:{ rect:{ width:102 } }
+};
+assert.deepStrictEqual(codes(fixedCellFill), [], 'fixed-asset paired amount inputs may exceed the generic character budget when each input exactly fills its equal-width cell content box');
+
+fixture = structuredClone(fixedCellFill);
+fixture.columns.closingBookValue.input.rect.width = 90;
+assert(codes(fixture).includes('INPUT_CELL_WIDTH_MISMATCH'), 'fixed-asset input narrower than its cell content box fails');
+
+fixture = structuredClone(fixedCellFill);
+fixture.columns.closingBookValue.width = 108;
+fixture.columns.closingBookValue.actualWidth = 108;
+fixture.columns.closingBookValue.cell.rect.width = 108;
+fixture.columns.closingBookValue.input.rect.width = 105;
+assert(codes(fixture).includes('FIXED_ASSET_EDITABLE_WIDTH_MISMATCH'), 'fixed-asset paired editable columns with different rendered widths fail');
+
 const known = { columns:{ life:{ classification:'numeric',computedMinWidth:'114px',canonicalValues:[5,5,5,5,5,5],contentMax:5,contentLength:1,editable:false },acquisitionCost:{ classification:'numeric',computedMinWidth:'114px' } } };
 assert.strictEqual(detectGeneration10KnownViolation(known),true,'Generation 10 shared numeric floor is detected');
 known.columns.life.computedMinWidth = '70px'; assert.strictEqual(detectGeneration10KnownViolation(known),false,'a separate life floor is not mislabeled as the known defect');
-console.log('visual gate self-tests: normal, narrow, wide, tall, clipping, overflow, wrapping: ok');
+console.log('visual gate self-tests: representative isolation, clipping, editable fit, content waste, years, mobile density, desktop chrome: ok');
