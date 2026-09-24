@@ -6496,13 +6496,6 @@ const QuestionData = {
       }
     },
     "explanation": "先入先出法では古い単価1,200円の商品から払い出します。払出額は25×1,200＝30,000円、残高は49個×1,200円＋20個×1,500円＝88,800円です。",
-    "explanationModel": {
-      "sources": [{"kind":"table","title":"商品有高帳","focus":"10月20日の払出行と、10月31日の残高行を見る","values":[{"label":"前月繰越","value":"74個 × 1,200円"},{"label":"10月9日 仕入","value":"20個 × 1,500円"},{"label":"10月20日 払出","value":"25個を先入先出法で払出"},{"label":"10月31日 残高","value":"69個"}]}],
-      "summary": [{"text":"先に入った1,200円の商品から25個を払い出す。"},{"text":"払出後は1,200円の商品49個と、1,500円の商品20個が残る。"}],
-      "calculation": [{"label":"払出額","expression":"25 × 1,200 = 30,000","result":30000,"operands":[{"label":"払出数量","value":25},{"label":"先に入った単価","value":1200}]},{"label":"期末残高","expression":"49 × 1,200 + 20 × 1,500 = 88,800","result":88800,"operands":[{"label":"旧在庫","value":58800},{"label":"新在庫","value":30000}]}],
-      "transfer": [{"from":"10月20日 払出","decision":"先入先出法の単価 1,200円","to":"払出単価・払出額","value":"1,200円 / 30,000円"},{"from":"10月31日 残高","decision":"49個@1,200円 + 20個@1,500円","to":"残高金額","value":"88,800円"}],
-      "checks": [{"label":"払出数量","expected":"25個を古い層から使用"},{"label":"残った数量","expected":"49個 + 20個 = 69個"},{"label":"残高金額","expected":"58,800円 + 30,000円 = 88,800円"}]
-    },
     "learningRole": "review",
     "variantGroup": "商品有高帳",
     "timelineRole": "main"
@@ -6972,10 +6965,6 @@ const QuestionData = {
       }
     },
     "explanation": "現金は資産なので、借方記入で増加し、貸方記入で減少します。したがって残高は順に678,000円、591,500円です。",
-    "explanationModel": {
-      "sources": [{"kind":"table","title":"現金元帳","focus":"直前残高・借方・貸方を上から順に見る","values":[{"label":"10月1日","value":"前月繰越 505,000円"},{"label":"10月8日","value":"借方 173,000円（現金増加）"},{"label":"10月15日","value":"貸方 86,500円（現金減少）"}]}],
-      "summary": [{"text":"現金は資産。借方記入は残高を増やし、貸方記入は残高を減らす。"},{"text":"1行ずつ計算し、その残高を次の行へ引き継ぐ。"}]
-    },
     "learningRole": "transfer",
     "variantGroup": "総勘定元帳（現金）",
     "timelineRole": "main"
@@ -15935,6 +15924,67 @@ Object.values(QuestionData).forEach((item, index) => {
     .replace(/\bdate(?=\d)/gu, '日付').replaceAll('description', '摘要').replaceAll('acquisitionCost', '取得原価').replaceAll('openingAccumulated', '期首減価償却累計額').replaceAll('asset', '固定資産')
     .replace(/quantity([0-9,]+)円/gu, '数量$1個').replace(/life([0-9,]+)円/gu, '耐用年数$1年').replaceAll('quantity', '数量').replaceAll('amount', '金額');
   item.npcDialogue = npc;
+});
+
+
+/* Issue #154: attach structured explanations only after all ledger overrides and
+   generated walkthroughs are finalized, so the learner sees the model for the
+   actual runtime question rather than an earlier legacy definition. */
+Object.assign(QuestionData.L034, {
+  explanationModel: {
+    sources: [
+      {kind:'material',title:'8月2日 売上票',focus:'商品90,000円を掛けで販売',values:[{label:'日付',value:'8/2'},{label:'証憑',value:'売上票'},{label:'内容',value:'商品90,000円を掛販売'}]},
+      {kind:'material',title:'8月6日 領収証',focus:'通信費12,000円を現金で支払',values:[{label:'日付',value:'8/6'},{label:'証憑',value:'領収証'},{label:'内容',value:'通信費12,000円を現金払い'}]}
+    ],
+    summary: [
+      {text:'8月2日：掛販売なので、売掛金（資産）の増加を借方、売上（収益）の増加を貸方に記入する。'},
+      {text:'8月6日：通信費（費用）の増加を借方、現金（資産）の減少を貸方に記入する。'}
+    ],
+    calculation: [
+      {label:'8月2日の金額',expression:'90,000円（売上票の記載額）',result:90000,operands:[{label:'資料記載額',value:90000}]},
+      {label:'8月6日の金額',expression:'12,000円（領収証の記載額）',result:12000,operands:[{label:'資料記載額',value:12000}]}
+    ],
+    transfer: [
+      {from:'8/2 売上票',decision:'掛販売 → 売掛金が増える',to:'借方：売掛金（元丁113）',value:'90,000円'},
+      {from:'8/2 売上票',decision:'掛販売 → 売上が増える',to:'貸方：売上（元丁401）',value:'90,000円'},
+      {from:'8/6 領収証',decision:'通信費が発生',to:'借方：通信費（元丁521）',value:'12,000円'},
+      {from:'8/6 領収証',decision:'現金で支払 → 現金が減る',to:'貸方：現金（元丁101）',value:'12,000円'}
+    ],
+    checks: [
+      {label:'日付順',expected:'8/2 → 8/6'},
+      {label:'8/2の貸借',expected:'借方90,000円＝貸方90,000円'},
+      {label:'8/6の貸借',expected:'借方12,000円＝貸方12,000円'},
+      {label:'元丁',expected:'売掛金113・売上401・通信費521・現金101'}
+    ]
+  }
+});
+Object.assign(QuestionData.L041, {
+  explanationModel: {
+    sources: [
+      {kind:'material',title:'4月3日 取引資料',focus:'商品90,000円を掛けで販売',values:[{label:'日付',value:'4/3'},{label:'取引',value:'商品90,000円を掛販売'}]},
+      {kind:'material',title:'4月8日 取引資料',focus:'通信費12,000円を現金で支払',values:[{label:'日付',value:'4/8'},{label:'取引',value:'通信費12,000円を現金払い'}]}
+    ],
+    summary: [
+      {text:'4月3日：掛販売なので、売掛金（資産）の増加を借方、売上（収益）の増加を貸方に記入する。'},
+      {text:'4月8日：通信費（費用）の増加を借方、現金（資産）の減少を貸方に記入する。'}
+    ],
+    calculation: [
+      {label:'4月3日の金額',expression:'90,000円（取引資料の記載額）',result:90000,operands:[{label:'資料記載額',value:90000}]},
+      {label:'4月8日の金額',expression:'12,000円（取引資料の記載額）',result:12000,operands:[{label:'資料記載額',value:12000}]}
+    ],
+    transfer: [
+      {from:'4/3 取引資料',decision:'掛販売 → 売掛金が増える',to:'借方：売掛金（元丁113）',value:'90,000円'},
+      {from:'4/3 取引資料',decision:'掛販売 → 売上が増える',to:'貸方：売上（元丁401）',value:'90,000円'},
+      {from:'4/8 取引資料',decision:'通信費が発生',to:'借方：通信費（元丁521）',value:'12,000円'},
+      {from:'4/8 取引資料',decision:'現金で支払 → 現金が減る',to:'貸方：現金（元丁101）',value:'12,000円'}
+    ],
+    checks: [
+      {label:'日付順',expected:'4/3 → 4/8'},
+      {label:'4/3の貸借',expected:'借方90,000円＝貸方90,000円'},
+      {label:'4/8の貸借',expected:'借方12,000円＝貸方12,000円'},
+      {label:'元丁',expected:'売掛金113・売上401・通信費521・現金101'}
+    ]
+  }
 });
 
 // Top-level `const` declarations are not added to `window` in classic scripts.

@@ -3,7 +3,7 @@ const fs=require('fs'),http=require('http'),path=require('path');
 const {chromium,webkit}=require('playwright');
 const ROOT=path.resolve(__dirname,'../..'),OUTPUT=path.join(ROOT,'artifacts','explanation-integration');
 const engines={chromium,webkit},viewports=[320,375,390,430],cases=['L034','L041'];
-const expected={L034:['25 × 1,200 = 30,000','49 × 1,200 + 20 × 1,500 = 88,800'],L041:['505,000 + 173,000 = 678,000','678,000 − 86,500 = 591,500']};
+const expected={L034:['90,000円（売上票の記載額）','12,000円（領収証の記載額）'],L041:['90,000円（取引資料の記載額）','12,000円（取引資料の記載額）']};
 const evidence={status:'RUNNING',reports:[],failures:[]},mime={'.css':'text/css','.html':'text/html','.js':'text/javascript'};
 const write=()=>{fs.mkdirSync(OUTPUT,{recursive:true});fs.writeFileSync(path.join(OUTPUT,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');};
 const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname,relative=pathname==='/'?'.github/visual/explanation-integration.html':pathname.slice(1),file=path.resolve(ROOT,relative);if(!file.startsWith(ROOT+path.sep)||!fs.existsSync(file)||fs.statSync(file).isDirectory()){res.writeHead(404);return res.end('not found');}res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file));});

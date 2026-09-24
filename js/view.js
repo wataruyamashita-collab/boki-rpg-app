@@ -728,10 +728,15 @@
       });
       return flow;
     }
-    appendAuthoredExplanation(question, container) {
+    appendAuthoredExplanation(question, container, authoredOnly = false) {
       if (question.npcDialogue) { const dialogue = this.document.createElement('blockquote'); dialogue.className = 'npc-dialogue'; dialogue.textContent = question.npcDialogue; container.append(dialogue); }
       if (question.type === 'journal' && question.answer) { const badges = this.document.createElement('div'); badges.className = 'explanation-accounts'; [...question.answer.debit, ...question.answer.credit].forEach(item => badges.append(this.accountLabel(item.account))); container.append(badges); }
-      this.explanationSections(question.explanation).forEach(section => { const card = this.document.createElement('section'); card.className = `explanation-card explanation-card-${section.kind}`; const title = this.document.createElement('h4'); title.textContent = section.label; const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = section.text; card.append(title, text); container.append(card); });
+      let explanation = String(question.explanation || '');
+      if (authoredOnly) {
+        const markers = ['【この問題への当てはめ】','【使用する資料】'].map(marker => explanation.indexOf(marker)).filter(index => index >= 0);
+        if (markers.length) explanation = explanation.slice(0, Math.min(...markers)).trimEnd();
+      }
+      this.explanationSections(explanation).forEach(section => { const card = this.document.createElement('section'); card.className = `explanation-card explanation-card-${section.kind}`; const title = this.document.createElement('h4'); title.textContent = section.label; const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = section.text; card.append(title, text); container.append(card); });
       this.renderKnowledgeLinks(question, container);
     }
     renderExplanation(question, score, userAnswer) {
@@ -743,7 +748,7 @@
         : 'もう一歩です。誤答の原因から正しい考え方へつなげ、実務と試験で使える判断手順まで一続きで確認しましょう。';
       container.append(lead);
       const structured = this.renderStructuredExplanation(question, userAnswer, score);
-      if (structured) { container.append(structured); this.appendAuthoredExplanation(question, container); return; }
+      if (structured) { container.append(structured); this.appendAuthoredExplanation(question, container, true); return; }
       const solution = this.document.createElement('section'); solution.className = 'solution-steps';
       const solutionHeading = this.document.createElement('h4'); solutionHeading.textContent = '解き方（この順番で考える）';
       const list = this.document.createElement('ol');
