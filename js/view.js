@@ -755,8 +755,8 @@
         '商品有高帳では、数量と単価を分けて追います。',
         '払出単価は問題で指定された方法に従い、払出後の数量と金額まで連続して確認します。'
       ]);
-      if (format === 'bookkeeping-voucher-entry') return profile('現金が増えるか、減るか、動かないかを見る','使う伝票を決めて記入する',[
-        '現金が増える取引は入金伝票、減る取引は出金伝票に記入します。',
+      if (format === 'bookkeeping-voucher-entry') return profile('現金が増えるか、減るか、動かないかを確認する','使う伝票を決めて記入する',[
+        '現金が増えるなら入金伝票、減るなら出金伝票に記入します。',
         '現金が動かない取引は振替伝票に記入します。'
       ]);
       if (format === 'bookkeeping-general-ledger' || format === 'bookkeeping-account-ledger' || /元帳/u.test(category)) return profile('増減と相手勘定を整理する','元帳に転記する',[
@@ -768,7 +768,7 @@
       if (question.type === 'worksheet') return profile('決算整理を反映する','精算表に記入する',['整理前残高に決算整理を反映し、損益計算書と貸借対照表へ振り分けます。','どの欄へ移すかは勘定科目の性質と決算整理後の残高で判断します。']);
       if (question.type === 'financial_statement') return profile('どの区分に入るか決める','財務諸表に記入する',['確定した残高を収益・費用・資産・負債・純資産の区分へ正しく表示します。','計算だけでなく表示区分を間違えないことが重要です。']);
       if (question.type === 'comprehensive') return profile('処理の順番を整理する','答えに反映する',['資料ごとに仕訳し、転記・集計・決算整理の順に処理します。','各段階で貸借や残高を確認してから次へ進みます。']);
-      return profile('処理のポイントをつかむ','答えに書き込む',['問題文の条件を整理し、必要な会計処理を一つずつ決めます。','答えを書いた後は資料の条件と整合しているかを確認します。']);
+      return profile('問題文の条件を整理する','答えに記入する',['問題文の条件を整理し、必要な会計処理を一つずつ決めます。','答えを書いたら、問題の条件に合っているか確認します。']);
     }
     renderStructuredExplanation(question, userAnswer, score) {
       if (score.correct || !question.explanationModel || !root.ExplanationModel?.build) return null;
@@ -791,7 +791,7 @@
         const section = element('section', 'explanation-flow-section'); section.dataset.section = key;
         const head = element('div', 'explanation-flow-head'); head.append(element('div', 'explanation-flow-step', String(index + 1)), element('h5', '', label)); section.append(head);
         const items = model[key] || [];
-        if (!items.length) section.append(element('p', 'explanation-flow-empty', 'この問題では追加情報はありません。'));
+        if (!items.length) section.append(element('p', 'explanation-flow-empty', 'ここで確認する追加の資料はありません。'));
         if (key === 'sources') items.forEach(item => {
           const card = element('article', 'explanation-source-card');
           card.append(element('h6', '', item.title), element('p', 'explanation-source-focus', item.focus));
@@ -854,13 +854,13 @@
       const list = this.document.createElement('ol');
       const steps = {
         journal:['取引によって増えたものと減ったものを拾います。','それぞれに適切な勘定科目を当てはめます。','資産・費用の増加は借方、負債・純資産・収益の増加は貸方に置き、減少は反対側に置きます。','借方合計と貸方合計が一致するまで金額を確認します。'],
-        correction:['帳簿に記録済みの仕訳を、借方・貸方に分けて書き出します。','証憑から本来の正しい仕訳を作ります。','誤った部分を逆向きにして取り消し、正しい処理との差額だけを訂正仕訳にします。','訂正仕訳を元の帳簿へ加え、証憑どおりの科目・金額になるか検算します。'],
+        correction:['帳簿に記録済みの仕訳を、借方・貸方に分けて書き出します。','証憑から本来の正しい仕訳を作ります。','誤った部分を逆向きにして取り消し、正しい処理との差額だけを訂正仕訳にします。','訂正仕訳を元の帳簿へ加え、証憑どおりの科目・金額になっているか確認します。'],
         ledger:['証憑を日付順に並べ、記帳する取引を選びます。','相手勘定と増減額を該当する行へ転記します。','直前残高へ増加を足し、減少を引いて新しい残高を求めます。','日付・相手勘定・最終残高を資料と照合します。'],
-        trial_balance:['各勘定の最終残高と残高方向を確認します。','借方残高は借方列、貸方残高は貸方列へ一度だけ転記します。','各列を合計します。','借方合計と貸方合計の一致で転記漏れや二重計上を検算します。'],
+        trial_balance:['各勘定の最終残高と残高方向を確認します。','借方残高は借方列、貸方残高は貸方列へ一度だけ転記します。','各列を合計します。','借方合計と貸方合計が一致するか見て、転記漏れや二重計上がないか確認します。'],
         worksheet:['試算表の残高を出発点にします。','決算整理事項を仕訳にし、修正記入の借方・貸方へ記入します。','修正後の各勘定を、収益・費用は損益計算書、資産・負債・純資産は貸借対照表へ振り分けます。','各欄の借方・貸方を合計し、差額となる当期純利益まで一致を確認します。'],
         financial_statement:['資料から収益・費用・資産・負債・純資産を分類します。','収益から売上原価と費用を差し引いて利益を求めます。','期末残高を対応する財務諸表の欄へ転記します。','合計や貸借の一致を確認します。'],
-        comprehensive:['資料ごとに必要な取引を仕訳します。','仕訳を帳簿へ転記して残高を集計します。','決算整理事項を反映します。','各段階の貸借一致を確認して最終数値を記入します。']
-      }[question.type] || ['資料の条件を整理します。','必要な会計処理を決めます。','計算して対応する欄へ転記します。','合計と資料を照合して検算します。'];
+        comprehensive:['資料ごとに必要な取引を仕訳します。','仕訳を帳簿へ転記して残高を集計します。','決算整理事項を反映します。','各段階で貸借が合っているか確認し、最後の金額を記入します。']
+      }[question.type] || ['資料の条件を整理します。','必要な会計処理を決めます。','計算して対応する欄へ転記します。','合計が合っているか、元の資料と見比べて確認します。'];
       steps.forEach(step => { const item = this.document.createElement('li'); item.textContent = step; list.append(item); });
       solution.append(solutionHeading, list); container.append(solution);
       const diagnostics = this.renderDiagnostics(question, userAnswer, score);

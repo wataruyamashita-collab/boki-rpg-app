@@ -15999,19 +15999,19 @@ Object.assign(QuestionData.L041, {
 const chapter8ExplanationSummary = item => {
   const format = item.format || '';
   const category = String(item.category || '');
-  if (format === 'fixed-asset-ledger' || /固定資産台帳/u.test(category)) return '取得原価・耐用年数・償却方法・使用月数を先に確定し、年額→月割→帳簿価額の順に処理します。';
+  if (format === 'fixed-asset-ledger' || /固定資産台帳/u.test(category)) return '取得原価・耐用年数・償却方法・使用月数を先に確認し、年額→月割→帳簿価額の順に処理します。';
   if (format === 'journal-book' || /仕訳帳/u.test(category)) return '取引ごとに増減する勘定科目を決め、借方・貸方・元丁を日付順に仕訳帳へ記入します。';
-  if (format === 'bookkeeping-notes-receivable') return '受取手形記入帳の対象になる約束手形だけを選び、受取日・振出人・満期日・金額を資料から拾います。';
-  if (format === 'bookkeeping-notes-payable') return '自店が振り出した約束手形だけを選び、振出日・受取人・満期日・金額を資料から拾います。';
+  if (format === 'bookkeeping-notes-receivable') return '受取手形記入帳の対象になる約束手形だけを選び、受取日・振出人・満期日・金額を資料で確認します。';
+  if (format === 'bookkeeping-notes-payable') return '自店が振り出した約束手形だけを選び、振出日・受取人・満期日・金額を資料で確認します。';
   if (format === 'bookkeeping-cash-book') return '現金の受入と支払を分け、受入額－支払額で残高の動きを追います。';
   if (format === 'bookkeeping-checking-book') return '当座預金の預入と引出を分け、預入額－引出額で残高の動きを追います。';
   if (format === 'bookkeeping-petty-cash-book') return '支払内容を費用科目ごとに分類し、定額資金前渡法では支払額と補給額の関係を確認します。';
   if (format === 'bookkeeping-purchase-book') return '仕入と仕入返品を分け、総仕入高から返品額を差し引いて純仕入高を求めます。';
   if (format === 'bookkeeping-sales-book') return '売上と売上返品を分け、総売上高から返品額を差し引いて純売上高を求めます。';
   if (format === 'bookkeeping-inventory-ledger' || /商品有高帳/u.test(category)) return '数量と単価を別々に追い、指定された払出単価の計算方法で払出額と残高額を求めます。';
-  if (format === 'bookkeeping-voucher-entry') return '現金が増えるか、減るか、動かないかを見て、使う伝票を判断します。';
+  if (format === 'bookkeeping-voucher-entry') return '現金が増えるか、減るか、動かないかを確認して、使う伝票を決めます。';
   if (format === 'bookkeeping-general-ledger' || format === 'bookkeeping-account-ledger' || /元帳/u.test(category)) return 'その勘定がどちら側で増えるかを確認し、取引ごとの増減と相手勘定を残高へ反映します。';
-  return '資料の順序と金額の動きを整理し、帳簿の各欄へ対応させます。';
+  return '資料を順に確認し、必要な金額を帳簿のどこに記入するか決めます。';
 };
 Object.values(QuestionData).forEach(item => {
   if (item.chapter !== 8 || item.explanationModel) return;
