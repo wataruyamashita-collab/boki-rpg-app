@@ -1,0 +1,170 @@
+name: Issue 154 finalize Generation 45
+on:
+  push:
+    branches:
+      - codex/issue-154-explanation-ux-integration
+
+permissions:
+  contents: write
+
+jobs:
+  finalize-generation-45:
+    if: github.event.head_commit.message == 'Prepare remote Generation 45 finalization'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/issue-154-explanation-ux-integration
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Verify current Generation 44 baseline
+        run: npm run verify
+      - name: Apply TAC-style three-voucher wording
+        shell: bash
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs=require('fs'),crypto=require('crypto');
+          const read=f=>fs.readFileSync(f,'utf8'),write=(f,s)=>fs.writeFileSync(f,s);
+          const replaceOnce=(file,from,to,label)=>{
+            const source=read(file);
+            if(source.split(from).length!==2)throw new Error('unexpected anchor count: '+label);
+            write(file,source.replace(from,to));
+          };
+          replaceOnce('data/questions.js',"if (format === 'bookkeeping-voucher-entry') return '現金の受取・現金の支払・現金を伴わない取引に分け、使う伝票を判断します。';","if (format === 'bookkeeping-voucher-entry') return '現金が増えるか、減るか、動かないかを見て、使う伝票を判断します。';",'voucher summary');
+          replaceOnce('js/explanation-model.js',"if(q.format==='bookkeeping-voucher-entry'){out.unshift({label:'取引ごとに現金の動きと伝票の種類を対応づける',expected:'現金の受取＝入金伝票 / 現金の支払＝出金伝票 / 現金を伴わない取引＝振替伝票',evidenceRefs:['table.rows']});return out;}","if(q.format==='bookkeeping-voucher-entry'){out.unshift({label:'現金の動きと伝票の種類が合っているか',expected:'増える → 入金伝票 / 減る → 出金伝票 / 動かない → 振替伝票',evidenceRefs:['table.rows']});return out;}",'voucher final check');
+          replaceOnce('js/view.js',"if (format === 'bookkeeping-voucher-entry') return profile('取引を伝票の種類に分ける','該当する伝票に記入する',[\n        '現金の受取は入金伝票、現金の支払は出金伝票に記入します。',\n        '現金を伴わない取引は振替伝票に記入します。'\n      ]);","if (format === 'bookkeeping-voucher-entry') return profile('現金が増えるか、減るか、動かないかを見る','使う伝票を決めて記入する',[\n        '現金が増える取引は入金伝票、減る取引は出金伝票に記入します。',\n        '現金が動かない取引は振替伝票に記入します。'\n      ]);",'voucher teaching profile');
+          replaceOnce('tests/chapter8-explanation.test.js',"assert(voucherModel.checks.some(item=>item.label==='取引ごとに現金の動きと伝票の種類を対応づける'),'L050は伝票専用の最終確認を表示する');\nassert(voucherModel.checks.some(item=>item.expected==='現金の受取＝入金伝票 / 現金の支払＝出金伝票 / 現金を伴わない取引＝振替伝票'),'L050は現金の動きと伝票の対応関係を確認する');","assert(voucherModel.summary.some(item=>item.text==='現金が増えるか、減るか、動かないかを見て、使う伝票を判断します。'),'L050は初学者が判断しやすい現金の増減で説明する');\nassert(voucherModel.checks.some(item=>item.label==='現金の動きと伝票の種類が合っているか'),'L050は自然な日本語で最後の確認を表示する');\nassert(voucherModel.checks.some(item=>item.expected==='増える → 入金伝票 / 減る → 出金伝票 / 動かない → 振替伝票'),'L050は現金の増減と伝票の対応を短く示す');\nassert(!/取引ごとに現金の動きと伝票の種類を対応づける|現金の受取＝入金伝票/u.test(JSON.stringify(voucherModel)),'L050へ旧来の硬い表現を残さない');",'voucher regression wording');
+          replaceOnce('.github/visual/run-explanation-integration.js',"L050:['取引を伝票の種類に分ける','該当する伝票に記入する',false]","L050:['現金が増えるか、減るか、動かないかを見る','使う伝票を決めて記入する',false]",'voucher visual headings');
+          replaceOnce('.github/visual/run-explanation-integration.js',"sourceText:document.querySelector('.explanation-flow-section[data-section=\"sources\"]')?.textContent||'',checkText:document.querySelector('.explanation-flow-section[data-section=\"checks\"]')?.textContent||'',directAmountCalculationCount:formulas.length","sourceText:document.querySelector('.explanation-flow-section[data-section=\"sources\"]')?.textContent||'',summaryText:document.querySelector('.explanation-flow-section[data-section=\"summary\"]')?.textContent||'',checkText:document.querySelector('.explanation-flow-section[data-section=\"checks\"]')?.textContent||'',directAmountCalculationCount:formulas.length",'voucher visual summary capture');
+          replaceOnce('.github/visual/run-explanation-integration.js',"if(caseId==='L050'&&/残高または帳簿値|次の行の計算/u.test(m.checkText))violations.push('VOUCHER_GENERIC_LEDGER_CHECK');if(caseId==='L050'&&!/現金の受取＝入金伝票/u.test(m.checkText))violations.push('VOUCHER_CHECK_MISSING');","if(caseId==='L050'&&/残高または帳簿値|次の行の計算/u.test(m.checkText))violations.push('VOUCHER_GENERIC_LEDGER_CHECK');if(caseId==='L050'&&!/現金が増えるか、減るか、動かないか/u.test(m.summaryText))violations.push('VOUCHER_SUMMARY_MISSING');if(caseId==='L050'&&!/増える → 入金伝票/u.test(m.checkText))violations.push('VOUCHER_CHECK_MISSING');if(caseId==='L050'&&/取引ごとに現金の動きと伝票の種類を対応づける|現金の受取＝入金伝票/u.test(m.checkText))violations.push('VOUCHER_OLD_WORDING');if(caseId==='L050'&&!/現金が増える取引は入金伝票/u.test(m.takeawayText))violations.push('VOUCHER_TAKEAWAY_MISSING');",'voucher visual wording gate');
+          replaceOnce('tests/explanation-integration.test.js',"const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-113'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-113'),viewIndex=html.indexOf('js/view.js?v=20260924-113');","const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-114'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-114'),viewIndex=html.indexOf('js/view.js?v=20260924-114');",'integration release');
+          const index=read('index.html');
+          if((index.match(/20260924-113/g)||[]).length!==13)throw new Error('unexpected index release token count');
+          write('index.html',index.replaceAll('20260924-113','20260924-114'));
+          replaceOnce('service-worker.js',"const RELEASE = '20260924-113';","const RELEASE = '20260924-114';",'service worker release');
+          const manifest=JSON.parse(read('pwa-release-manifest.json'));
+          if(manifest.release!=='20260924-113'||manifest.previousRelease!=='20260924-112')throw new Error('unexpected release manifest baseline');
+          const digest=buffer=>crypto.createHash('sha256').update(buffer).digest('hex');
+          for(const file of ['data/questions.js','js/explanation-model.js','js/view.js'])manifest.assets[file]=digest(fs.readFileSync(file));
+          manifest.previousRelease='20260924-113';
+          manifest.release='20260924-114';
+          write('pwa-release-manifest.json',JSON.stringify(manifest,null,2)+'\n');
+          NODE
+      - name: Pre-authority targeted regression
+        run: |
+          node tests/chapter8-explanation.test.js
+          node tests/explanation-integration.test.js
+          node tests/service-worker.test.js
+          node scripts/audit-matrix.js
+          git diff --check
+      - name: Generate Generation 45 finalization support
+        shell: bash
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs=require('fs'),crypto=require('crypto'),childProcess=require('child_process');
+          const core=require('./scripts/qa/audit-core'),lifecycle=require('./scripts/qa/phase-b-lifecycle');
+          const read=f=>fs.readFileSync(f,'utf8'),write=(f,s)=>fs.writeFileSync(f,s);
+          const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
+          const git=args=>childProcess.execFileSync('git',args,{encoding:'utf8'}).trim();
+          const must=(s,a,b,label)=>{if(!s.includes(a))throw new Error('missing '+label);return s.replace(a,b);};
+          const seq=max=>'['+Array.from({length:max-1},(_,i)=>i+2).join(',')+']';
+          const approvedHead=git(['rev-parse','HEAD']),approvedTree=git(['rev-parse','HEAD^{tree}']);
+          const authorityRel=[lifecycle.ROOT_LOCK,...Array.from({length:43},(_,i)=>`reports/auto-gate/audit-locks/phase-b-generation-${i+2}.json`)];
+          const expectedAuthoritySha256=authorityRel.map(f=>digest(fs.readFileSync(f)));
+          const productionFiles=['css/style.css','data/questions.js','index.html','js/explanation-model.js','js/view.js','pwa-release-manifest.json','service-worker.js'];
+          const finalProductionSha256=Object.fromEntries(productionFiles.map(f=>[f,core.sha(f)]));
+          const finalizer=`'use strict';
+          const childProcess=require('child_process'),crypto=require('crypto'),fs=require('fs'),path=require('path'),core=require('./audit-core'),lifecycle=require('./phase-b-lifecycle');
+          const output=path.join(core.ROOT,'reports/auto-gate/audit-locks/phase-b-generation-45.json');
+          const authorityPaths=[lifecycle.ROOT_LOCK,...Array.from({length:43},(_,i)=>\`reports/auto-gate/audit-locks/phase-b-generation-\${i+2}.json\`)].map(f=>path.join(core.ROOT,f));
+          const expectedAuthoritySha256=${JSON.stringify(expectedAuthoritySha256)};
+          const approvedHead='${approvedHead}',approvedTree='${approvedTree}';
+          const finalProductionSha256=${JSON.stringify(finalProductionSha256)};
+          const requiredDirty=new Set(['.github/visual/run-explanation-integration.js','data/questions.js','index.html','independent-audit/tests/generation-45-finalizer.test.js','independent-audit/tests/generation-immutability.test.js','js/explanation-model.js','js/view.js','package.json','pwa-release-manifest.json','scripts/qa/finalize-phase-b-generation-45.js','scripts/qa/validate-auto-gate.js','service-worker.js','tests/chapter8-explanation.test.js','tests/explanation-integration.test.js']);
+          const NEW_RELEASE='20260924-114',PREVIOUS_RELEASE='20260924-113';
+          const fail=m=>{console.error(\`PHASE_B_GENERATION_45_FINALIZATION_REFUSED: \${m}\`);process.exitCode=1;return false;};
+          const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
+          const git=a=>childProcess.execFileSync('git',a,{cwd:core.ROOT,encoding:'utf8'}).trim();
+          const changedFiles=()=>git(['status','--porcelain','--untracked-files=all']).split(/\\n/u).filter(Boolean).map(l=>l.slice(2).trim());
+          function validateRelease(){const m=JSON.parse(fs.readFileSync(path.join(core.ROOT,'pwa-release-manifest.json'),'utf8')),w=fs.readFileSync(path.join(core.ROOT,'service-worker.js'),'utf8'),i=fs.readFileSync(path.join(core.ROOT,'index.html'),'utf8');if(m.release!==NEW_RELEASE||m.previousRelease!==PREVIOUS_RELEASE)throw Error('release manifest version mismatch');if(!w.includes(\`const RELEASE = '\${NEW_RELEASE}';\`))throw Error('service worker release mismatch');if(i.includes(\`?v=\${PREVIOUS_RELEASE}\`)||(i.match(new RegExp(\`\\\\?v=\${NEW_RELEASE}\`,'g'))||[]).length!==13)throw Error('index release tokens mismatch');for(const[f,s]of Object.entries(m.assets))if(core.sha(f)!==s)throw Error(\`release asset hash mismatch: \${f}\`);}
+          function finalize(){if(fs.existsSync(output)||lifecycle.generationAuthorities().some(x=>x.document.generation===45))return fail('Generation 45 already exists');if(authorityPaths.some((f,i)=>!fs.existsSync(f)||digest(fs.readFileSync(f))!==expectedAuthoritySha256[i]))return fail('historical authority raw bytes changed');if(git(['rev-parse','HEAD'])!==approvedHead||git(['rev-parse','HEAD^{tree}'])!==approvedTree)return fail('approved Generation 44 successor baseline mismatch');const d=changedFiles();if(d.length!==requiredDirty.size||d.some(f=>!requiredDirty.has(f))||[...requiredDirty].some(f=>!d.includes(f)))return fail(\`dirty scope mismatch: \${d.join(', ')}\`);try{validateRelease();}catch(e){return fail(e.message);}for(const[f,s]of Object.entries(finalProductionSha256))if(core.sha(f)!==s)return fail(\`final Production hash mismatch: \${f}\`);const a=lifecycle.generationAuthorities();if(JSON.stringify(a.map(x=>x.document.generation))!==JSON.stringify(Array.from({length:43},(_,i)=>i+2)))return fail('authority sequence must be exactly [2..44]');let c;try{c=lifecycle.createCandidate();}catch(e){return fail(e.message);}if(c.generation!==45||JSON.stringify(c.predecessor)!==JSON.stringify(lifecycle.identity(a.at(-1).document)))return fail('candidate predecessor or generation mismatch');const v=lifecycle.verifyCandidate(c);if(!v.ok)return fail(v.errors.join(', '));fs.writeFileSync(output,JSON.stringify(c,null,2)+'\\n',{flag:'wx'});console.log(\`FINALIZED \${path.relative(core.ROOT,output)}\`);return true;}
+          if(require.main===module){if(!finalize())process.exit(1);}module.exports={finalProductionSha256,NEW_RELEASE,PREVIOUS_RELEASE,approvedHead,approvedTree,authorityPaths,expectedAuthoritySha256,finalize,output,validateRelease};
+          `;
+          write('scripts/qa/finalize-phase-b-generation-45.js',finalizer);
+
+          const finalizerTest=`'use strict';
+          const assert=require('assert'),childProcess=require('child_process'),crypto=require('crypto'),fs=require('fs');
+          const core=require('../../scripts/qa/audit-core'),lifecycle=require('../../scripts/qa/phase-b-lifecycle'),finalizer=require('../../scripts/qa/finalize-phase-b-generation-45');
+          let count=0;const test=(name,fn)=>{fn();count++;console.log(\`ok \${count} - \${name}\`);};const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+          const authorities=lifecycle.generationAuthorities(),g44=authorities.find(x=>x.document.generation===44),g45=authorities.find(x=>x.document.generation===45);
+          test('Generation 45 is discoverable',()=>assert(g45));
+          test('Generation 45 predecessor is exact Generation 44',()=>assert.deepStrictEqual(g45.document.predecessor,lifecycle.identity(g44.document)));
+          test('Generation 45 production identity changes for TAC-style voucher guidance',()=>assert.notStrictEqual(g45.document.baselineIdentity,g44.document.baselineIdentity));
+          test('committed Generation 45 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+          test('duplicate Generation 45 issuance fails',()=>assert.notStrictEqual(childProcess.spawnSync(process.execPath,['scripts/qa/finalize-phase-b-generation-45.js'],{cwd:core.ROOT,encoding:'utf8'}).status,0));
+          test('historical authority raw SHA values are pinned',()=>assert.deepStrictEqual(finalizer.authorityPaths.map(f=>digest(fs.readFileSync(f))),finalizer.expectedAuthoritySha256));
+          console.log(\`Generation 45 finalizer regressions: \${count}/\${count}\`);
+          `;
+          write('independent-audit/tests/generation-45-finalizer.test.js',finalizerTest);
+
+          let imm=read('independent-audit/tests/generation-immutability.test.js');
+          const seq43=seq(43),seq44=seq(44),seq45=seq(45);
+          imm=imm.replaceAll(seq44,seq45);
+          imm=imm.replaceAll(seq43,seq44);
+          imm=imm.replaceAll('generation44Committed','generation45Committed');
+          imm=must(imm,'committed(44)','committed(45)','committed generation');
+          imm=must(imm,'stale-predecessor Generation 45 successor is rejected','stale-predecessor Generation 46 successor is rejected','stale successor label');
+          imm=must(imm,'skipped.generation=45','skipped.generation=46','stale successor generation');
+          imm=imm.replaceAll('Generation 44','Generation 45');
+          imm=imm.replaceAll('authorityPath(44)','authorityPath(45)');
+          imm=imm.replaceAll('document.generation<44','document.generation<45');
+          write('independent-audit/tests/generation-immutability.test.js',imm);
+
+          const pkg=JSON.parse(read('package.json'));
+          if(!pkg.scripts['qa:test'].includes('generation-45-finalizer.test.js'))pkg.scripts['qa:test']+=' && node independent-audit/tests/generation-45-finalizer.test.js';
+          pkg.scripts['qa:finalize:phase-b-generation-45']='node scripts/qa/finalize-phase-b-generation-45.js';
+          write('package.json',JSON.stringify(pkg,null,2)+'\n');
+
+          let auto=read('scripts/qa/validate-auto-gate.js');
+          const seq45Auto=seq(45);
+          const legal=/const legalSequences=(\[[^\n]+\]);/u.exec(auto);
+          if(!legal)throw new Error('legalSequences definition not found');
+          if(!legal[1].includes(seq45Auto)){
+            const extended=legal[1].slice(0,-1)+','+seq45Auto+']';
+            auto=auto.replace(legal[1],extended);
+          }
+          auto=must(auto,'through at most Generation 44','through at most Generation 45','auto-gate generation label');
+          write('scripts/qa/validate-auto-gate.js',auto);
+
+          console.log(JSON.stringify({approvedHead,approvedTree,expectedAuthorityCount:expectedAuthoritySha256.length,finalProductionSha256},null,2));
+          NODE
+      - name: Confirm exact dirty finalization scope
+        run: |
+          git status --short
+          test "$(git status --porcelain --untracked-files=all | wc -l)" -eq 14
+      - name: Finalize Generation 45
+        run: node scripts/qa/finalize-phase-b-generation-45.js
+      - name: Commit Generation 45 locally and remove helper workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/issue154-finalize-generation-45.yml
+          git add -A
+          git commit -m "Finalize Generation 45 for TAC-style voucher guidance"
+      - name: Verify committed Generation 45
+        run: |
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+          test -z "$(git status --porcelain)"
+      - name: Publish verified Generation 45
+        run: git push origin HEAD:codex/issue-154-explanation-ux-integration
