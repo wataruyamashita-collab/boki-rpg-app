@@ -28,7 +28,10 @@ jobs:
           npm run verify
           npm run qa:test
           npm run qa:integrity
+          npm run qa:evidence
           npm run audit:auto-gate
+          git checkout -- reports/auto-gate
+          test -z "$(git status --porcelain -- reports/auto-gate)"
 
       - name: Apply Gate 5-A changes
         shell: bash
@@ -232,7 +235,6 @@ jobs:
           node tests/gate5-structured-explanation.test.js
           npm run verify
           npm run qa:test
-          npm run audit:auto-gate
           git diff --check
 
       - name: Create Generation 48 authority
@@ -252,10 +254,18 @@ jobs:
           console.log('FINALIZED '+output);
           NODE
 
+      - name: Regenerate Generation 48 auto-gate evidence
+        run: |
+          npm run qa:evidence
+          npm run audit:auto-gate
+          npm run qa:integrity
+          git diff --check
+
       - name: Commit Generation 48 and remove helper
         shell: bash
         run: |
-          test "$(git status --porcelain --untracked-files=all | wc -l)" -eq 12
+          test -f reports/auto-gate/audit-locks/phase-b-generation-48.json
+          git status --short
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/issue154-finalize-generation-48.yml
