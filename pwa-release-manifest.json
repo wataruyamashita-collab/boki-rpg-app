@@ -1,6 +1,6 @@
 {
-  "release": "20260924-112",
-  "previousRelease": "20260924-111",
+  "release": "20260924-113",
+  "previousRelease": "20260924-112",
   "assets": {
     "css/style.css": "5132258b88c0aca4dddea1b3ef1d1a51cad8d0db02ce0f040837a8fd8273febc",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
@@ -14,6 +14,6 @@
     "js/view.js": "ca4a73bb3e4ec1e4aee3e06f0fef6bfef882e3eff2d6d3af4a67cdec421e2883",
     "js/controller.js": "ebc57c540d86f98afa49ec019ae86e1cefa829c6acc3304b8829c4785769fb92",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
-    "js/explanation-model.js": "ca789a11a05a2dbee68264aeee11e50519470298ab22ef701c8e5aa47e6887a9"
+    "js/explanation-model.js": "718e6930cca83b4a18f4eb27268be1b699d9219d512afb8cd0edbeab8fe52b72"
   }
 }
