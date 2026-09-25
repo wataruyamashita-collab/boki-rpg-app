@@ -269,6 +269,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/issue154-finalize-generation-48.yml
+          if [ -f .github/issue154-gen48-retry.txt ]; then git rm .github/issue154-gen48-retry.txt; fi
           git add -A
           git commit -m "Finalize Generation 48 for Gate 5 basic types"
 
