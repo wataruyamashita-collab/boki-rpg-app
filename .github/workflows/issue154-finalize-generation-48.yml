@@ -1,0 +1,275 @@
+name: Issue 154 finalize Generation 48
+on:
+  push:
+    branches:
+      - codex/issue-154-explanation-ux-integration
+
+permissions:
+  contents: write
+
+jobs:
+  finalize-generation-48:
+    if: github.event.head_commit.message == 'Prepare remote Generation 48 finalization'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/issue-154-explanation-ux-integration
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Verify Generation 47 baseline
+        run: |
+          npm run verify
+          npm run qa:test
+          npm run qa:integrity
+          npm run audit:auto-gate
+
+      - name: Apply Gate 5-A changes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import hashlib, json, re
+
+          def read(path):
+              return Path(path).read_text()
+
+          def write(path, value):
+              Path(path).write_text(value)
+
+          def replace_once(path, old, new, label):
+              value=read(path)
+              if value.count(old)!=1:
+                  raise SystemExit("unexpected anchor count for "+label+": "+str(value.count(old)))
+              write(path,value.replace(old,new,1))
+
+          path='js/explanation-model.js'
+          value=read(path)
+
+          old="  const labels={date:'日付',description:'摘要',transaction:'取引内容',account:'勘定科目',item:'項目',quantity:'数量',unitPrice:'単価',amount:'金額',debit:'借方',credit:'貸方',balance:'残高',asset:'固定資産',acquisitionDate:'取得日',acquisitionCost:'取得原価',life:'耐用年数',months:'使用月数',openingAccumulated:'期首減価償却累計額',currentDepreciation:'当期減価償却費',closingAccumulated:'期末減価償却累計額',closingBookValue:'期末帳簿価額'};"
+          new="  const labels={date:'日付',description:'摘要',transaction:'取引内容',account:'勘定科目',item:'項目',value:'内容',answer:'解答欄',recorded:'帳簿の記録',evidence:'証ひょう',section:'区分',quantity:'数量',unitPrice:'単価',amount:'金額',debit:'借方',credit:'貸方',balance:'残高',asset:'固定資産',acquisitionDate:'取得日',acquisitionCost:'取得原価',residualValue:'残存価額',life:'耐用年数',method:'償却方法',months:'使用月数',annualDepreciation:'1年分の減価償却費',openingAccumulated:'期首減価償却累計額',currentDepreciation:'当期減価償却費',closingAccumulated:'期末減価償却累計額',closingBookValue:'期末帳簿価額',disposalBookValue:'売却時帳簿価額',disposalLoss:'固定資産売却損'};"
+          if value.count(old)!=1:
+              raise SystemExit('labels anchor mismatch')
+          value=value.replace(old,new,1)
+
+          old="  const materialFocus=q=>{const format=q.format||'',category=String(q.category||'');if(format==='bookkeeping-voucher-entry')return '取引内容と金額を確認する';if(format==='bookkeeping-notes-receivable'||format==='bookkeeping-notes-payable')return '日付・相手先・金額を確認する';if(format==='fixed-asset-ledger'||/固定資産台帳/u.test(category))return '取得原価・耐用年数など、計算に使う条件を確認する';return '資料に書かれている内容を確認する';};"
+          new="  const materialFocus=q=>{const format=q.format||'',category=String(q.category||'');if(q.type==='correction')return '帳簿の記録と証ひょうを比べる';if(format==='bookkeeping-voucher-entry')return '取引内容と金額を確認する';if(format==='bookkeeping-notes-receivable'||format==='bookkeeping-notes-payable')return '日付・相手先・金額を確認する';if(format==='fixed-asset-ledger'||/固定資産台帳/u.test(category))return '取得原価・耐用年数など、計算に使う条件を確認する';return '資料に書かれている内容を確認する';};"
+          if value.count(old)!=1:
+              raise SystemExit('materialFocus anchor mismatch')
+          value=value.replace(old,new,1)
+
+          calc_pattern=re.compile(r"  function calculations\(q\)\{if\(q\.type==='journal'\).*?;const special=chapter8Calculations\(q\);")
+          calc_new="  function calculations(q){if(q.type==='journal')return [...(q.answer?.debit||[]),...(q.answer?.credit||[])].map(r=>({label:r.account,expression:null,result:r.amount,operands:[],evidenceRefs:['answer']}));if(q.type==='trial_balance'){const cells=q.answer?.cells||{},rows=q.table?.rows||[],debits=rows.map(r=>r?.debit).filter(v=>typeof v==='number'&&Number.isFinite(v)),credits=rows.map(r=>r?.credit).filter(v=>typeof v==='number'&&Number.isFinite(v)),out=[];if(debits.length&&Number.isFinite(cells.total_debit))out.push(calcItem('借方合計',debits.map(comma).join(' + ')+' = '+comma(cells.total_debit),cells.total_debit,['table.rows','answer.cells.total_debit']));if(credits.length&&Number.isFinite(cells.total_credit))out.push(calcItem('貸方合計',credits.map(comma).join(' + ')+' = '+comma(cells.total_credit),cells.total_credit,['table.rows','answer.cells.total_credit']));return out;}const special=chapter8Calculations(q);"
+          value,n=calc_pattern.subn(calc_new,value,count=1)
+          if n!=1:
+              raise SystemExit('calculations anchor mismatch')
+
+          transfer_pattern=re.compile(r"  function transfer\(q\)\{if\(q\.type==='journal'\).*?;const locs=locations\(q\);")
+          transfer_new="  function transfer(q){if(q.type==='journal')return['debit','credit'].flatMap(side=>(q.answer?.[side]||[]).map(r=>({from:'問題文・証憑',decision:r.account,to:side==='debit'?'借方':'貸方',debitCredit:side,value:r.amount,evidenceRefs:['answer.'+side]})));if(q.type==='correction'){const c=q.answer?.cells||{},out=[];if(c.debitAccount&&Number.isFinite(c.debitAmount))out.push({from:'帳簿と証ひょうの差',decision:'訂正仕訳',to:'借方',debitCredit:'debit',value:c.debitAccount+' '+comma(c.debitAmount)+'円',evidenceRefs:['materials','answer.cells.debitAccount','answer.cells.debitAmount']});if(c.creditAccount&&Number.isFinite(c.creditAmount))out.push({from:'帳簿と証ひょうの差',decision:'訂正仕訳',to:'貸方',debitCredit:'credit',value:c.creditAccount+' '+comma(c.creditAmount)+'円',evidenceRefs:['materials','answer.cells.creditAccount','answer.cells.creditAmount']});return out;}const locs=locations(q);"
+          value,n=transfer_pattern.subn(transfer_new,value,count=1)
+          if n!=1:
+              raise SystemExit('transfer anchor mismatch')
+
+          checks_pattern=re.compile(r"  function checks\(q\)\{if\(q\.type==='journal'\).*?;const locs=locations\(q\),out=")
+          checks_new="  function checks(q){if(q.type==='journal'){const d=(q.answer?.debit||[]).reduce((s,r)=>s+(Number(r.amount)||0),0),c=(q.answer?.credit||[]).reduce((s,r)=>s+(Number(r.amount)||0),0);return[{label:'借方合計と貸方合計が合っているか確認する',expected:d===c?num(d)+' = '+num(c):'不一致',evidenceRefs:['answer.debit','answer.credit']}];}const cells=q.answer?.cells||{};if(q.type==='trial_balance'){const d=cells.total_debit,c=cells.total_credit;return[{label:'借方合計と貸方合計が一致しているか確認する',expected:Number.isFinite(d)&&Number.isFinite(c)?num(d)+' = '+num(c):'合計欄を確認',evidenceRefs:['answer.cells.total_debit','answer.cells.total_credit']}];}if(q.type==='correction'){const d=cells.debitAmount,c=cells.creditAmount;return[{label:'訂正する部分だけを直せているか確認する',expected:'正しい部分は残す',evidenceRefs:['materials','answer.cells']},{label:'訂正仕訳の借方と貸方の金額が合っているか確認する',expected:Number.isFinite(d)&&Number.isFinite(c)?num(d)+' = '+num(c):'借方・貸方を確認',evidenceRefs:['answer.cells.debitAmount','answer.cells.creditAmount']}];}const locs=locations(q),out="
+          value,n=checks_pattern.subn(checks_new,value,count=1)
+          if n!=1:
+              raise SystemExit('checks anchor mismatch')
+
+          write(path,value)
+
+          qpath='data/questions.js'
+          q=read(qpath)
+          anchor="""Object.values(QuestionData).forEach(item => {
+            if (item.chapter !== 8 || item.explanationModel) return;
+            item.explanationModel = {summary:[{text:chapter8ExplanationSummary(item)}]};
+          });"""
+          addition=anchor+"""
+
+          const gate5ExplanationSummary = item => {
+            if (item.type === 'journal') return '取引で何が増え、何が減ったかを確認し、勘定科目を決めて借方・貸方に分けます。';
+            if (item.type === 'ledger') return chapter8ExplanationSummary(item);
+            if (item.type === 'trial_balance') return '各勘定の残高を借方と貸方に分け、それぞれを縦に合計します。';
+            if (item.type === 'correction') return '帳簿の記録と証ひょうを比べ、誤っている部分だけを訂正します。';
+            return '';
+          };
+          Object.values(QuestionData).forEach(item => {
+            if (item.explanationModel || !['journal','ledger','trial_balance','correction'].includes(item.type)) return;
+            item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};
+          });"""
+          if q.count(anchor)!=1:
+              raise SystemExit('Gate 5 assignment anchor mismatch')
+          write(qpath,q.replace(anchor,addition,1))
+
+          test=r"""'use strict';
+          const assert=require('assert'),fs=require('fs'),vm=require('vm');
+          const ExplanationModel=require('../js/explanation-model');
+          const sandbox={window:{}};
+          vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),sandbox,{filename:'data/questions.js'});
+          const data=sandbox.window.QuestionData,values=Object.values(data);
+          const expected={journal:150,ledger:50,trial_balance:40,correction:20};
+          for(const pair of Object.entries(expected)){
+            const type=pair[0],count=pair[1],qs=values.filter(q=>q.type===type);
+            assert.strictEqual(qs.length,count,type+': question count');
+            assert.strictEqual(qs.filter(q=>q.explanationModel).length,count,type+': all questions use structured explanation');
+            for(const q of qs){
+              const model=ExplanationModel.build(q,q.type==='journal'?{}:{cells:{}},{correct:false});
+              assert.strictEqual(ExplanationModel.validate(model).valid,true,q.id+': valid model');
+              assert(model.sources.length>0,q.id+': sources');
+              assert(model.summary.length>0,q.id+': summary');
+              assert(model.transfer.length>0,q.id+': transfer');
+              assert(model.checks.length>0,q.id+': checks');
+              const raw=model.sources.flatMap(source=>(source.values||[]).map(value=>String(value.label||'')));
+              assert(!raw.some(label=>/^(?:date|description|transaction|account|item|value|answer|recorded|evidence|quantity|unitPrice|amount)$/u.test(label)),q.id+': no raw internal source labels');
+              assert(!/正答値|資料の項目と数値|帳簿値|対応づける/u.test(JSON.stringify({sources:model.sources,summary:model.summary,checks:model.checks})),q.id+': no system-facing learner wording');
+            }
+          }
+          const j=ExplanationModel.build(data.J001,{}, {correct:false});
+          assert(j.summary.some(x=>x.text==='取引で何が増え、何が減ったかを確認し、勘定科目を決めて借方・貸方に分けます。'),'J001 summary');
+          assert(j.checks.some(x=>x.label==='借方合計と貸方合計が合っているか確認する'),'J001 check');
+          const t=ExplanationModel.build(data.T001,{cells:{}},{correct:false});
+          assert(t.calculation.some(x=>x.expression==='410,000 + 175,000 + 60,000 + 289,000 + 90,000 = 1,024,000'),'T001 debit total');
+          assert(t.calculation.some(x=>x.expression==='134,000 + 400,000 + 490,000 = 1,024,000'),'T001 credit total');
+          assert.strictEqual(t.checks[0].label,'借方合計と貸方合計が一致しているか確認する','T001 final check');
+          assert.strictEqual(t.checks[0].expected,'1,024,000 = 1,024,000','T001 equality');
+          const e=ExplanationModel.build(data.E001,{cells:{}},{correct:false});
+          assert.deepStrictEqual(JSON.parse(JSON.stringify(e.sources[0].values.map(x=>x.label))),['帳簿の記録','証ひょう'],'E001 labels');
+          assert.strictEqual(e.sources[0].focus,'帳簿の記録と証ひょうを比べる','E001 focus');
+          assert.strictEqual(e.transfer.length,2,'E001 transfer pair');
+          assert.deepStrictEqual(JSON.parse(JSON.stringify(e.transfer.map(x=>[x.to,x.value]))),[['借方','広告宣伝費 22,500円'],['貸方','備品 22,500円']],'E001 entry');
+          assert(e.checks.some(x=>x.label==='訂正する部分だけを直せているか確認する'),'E001 keep correct portion');
+          assert(e.checks.some(x=>x.expected==='22,500 = 22,500'),'E001 debit credit check');
+          assert(data.L001.explanationModel,'L001 structured explanation');
+          console.log('Gate 5-A structured explanation tests: PASS');
+          """
+          write('tests/gate5-structured-explanation.test.js',test)
+
+          vpath='.github/visual/run-explanation-integration.js'
+          v=read(vpath)
+          old="const profiles={\n  L028:"
+          new="const profiles={\n  J001:['どういう取引か考える','借方・貸方を決めて仕訳する',false],\n  T001:['残高の置き場所を決める','試算表に記入する',true],\n  E001:['どこが違うか整理する','訂正仕訳を書く',false],\n  L028:"
+          if v.count(old)!=1:
+              raise SystemExit('visual profiles anchor mismatch')
+          v=v.replace(old,new,1)
+          anchor="if(caseId==='L029'&&(m.sourceTables!==1||JSON.stringify(m.sourceTableHeaders)!==JSON.stringify(['日付','摘要','数量','単価（円）','金額（円）'])||m.sourceTableRows!==4||m.sourceUnknowns!==3))violations.push('SOURCE_TABLE_STRUCTURE');"
+          checks="if(caseId==='T001'&&(m.sourceTables!==1||JSON.stringify(m.sourceTableHeaders)!==JSON.stringify(['勘定科目','借方','貸方'])||m.sourceTableRows!==9))violations.push('TRIAL_BALANCE_SOURCE_TABLE');if(caseId==='T001'&&(!m.formulaTexts.join(' ').includes('410,000 + 175,000 + 60,000 + 289,000 + 90,000 = 1,024,000')||!m.checkText.includes('借方合計と貸方合計が一致しているか確認する')))violations.push('TRIAL_BALANCE_GUIDANCE');if(caseId==='E001'&&(!m.sourceText.includes('帳簿の記録と証ひょうを比べる')||m.transferCards!==2||!m.checkText.includes('訂正する部分だけを直せているか確認する')))violations.push('CORRECTION_GUIDANCE');if(caseId==='J001'&&(!m.summaryText.includes('取引で何が増え、何が減ったか')||!m.checkText.includes('借方合計と貸方合計が合っているか確認する')))violations.push('JOURNAL_GUIDANCE');"+anchor
+          if v.count(anchor)!=1:
+              raise SystemExit('visual assertion anchor mismatch')
+          write(vpath,v.replace(anchor,checks,1))
+
+          replace_once('tests/explanation-integration.test.js',
+            "const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-116'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-116'),viewIndex=html.indexOf('js/view.js?v=20260924-116');",
+            "const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-117'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-117'),viewIndex=html.indexOf('js/view.js?v=20260924-117');",
+            'release test')
+
+          package=json.loads(read('package.json'))
+          marker='node tests/chapter8-explanation.test.js'
+          add=marker+' && node tests/gate5-structured-explanation.test.js'
+          if 'tests/gate5-structured-explanation.test.js' not in package['scripts']['test']:
+              package['scripts']['test']=package['scripts']['test'].replace(marker,add)
+          write('package.json',json.dumps(package,ensure_ascii=False,indent=2)+'\n')
+
+          index=read('index.html')
+          if index.count('20260924-116')!=13:
+              raise SystemExit('unexpected release token count')
+          write('index.html',index.replace('20260924-116','20260924-117'))
+
+          replace_once('service-worker.js',"const RELEASE = '20260924-116';","const RELEASE = '20260924-117';",'service worker')
+
+          manifest=json.loads(read('pwa-release-manifest.json'))
+          if manifest['release']!='20260924-116' or manifest['previousRelease']!='20260924-115':
+              raise SystemExit('release manifest baseline mismatch')
+          for file in ['data/questions.js','js/explanation-model.js']:
+              manifest['assets'][file]=hashlib.sha256(Path(file).read_bytes()).hexdigest()
+          manifest['previousRelease']='20260924-116'
+          manifest['release']='20260924-117'
+          write('pwa-release-manifest.json',json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
+
+          ipath='independent-audit/tests/generation-immutability.test.js'
+          imm=read(ipath)
+          seq46='['+','.join(str(i) for i in range(2,47))+']'
+          seq47='['+','.join(str(i) for i in range(2,48))+']'
+          seq48='['+','.join(str(i) for i in range(2,49))+']'
+          imm=imm.replace(seq47,seq48).replace(seq46,seq47)
+          imm=imm.replace('const generation47Committed=committed(47);','const generation48Committed=committed(48);')
+          imm=imm.replace('generation47Committed','generation48Committed')
+          imm=imm.replace("'authority sequence is [2..38] before Generation 47 or [2..39] after commit'","'authority sequence is [2..47] before Generation 48 or [2..48] after commit'")
+          imm=imm.replace('committed(47)','committed(48)')
+          imm=imm.replace('authorityPath(47)','authorityPath(48)')
+          imm=imm.replace("'stale-predecessor Generation 48 successor is rejected'","'stale-predecessor Generation 49 successor is rejected'")
+          imm=imm.replace('skipped.generation=48','skipped.generation=49')
+          imm=imm.replace('Generation 47','Generation 48')
+          imm=imm.replace('document.generation<47','document.generation<48')
+          write(ipath,imm)
+
+          apath='scripts/qa/validate-auto-gate.js'
+          auto=read(apath)
+          seq48='['+','.join(str(i) for i in range(2,49))+']'
+          m=re.search(r'const legalSequences=(\[[^\n]+\]);',auto)
+          if not m:
+              raise SystemExit('legalSequences not found')
+          legal=m.group(1)
+          if seq48 not in legal:
+              legal=legal[:-1]+','+seq48+']'
+              auto=auto[:m.start(1)]+legal+auto[m.end(1):]
+          auto=auto.replace('through at most Generation 47','through at most Generation 48')
+          write(apath,auto)
+          PY
+
+      - name: Confirm exact Gate 5-A dirty scope
+        run: |
+          git status --short
+          test "$(git status --porcelain --untracked-files=all | wc -l)" -eq 11
+
+      - name: Verify changes before authority
+        run: |
+          node tests/gate5-structured-explanation.test.js
+          npm run verify
+          npm run qa:test
+          npm run audit:auto-gate
+          git diff --check
+
+      - name: Create Generation 48 authority
+        shell: bash
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs=require('fs'),path=require('path');
+          const lifecycle=require('./scripts/qa/phase-b-lifecycle');
+          const output=path.join(process.cwd(),'reports/auto-gate/audit-locks/phase-b-generation-48.json');
+          if(fs.existsSync(output))throw new Error('Generation 48 already exists');
+          const candidate=lifecycle.createCandidate();
+          if(candidate.generation!==48)throw new Error('expected Generation 48, got '+candidate.generation);
+          const verified=lifecycle.verifyCandidate(candidate);
+          if(!verified.ok)throw new Error(verified.errors.join(', '));
+          fs.writeFileSync(output,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
+          console.log('FINALIZED '+output);
+          NODE
+
+      - name: Commit Generation 48 and remove helper
+        shell: bash
+        run: |
+          test "$(git status --porcelain --untracked-files=all | wc -l)" -eq 12
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/issue154-finalize-generation-48.yml
+          git add -A
+          git commit -m "Finalize Generation 48 for Gate 5 basic types"
+
+      - name: Verify committed Generation 48
+        run: |
+          npm run qa:test
+          npm run qa:integrity
+          npm run audit:auto-gate
+          npm run verify
+          git diff --check
+          test -z "$(git status --porcelain)"
+
+      - name: Publish verified Generation 48
+        run: git push origin HEAD:codex/issue-154-explanation-ux-integration
