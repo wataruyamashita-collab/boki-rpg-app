@@ -75,7 +75,10 @@ jobs:
           npm run qa:integrity
           git diff --check
           rm -rf artifacts
-          test -z "$(git status --porcelain)"
+          echo "FINAL_GIT_STATUS_BEGIN"
+          git status --short --untracked-files=all
+          echo "FINAL_GIT_STATUS_END"
+          test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Publish verified harness fix
         run: git push origin HEAD:codex/issue-154-explanation-ux-integration
