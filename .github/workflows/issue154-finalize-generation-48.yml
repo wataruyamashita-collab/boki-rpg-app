@@ -233,8 +233,10 @@ jobs:
       - name: Verify changes before authority
         run: |
           node tests/gate5-structured-explanation.test.js
-          npm run verify
-          npm run qa:test
+          node tests/chapter8-explanation.test.js
+          node tests/explanation-integration.test.js
+          node tests/service-worker.test.js
+          node scripts/audit-matrix.js
           git diff --check
 
       - name: Create Generation 48 authority
