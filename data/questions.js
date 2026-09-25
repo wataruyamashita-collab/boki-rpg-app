@@ -16018,6 +16018,18 @@ Object.values(QuestionData).forEach(item => {
   item.explanationModel = {summary:[{text:chapter8ExplanationSummary(item)}]};
 });
 
+const gate5ExplanationSummary = item => {
+  if (item.type === 'journal') return '取引で何が増え、何が減ったかを確認し、勘定科目を決めて借方・貸方に分けます。';
+  if (item.type === 'ledger') return chapter8ExplanationSummary(item);
+  if (item.type === 'trial_balance') return '各勘定の残高を借方と貸方に分け、それぞれを縦に合計します。';
+  if (item.type === 'correction') return '帳簿の記録と証ひょうを比べ、誤っている部分だけを訂正します。';
+  return '';
+};
+Object.values(QuestionData).forEach(item => {
+  if (item.explanationModel || !['journal','ledger','trial_balance','correction'].includes(item.type)) return;
+  item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};
+});
+
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {

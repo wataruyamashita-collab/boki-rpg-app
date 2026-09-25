@@ -1,10 +1,10 @@
 {
-  "release": "20260924-116",
-  "previousRelease": "20260924-115",
+  "release": "20260924-117",
+  "previousRelease": "20260924-116",
   "assets": {
     "css/style.css": "9c2e06db70b7a8433edffbb468c0306530f1c9b39abdcec802b2b6c3ade40d50",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
-    "data/questions.js": "6da41db878bb1f502c5fef0c12350b7ce991763ccd39b5f716109823fb2ef549",
+    "data/questions.js": "22227707865c06499dfe6bb049efa6fed81e0ed37ef6a8674aa429e85806f5a6",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
     "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
     "js/model.js": "941ccd7ddfa7e9a91d95976568ba5171b983d69cfea36086783fca19f2609a67",
@@ -14,6 +14,6 @@
     "js/view.js": "f1d1305eb485253060383eb3563e5c32325f7a4ad7ba272caa752676a7bb4dbf",
     "js/controller.js": "ebc57c540d86f98afa49ec019ae86e1cefa829c6acc3304b8829c4785769fb92",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
-    "js/explanation-model.js": "a9f84e28fffaed024870b78f7abfb5793b6599b630f7a2b556d48b0a3660dbc1"
+    "js/explanation-model.js": "0002d146b80a958ae23aed6df323fe3a58e707d875a187469b1f38647be30a21"
   }
 }

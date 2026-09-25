@@ -26,7 +26,7 @@ assert(/\.explanation-formula strong\s*\{[^}]*overflow-wrap:\s*anywhere/s.test(c
 assert(view.includes('explanation-source-table-wrap'),'表資料は専用の横スクロール領域で表示する');
 assert(/\.explanation-source-table-wrap\s*\{[^}]*overflow-x:\s*auto/s.test(css),'確認表は狭い画面で表だけ横スクロールできる');
 assert(/\.explanation-source-table\s*\{[^}]*min-width:\s*520px/s.test(css),'確認表の列幅を潰さない');
-const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-116'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-116'),viewIndex=html.indexOf('js/view.js?v=20260924-116');
+const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-117'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-117'),viewIndex=html.indexOf('js/view.js?v=20260924-117');
 assert(feedbackIndex>=0&&feedbackIndex<modelIndex&&modelIndex<viewIndex,'feedback→explanation model→viewの順に読み込む');
 assert(worker.includes("'./js/explanation-model.js'"),'PWAキャッシュへexplanation modelを含める');
 console.log('explanation integration tests: PASS');
