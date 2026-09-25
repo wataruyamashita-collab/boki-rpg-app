@@ -65,7 +65,7 @@ jobs:
             "      return profile('問題文の条件を整理する','答えに記入する',['問題文の条件を整理し、必要な会計処理を一つずつ決めます。','答えを書いたら、問題の条件に合っているか確認します。']);",
             'generic teaching profile');
           replaceOnce('js/view.js',"'この問題では追加情報はありません。'","'ここで確認する追加の資料はありません。'",'empty learner wording');
-          replaceOnce('js/view.js',"'証憑どおりの科目・金額になるか検算します。'","'証憑どおりの科目・金額になっているか確認します。'",'correction check wording');
+          replaceOnce('js/view.js',"'訂正仕訳を元の帳簿へ加え、証憑どおりの科目・金額になるか検算します。'","'訂正仕訳を元の帳簿へ加え、証憑どおりの科目・金額になっているか確認します。'",'correction check wording');
           replaceOnce('js/view.js',"'借方合計と貸方合計の一致で転記漏れや二重計上を検算します。'","'借方合計と貸方合計が一致するか見て、転記漏れや二重計上がないか確認します。'",'trial balance check wording');
           replaceOnce('js/view.js',"'各段階の貸借一致を確認して最終数値を記入します。'","'各段階で貸借が合っているか確認し、最後の金額を記入します。'",'comprehensive wording');
           replaceOnce('js/view.js',"'合計と資料を照合して検算します。'","'合計が合っているか、元の資料と見比べて確認します。'",'generic solution wording');
