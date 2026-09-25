@@ -71,13 +71,11 @@ jobs:
       - name: Verify committed harness fix
         run: |
           rm -rf artifacts
+          npm ci
           npm run verify
           npm run qa:integrity
           git diff --check
           rm -rf artifacts
-          echo "FINAL_GIT_STATUS_BEGIN"
-          git status --short --untracked-files=all
-          echo "FINAL_GIT_STATUS_END"
           test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Publish verified harness fix
