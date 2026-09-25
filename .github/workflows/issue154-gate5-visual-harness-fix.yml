@@ -70,9 +70,11 @@ jobs:
 
       - name: Verify committed harness fix
         run: |
+          rm -rf artifacts
           npm run verify
           npm run qa:integrity
           git diff --check
+          rm -rf artifacts
           test -z "$(git status --porcelain)"
 
       - name: Publish verified harness fix
