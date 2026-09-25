@@ -16009,7 +16009,7 @@ const chapter8ExplanationSummary = item => {
   if (format === 'bookkeeping-purchase-book') return '仕入と仕入返品を分け、総仕入高から返品額を差し引いて純仕入高を求めます。';
   if (format === 'bookkeeping-sales-book') return '売上と売上返品を分け、総売上高から返品額を差し引いて純売上高を求めます。';
   if (format === 'bookkeeping-inventory-ledger' || /商品有高帳/u.test(category)) return '数量と単価を別々に追い、指定された払出単価の計算方法で払出額と残高額を求めます。';
-  if (format === 'bookkeeping-voucher-entry') return '現金の受取・現金の支払・現金を伴わない取引に分け、使う伝票を判断します。';
+  if (format === 'bookkeeping-voucher-entry') return '現金が増えるか、減るか、動かないかを見て、使う伝票を判断します。';
   if (format === 'bookkeeping-general-ledger' || format === 'bookkeeping-account-ledger' || /元帳/u.test(category)) return 'その勘定がどちら側で増えるかを確認し、取引ごとの増減と相手勘定を残高へ反映します。';
   return '資料の順序と金額の動きを整理し、帳簿の各欄へ対応させます。';
 };

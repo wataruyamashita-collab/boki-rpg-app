@@ -23,7 +23,7 @@ assert(view.includes('元丁には総勘定元帳の転記先を示す番号'),'
 assert(view.includes('証憑に金額が示されている場合は、その金額をそのまま記入'),'直接記載額と計算問題を見分ける原則を持つ');
 assert(!view.includes('this.appendAuthoredExplanation(question, container, true)'),'構造化解説では旧authored解説を重複表示しない');
 assert(/\.explanation-formula strong\s*\{[^}]*overflow-wrap:\s*anywhere/s.test(css),'計算ブロックをiPhoneでクリップしない');
-const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-113'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-113'),viewIndex=html.indexOf('js/view.js?v=20260924-113');
+const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-114'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-114'),viewIndex=html.indexOf('js/view.js?v=20260924-114');
 assert(feedbackIndex>=0&&feedbackIndex<modelIndex&&modelIndex<viewIndex,'feedback→explanation model→viewの順に読み込む');
 assert(worker.includes("'./js/explanation-model.js'"),'PWAキャッシュへexplanation modelを含める');
 console.log('explanation integration tests: PASS');

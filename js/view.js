@@ -755,9 +755,9 @@
         '商品有高帳では、数量と単価を分けて追います。',
         '払出単価は問題で指定された方法に従い、払出後の数量と金額まで連続して確認します。'
       ]);
-      if (format === 'bookkeeping-voucher-entry') return profile('取引を伝票の種類に分ける','該当する伝票に記入する',[
-        '現金の受取は入金伝票、現金の支払は出金伝票に記入します。',
-        '現金を伴わない取引は振替伝票に記入します。'
+      if (format === 'bookkeeping-voucher-entry') return profile('現金が増えるか、減るか、動かないかを見る','使う伝票を決めて記入する',[
+        '現金が増える取引は入金伝票、減る取引は出金伝票に記入します。',
+        '現金が動かない取引は振替伝票に記入します。'
       ]);
       if (format === 'bookkeeping-general-ledger' || format === 'bookkeeping-account-ledger' || /元帳/u.test(category)) return profile('増減と相手勘定を整理する','元帳に転記する',[
         '元帳では、その勘定が借方・貸方のどちらで増えるかを先に確認します。',

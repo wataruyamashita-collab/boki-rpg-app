@@ -45,8 +45,10 @@ assert(voucherModel.sources.some(source=>source.values.some(value=>value.value==
 assert(voucherModel.sources.some(source=>source.values.some(value=>value.value==='備品を現金で購入')),'L050は備品現金購入を資料に含む');
 assert(voucherModel.sources.some(source=>source.values.some(value=>value.value==='商品を掛けで仕入')),'L050は掛仕入取引を資料に含む');
 assert(!/\b(?:item|account):/u.test(JSON.stringify(voucherModel.sources)),'L050の資料表示へ内部英語キーを漏らさない');
-assert(voucherModel.checks.some(item=>item.label==='取引ごとに現金の動きと伝票の種類を対応づける'),'L050は伝票専用の最終確認を表示する');
-assert(voucherModel.checks.some(item=>item.expected==='現金の受取＝入金伝票 / 現金の支払＝出金伝票 / 現金を伴わない取引＝振替伝票'),'L050は現金の動きと伝票の対応関係を確認する');
+assert(voucherModel.summary.some(item=>item.text==='現金が増えるか、減るか、動かないかを見て、使う伝票を判断します。'),'L050は初学者が判断しやすい現金の増減で説明する');
+assert(voucherModel.checks.some(item=>item.label==='現金の動きと伝票の種類が合っているか'),'L050は自然な日本語で最後の確認を表示する');
+assert(voucherModel.checks.some(item=>item.expected==='増える → 入金伝票 / 減る → 出金伝票 / 動かない → 振替伝票'),'L050は現金の増減と伝票の対応を短く示す');
+assert(!/取引ごとに現金の動きと伝票の種類を対応づける|現金の受取＝入金伝票/u.test(JSON.stringify(voucherModel)),'L050へ旧来の硬い表現を残さない');
 assert(!voucherModel.checks.some(item=>/残高または帳簿値|次の行の計算/u.test(`${item.label} ${item.expected}`)),'L050へ元帳用の残高更新チェックを表示しない');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.window.QuestionData.L050.answer.cells)),{value1:50000,value2:20000,value3:30000},'L050の正答金額は変更しない');
 console.log('Chapter 8 structured explanation tests: PASS');
