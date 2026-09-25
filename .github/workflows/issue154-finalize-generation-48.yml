@@ -79,7 +79,7 @@ jobs:
           if n!=1:
               raise SystemExit('transfer anchor mismatch')
 
-          checks_pattern=re.compile(r"  function checks\(q\)\{if\(q\.type==='journal'\).*?;const locs=locations\(q\),out=")
+          checks_pattern=re.compile(r"  function checks\(q\)\{if\(q\.type==='journal'\).*?const locs=locations\(q\),out=")
           checks_new="  function checks(q){if(q.type==='journal'){const d=(q.answer?.debit||[]).reduce((s,r)=>s+(Number(r.amount)||0),0),c=(q.answer?.credit||[]).reduce((s,r)=>s+(Number(r.amount)||0),0);return[{label:'借方合計と貸方合計が合っているか確認する',expected:d===c?num(d)+' = '+num(c):'不一致',evidenceRefs:['answer.debit','answer.credit']}];}const cells=q.answer?.cells||{};if(q.type==='trial_balance'){const d=cells.total_debit,c=cells.total_credit;return[{label:'借方合計と貸方合計が一致しているか確認する',expected:Number.isFinite(d)&&Number.isFinite(c)?num(d)+' = '+num(c):'合計欄を確認',evidenceRefs:['answer.cells.total_debit','answer.cells.total_credit']}];}if(q.type==='correction'){const d=cells.debitAmount,c=cells.creditAmount;return[{label:'訂正する部分だけを直せているか確認する',expected:'正しい部分は残す',evidenceRefs:['materials','answer.cells']},{label:'訂正仕訳の借方と貸方の金額が合っているか確認する',expected:Number.isFinite(d)&&Number.isFinite(c)?num(d)+' = '+num(c):'借方・貸方を確認',evidenceRefs:['answer.cells.debitAmount','answer.cells.creditAmount']}];}const locs=locations(q),out="
           value,n=checks_pattern.subn(checks_new,value,count=1)
           if n!=1:
