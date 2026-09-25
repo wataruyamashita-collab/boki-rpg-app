@@ -38,6 +38,13 @@ for(const [id,formula] of Object.entries(formulas)){
   const model=ExplanationModel.build(sandbox.window.QuestionData[id],{cells:{}},{correct:false});
   assert(model.calculation.some(item=>item.expression===formula),`${id}: expected formula ${formula}`);
 }
+const inventoryModel=ExplanationModel.build(sandbox.window.QuestionData.L029,{cells:{}},{correct:false});
+const inventorySource=inventoryModel.sources[0];
+assert.strictEqual(inventorySource.kind,'table','L029は表形式の資料として扱う');
+assert.strictEqual(inventorySource.focus,'日付ごとに「数量 → 単価 → 金額」の順で横に確認します。','L029は初学者が見る順番を明示する');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(inventorySource.table.columns.map(column=>column.label))),['日付','摘要','数量','単価（円）','金額（円）'],'L029の確認表は元の商品有高帳5列を保持する');
+assert.strictEqual(inventorySource.table.rows.length,4,'L029の確認表は4行を保持する');
+assert.strictEqual(inventorySource.table.rows.flat().filter(cell=>cell.value==='入力').length,3,'L029の未回答3欄は正答値へ展開しない');
 const voucherModel=ExplanationModel.build(sandbox.window.QuestionData.L050,{cells:{}},{correct:false});
 assert.strictEqual(voucherModel.sources.length,3,'L050は3取引を資料として表示する');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(voucherModel.sources.map(source=>source.title))),['取引1','取引2','取引3'],'L050の資料見出しは取引1〜3');

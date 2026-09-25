@@ -23,7 +23,10 @@ assert(view.includes('元丁には総勘定元帳の転記先を示す番号'),'
 assert(view.includes('証憑に金額が示されている場合は、その金額をそのまま記入'),'直接記載額と計算問題を見分ける原則を持つ');
 assert(!view.includes('this.appendAuthoredExplanation(question, container, true)'),'構造化解説では旧authored解説を重複表示しない');
 assert(/\.explanation-formula strong\s*\{[^}]*overflow-wrap:\s*anywhere/s.test(css),'計算ブロックをiPhoneでクリップしない');
-const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-114'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-114'),viewIndex=html.indexOf('js/view.js?v=20260924-114');
+assert(view.includes('explanation-source-table-wrap'),'表資料は専用の横スクロール領域で表示する');
+assert(/\.explanation-source-table-wrap\s*\{[^}]*overflow-x:\s*auto/s.test(css),'確認表は狭い画面で表だけ横スクロールできる');
+assert(/\.explanation-source-table\s*\{[^}]*min-width:\s*520px/s.test(css),'確認表の列幅を潰さない');
+const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-115'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-115'),viewIndex=html.indexOf('js/view.js?v=20260924-115');
 assert(feedbackIndex>=0&&feedbackIndex<modelIndex&&modelIndex<viewIndex,'feedback→explanation model→viewの順に読み込む');
 assert(worker.includes("'./js/explanation-model.js'"),'PWAキャッシュへexplanation modelを含める');
 console.log('explanation integration tests: PASS');

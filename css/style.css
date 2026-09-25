@@ -747,6 +747,14 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .explanation-source-value:first-child { padding-top:0; border-top:0; }
 .explanation-source-value dt { font-weight:800; }
 .explanation-source-value dd { min-width:0; margin:0; overflow-wrap:anywhere; }
+.explanation-source-table-wrap { max-width:100%; overflow-x:auto; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; border:1px solid #d5dce0; border-radius:8px; background:#fff; }
+.explanation-source-table { width:100%; min-width:520px; border-collapse:collapse; font-size:.88rem; font-variant-numeric:tabular-nums; }
+.explanation-source-table th,.explanation-source-table td { padding:8px 10px; border-right:1px solid #e1e7eb; border-bottom:1px solid #e1e7eb; white-space:nowrap; }
+.explanation-source-table th:last-child,.explanation-source-table td:last-child { border-right:0; }
+.explanation-source-table tbody tr:last-child td { border-bottom:0; }
+.explanation-source-table th { background:#eef3f6; text-align:left; font-weight:800; }
+.explanation-source-table td.is-number { text-align:right; }
+.explanation-source-table td.explanation-source-unknown { text-align:center; font-weight:900; }
 .explanation-summary-item { margin:0; line-height:1.55; }
 .explanation-formula { font-variant-numeric:tabular-nums; }
 .explanation-formula-label { margin-bottom:5px; font-size:.8rem; font-weight:800; }

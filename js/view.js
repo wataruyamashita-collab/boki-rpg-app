@@ -792,7 +792,24 @@
         const head = element('div', 'explanation-flow-head'); head.append(element('div', 'explanation-flow-step', String(index + 1)), element('h5', '', label)); section.append(head);
         const items = model[key] || [];
         if (!items.length) section.append(element('p', 'explanation-flow-empty', 'この問題では追加情報はありません。'));
-        if (key === 'sources') items.forEach(item => { const card = element('article', 'explanation-source-card'); card.append(element('h6', '', item.title), element('p', 'explanation-source-focus', item.focus)); const list = element('dl', 'explanation-source-values'); (item.values || []).forEach(value => { const row = element('div', 'explanation-source-value'); row.append(element('dt', '', value.label), element('dd', '', valueText(value.value))); list.append(row); }); card.append(list); section.append(card); });
+        if (key === 'sources') items.forEach(item => {
+          const card = element('article', 'explanation-source-card');
+          card.append(element('h6', '', item.title), element('p', 'explanation-source-focus', item.focus));
+          if (item.table?.columns?.length && item.table?.rows?.length) {
+            const wrap = element('div', 'explanation-source-table-wrap'); wrap.tabIndex = 0; wrap.setAttribute('aria-label', `${item.title}の確認表`);
+            const table = element('table', 'explanation-source-table'), thead = element('thead', ''), headRow = element('tr', '');
+            item.table.columns.forEach(column => { const th = element('th', '', column.label); th.scope = 'col'; headRow.append(th); });
+            thead.append(headRow); table.append(thead);
+            const tbody = element('tbody', '');
+            item.table.rows.forEach(row => { const tr = element('tr', ''); row.forEach(cell => { const unknown = cell.value === '入力'; const className = unknown ? 'explanation-source-unknown' : (typeof cell.value === 'number' ? 'is-number' : ''); const shownValue = unknown ? '？' : (cell.value == null || cell.value === '' ? '—' : (typeof cell.value === 'number' ? cell.value.toLocaleString('ja-JP') : String(cell.value))); tr.append(element('td', className, shownValue)); }); tbody.append(tr); });
+            table.append(tbody); wrap.append(table); card.append(wrap);
+          } else {
+            const list = element('dl', 'explanation-source-values');
+            (item.values || []).forEach(value => { const row = element('div', 'explanation-source-value'); row.append(element('dt', '', value.label), element('dd', '', valueText(value.value))); list.append(row); });
+            card.append(list);
+          }
+          section.append(card);
+        });
         if (key === 'summary') { const list = element('div', 'explanation-summary-list'); items.forEach(item => list.append(element('p', 'explanation-summary-item', item.text))); section.append(list); }
         if (key === 'calculation') items.forEach(item => { const card = element('article', 'explanation-formula'); card.append(element('div', 'explanation-formula-label', item.label), element('strong', '', item.expression || `答え：${valueText(item.result)}`)); if (item.operands?.length) { const operands = element('div', 'explanation-operands'); item.operands.forEach(value => operands.append(element('span', 'explanation-operand', `${value.label} ${valueText(value.value)}`))); card.append(operands); } section.append(card); });
         if (key === 'transfer') items.forEach(item => { const card = element('article', 'explanation-transfer-card'), from = element('div', 'explanation-transfer-from'), to = element('div', 'explanation-transfer-to'); from.append(element('strong', '', item.from), element('div', '', item.decision)); to.append(element('strong', '', item.to), element('div', '', valueText(item.value))); const arrow = element('div', 'explanation-transfer-arrow', '→'); arrow.setAttribute('aria-hidden', 'true'); card.append(from, arrow, to); section.append(card); });
