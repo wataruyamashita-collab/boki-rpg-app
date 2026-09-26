@@ -4,7 +4,7 @@ const ExplanationModel=require('../js/explanation-model');
 const sandbox={window:{}};
 vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),sandbox,{filename:'data/questions.js'});
 const data=sandbox.window.QuestionData,values=Object.values(data);
-const expected={journal:150,ledger:50,trial_balance:40,correction:20};
+const expected={journal:150,ledger:50,trial_balance:40,correction:20,worksheet:20,financial_statement:10,comprehensive:10};
 for(const pair of Object.entries(expected)){
   const type=pair[0],count=pair[1],qs=values.filter(q=>q.type===type);
   assert.strictEqual(qs.length,count,type+': question count');
@@ -37,4 +37,14 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(e.transfer.map(x=>[x.to,x.value
 assert(e.checks.some(x=>x.label==='訂正する部分だけを直せているか確認する'),'E001 keep correct portion');
 assert(e.checks.some(x=>x.expected==='22,500 = 22,500'),'E001 debit credit check');
 assert(data.L001.explanationModel,'L001 structured explanation');
-console.log('Gate 5-A structured explanation tests: PASS');
+assert.strictEqual(values.filter(q=>q.explanationModel).length,300,'all 300 questions use structured explanation');
+const d=ExplanationModel.build(data.D001,{cells:{}},{correct:false});
+assert(d.summary.some(x=>x.text==='試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。'),'D001 summary');
+assert(d.transfer.length>0&&d.checks.length>0,'D001 structured flow');
+const f=ExplanationModel.build(data.F001,{cells:{}},{correct:false});
+assert(f.summary.some(x=>x.text==='決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。'),'F001 summary');
+assert(f.transfer.length>0&&f.checks.length>0,'F001 structured flow');
+const c=ExplanationModel.build(data.C001,{cells:{}},{correct:false});
+assert(c.summary.some(x=>x.text==='資料を処理する順番を整理し、仕訳・転記・決算整理をつないで最終金額を求めます。'),'C001 summary');
+assert(c.transfer.length>0&&c.checks.length>0,'C001 structured flow');
+console.log('Gate 5 structured explanation tests (A+B): PASS');

@@ -1,10 +1,10 @@
 {
-  "release": "20260924-120",
-  "previousRelease": "20260924-119",
+  "release": "20260924-121",
+  "previousRelease": "20260924-120",
   "assets": {
     "css/style.css": "9e7ba98ce700fb33b1919c913ea1bc98c25f0bd3ec495a5cee49c75ceaa651ee",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
-    "data/questions.js": "22227707865c06499dfe6bb049efa6fed81e0ed37ef6a8674aa429e85806f5a6",
+    "data/questions.js": "e85eceab884ddd350a84412936815081c1f84db4079eadbe2f1aeb5029c02bcc",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
     "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
     "js/model.js": "941ccd7ddfa7e9a91d95976568ba5171b983d69cfea36086783fca19f2609a67",

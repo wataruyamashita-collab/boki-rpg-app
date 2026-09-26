@@ -16023,10 +16023,13 @@ const gate5ExplanationSummary = item => {
   if (item.type === 'ledger') return chapter8ExplanationSummary(item);
   if (item.type === 'trial_balance') return '各勘定の残高を借方と貸方に分け、それぞれを縦に合計します。';
   if (item.type === 'correction') return '帳簿の記録と証ひょうを比べ、誤っている部分だけを訂正します。';
+  if (item.type === 'worksheet') return '試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。';
+  if (item.type === 'financial_statement') return '決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。';
+  if (item.type === 'comprehensive') return '資料を処理する順番を整理し、仕訳・転記・決算整理をつないで最終金額を求めます。';
   return '';
 };
 Object.values(QuestionData).forEach(item => {
-  if (item.explanationModel || !['journal','ledger','trial_balance','correction'].includes(item.type)) return;
+  if (item.explanationModel || !['journal','ledger','trial_balance','correction','worksheet','financial_statement','comprehensive'].includes(item.type)) return;
   item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};
 });
 
