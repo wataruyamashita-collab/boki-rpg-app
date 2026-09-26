@@ -20,7 +20,7 @@ const auditPath=path.join(
 );
 
 const authorityBytes=new Map(
-  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53]
+  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54]
     .filter(generation=>fs.existsSync(authorityPath(generation)))
     .map(
       generation=>[
@@ -65,10 +65,10 @@ try{
   const generations=authorities.map(
     item=>item.document.generation
   );
-  const generation53Committed=committed(53);
+  const generation54Committed=committed(54);
 
   test(
-    'authority sequence is [2..52] before Generation 53 or [2..53] after commit',
+    'authority sequence is [2..53] before Generation 54 or [2..54] after commit',
     ()=>assert.deepStrictEqual(
       generations,
       generation53Committed
@@ -146,7 +146,7 @@ try{
   const candidate=generation53Committed
     ? documents.at(-1)
     : (
-        fs.existsSync(authorityPath(53))
+        fs.existsSync(authorityPath(54))
           ? JSON.parse(fs.readFileSync(authorityPath(53),'utf8'))
           : lifecycle.createCandidate()
       );
@@ -169,16 +169,16 @@ try{
   }
 
   test(
-    'stale-predecessor Generation 54 successor is rejected',
+    'stale-predecessor Generation 55 successor is rejected',
     ()=>{
       const skipped=structuredClone(candidate);
-      skipped.generation=54;
+      skipped.generation=55;
       rejectCandidate(skipped,documents);
     }
   );
 
   test(
-    'competing Generation 53 is rejected',
+    'competing Generation 54 is rejected',
     ()=>{
       const fork=structuredClone(candidate);
       fork.auditHash='f'.repeat(64);
@@ -187,7 +187,7 @@ try{
         candidate,
         [
           ...documents.filter(
-            document=>document.generation<53
+            document=>document.generation<54
           ),
           fork
         ]
@@ -196,7 +196,7 @@ try{
   );
 
   test(
-    'broken Generation 53 predecessor is rejected',
+    'broken Generation 54 predecessor is rejected',
     ()=>{
       const broken=structuredClone(candidate);
       broken.predecessor.canonicalDocumentSha256='0'.repeat(64);
@@ -204,7 +204,7 @@ try{
       rejectCandidate(
         broken,
         documents.filter(
-          document=>document.generation<53
+          document=>document.generation<54
         )
       );
     }
@@ -250,7 +250,7 @@ try{
 
   if(generation53Committed){
     test(
-      'committed Generation 53 current integrity passes',
+      'committed Generation 54 current integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCurrent().ok,
         true
@@ -258,7 +258,7 @@ try{
     );
   }else{
     test(
-      'pending Generation 53 candidate integrity passes',
+      'pending Generation 54 candidate integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCandidate(candidate).ok,
         true
