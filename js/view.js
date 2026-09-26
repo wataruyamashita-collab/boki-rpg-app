@@ -156,13 +156,22 @@
       if (!container) { container = this.document.createElement('section'); container.id = 'question-materials'; container.className = 'question-materials'; this.byId('q-text').after(container); }
       container.replaceChildren(); container.hidden = !Array.isArray(question.materials) || question.materials.length === 0;
       if (container.hidden) return;
+      container.dataset.questionType = question.type;
       const heading = this.document.createElement('h3'); heading.textContent = question.materialTitle || '資料';
       const wrap = this.document.createElement('div'); wrap.className = 'materials-table-wrap';
       const table = this.document.createElement('table'); table.className = 'materials-table';
       const columns = [...new Set(question.materials.flatMap(row => Object.keys(row)))];
+      const compact = question.type === 'worksheet' && columns.length <= 3;
+      wrap.classList.toggle('materials-table-wrap-compact', compact); table.classList.toggle('materials-table-compact', compact);
       const head = table.createTHead().insertRow(); columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); head.append(th); });
       const body = table.createTBody(); question.materials.forEach(material => { const row = body.insertRow(); columns.forEach(column => { const cell = row.insertCell(); const value = material[column]; cell.textContent = value == null ? '—' : typeof value === 'number' ? yen(value) : value; }); });
       wrap.append(table); container.append(heading, wrap);
+      if (Array.isArray(question.adjustments) && question.adjustments.length) {
+        const section = this.document.createElement('section'); section.className = 'question-adjustments'; section.setAttribute('aria-label', '決算整理事項');
+        const title = this.document.createElement('h4'); title.textContent = '決算整理事項';
+        const list = this.document.createElement('ol'); question.adjustments.forEach(text => { const item = this.document.createElement('li'); item.textContent = text; list.append(item); });
+        section.append(title, list); container.append(section);
+      }
     }
     makeAmount(className, label, value = '') {
       const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', this.calculatorFirstInput ? 'none' : 'numeric');
@@ -346,14 +355,72 @@
       if (account) { const type = this.accountType(account); const badge = this.document.createElement('span'); badge.className = `account-badge account-badge-${type}`; badge.textContent = DOMAIN.typeLabels[type] || '科目'; wrap.append(badge); }
       return wrap;
     }
+    compactWorksheetViewport() {
+      return Boolean(root.matchMedia?.('(max-width: 900px)').matches);
+    }
+    renderWorksheetMobile(question, draft, wrap) {
+      const groups = [
+        { title:'試算表', instruction:'元の残高を確認します。', columns:[1,2] },
+        { title:'修正記入', instruction:'決算整理事項を借方・貸方へ反映します。', columns:[3,4] },
+        { title:'損益計算書', instruction:'収益・費用を損益計算書へ振り分けます。', columns:[5,6] },
+        { title:'貸借対照表', instruction:'資産・負債・純資産を貸借対照表へ振り分けます。', columns:[7,8] }
+      ];
+      const cellIds = new Map(); let inputIndex = 0;
+      (question.table.rows || []).forEach((rowData, rowIndex) => Object.values(rowData).forEach((value, columnIndex) => {
+        if (value === '入力') cellIds.set(rowIndex + ':' + columnIndex, question.table.inputCells[inputIndex++]);
+      }));
+      const flow = this.document.createElement('div'); flow.className = 'worksheet-mobile-flow'; flow.setAttribute('aria-label', '8欄精算表を4つの処理に分けて入力');
+      const appendValue = (cell, value, rowIndex, columnIndex) => {
+        if (value !== '入力') {
+          cell.textContent = value == null || value === '' ? '—' : typeof value === 'number' ? yen(value) : this.tableLabel(value);
+          if (typeof value === 'number') cell.classList.add('amount-cell');
+          return;
+        }
+        const id = cellIds.get(rowIndex + ':' + columnIndex);
+        const inputType = question.table.inputTypes?.[id] || 'amount';
+        const metadata = question.table.inputMetadata?.[id];
+        const label = metadata?.label || this.cellLabel(question, id);
+        const input = inputType === 'amount'
+          ? this.makeAmount('table-input worksheet-mobile-input', label + '（金額）', draft.cells?.[id] ?? '')
+          : this.makeText('table-input worksheet-mobile-input', label, draft.cells?.[id] ?? '');
+        input.dataset.cellId = id; input.dataset.inputType = inputType; cell.classList.add('worksheet-mobile-editable');
+        cell.append(input);
+      };
+      groups.forEach((group, groupIndex) => {
+        const section = this.document.createElement('section'); section.className = 'worksheet-mobile-section'; section.dataset.worksheetGroup = group.title;
+        const header = this.document.createElement('div'); header.className = 'worksheet-mobile-section-head';
+        const step = this.document.createElement('span'); step.className = 'worksheet-mobile-step'; step.textContent = (groupIndex + 1) + '/4';
+        const title = this.document.createElement('h3'); title.textContent = group.title;
+        const instruction = this.document.createElement('p'); instruction.textContent = group.instruction;
+        header.append(step, title); section.append(header, instruction);
+        const table = this.document.createElement('table'); table.className = 'worksheet-mobile-table';
+        const head = table.createTHead().insertRow(); ['勘定科目','借方','貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; head.append(th); });
+        const body = table.createTBody();
+        (question.table.rows || []).forEach((rowData, rowIndex) => {
+          const values = Object.values(rowData); const debit = values[group.columns[0]], credit = values[group.columns[1]];
+          const empty = [debit, credit].every(value => value == null || value === '' || value === '—');
+          if (empty) return;
+          const row = body.insertRow(); const account = row.insertCell(); account.className = 'worksheet-mobile-account'; account.textContent = values[0];
+          const debitCell = row.insertCell(); appendValue(debitCell, debit, rowIndex, group.columns[0]);
+          const creditCell = row.insertCell(); appendValue(creditCell, credit, rowIndex, group.columns[1]);
+        });
+        section.append(table); flow.append(section);
+      });
+      wrap.append(flow);
+    }
     renderTable(question, draft = {}) {
       const wrap = this.byId('table-container'); wrap.replaceChildren();
-      wrap.classList.toggle('worksheet-scroll', question.format === 'eight-column-worksheet');
+      const compactWorksheet = question.format === 'eight-column-worksheet' && this.compactWorksheetViewport();
+      wrap.classList.toggle('worksheet-scroll', question.format === 'eight-column-worksheet' && !compactWorksheet);
+      wrap.classList.toggle('worksheet-mobile-mode', compactWorksheet);
       if (question.format === 'eight-column-worksheet') {
         const guide = this.document.createElement('aside'); guide.className = 'worksheet-guide';
-        const title = this.document.createElement('strong'); title.textContent = '「8桁」は、金額の桁数ではなく8つの金額欄という意味です';
-        const detail = this.document.createElement('p'); detail.textContent = '試算表・修正記入・損益計算書・貸借対照表に、それぞれ借方と貸方があるため、2欄×4組＝8欄です。表は横にスクロールして入力してください。';
+        const title = this.document.createElement('strong'); title.textContent = '8欄精算表は、4組の借方・貸方を一つにつないだ表です';
+        const detail = this.document.createElement('p'); detail.textContent = compactWorksheet
+          ? 'スマートフォンでは、試算表 → 修正記入 → 損益計算書 → 貸借対照表の順に3列ずつ表示します。'
+          : '試算表・修正記入・損益計算書・貸借対照表に、それぞれ借方と貸方があります。';
         guide.append(title, detail); wrap.append(guide);
+        if (compactWorksheet) { this.renderWorksheetMobile(question, draft, wrap); return; }
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
       table.dataset.questionType = question.type;
