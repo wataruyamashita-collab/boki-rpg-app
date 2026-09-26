@@ -75,7 +75,8 @@ jobs:
           npm run verify
           npm run qa:integrity
           git diff --check
-          rm -rf artifacts
+          rm -rf artifacts node_modules
+          git status --short
           test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Publish verified harness fix
