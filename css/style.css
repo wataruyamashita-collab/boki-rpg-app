@@ -526,17 +526,48 @@ select, .amount-input {
   .filter-grid { grid-template-columns: 1fr; gap: 6px; }
 }
 
-/* Gate 5-A physical QA: align mobile trial-balance cells while preserving a 44px touch target. */
+/* Gate 5-A physical QA: keep the three-column trial balance inside the mobile viewport. */
 @media (max-width: 480px) {
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
   .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tbody tr {
     height: 44px;
   }
-  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tbody td {
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] th,
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td {
+    box-sizing: border-box;
     height: 44px;
-    padding-top: 0;
-    padding-bottom: 0;
+    padding: 0 4px;
     vertical-align: middle;
     line-height: 1.25;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] th {
+    font-size: .82rem;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td {
+    font-size: .85rem;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] th[data-column-key="account"],
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td[data-column-key="account"] {
+    width: 40%;
+    min-width: 0;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td[data-column-key="account"] {
+    text-align: left;
+    white-space: nowrap;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] th[data-column-type="numeric"],
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td[data-column-type="numeric"] {
+    width: 30%;
+    min-width: 0;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td.amount-cell {
+    min-width: 0;
   }
   .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tr.trial-balance-total-row td.amount-cell {
     padding: 0;
