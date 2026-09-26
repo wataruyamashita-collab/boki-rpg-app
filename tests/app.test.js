@@ -227,7 +227,7 @@ browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(worksh
 assert.strictEqual(worksheetCalculatorPanel.open,true,'D001モバイル金額欄を選ぶと計算機をその場で開く');
 assert.strictEqual(worksheetCalculatorPanel.classList.contains('calculator-mobile-dock'),true,'D001モバイルでは既存計算機を画面下ドックへ切り替える');
 assert.strictEqual(worksheetForm.classList.contains('calculator-dock-active'),true,'計算機ドック表示中は入力欄を隠さない下余白を確保する');
-assert.strictEqual(JSON.stringify(worksheetTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'smooth'}),'選択したD001金額欄を計算機ドックの上へ表示する');
+assert.strictEqual(JSON.stringify(worksheetTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'選択したD001金額欄を計算機ドックの上へ表示する');
 const formatDirectAmount = value => { const input={value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',validationMessage:'',setCustomValidity(message){this.validationMessage=message;},setSelectionRange(){}}; const valid=browserSandbox.window.AppController.prototype.formatAmount(input); return {input,valid}; };
 const validAmounts = new Map([['',''],['0','0'],['12','12'],['1234','1,234'],['1234567','1,234,567'],['1,234','1,234'],['12,345','12,345'],['123,456','123,456'],['1,234,567','1,234,567'],['１２３４','1,234'],['１，２３４','1,234'],['１２，３４５','12,345']]);
 for (const [raw,expected] of validAmounts) { const {input,valid}=formatDirectAmount(raw); assert.strictEqual(valid,true,`${raw||'空欄'}を有効な金額として受理する`); assert.strictEqual(input.value,expected,`${raw||'空欄'}を正規表示する`); assert.strictEqual(input.validationMessage,'',`${raw||'空欄'}のcustom validityを解除する`); }
