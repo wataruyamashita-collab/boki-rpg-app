@@ -96,6 +96,11 @@
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target, event); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
       this.document.addEventListener('pointerdown', event => { if (event.target.matches('.amount-input[readonly]:not(:disabled)')) this.selectCalculatorTarget(event.target); });
       this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
+      const calculatorPanel = this.document.querySelector?.('.calculator');
+      calculatorPanel?.addEventListener?.('toggle', () => {
+        const active = Boolean(calculatorPanel.open && calculatorPanel.classList?.contains?.('calculator-mobile-dock'));
+        this.document.getElementById('question-form')?.classList?.toggle?.('calculator-dock-active', active);
+      });
       this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select, .correction-row select, .journal-book-account')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
       this.document.getElementById('filter-query').addEventListener('input', event => { this.filters.query = event.target.value; this.renderModes(); });
       ['filter-account', 'filter-mistakes'].forEach(id => this.document.getElementById(id).addEventListener('change', event => { this.filters[id === 'filter-account' ? 'account' : 'mistakes'] = event.target.value; this.renderModes(); }));
@@ -588,7 +593,18 @@
       this.document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
       this.calculatorTarget = input;
       const calculatorPanel = this.document.querySelector('.calculator');
-      if (input.readOnly && calculatorPanel) calculatorPanel.open = true;
+      const worksheetMobileInput = Boolean(input.closest?.('.worksheet-mobile-section'));
+      if (input.readOnly && calculatorPanel) {
+        if (worksheetMobileInput) {
+          calculatorPanel.classList?.add?.('calculator-mobile-dock');
+          this.document.getElementById('question-form')?.classList?.add?.('calculator-dock-active');
+        }
+        calculatorPanel.open = true;
+        if (worksheetMobileInput) {
+          const revealTarget = () => input.scrollIntoView?.({ block:'center', inline:'nearest', behavior:'smooth' });
+          if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
+        }
+      }
       const currentAmount = normalizeNumber(input.value).replace(/,/g, '');
       this.clearCalculator();
       if (/^\d+(?:\.\d+)?$/.test(currentAmount)) this.expression = String(Number(currentAmount));
@@ -641,7 +657,9 @@
     resetCalculator() {
       this.clearCalculator(); this.calculatorTarget=null; this.updateCalculatorDisplay();
       const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選ぶと、現在の数字を計算機で修正できます';
-      const calculatorPanel=this.document.querySelector?.('.calculator'); if(calculatorPanel)calculatorPanel.open=false;
+      const calculatorPanel=this.document.querySelector?.('.calculator');
+      if(calculatorPanel){ calculatorPanel.open=false; calculatorPanel.classList?.remove?.('calculator-mobile-dock'); }
+      this.document.getElementById('question-form')?.classList?.remove?.('calculator-dock-active');
     }
     inputCalculatorDigit(key) {
       if (this.expression === 'エラー' || this.calculator.waitingForOperand) { this.expression = '0'; this.calculator.waitingForOperand = false; }
