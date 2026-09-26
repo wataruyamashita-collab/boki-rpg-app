@@ -192,6 +192,42 @@ assert.strictEqual(editableElements.calculator.scrollOptions, undefined, '金額
 editableTarget.readOnly = true;
 browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(editableCalculator, editableTarget);
 assert.strictEqual(editableElements.calculator.open, true, 'calculator-first金額欄のtapは既存のアプリ内計算機を開く');
+const classSet = () => {
+  const values = new Set();
+  return { add(value){values.add(value);}, remove(value){values.delete(value);}, contains(value){return values.has(value);}, toggle(value,force){if(force===undefined){if(values.has(value))values.delete(value);else values.add(value);}else if(force)values.add(value);else values.delete(value);} };
+};
+const worksheetTarget = {
+  value:'', readOnly:true,
+  getAttribute(){return '修正記入 前払保険料 借方（金額）';},
+  closest(selector){return selector === '.worksheet-mobile-section' ? {} : null;},
+  scrollIntoView(options){this.scrollOptions=options;},
+  classList:classSet()
+};
+const worksheetCalculatorPanel={open:false,classList:classSet()};
+const worksheetForm={classList:classSet()};
+const worksheetElements={
+  'calculator-target':{textContent:''},
+  'calculator-display':{value:''},
+  'calculator-operator':{textContent:''},
+  'question-form':worksheetForm
+};
+const worksheetCalculatorController={
+  expression:'0',calculatorTarget:null,
+  calculator:{accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null},
+  document:{
+    querySelector:selector=>selector==='.calculator'?worksheetCalculatorPanel:null,
+    querySelectorAll:selector=>selector==='.amount-input'?[worksheetTarget]:[],
+    getElementById:id=>worksheetElements[id]
+  },
+  clearCalculator:browserSandbox.window.AppController.prototype.clearCalculator,
+  updateCalculatorDisplay:browserSandbox.window.AppController.prototype.updateCalculatorDisplay,
+  formatCalculatorExpression:browserSandbox.window.AppController.prototype.formatCalculatorExpression
+};
+browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(worksheetCalculatorController,worksheetTarget);
+assert.strictEqual(worksheetCalculatorPanel.open,true,'D001モバイル金額欄を選ぶと計算機をその場で開く');
+assert.strictEqual(worksheetCalculatorPanel.classList.contains('calculator-mobile-dock'),true,'D001モバイルでは既存計算機を画面下ドックへ切り替える');
+assert.strictEqual(worksheetForm.classList.contains('calculator-dock-active'),true,'計算機ドック表示中は入力欄を隠さない下余白を確保する');
+assert.deepStrictEqual(worksheetTarget.scrollOptions,{block:'center',inline:'nearest',behavior:'smooth'},'選択したD001金額欄を計算機ドックの上へ表示する');
 const formatDirectAmount = value => { const input={value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',validationMessage:'',setCustomValidity(message){this.validationMessage=message;},setSelectionRange(){}}; const valid=browserSandbox.window.AppController.prototype.formatAmount(input); return {input,valid}; };
 const validAmounts = new Map([['',''],['0','0'],['12','12'],['1234','1,234'],['1234567','1,234,567'],['1,234','1,234'],['12,345','12,345'],['123,456','123,456'],['1,234,567','1,234,567'],['１２３４','1,234'],['１，２３４','1,234'],['１２，３４５','12,345']]);
 for (const [raw,expected] of validAmounts) { const {input,valid}=formatDirectAmount(raw); assert.strictEqual(valid,true,`${raw||'空欄'}を有効な金額として受理する`); assert.strictEqual(input.value,expected,`${raw||'空欄'}を正規表示する`); assert.strictEqual(input.validationMessage,'',`${raw||'空欄'}のcustom validityを解除する`); }
@@ -944,6 +980,9 @@ assert(/\.journal-header\s*\{[^}]*grid-template-columns:\s*200px\s+120px\s+200px
 assert(/\.journal-entry-area\s*\{[^}]*max-width:\s*100%[^}]*overflow:\s*visible/s.test(cssSource) && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(cssSource), 'iPhoneで説明を固定したまま仕訳グリッドだけを横スクロールできる');
 assert(/\.table-question-wrap\s*{[^}]*overflow-x:\s*auto/s.test(cssSource), '大きな表は小型画面で横スクロールできる');
 assert(viewSource.includes('試算表 → 修正記入 → 損益計算書 → 貸借対照表') && viewSource.includes("guide.className = 'worksheet-guide'") && !viewSource.includes('表は横にスクロールして入力してください。'), '8欄精算表はモバイルで4段階の処理順を示し、横スクロール前提にしない');
+assert(viewSource.includes("referenceLabel.textContent = 'ここを見る'") && viewSource.includes('元試算表の売上・仕入・保険料') && viewSource.includes('損益計算書の貸借差額'), 'D001モバイル各段階で参照する資料を入力欄の直前に示す');
+assert(controllerSource.includes("'calculator-mobile-dock'") && controllerSource.includes("scrollIntoView?.({ block:'center'"), 'D001モバイル金額欄は計算機を画面下ドック化し選択欄を見える位置へ移す');
+assert(/\.calculator\.calculator-mobile-dock\[open\]\s*\{[^}]*position:\s*fixed[^}]*bottom:/s.test(cssSource) && /#question-form\.calculator-dock-active\s*\{[^}]*padding-bottom:/s.test(cssSource), 'D001モバイル計算機ドックは固定表示と重なり防止余白を持つ');
 assert(viewSource.includes("th.scope = 'colgroup'") && viewSource.includes("accountHead.rowSpan = 2"), '8欄精算表のヘッダーを4組と借方・貸方の二段構成にする');
 assert(/\.eight-column-worksheet \.worksheet-value-cell, \.answer-table \.amount-cell\s*{[^}]*white-space:\s*nowrap/s.test(cssSource), '精算表を含む表の金額を途中で折り返さない');
 assert(/\.eight-column-worksheet th:not\(:first-child\), \.eight-column-worksheet td:not\(:first-child\)\s*{[^}]*min-width:\s*13ch/s.test(cssSource), '8桁精算表の金額列に多桁の数値を表示できる幅を確保する');
