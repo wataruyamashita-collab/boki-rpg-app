@@ -20362,7 +20362,7 @@
         "finding": "scene「決算・財務諸表へつなぐ」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f066fc8825e7fd666d57649b6f5298541def28cc703ec01e8241ce6c610f4a69",
+      "sourceHash": "sha256:e72a16d37681e406c5162674110a708273fbe6ead154c894d3a96af3c68b2136",
       "answerSchemaHash": "sha256:7e4a452c1b70f6372cac4888485232cdd51eccc92389ca6b37050907d543c68b"
     },
     {
