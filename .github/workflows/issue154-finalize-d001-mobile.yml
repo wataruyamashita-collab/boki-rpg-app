@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   finalize:
-    if: github.event.head_commit.message == 'Prepare Generation 53 D001 validation retry 3'
+    if: github.event.head_commit.message == 'Prepare Generation 53 D001 validation retry 4'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -59,6 +59,23 @@ jobs:
           fs.writeFileSync('pwa-release-manifest.json',JSON.stringify(manifest,null,2)+'\n');
           NODE
 
+      - name: Refresh D001 committed audit evidence
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const {evidenceStamp,loadQuestions}=require('./scripts/audit-matrix');
+          const file='reports/question-audit-matrix.json';
+          const matrix=JSON.parse(fs.readFileSync(file,'utf8'));
+          const questions=loadQuestions();
+          const row=matrix.rows.find(item=>item.id==='D001');
+          if(!row) throw new Error('D001 audit row missing');
+          const stamp=evidenceStamp(questions.D001);
+          row.sourceHash=stamp.sourceHash;
+          row.answerSchemaHash=stamp.answerSchemaHash;
+          fs.writeFileSync(file,JSON.stringify(matrix,null,2)+'\n');
+          console.log('D001_AUDIT_EVIDENCE_REFRESHED '+row.sourceHash);
+          NODE
+
       - name: Create Generation 53 candidate
         run: |
           node - <<'NODE'
@@ -102,7 +119,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html service-worker.js pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-53.json
+          git add index.html service-worker.js pwa-release-manifest.json reports/question-audit-matrix.json reports/auto-gate/audit-locks/phase-b-generation-53.json
           git diff --cached --check
           git commit -m "Finalize Generation 53 for D001 mobile UX"
 
