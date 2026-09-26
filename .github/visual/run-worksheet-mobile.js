@@ -79,7 +79,7 @@ async function run(){
           page.on('pageerror',e=>errors.push(String(e?.stack||e?.message||e)));
           try{
             await page.goto(base,{waitUntil:'load'});
-            await page.waitForTimeout(25);
+            await page.waitForTimeout(80);
             const m=await measure(page,width);
             m.pageErrors=errors;
             const expectedIds=await page.evaluate(()=>window.QuestionData.D001.table.inputCells);
