@@ -99,7 +99,15 @@ assert(t001Widths.size>0&&[...t001Widths.values()].every(width => width === 9), 
 assert(/min-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericCellRule), 'ordinary amount cells keep the nine-glyph semantic floor without double-counting input chrome');
 assert(/box-sizing:\s*content-box/.test(numericInputRule) && /width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule), 'ordinary amount controls reserve nine content glyphs with padding and borders outside that content box');
 assert(view.includes("cell.style.setProperty('--column-input-ch'") && view.includes("table.style.setProperty('--table-input-ch'"), 'renderer applies bounded per-column budgets and one shared compact numeric-input width per ordinary table');
-assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
+assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'desktop eight-column worksheets retain the canonical wide worksheet');
+assert(view.includes('compactWorksheetViewport()') && view.includes('renderWorksheetMobile(question, draft, wrap)') && view.includes("'(max-width: 900px)'"), 'mobile worksheet renderer switches to the four-block flow without duplicating inputs');
+assert(view.includes('試算表 → 修正記入 → 損益計算書 → 貸借対照表'), 'mobile worksheet guide teaches the accounting processing order');
+assert(!view.includes('表は横にスクロールして入力してください。'), 'worksheet guidance no longer instructs phone users to solve by horizontal scrolling');
+assert(/\.worksheet-mobile-mode\s*\{[^}]*overflow:\s*visible/.test(css), 'mobile worksheet removes the nested scroll container');
+assert(/\.worksheet-mobile-table\s*\{[^}]*width:\s*100%[^}]*table-layout:\s*fixed/.test(css), 'mobile worksheet uses a viewport-width three-column table');
+assert(/\.worksheet-mobile-table th:first-child,[\s\S]*\.worksheet-mobile-table td:first-child\s*\{[^}]*width:\s*44%/.test(css), 'mobile worksheet repeats the account context in a stable 44% first column');
+assert(/\.worksheet-mobile-input\s*\{[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*font-size:\s*16px/s.test(css), 'mobile worksheet inputs stay inside their cells and avoid iPhone zoom');
+assert(view.includes("question.type === 'worksheet' && columns.length <= 3") && /\.materials-table\.materials-table-compact\s*\{[^}]*min-width:\s*0[^}]*table-layout:\s*fixed/.test(css), 'worksheet source trial balance fits the mobile viewport instead of inheriting the generic 28rem floor');
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
 for (const viewport of [320, 375, 390, 430]) assert(fixedAssetMinimum > viewport && /overflow-x:\s*auto/.test(css), `${viewport}px: fixed-asset content remains wider than its viewport and horizontally scrollable`);
 const desktopJournalMatch = css.match(/\.journal-row\s*\{[^}]*grid-template-columns:\s*(\d+)px\s+(\d+)px\s+(\d+)px\s+(\d+)px/s);
