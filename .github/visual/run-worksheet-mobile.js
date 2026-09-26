@@ -26,6 +26,12 @@ async function measure(page,width){
     const sections=qs('.worksheet-mobile-section');
     const tables=qs('.worksheet-mobile-table');
     const inputs=qs('.worksheet-mobile-input');
+    const references=qs('.worksheet-mobile-reference');
+    const calculator=document.querySelector('.calculator');
+    const selected=document.querySelector('.worksheet-mobile-input.calculator-selected');
+    const form=document.getElementById('question-form');
+    const calculatorRect=calculator&&calculator.open?rect(calculator):null;
+    const selectedRect=selected?rect(selected):null;
     return {
       width,
       pageOverflow:document.documentElement.scrollWidth>window.innerWidth+1||document.body.scrollWidth>window.innerWidth+1,
@@ -44,7 +50,18 @@ async function measure(page,width){
       tableFit:tables.every(table=>{const section=table.closest('.worksheet-mobile-section');return rect(table).left>=rect(section).left-1&&rect(table).right<=rect(section).right+1;}),
       inputCount:inputs.length,
       inputFit:inputs.every(input=>{const cell=input.closest('td');return rect(input).left>=rect(cell).left-1&&rect(input).right<=rect(cell).right+1&&parseFloat(getComputedStyle(input).fontSize)>=16;}),
-      inputIds:inputs.map(e=>e.dataset.cellId)
+      inputIds:inputs.map(e=>e.dataset.cellId),
+      referenceCount:references.length,
+      referenceLabels:references.map(e=>e.querySelector('strong')?.textContent||''),
+      referenceTexts:references.map(e=>e.querySelector('p')?.textContent||''),
+      calculatorOpen:Boolean(calculator?.open),
+      calculatorDocked:Boolean(calculator?.classList.contains('calculator-mobile-dock')),
+      calculatorPosition:calculator?getComputedStyle(calculator).position:'',
+      calculatorBottom:calculator?getComputedStyle(calculator).bottom:'',
+      formDockActive:Boolean(form?.classList.contains('calculator-dock-active')),
+      formPaddingBottom:form?parseFloat(getComputedStyle(form).paddingBottom)||0:0,
+      selectedVisibleAboveDock:Boolean(selectedRect&&calculatorRect&&selectedRect.bottom<=calculatorRect.top+1),
+      selectedScrollY:selectedRect?.top||0
     };
   },width);
 }
@@ -78,6 +95,10 @@ async function run(){
             if(!m.tableFit)violations.push('WORKSHEET_TABLE_OVERFLOW');
             if(!m.inputFit)violations.push('WORKSHEET_INPUT_OVERFLOW');
             if(m.inputCount!==expectedIds.length||JSON.stringify([...m.inputIds].sort())!==JSON.stringify([...expectedIds].sort()))violations.push('WORKSHEET_INPUT_IDENTITY');
+            if(m.referenceCount!==4||m.referenceLabels.some(label=>label!=='ここを見る'))violations.push('WORKSHEET_REFERENCE_CUES');
+            if(!m.referenceTexts[0]?.includes('元試算表')||!m.referenceTexts[1]?.includes('決算整理事項')||!m.referenceTexts[2]?.includes('売上・仕入・保険料')||!m.referenceTexts[3]?.includes('損益計算書の貸借差額'))violations.push('WORKSHEET_REFERENCE_CONTENT');
+            if(!m.calculatorOpen||!m.calculatorDocked||m.calculatorPosition!=='fixed'||!m.formDockActive||m.formPaddingBottom<350)violations.push('WORKSHEET_CALCULATOR_DOCK');
+            if(!m.selectedVisibleAboveDock)violations.push('WORKSHEET_SELECTED_INPUT_COVERED');
             if(errors.length)violations.push('PAGE_SCRIPT_ERROR');
             fs.mkdirSync(path.join(OUTPUT,name),{recursive:true});
             await page.screenshot({path:path.join(OUTPUT,name,'D001-'+width+'.png'),fullPage:true});
