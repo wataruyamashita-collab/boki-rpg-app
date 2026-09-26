@@ -359,11 +359,34 @@
       return Boolean(root.matchMedia?.('(max-width: 900px)').matches);
     }
     renderWorksheetMobile(question, draft, wrap) {
+      const adjustmentGuide = Array.isArray(question.adjustments) && question.adjustments.length
+        ? question.adjustments.join('／')
+        : '決算整理事項を確認します。';
       const groups = [
-        { title:'試算表', instruction:'元の残高を確認します。', columns:[1,2] },
-        { title:'修正記入', instruction:'決算整理事項を借方・貸方へ反映します。', columns:[3,4] },
-        { title:'損益計算書', instruction:'収益・費用を損益計算書へ振り分けます。', columns:[5,6] },
-        { title:'貸借対照表', instruction:'資産・負債・純資産を貸借対照表へ振り分けます。', columns:[7,8] }
+        {
+          title:'試算表',
+          instruction:'元の残高を確認します。',
+          reference:'元試算表：勘定科目ごとの借方・貸方残高を確認します。',
+          columns:[1,2]
+        },
+        {
+          title:'修正記入',
+          instruction:'決算整理事項を借方・貸方へ反映します。',
+          reference:`決算整理事項：${adjustmentGuide}`,
+          columns:[3,4]
+        },
+        {
+          title:'損益計算書',
+          instruction:'収益・費用を損益計算書へ振り分けます。',
+          reference:'元試算表の売上・仕入・保険料と、修正記入で反映した決算整理事項を確認します。',
+          columns:[5,6]
+        },
+        {
+          title:'貸借対照表',
+          instruction:'資産・負債・純資産を貸借対照表へ振り分けます。',
+          reference:'元試算表の資産・負債・純資産と、修正記入で反映した決算整理事項、損益計算書の貸借差額を確認します。',
+          columns:[7,8]
+        }
       ];
       const cellIds = new Map(); let inputIndex = 0;
       (question.table.rows || []).forEach((rowData, rowIndex) => Object.values(rowData).forEach((value, columnIndex) => {
@@ -392,7 +415,11 @@
         const step = this.document.createElement('span'); step.className = 'worksheet-mobile-step'; step.textContent = (groupIndex + 1) + '/4';
         const title = this.document.createElement('h3'); title.textContent = group.title;
         const instruction = this.document.createElement('p'); instruction.textContent = group.instruction;
-        header.append(step, title); section.append(header, instruction);
+        const reference = this.document.createElement('aside'); reference.className = 'worksheet-mobile-reference';
+        const referenceLabel = this.document.createElement('strong'); referenceLabel.textContent = 'ここを見る';
+        const referenceText = this.document.createElement('p'); referenceText.textContent = group.reference;
+        reference.append(referenceLabel, referenceText);
+        header.append(step, title); section.append(header, instruction, reference);
         const table = this.document.createElement('table'); table.className = 'worksheet-mobile-table';
         const head = table.createTHead().insertRow(); ['勘定科目','借方','貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; head.append(th); });
         const body = table.createTBody();
