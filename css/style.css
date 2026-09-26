@@ -280,6 +280,9 @@ button.secondary-button:hover { color: #fff; }
 .worksheet-mobile-section-head h3 { margin: 0; font-size: 1rem; }
 .worksheet-mobile-step { flex: 0 0 auto; padding: 2px 7px; border: 1px solid #7f8c8d; border-radius: 999px; font-size: .78rem; font-weight: 700; }
 .worksheet-mobile-section > p { margin: 0; padding: 0 10px 8px; background: #f8fafb; color: #44515c; font-size: .86rem; }
+.worksheet-mobile-reference { margin: 0 10px 9px; padding: 8px 10px; border-left: 4px solid #3498db; border-radius: 6px; background: #eef8ff; color: #234; }
+.worksheet-mobile-reference strong { display: block; margin-bottom: 3px; color: #1b4f72; font-size: .78rem; }
+.worksheet-mobile-reference p { margin: 0; font-size: .82rem; line-height: 1.45; }
 .worksheet-mobile-table { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .86rem; }
 .worksheet-mobile-table th, .worksheet-mobile-table td { height: 44px; padding: 3px 4px; border-top: 1px solid #d5dce0; border-right: 1px solid #d5dce0; vertical-align: middle; }
 .worksheet-mobile-table th:last-child, .worksheet-mobile-table td:last-child { border-right: 0; }
@@ -807,12 +810,33 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .diagnostic-card h4, .diagnostic-card p { margin: .35rem 0; }
 .diagnostic-card strong { display: block; margin-top: .7rem; color: #713f12; }
 
-/* The calculator remains in normal document flow so it never covers an active input. */
+/* The calculator stays in normal flow except for the scoped D001 mobile worksheet dock. */
 .calculator-readout { position: relative; }
 .calculator-operator-indicator { position: absolute; left: 10px; top: 50%; min-width: 1.5em; color: #17202a; font-size: 1.25rem; font-weight: bold; transform: translateY(-50%); }
 .calculator-keys .calculator-operator-active { outline: 3px solid #f1c40f; outline-offset: 1px; font-weight: bold; }
 @media (max-width: 768px) {
   #question-form { padding-bottom: env(safe-area-inset-bottom); }
+  #question-form.calculator-dock-active { padding-bottom: calc(390px + env(safe-area-inset-bottom)); }
+  .calculator.calculator-mobile-dock[open] {
+    position: fixed;
+    z-index: 90;
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: auto;
+    max-width: 420px;
+    max-height: min(56vh, 380px);
+    margin: 0 auto;
+    overflow: auto;
+    box-shadow: 0 12px 34px rgba(0,0,0,.35);
+  }
+  .calculator.calculator-mobile-dock[open] summary { min-height: 40px; padding: 7px 10px; }
+  .calculator.calculator-mobile-dock[open] .calculator-body { padding: 2px 8px 8px; }
+  .calculator.calculator-mobile-dock[open] .calculator-display { padding: 7px; font-size: 1.1rem; }
+  .calculator.calculator-mobile-dock[open] .calculator-transfer { margin-top: 5px; gap: 5px; }
+  .calculator.calculator-mobile-dock[open] .calculator-transfer button { padding: 7px 8px; }
+  .calculator.calculator-mobile-dock[open] .calculator-keys { grid-template-rows: repeat(5, 40px); gap: 4px; margin-top: 6px; }
+  .calculator.calculator-mobile-dock[open] .calculator-keys button { min-height: 40px; }
   .materials-table.materials-table-compact th, .materials-table.materials-table-compact td { padding: .4rem .3rem; font-size: .82rem; }
   .calculator { max-width: 100%; }
   .table-question-wrap.worksheet-scroll { max-height: 62vh; }
