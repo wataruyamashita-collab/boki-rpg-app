@@ -601,7 +601,7 @@
         }
         calculatorPanel.open = true;
         if (worksheetMobileInput) {
-          const revealTarget = () => input.scrollIntoView?.({ block:'center', inline:'nearest', behavior:'smooth' });
+          const revealTarget = () => input.scrollIntoView?.({ block:'center', inline:'nearest', behavior:'auto' });
           if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
         }
       }
