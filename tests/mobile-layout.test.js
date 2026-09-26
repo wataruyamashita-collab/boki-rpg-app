@@ -151,3 +151,22 @@ assert(
   'coaching retry explicitly hides confidence, save button, and save status in WebKit'
 );
 console.log(`mobile layout semantic audit: ${questions.length} questions, ${ordinary.length} ordinary tables, ${columns.length} unique columns (320/375/390/430): ok`);
+// Gate 5-A T001 physical density regression.
+assert(view.includes("table.dataset.questionType = question.type"), "ordinary table renderer exposes the canonical question type for scoped responsive rules");
+assert(view.includes("row.classList.add('trial-balance-total-row')"), "trial-balance input row receives a stable semantic class without inspecting answer values");
+const trialBalanceDensityTokens = [
+  '[data-question-type="trial_balance"] tbody tr',
+  'height: 44px;',
+  'tr.trial-balance-total-row td.amount-cell',
+  'background: #fffdf3;',
+  'tr.trial-balance-total-row .table-input[data-input-type="amount"]',
+  'box-sizing: border-box;',
+  'width: 100%;',
+  'min-width: 0;',
+  'max-width: 100%;',
+  'height: 44px;',
+  'min-height: 44px;',
+  'border: 0;',
+  'font-size: 16px;'
+];
+for (const token of trialBalanceDensityTokens) assert(css.includes(token), "trial-balance physical-density CSS keeps required token: "+token);

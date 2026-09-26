@@ -8,7 +8,7 @@
 <style>body{background:#fff}.visual-shell{max-width:760px;margin:0 auto;padding:12px}</style>
 </head>
 <body>
-<main class="visual-shell"><section id="explanation"></section></main>
+<main class="visual-shell"><section id="table-container" class="table-question-wrap" hidden></section><section id="explanation"></section></main>
 <script src="../../data/questions.js"></script>
 <script src="../../js/feedback.js"></script>
 <script src="../../js/explanation-model.js"></script>
@@ -18,7 +18,9 @@ const params=new URLSearchParams(location.search),requested=params.get('case'),c
 document.body.dataset.caseId=caseId;
 const question=window.QuestionData[caseId];
 const wrong=question.type==='journal'?{debit:[],credit:[]}:{cells:Object.fromEntries((question.table?.inputCells||[]).map(id=>[id,'']))};
-new window.AppView(document).renderExplanation(question,{correct:false},wrong);
+const view=new window.AppView(document),tableContainer=document.getElementById('table-container');
+if(caseId==='T001'){tableContainer.hidden=false;view.renderTable(question,{cells:{}});}
+view.renderExplanation(question,{correct:false},wrong);
 </script>
 </body>
 </html>

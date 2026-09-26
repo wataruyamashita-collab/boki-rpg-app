@@ -356,6 +356,7 @@
         guide.append(title, detail); wrap.append(guide);
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
+      table.dataset.questionType = question.type;
       const columnTypes = new Map((question.table.columns || []).map(column => [column, 'text']));
       const inputCharacters = genericTableInputCharacters(question);
       if (question.format !== 'eight-column-worksheet') {
@@ -391,7 +392,7 @@
       }
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
-        const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
+        const row = body.insertRow(); if (question.type === 'trial_balance' && Object.values(rowData).includes('入力')) row.classList.add('trial-balance-total-row'); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
           const cell = row.insertCell();
           if (question.format !== 'eight-column-worksheet') { cell.dataset.columnKey = question.table.columns[columnIndex]; cell.dataset.columnType = columnTypes.get(question.table.columns[columnIndex]); }
           if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');

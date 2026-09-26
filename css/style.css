@@ -526,6 +526,39 @@ select, .amount-input {
   .filter-grid { grid-template-columns: 1fr; gap: 6px; }
 }
 
+/* Gate 5-A physical QA: align mobile trial-balance cells while preserving a 44px touch target. */
+@media (max-width: 480px) {
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tbody tr {
+    height: 44px;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tbody td {
+    height: 44px;
+    padding-top: 0;
+    padding-bottom: 0;
+    vertical-align: middle;
+    line-height: 1.25;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tr.trial-balance-total-row td.amount-cell {
+    padding: 0;
+    background: #fffdf3;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tr.trial-balance-total-row .table-input[data-input-type="amount"] {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 4px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: 16px;
+    line-height: 1.25;
+  }
+}
+
 @media (max-width: 680px) {
   .app-header { align-items: stretch; flex-direction: column; gap: 9px; }
   .player-status { grid-template-columns: repeat(3, minmax(0, 1fr)); }
