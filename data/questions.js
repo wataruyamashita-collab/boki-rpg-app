@@ -14671,7 +14671,7 @@ const worksheetTableRows = worksheetRows.map(([account, values], rowIndex) => {
 QuestionData.D001 = {
   id: 'D001', type: 'worksheet', format: 'eight-column-worksheet', category: '8欄精算表（8桁精算表）', difficulty: 3, chapter: 10,
   scene: '決算・財務諸表へつなぐ', story: '同じ会社の決算整理から損益計算書と貸借対照表までを一枚で完成させる。',
-  question: '下記の元試算表と決算整理事項をもとに、8欄精算表の入力欄を完成しなさい。「—」は記入不要です。',
+  question: '「8桁」は金額の桁数ではなく、4組の借方・貸方を合わせた8つの金額欄を指します。下記の元試算表と決算整理事項をもとに、入力欄のみを完成しなさい。「—」は記入不要です。',
   materialTitle: '元試算表',
   adjustments: ['保険料のうち40,000円を前払保険料へ振り替える。','備品を間接法で60,000円減価償却する。'],
   materials: worksheetRows.filter(([, values]) => values[0] || values[1]).map(([account, values]) => ({ '勘定科目': account, '借方': values[0] || '—', '貸方': values[1] || '—' })),
