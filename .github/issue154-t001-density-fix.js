@@ -151,6 +151,18 @@ function updateGenerationImmutability(){
   write(file,s);
 }
 
+function updateIntegrationReleaseRegression(){
+  const file='tests/explanation-integration.test.js';
+  let s=read(file);
+  s=replaceOnce(
+    s,
+    "const feedbackIndex=html.indexOf('js/feedback.js?v=20260924-117'),modelIndex=html.indexOf('js/explanation-model.js?v=20260924-117'),viewIndex=html.indexOf('js/view.js?v=20260924-117');",
+    "const release=JSON.parse(fs.readFileSync('pwa-release-manifest.json','utf8')).release;\nconst feedbackIndex=html.indexOf(\`js/feedback.js?v=\${release}\`),modelIndex=html.indexOf(\`js/explanation-model.js?v=\${release}\`),viewIndex=html.indexOf(\`js/view.js?v=\${release}\`);",
+    'integration release regression'
+  );
+  write(file,s);
+}
+
 function updateRelease(){
   const release='20260924-118',previous='20260924-117';
   let index=read('index.html');
@@ -178,5 +190,6 @@ updateMobileRegression();
 updateVisualFixture();
 updateVisualGate();
 updateGenerationImmutability();
+updateIntegrationReleaseRegression();
 updateRelease();
 console.log('T001_DENSITY_FIX_APPLIED');
