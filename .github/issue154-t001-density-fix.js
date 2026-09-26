@@ -32,13 +32,13 @@ function updateCss(){
   if(s.includes('Gate 5-A physical QA: keep mobile trial-balance'))throw new Error('trial-balance CSS already present');
   const anchor="@media (max-width: 680px) {\n  .app-header {";
   const block=[
-    '/* Gate 5-A physical QA: keep mobile trial-balance cells and total inputs on one compact row rhythm. */',
+    '/* Gate 5-A physical QA: align mobile trial-balance cells while preserving a 44px touch target. */',
     '@media (max-width: 480px) {',
     '  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tbody tr {',
-    '    height: 34px;',
+    '    height: 44px;',
     '  }',
     '  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tbody td {',
-    '    height: 34px;',
+    '    height: 44px;',
     '    padding-top: 0;',
     '    padding-bottom: 0;',
     '    vertical-align: middle;',
@@ -54,8 +54,8 @@ function updateCss(){
     '    width: 100%;',
     '    min-width: 0;',
     '    max-width: 100%;',
-    '    height: 32px;',
-    '    min-height: 32px;',
+    '    height: 44px;',
+    '    min-height: 44px;',
     '    padding: 0 4px;',
     '    border: 0;',
     '    border-radius: 0;',
@@ -82,7 +82,7 @@ function updateMobileRegression(){
     'assert(view.includes("row.classList.add(\'trial-balance-total-row\')"), "trial-balance input row receives a stable semantic class without inspecting answer values");',
     'const trialBalanceDensityTokens = [',
     '  \'[data-question-type="trial_balance"] tbody tr\',',
-    '  \'height: 34px;\',',
+    '  \'height: 44px;\',',
     '  \'tr.trial-balance-total-row td.amount-cell\',',
     '  \'background: #fffdf3;\',',
     '  \'tr.trial-balance-total-row .table-input[data-input-type="amount"]\',',
@@ -90,8 +90,8 @@ function updateMobileRegression(){
     '  \'width: 100%;\',',
     '  \'min-width: 0;\',',
     '  \'max-width: 100%;\',',
-    '  \'height: 32px;\',',
-    '  \'min-height: 32px;\',',
+    '  \'height: 44px;\',',
+    '  \'min-height: 44px;\',',
     '  \'border: 0;\',',
     '  \'font-size: 16px;\'',
     '];',
@@ -126,7 +126,7 @@ function updateVisualGate(){
   const measureNew="const qs=s=>[...document.querySelectorAll(s)],rect=e=>e.getBoundingClientRect(),sections=qs('.explanation-flow-section'),formulas=qs('.explanation-formula strong'),trialTable=document.querySelector('.answer-table[data-question-type=\\"trial_balance\\"]'),trialRows=trialTable?[...trialTable.querySelectorAll('tbody tr')]:[],trialTotalRow=trialTable?.querySelector('tr.trial-balance-total-row')||null,trialInputs=trialTotalRow?[...trialTotalRow.querySelectorAll('.table-input[data-input-type=\\"amount\\"]')]:[],trialMetrics={tableCount:trialTable?1:0,normalRowHeight:trialRows[0]?rect(trialRows[0]).height:0,totalRowHeight:trialTotalRow?rect(trialTotalRow).height:0,inputs:trialInputs.map(input=>{const cell=input.closest('td'),ir=rect(input),cr=rect(cell);return{inputWidth:ir.width,cellWidth:cr.width,inputHeight:ir.height,fontSize:parseFloat(getComputedStyle(input).fontSize)};})};return{caseId,width,trialMetrics,headings:";
   s=replaceOnce(s,measureAnchor,measureNew,'visual metrics');
   const violationAnchor="if(caseId==='T001'&&(!m.formulaTexts.join(' ').includes('410,000 + 175,000 + 60,000 + 289,000 + 90,000 = 1,024,000')||!m.checkText.includes('借方合計と貸方合計が一致しているか確認する')))violations.push('TRIAL_BALANCE_GUIDANCE');";
-  const violationNew=violationAnchor+"if(caseId==='T001'&&(m.trialMetrics.tableCount!==1||m.trialMetrics.normalRowHeight<=0||m.trialMetrics.totalRowHeight<=0||Math.abs(m.trialMetrics.totalRowHeight-m.trialMetrics.normalRowHeight)>1.5||m.trialMetrics.totalRowHeight>36||m.trialMetrics.inputs.length!==2||m.trialMetrics.inputs.some(item=>Math.abs(item.inputWidth-item.cellWidth)>2.5||item.inputHeight>34||item.fontSize<16)))violations.push('TRIAL_BALANCE_INPUT_DENSITY');";
+  const violationNew=violationAnchor+"if(caseId==='T001'&&(m.trialMetrics.tableCount!==1||m.trialMetrics.normalRowHeight<=0||m.trialMetrics.totalRowHeight<=0||Math.abs(m.trialMetrics.totalRowHeight-m.trialMetrics.normalRowHeight)>1.5||m.trialMetrics.totalRowHeight<43||m.trialMetrics.totalRowHeight>45||m.trialMetrics.inputs.length!==2||m.trialMetrics.inputs.some(item=>Math.abs(item.inputWidth-item.cellWidth)>2.5||item.inputHeight<43||item.inputHeight>45||item.fontSize<16)))violations.push('TRIAL_BALANCE_INPUT_DENSITY');";
   s=replaceOnce(s,violationAnchor,violationNew,'visual density violation');
   write(file,s);
 }
