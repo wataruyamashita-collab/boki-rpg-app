@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>D001 mobile worksheet gate</title>
+<link rel="stylesheet" href="../../css/style.css">
+<style>body{background:#fff}.visual-shell{max-width:760px;margin:0 auto;padding:12px}</style>
+</head>
+<body>
+<main class="visual-shell">
+<p id="q-text"></p>
+<section id="question-materials" class="question-materials"></section>
+<section id="table-container" class="table-question-wrap"></section>
+</main>
+<script src="../../data/questions.js"></script>
+<script src="../../js/view.js"></script>
+<script>
+const question=window.QuestionData.D001;
+document.getElementById('q-text').textContent=question.question;
+const view=new window.AppView(document);
+view.renderMaterials(question);
+view.renderTable(question,{cells:{}});
+</script>
+</body>
+</html>
