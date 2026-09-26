@@ -24,6 +24,7 @@ const evidenceStamp = question => ({
     story: question.story,
     question: question.question,
     materials: question.materials,
+    adjustments: question.adjustments,
     table: question.table
   }),
   answerSchemaHash: hash({
