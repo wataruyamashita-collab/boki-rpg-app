@@ -75,7 +75,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add css/style.css js/view.js tests/mobile-layout.test.js independent-audit/tests/generation-immutability.test.js .github/visual/explanation-integration.html .github/visual/run-explanation-integration.js index.html service-worker.js pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-49.json
+          git add css/style.css js/view.js tests/mobile-layout.test.js tests/explanation-integration.test.js independent-audit/tests/generation-immutability.test.js .github/visual/explanation-integration.html .github/visual/run-explanation-integration.js index.html service-worker.js pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-49.json
           git diff --cached --check
           git commit -m "Finalize Generation 49 for trial balance density"
 
