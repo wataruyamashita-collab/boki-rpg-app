@@ -943,7 +943,7 @@ assert(viewSource.includes("this.byId('explanation').before(container)"), '古�
 assert(/\.journal-header\s*\{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+120px[^}]*width:\s*max-content[^}]*min-width:\s*0/s.test(cssSource), '仕訳は過剰な620px固定床を使わずコンパクトな4列幅を保つ');
 assert(/\.journal-entry-area\s*\{[^}]*max-width:\s*100%[^}]*overflow:\s*visible/s.test(cssSource) && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(cssSource), 'iPhoneで説明を固定したまま仕訳グリッドだけを横スクロールできる');
 assert(/\.table-question-wrap\s*{[^}]*overflow-x:\s*auto/s.test(cssSource), '大きな表は小型画面で横スクロールできる');
-assert(viewSource.includes('2欄×4組＝8欄') && viewSource.includes("guide.className = 'worksheet-guide'"), '8桁精算表の構成と横スクロール操作を表の直前で説明する');
+assert(viewSource.includes('試算表 → 修正記入 → 損益計算書 → 貸借対照表') && viewSource.includes("guide.className = 'worksheet-guide'") && !viewSource.includes('表は横にスクロールして入力してください。'), '8欄精算表はモバイルで4段階の処理順を示し、横スクロール前提にしない');
 assert(viewSource.includes("th.scope = 'colgroup'") && viewSource.includes("accountHead.rowSpan = 2"), '8欄精算表のヘッダーを4組と借方・貸方の二段構成にする');
 assert(/\.eight-column-worksheet \.worksheet-value-cell, \.answer-table \.amount-cell\s*{[^}]*white-space:\s*nowrap/s.test(cssSource), '精算表を含む表の金額を途中で折り返さない');
 assert(/\.eight-column-worksheet th:not\(:first-child\), \.eight-column-worksheet td:not\(:first-child\)\s*{[^}]*min-width:\s*13ch/s.test(cssSource), '8桁精算表の金額列に多桁の数値を表示できる幅を確保する');
