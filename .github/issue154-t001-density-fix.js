@@ -13,7 +13,7 @@ function updateView(){
   const file='js/view.js';
   let s=read(file);
   const tick=String.fromCharCode(96);
-  const templateText='answer-table$'+'{question.format === \\'eight-column-worksheet\\' ? \\' eight-column-worksheet\\' : \\'\\'}';
+  const templateText='answer-table$'+'{question.format === \'eight-column-worksheet\' ? \' eight-column-worksheet\' : \'\'}';
   const oldTable="const table = this.document.createElement('table'); table.className = "+tick+templateText+tick+";\n      const columnTypes";
   const newTable="const table = this.document.createElement('table'); table.className = "+tick+templateText+tick+";\n      table.dataset.questionType = question.type;\n      const columnTypes";
   s=replaceOnce(s,oldTable,newTable,'view question-type');
@@ -79,21 +79,21 @@ function updateMobileRegression(){
     '',
     '// Gate 5-A T001 physical density regression.',
     'assert(view.includes("table.dataset.questionType = question.type"), "ordinary table renderer exposes the canonical question type for scoped responsive rules");',
-    'assert(view.includes("row.classList.add(\\'trial-balance-total-row\\')"), "trial-balance input row receives a stable semantic class without inspecting answer values");',
+    'assert(view.includes("row.classList.add(\'trial-balance-total-row\')"), "trial-balance input row receives a stable semantic class without inspecting answer values");',
     'const trialBalanceDensityTokens = [',
-    '  \\'[data-question-type="trial_balance"] tbody tr\\',',
-    '  \\'height: 34px;\\',',
-    '  \\'tr.trial-balance-total-row td.amount-cell\\',',
-    '  \\'background: #fffdf3;\\',',
-    '  \\'tr.trial-balance-total-row .table-input[data-input-type="amount"]\\',',
-    '  \\'box-sizing: border-box;\\',',
-    '  \\'width: 100%;\\',',
-    '  \\'min-width: 0;\\',',
-    '  \\'max-width: 100%;\\',',
-    '  \\'height: 32px;\\',',
-    '  \\'min-height: 32px;\\',',
-    '  \\'border: 0;\\',',
-    '  \\'font-size: 16px;\\'',
+    '  \'[data-question-type="trial_balance"] tbody tr\',',
+    '  \'height: 34px;\',',
+    '  \'tr.trial-balance-total-row td.amount-cell\',',
+    '  \'background: #fffdf3;\',',
+    '  \'tr.trial-balance-total-row .table-input[data-input-type="amount"]\',',
+    '  \'box-sizing: border-box;\',',
+    '  \'width: 100%;\',',
+    '  \'min-width: 0;\',',
+    '  \'max-width: 100%;\',',
+    '  \'height: 32px;\',',
+    '  \'min-height: 32px;\',',
+    '  \'border: 0;\',',
+    '  \'font-size: 16px;\'',
     '];',
     'for (const token of trialBalanceDensityTokens) assert(css.includes(token), "trial-balance physical-density CSS keeps required token: "+token);'
   ].join('\n');
@@ -123,7 +123,7 @@ function updateVisualGate(){
   const file='.github/visual/run-explanation-integration.js';
   let s=read(file);
   const measureAnchor="const qs=s=>[...document.querySelectorAll(s)],rect=e=>e.getBoundingClientRect(),sections=qs('.explanation-flow-section'),formulas=qs('.explanation-formula strong');return{caseId,width,headings:";
-  const measureNew="const qs=s=>[...document.querySelectorAll(s)],rect=e=>e.getBoundingClientRect(),sections=qs('.explanation-flow-section'),formulas=qs('.explanation-formula strong'),trialTable=document.querySelector('.answer-table[data-question-type=\\\"trial_balance\\\"]'),trialRows=trialTable?[...trialTable.querySelectorAll('tbody tr')]:[],trialTotalRow=trialTable?.querySelector('tr.trial-balance-total-row')||null,trialInputs=trialTotalRow?[...trialTotalRow.querySelectorAll('.table-input[data-input-type=\\\"amount\\\"]')]:[],trialMetrics={tableCount:trialTable?1:0,normalRowHeight:trialRows[0]?rect(trialRows[0]).height:0,totalRowHeight:trialTotalRow?rect(trialTotalRow).height:0,inputs:trialInputs.map(input=>{const cell=input.closest('td'),ir=rect(input),cr=rect(cell);return{inputWidth:ir.width,cellWidth:cr.width,inputHeight:ir.height,fontSize:parseFloat(getComputedStyle(input).fontSize)};})};return{caseId,width,trialMetrics,headings:";
+  const measureNew="const qs=s=>[...document.querySelectorAll(s)],rect=e=>e.getBoundingClientRect(),sections=qs('.explanation-flow-section'),formulas=qs('.explanation-formula strong'),trialTable=document.querySelector('.answer-table[data-question-type=\\"trial_balance\\"]'),trialRows=trialTable?[...trialTable.querySelectorAll('tbody tr')]:[],trialTotalRow=trialTable?.querySelector('tr.trial-balance-total-row')||null,trialInputs=trialTotalRow?[...trialTotalRow.querySelectorAll('.table-input[data-input-type=\\"amount\\"]')]:[],trialMetrics={tableCount:trialTable?1:0,normalRowHeight:trialRows[0]?rect(trialRows[0]).height:0,totalRowHeight:trialTotalRow?rect(trialTotalRow).height:0,inputs:trialInputs.map(input=>{const cell=input.closest('td'),ir=rect(input),cr=rect(cell);return{inputWidth:ir.width,cellWidth:cr.width,inputHeight:ir.height,fontSize:parseFloat(getComputedStyle(input).fontSize)};})};return{caseId,width,trialMetrics,headings:";
   s=replaceOnce(s,measureAnchor,measureNew,'visual metrics');
   const violationAnchor="if(caseId==='T001'&&(!m.formulaTexts.join(' ').includes('410,000 + 175,000 + 60,000 + 289,000 + 90,000 = 1,024,000')||!m.checkText.includes('借方合計と貸方合計が一致しているか確認する')))violations.push('TRIAL_BALANCE_GUIDANCE');";
   const violationNew=violationAnchor+"if(caseId==='T001'&&(m.trialMetrics.tableCount!==1||m.trialMetrics.normalRowHeight<=0||m.trialMetrics.totalRowHeight<=0||Math.abs(m.trialMetrics.totalRowHeight-m.trialMetrics.normalRowHeight)>1.5||m.trialMetrics.totalRowHeight>36||m.trialMetrics.inputs.length!==2||m.trialMetrics.inputs.some(item=>Math.abs(item.inputWidth-item.cellWidth)>2.5||item.inputHeight>34||item.fontSize<16)))violations.push('TRIAL_BALANCE_INPUT_DENSITY');";
