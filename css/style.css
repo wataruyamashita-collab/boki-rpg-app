@@ -273,6 +273,22 @@ button.secondary-button:hover { color: #fff; }
 .eight-column-worksheet th:not(:first-child), .eight-column-worksheet td:not(:first-child) { min-width: 13ch; }
 .eight-column-worksheet .worksheet-value-cell, .answer-table .amount-cell { overflow-wrap: normal; word-break: keep-all; white-space: nowrap; }
 .eight-column-worksheet .table-input { width: 100%; min-width: 11ch; font-size: 16px; }
+.worksheet-mobile-mode { max-height: none; overflow: visible; border: 0; }
+.worksheet-mobile-flow { display: grid; gap: 14px; width: 100%; max-width: 100%; }
+.worksheet-mobile-section { min-width: 0; overflow: hidden; border: 1px solid #d5dce0; border-radius: 10px; background: #fff; }
+.worksheet-mobile-section-head { display: flex; align-items: center; gap: 8px; padding: 9px 10px 4px; background: #f8fafb; }
+.worksheet-mobile-section-head h3 { margin: 0; font-size: 1rem; }
+.worksheet-mobile-step { flex: 0 0 auto; padding: 2px 7px; border: 1px solid #7f8c8d; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+.worksheet-mobile-section > p { margin: 0; padding: 0 10px 8px; background: #f8fafb; color: #44515c; font-size: .86rem; }
+.worksheet-mobile-table { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .86rem; }
+.worksheet-mobile-table th, .worksheet-mobile-table td { height: 44px; padding: 3px 4px; border-top: 1px solid #d5dce0; border-right: 1px solid #d5dce0; vertical-align: middle; }
+.worksheet-mobile-table th:last-child, .worksheet-mobile-table td:last-child { border-right: 0; }
+.worksheet-mobile-table th { background: #eef2f5; text-align: center; white-space: nowrap; }
+.worksheet-mobile-table th:first-child, .worksheet-mobile-table td:first-child { width: 44%; text-align: left; }
+.worksheet-mobile-table th:not(:first-child), .worksheet-mobile-table td:not(:first-child) { width: 28%; text-align: right; }
+.worksheet-mobile-account { overflow-wrap: anywhere; }
+.worksheet-mobile-input { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; height: 44px; min-height: 44px; padding: 2px; border: 0; font-size: 16px; text-align: right; }
+.worksheet-mobile-editable:focus-within { background: #fff4c2; box-shadow: inset 0 0 0 3px rgba(52,152,219,.28); }
 .table-input { min-width: 0; }
 .table-text-input { width: 100%; min-width: 120px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; }
 .fixed-asset-ledger { display: grid; gap: 14px; padding: 12px; background: #eef2f5; }
@@ -773,6 +789,16 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .question-materials h3 { margin: 0 0 .5rem; font-size: 1rem; }
 .materials-table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .materials-table { width: 100%; min-width: 28rem; border-collapse: collapse; font-size: .875rem; }
+.materials-table-wrap-compact { overflow-x: hidden; }
+.materials-table.materials-table-compact { min-width: 0; table-layout: fixed; }
+.materials-table.materials-table-compact th:first-child,
+.materials-table.materials-table-compact td:first-child { width: 40%; }
+.materials-table.materials-table-compact th:not(:first-child),
+.materials-table.materials-table-compact td:not(:first-child) { width: 30%; }
+.question-adjustments { margin-top: .85rem; padding: .75rem; border: 1px solid #cbd5e1; border-radius: .65rem; background: #fff; }
+.question-adjustments h4 { margin: 0 0 .45rem; font-size: .95rem; }
+.question-adjustments ol { margin: 0; padding-left: 1.4rem; }
+.question-adjustments li + li { margin-top: .35rem; }
 .materials-table th, .materials-table td { padding: .55rem; border: 1px solid #cbd5e1; text-align: left; vertical-align: top; }
 .materials-table th { background: #e2e8f0; white-space: nowrap; }
 .account-badge-contraAsset { background: #ede9fe; color: #5b21b6; }
@@ -787,6 +813,7 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .calculator-keys .calculator-operator-active { outline: 3px solid #f1c40f; outline-offset: 1px; font-weight: bold; }
 @media (max-width: 768px) {
   #question-form { padding-bottom: env(safe-area-inset-bottom); }
+  .materials-table.materials-table-compact th, .materials-table.materials-table-compact td { padding: .4rem .3rem; font-size: .82rem; }
   .calculator { max-width: 100%; }
   .table-question-wrap.worksheet-scroll { max-height: 62vh; }
 }
