@@ -127,9 +127,9 @@ function updateMobileRegression(){
     '// Gate 5-A T001 mobile-fit regression.',
     'const trialBalanceTableRule = css.match(/\\.answer-table:not\\(\\.eight-column-worksheet\\)\\[data-question-type="trial_balance"\\]\\s*\\{([^}]*)\\}/)?.[1] || "";',
     'assert(/width:\\s*100%/.test(trialBalanceTableRule) && /max-width:\\s*100%/.test(trialBalanceTableRule) && /table-layout:\\s*fixed/.test(trialBalanceTableRule), "three-column trial balance is constrained to the mobile viewport instead of a max-content canvas");',
-    'const trialBalanceAccountRule = css.match(/td\\[data-column-key="account"\\]\\s*\\{([^}]*)\\}/)?.[1] || "";',
+    'const trialBalanceAccountRule = css.match(/\\.answer-table:not\\(\\.eight-column-worksheet\\)\\[data-question-type="trial_balance"\\] td\\[data-column-key="account"\\]\\s*\\{([^}]*)\\}/)?.[1] || "";',
     'assert(/width:\\s*40%/.test(trialBalanceAccountRule) && /min-width:\\s*0/.test(trialBalanceAccountRule), "trial-balance account column stays visible within a compact 40% budget");',
-    'const trialBalanceNumericRule = css.match(/td\\[data-column-type="numeric"\\]\\s*\\{([^}]*)\\}/)?.[1] || "";',
+    'const trialBalanceNumericRule = css.match(/\\.answer-table:not\\(\\.eight-column-worksheet\\)\\[data-question-type="trial_balance"\\] td\\[data-column-type="numeric"\\]\\s*\\{([^}]*)\\}/)?.[1] || "";',
     'assert(/width:\\s*30%/.test(trialBalanceNumericRule) && /min-width:\\s*0/.test(trialBalanceNumericRule), "trial-balance debit and credit columns each use a compact 30% budget");'
   ].join('\n');
   s=s.trimEnd()+block+'\n';
