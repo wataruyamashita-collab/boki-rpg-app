@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   gate5b:
-    if: github.event.head_commit.message == 'Prepare Gate 5-B structured explanations'
+    if: github.event.head_commit.message == 'Prepare Gate 5-B structured explanations retry'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -36,7 +36,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json, hashlib, re
+          import json, hashlib
 
           def read(path):
               return Path(path).read_text(encoding='utf-8')
@@ -50,30 +50,32 @@ jobs:
                   raise RuntimeError(f'{label} anchor mismatch: {count}')
               return source.replace(old, new, 1)
 
-          # 1) Enable structured explanations for Gate 5-B types.
           path='data/questions.js'
           s=read(path)
-          old="""  if (item.type === 'correction') return '帳簿の記録と証ひょうを比べ、誤っている部分だけを訂正します。';
-  return '';
-};
-Object.values(QuestionData).forEach(item => {
-  if (item.explanationModel || !['journal','ledger','trial_balance','correction'].includes(item.type)) return;
-  item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};
-});"""
-          new="""  if (item.type === 'correction') return '帳簿の記録と証ひょうを比べ、誤っている部分だけを訂正します。';
-  if (item.type === 'worksheet') return '試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。';
-  if (item.type === 'financial_statement') return '決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。';
-  if (item.type === 'comprehensive') return '資料を処理する順番を整理し、仕訳・転記・決算整理をつないで最終金額を求めます。';
-  return '';
-};
-Object.values(QuestionData).forEach(item => {
-  if (item.explanationModel || !['journal','ledger','trial_balance','correction','worksheet','financial_statement','comprehensive'].includes(item.type)) return;
-  item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};
-});"""
+          old="\n".join([
+              "  if (item.type === 'correction') return '帳簿の記録と証ひょうを比べ、誤っている部分だけを訂正します。';",
+              "  return '';",
+              "};",
+              "Object.values(QuestionData).forEach(item => {",
+              "  if (item.explanationModel || !['journal','ledger','trial_balance','correction'].includes(item.type)) return;",
+              "  item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};",
+              "});"
+          ])
+          new="\n".join([
+              "  if (item.type === 'correction') return '帳簿の記録と証ひょうを比べ、誤っている部分だけを訂正します。';",
+              "  if (item.type === 'worksheet') return '試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。';",
+              "  if (item.type === 'financial_statement') return '決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。';",
+              "  if (item.type === 'comprehensive') return '資料を処理する順番を整理し、仕訳・転記・決算整理をつないで最終金額を求めます。';",
+              "  return '';",
+              "};",
+              "Object.values(QuestionData).forEach(item => {",
+              "  if (item.explanationModel || !['journal','ledger','trial_balance','correction','worksheet','financial_statement','comprehensive'].includes(item.type)) return;",
+              "  item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};",
+              "});"
+          ])
           s=replace_once(s,old,new,'Gate 5-B question-type expansion')
           write(path,s)
 
-          # 2) Expand full-population regression test from 260 to all 300 questions.
           path='tests/gate5-structured-explanation.test.js'
           s=read(path)
           s=replace_once(
@@ -83,45 +85,49 @@ Object.values(QuestionData).forEach(item => {
               'Gate 5-B expected counts'
           )
           anchor="assert(data.L001.explanationModel,'L001 structured explanation');"
-          extra="""assert.strictEqual(values.filter(q=>q.explanationModel).length,300,'all 300 questions use structured explanation');
-const d=ExplanationModel.build(data.D001,{cells:{}},{correct:false});
-assert(d.summary.some(x=>x.text==='試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。'),'D001 summary');
-assert(d.transfer.length>0&&d.checks.length>0,'D001 structured flow');
-const f=ExplanationModel.build(data.F001,{cells:{}},{correct:false});
-assert(f.summary.some(x=>x.text==='決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。'),'F001 summary');
-assert(f.transfer.length>0&&f.checks.length>0,'F001 structured flow');
-const c=ExplanationModel.build(data.C001,{cells:{}},{correct:false});
-assert(c.summary.some(x=>x.text==='資料を処理する順番を整理し、仕訳・転記・決算整理をつないで最終金額を求めます。'),'C001 summary');
-assert(c.transfer.length>0&&c.checks.length>0,'C001 structured flow');"""
+          extra="\n".join([
+              "assert.strictEqual(values.filter(q=>q.explanationModel).length,300,'all 300 questions use structured explanation');",
+              "const d=ExplanationModel.build(data.D001,{cells:{}},{correct:false});",
+              "assert(d.summary.some(x=>x.text==='試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。'),'D001 summary');",
+              "assert(d.transfer.length>0&&d.checks.length>0,'D001 structured flow');",
+              "const f=ExplanationModel.build(data.F001,{cells:{}},{correct:false});",
+              "assert(f.summary.some(x=>x.text==='決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。'),'F001 summary');",
+              "assert(f.transfer.length>0&&f.checks.length>0,'F001 structured flow');",
+              "const c=ExplanationModel.build(data.C001,{cells:{}},{correct:false});",
+              "assert(c.summary.some(x=>x.text==='資料を処理する順番を整理し、仕訳・転記・決算整理をつないで最終金額を求めます。'),'C001 summary');",
+              "assert(c.transfer.length>0&&c.checks.length>0,'C001 structured flow');"
+          ])
           s=replace_once(s,anchor,anchor+'\n'+extra,'Gate 5-B representative assertions')
           s=s.replace("console.log('Gate 5-A structured explanation tests: PASS');","console.log('Gate 5 structured explanation tests (A+B): PASS');")
           write(path,s)
 
-          # 3) Add representative Gate 5-B browser visual cases.
           path='.github/visual/run-explanation-integration.js'
           s=read(path)
           profile_anchor="  E001:['どこが違うか整理する','訂正仕訳を書く',false],"
-          profile_extra="""  D001:['決算整理を反映する','精算表に記入する',false],
-  F001:['どの区分に入るか決める','財務諸表に記入する',false],
-  C001:['処理の順番を整理する','答えに反映する',false],"""
+          profile_extra="\n".join([
+              "  D001:['決算整理を反映する','精算表に記入する',false],",
+              "  F001:['どの区分に入るか決める','財務諸表に記入する',false],",
+              "  C001:['処理の順番を整理する','答えに反映する',false],"
+          ])
           s=replace_once(s,profile_anchor,profile_anchor+'\n'+profile_extra,'Gate 5-B visual profiles')
           guidance_anchor="if(caseId==='J001'&&(!m.summaryText.includes('取引で何が増え、何が減ったか')||!m.checkText.includes('借方合計と貸方合計が合っているか確認する')))violations.push('JOURNAL_GUIDANCE');"
-          guidance_extra="""if(caseId==='D001'&&!m.summaryText.includes('試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。'))violations.push('WORKSHEET_GUIDANCE');
-if(caseId==='F001'&&!m.summaryText.includes('決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。'))violations.push('FINANCIAL_STATEMENT_GUIDANCE');
-if(caseId==='C001'&&!m.summaryText.includes('資料を処理する順番を整理し、仕訳・転記・決算整理をつないで最終金額を求めます。'))violations.push('COMPREHENSIVE_GUIDANCE');"""
+          guidance_extra="".join([
+              "if(caseId==='D001'&&!m.summaryText.includes('試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。'))violations.push('WORKSHEET_GUIDANCE');",
+              "if(caseId==='F001'&&!m.summaryText.includes('決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。'))violations.push('FINANCIAL_STATEMENT_GUIDANCE');",
+              "if(caseId==='C001'&&!m.summaryText.includes('資料を処理する順番を整理し、仕訳・転記・決算整理をつないで最終金額を求めます。'))violations.push('COMPREHENSIVE_GUIDANCE');"
+          ])
           s=replace_once(s,guidance_anchor,guidance_anchor+guidance_extra,'Gate 5-B visual guidance')
           write(path,s)
 
-          # 4) Advance successor-aware Generation immutability test to Generation 52.
           path='independent-audit/tests/generation-immutability.test.js'
           s=read(path)
-          seq51='[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51]'
+          seq50='[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50]'
+          seq51=seq50[:-1]+',51]'
           seq52=seq51[:-1]+',52]'
-          if s.count(seq51) < 2:
-              raise RuntimeError('Generation 51 sequence anchors missing')
+          if s.count(seq51) < 3:
+              raise RuntimeError(f'Generation 51 sequence anchors missing: {s.count(seq51)}')
           s=s.replace(seq51,seq52)
-          # Restore the pre-commit branch to [2..51] in the ternary.
-          s=replace_once(s,": "+seq52+"\n    )",": "+seq51+"\n    )",'Generation 52 pre-commit sequence')
+          s=replace_once(s,": "+seq50+"\n    )",": "+seq51+"\n    )",'Generation 52 pre-commit sequence')
           s=s.replace('generation51Committed','generation52Committed')
           s=s.replace('committed(51)','committed(52)')
           s=s.replace('authorityPath(51)','authorityPath(52)')
@@ -138,7 +144,6 @@ if(caseId==='C001'&&!m.summaryText.includes('資料を処理する順番を整�
           )
           write(path,s)
 
-          # 5) PWA release successor.
           release='20260924-121'
           previous='20260924-120'
 
