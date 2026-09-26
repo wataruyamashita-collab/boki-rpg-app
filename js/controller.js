@@ -601,7 +601,19 @@
         }
         calculatorPanel.open = true;
         if (worksheetMobileInput) {
-          const revealTarget = () => input.scrollIntoView?.({ block:'center', inline:'nearest', behavior:'auto' });
+          const revealTarget = () => {
+            input.scrollIntoView?.({ block:'center', inline:'nearest', behavior:'auto' });
+            const keepAboveDock = () => {
+              const inputRect = input.getBoundingClientRect?.();
+              const panelRect = calculatorPanel.getBoundingClientRect?.();
+              if (!inputRect || !panelRect) return;
+              const safeBottom = panelRect.top - 16;
+              if (inputRect.bottom > safeBottom) {
+                root.scrollBy?.({ top:inputRect.bottom - safeBottom, left:0, behavior:'auto' });
+              }
+            };
+            if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(keepAboveDock); else keepAboveDock();
+          };
           if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
         }
       }
