@@ -1,0 +1,151 @@
+name: Issue 154 T001 table density fix
+on:
+  push:
+    branches:
+      - codex/issue-154-explanation-ux-integration
+
+permissions:
+  contents: write
+
+jobs:
+  fix-t001-table-density:
+    if: github.event.head_commit.message == 'Prepare T001 table density fix'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/issue-154-explanation-ux-integration
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Verify Generation 48 baseline
+        run: |
+          npm run verify
+          npm run qa:integrity
+          git diff --check
+
+      - name: Apply T001 table density fix and release 118
+        shell: bash
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs=require('fs');
+          const crypto=require('crypto');
+
+          const cssFile='css/style.css';
+          let css=fs.readFileSync(cssFile,'utf8');
+          const marker='/* Gate 5-A: compact editable total cells while preserving a 44px touch target */';
+          if(css.includes(marker)) throw new Error('T001 density marker already exists');
+          const anchor='.answer-table td:focus-within { background: #fff4c2; box-shadow: inset 0 0 0 3px rgba(52,152,219,.28); }';
+          if(css.split(anchor).length!==2) throw new Error('CSS anchor mismatch');
+          const rule=`
+${marker}
+.answer-table:not(.eight-column-worksheet) td:has(> .table-input[data-cell-id^="total_"]) {
+  padding: 0;
+}
+.answer-table:not(.eight-column-worksheet)[data-sizing="semantic-content"] td:has(> .table-input[data-cell-id^="total_"]) .table-input[data-input-type="amount"] {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px;
+  border-radius: 0;
+  text-align: right;
+}
+`;
+          css=css.replace(anchor,anchor+rule);
+          fs.writeFileSync(cssFile,css);
+
+          const manifestFile='pwa-release-manifest.json';
+          const manifest=JSON.parse(fs.readFileSync(manifestFile,'utf8'));
+          if(manifest.release!=='20260924-117') throw new Error('unexpected current release');
+          manifest.previousRelease='20260924-117';
+          manifest.release='20260924-118';
+          manifest.assets['css/style.css']=crypto.createHash('sha256').update(fs.readFileSync(cssFile)).digest('hex');
+          fs.writeFileSync(manifestFile,JSON.stringify(manifest,null,2)+'\n');
+
+          const indexFile='index.html';
+          let index=fs.readFileSync(indexFile,'utf8');
+          const oldToken='?v=20260924-117',newToken='?v=20260924-118';
+          const count=index.split(oldToken).length-1;
+          if(count<1) throw new Error('index release token not found');
+          index=index.split(oldToken).join(newToken);
+          fs.writeFileSync(indexFile,index);
+
+          const swFile='service-worker.js';
+          let sw=fs.readFileSync(swFile,'utf8');
+          const oldRelease="const RELEASE = '20260924-117';";
+          const newRelease="const RELEASE = '20260924-118';";
+          if(sw.split(oldRelease).length!==2) throw new Error('service-worker release anchor mismatch');
+          sw=sw.replace(oldRelease,newRelease);
+          fs.writeFileSync(swFile,sw);
+
+          const lifecycle=require('./scripts/qa/phase-b-lifecycle');
+          const core=require('./scripts/qa/audit-core');
+          const out='reports/auto-gate/audit-locks/phase-b-generation-49.json';
+          if(fs.existsSync(out)) throw new Error('Generation 49 authority already exists');
+          const authorities=lifecycle.generationAuthorities();
+          if(authorities.at(-1)?.document?.generation!==48) throw new Error('Generation 48 is not the latest authority');
+          const candidate=lifecycle.createCandidate();
+          if(candidate.generation!==49) throw new Error(`expected Generation 49, got ${candidate.generation}`);
+          if(candidate.predecessor.generation!==48) throw new Error('Generation 49 predecessor mismatch');
+          const verification=lifecycle.verifyCandidate(candidate);
+          if(!verification.ok) throw new Error(verification.errors.join(', '));
+          fs.writeFileSync(out,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
+
+          const updated=JSON.parse(fs.readFileSync(manifestFile,'utf8'));
+          if(updated.release!=='20260924-118'||updated.previousRelease!=='20260924-117') throw new Error('release manifest verification failed');
+          if(!fs.readFileSync(cssFile,'utf8').includes(marker)) throw new Error('density CSS missing');
+          console.log('Prepared Generation 49 / release 20260924-118');
+          NODE
+
+      - name: Verify Generation 49 candidate before commit
+        run: |
+          npm run verify
+          npm run qa:integrity
+          git diff --check
+          node - <<'NODE'
+          const fs=require('fs');
+          const a=JSON.parse(fs.readFileSync('reports/auto-gate/audit-locks/phase-b-generation-49.json','utf8'));
+          if(a.generation!==49||a.predecessor.generation!==48) process.exit(1);
+          const css=fs.readFileSync('css/style.css','utf8');
+          for(const required of [
+            'td:has(> .table-input[data-cell-id^="total_"])',
+            'height: 44px;',
+            'padding: 0;'
+          ]) if(!css.includes(required)) throw new Error('missing CSS guard: '+required);
+          console.log('T001 density source checks: ok');
+          NODE
+
+      - name: Commit verified Generation 49 and cleanup
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/issue154-t001-table-density-fix.yml
+          if [ -f .github/issue154-t001-density-trigger.txt ]; then git rm .github/issue154-t001-density-trigger.txt; fi
+          git add css/style.css index.html pwa-release-manifest.json service-worker.js reports/auto-gate/audit-locks/phase-b-generation-49.json
+          git commit -m "Fix T001 table input density"
+
+      - name: Verify committed Generation 49
+        run: |
+          rm -rf artifacts node_modules
+          npm ci
+          npm run verify
+          npm run qa:integrity
+          git diff --check
+          rm -rf artifacts node_modules
+          git status --short
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+      - name: Publish verified Generation 49
+        run: git push origin HEAD:codex/issue-154-explanation-ux-integration
