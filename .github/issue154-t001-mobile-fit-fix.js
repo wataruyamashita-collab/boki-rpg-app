@@ -196,7 +196,7 @@ function updateRelease(){
 }
 
 function createGeneration50(){
-  const lifecycle=require('./scripts/qa/phase-b-lifecycle');
+  const lifecycle=require('../scripts/qa/phase-b-lifecycle');
   const file='reports/auto-gate/audit-locks/phase-b-generation-50.json';
   if(fs.existsSync(file))throw new Error('Generation 50 authority already exists');
   const authorities=lifecycle.generationAuthorities();
