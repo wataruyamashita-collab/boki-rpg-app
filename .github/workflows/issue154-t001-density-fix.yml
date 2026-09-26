@@ -1,0 +1,113 @@
+name: Issue 154 T001 trial balance density fix
+on:
+  push:
+    branches:
+      - codex/issue-154-explanation-ux-integration
+
+permissions:
+  contents: write
+
+jobs:
+  fix-trial-balance-density:
+    if: github.event.head_commit.message == 'Prepare T001 trial balance density fix'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/issue-154-explanation-ux-integration
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Check temporary helper syntax
+        run: node --check .github/issue154-t001-density-fix.js
+      - run: npm ci
+
+      - name: Verify exact Generation 48 baseline
+        run: |
+          npm run verify
+          npm run qa:integrity
+          git diff --check
+
+      - name: Apply T001 physical density fix and regressions
+        run: node .github/issue154-t001-density-fix.js
+
+      - name: Mandatory pre-commit verification
+        run: |
+          npm run verify
+          node .github/visual/gate-core.test.js
+          node .github/visual/harness-source.test.js
+          git diff --check
+
+      - name: Install pinned CI-only Playwright
+        run: npm install --no-save --package-lock=false playwright@1.55.0
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Verify T001 density and existing browser gates
+        run: |
+          node .github/visual/run-visual.js strict
+          node .github/visual/run-explanation-integration.js
+
+      - name: Commit verified production fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add css/style.css js/view.js tests/mobile-layout.test.js independent-audit/tests/generation-immutability.test.js .github/visual/explanation-integration.html .github/visual/run-explanation-integration.js index.html service-worker.js pwa-release-manifest.json
+          git diff --cached --check
+          git commit -m "Fix trial balance mobile table density"
+
+      - name: Create Generation 49 candidate
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs=require('fs'),path=require('path'),lifecycle=require('./scripts/qa/phase-b-lifecycle');
+          const file='reports/auto-gate/audit-locks/phase-b-generation-49.json';
+          if(fs.existsSync(file))throw new Error('Generation 49 authority already exists');
+          const candidate=lifecycle.createCandidate();
+          if(candidate.generation!==49)throw new Error('expected Generation 49, got '+candidate.generation);
+          const verification=lifecycle.verifyCandidate(candidate);
+          if(!verification.ok)throw new Error(verification.errors.join(', '));
+          fs.mkdirSync(path.dirname(file),{recursive:true});
+          fs.writeFileSync(file,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
+          console.log('GENERATION_49_CANDIDATE_OK '+candidate.baselineIdentity+' '+candidate.auditHash);
+          NODE
+
+      - name: Mandatory verification before authority commit
+        run: |
+          rm -rf artifacts node_modules
+          npm ci
+          npm run verify
+          git diff --check
+
+      - name: Commit Generation 49 authority
+        run: |
+          git add reports/auto-gate/audit-locks/phase-b-generation-49.json
+          git diff --cached --check
+          git commit -m "Finalize Generation 49 for trial balance density"
+
+      - name: Verify committed Generation 49
+        run: |
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+
+      - name: Remove temporary helper after mandatory verification
+        run: |
+          git rm .github/workflows/issue154-t001-density-fix.yml .github/issue154-t001-density-fix.js
+          npm run verify
+          git diff --check
+          git commit -m "Remove T001 density helper"
+
+      - name: Final exact-tree verification and publish
+        run: |
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+          rm -rf artifacts node_modules
+          git status --short
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git push origin HEAD:codex/issue-154-explanation-ux-integration
