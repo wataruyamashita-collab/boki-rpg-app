@@ -61,23 +61,24 @@
   "findings": [],
   "contract": "mobile",
   "sourceHashes": {
-    "css/style.css": "0ccd4dc72959fd2af6e43e976413885a13c38821dcff33a7b056b4a5e8c9ce55",
+    "css/style.css": "9c2e06db70b7a8433edffbb468c0306530f1c9b39abdcec802b2b6c3ade40d50",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
-    "data/questions.js": "0ca00226094bc1c13fafd90219671f510c7275e9f54aee31dd372308390d8dd7",
-    "index.html": "a34cc3862d89867d7696eba91691b060384309475ddf77463e0abacd0b7e2b65",
+    "data/questions.js": "22227707865c06499dfe6bb049efa6fed81e0ed37ef6a8674aa429e85806f5a6",
+    "index.html": "c5abc4854d93b4f6d72f071fbeb32c2664e7fe9667d73b128199d731eeff6eb1",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
     "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
-    "js/controller.js": "befe50b0e4f889397eb964e25d8b8f30e746a07f6cd6bc282521be51d34e6a4b",
+    "js/controller.js": "ebc57c540d86f98afa49ec019ae86e1cefa829c6acc3304b8829c4785769fb92",
     "js/engine.js": "a0f94eaa142ce19c07da284d3777a23a2c7af38c7b1eb6591e982ab48de50f78",
+    "js/explanation-model.js": "0002d146b80a958ae23aed6df323fe3a58e707d875a187469b1f38647be30a21",
     "js/feedback.js": "8c04b1847aca22a44d48b5f0dc636cec47519b4d6c6f454333e3113cd8710b5f",
-    "js/model.js": "5b0960651ab936c4404c460171e37c45b087cde7469d012f73b6fb66d9e4b71e",
+    "js/model.js": "941ccd7ddfa7e9a91d95976568ba5171b983d69cfea36086783fca19f2609a67",
     "js/rpg.js": "fcc89d34b4a6773ecf33c3004997482a12e5444062e2e41b2b1f31d7c4742410",
-    "js/view.js": "a6c3324476d0e1b57fd51dd0f87845ada6c7fd3d3a012dabf33fc28a0397a707",
+    "js/view.js": "f1d1305eb485253060383eb3563e5c32325f7a4ad7ba272caa752676a7bb4dbf",
     "manifest.webmanifest": "fcde227f0593c3fc7fd5e8adc89be13201f9a35f74d9ad6a4212b23d2a75bd72",
-    "pwa-release-manifest.json": "30b4ac26687c9218f7162e8bcc40241e85ee3268f2e273055e1de591ddadfb38",
-    "service-worker.js": "65b76381787ecce6cc08e8c7103d3746980f9c399bccd0c6ce7a678b7e26247a",
+    "pwa-release-manifest.json": "3d953b826c659c92ea0de4292002415c2263ecb4a0ab36e6bf825ecaf3c3695c",
+    "service-worker.js": "0dd7de92c37191b055aff8ef2073f230b85e36737d5a473d5fb4f7a12ec8985a",
     "types/domain.d.ts": "94f1affd9e89eb139e968940e7a8ce64ca1e3b4728c5f59d9b6de0d97a96e3ec"
   },
-  "measuredAt": "2026-09-22T21:07:47.155Z"
+  "measuredAt": "2026-09-25T09:37:18.397Z"
 }

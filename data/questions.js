@@ -14718,6 +14718,11 @@ Object.entries(replacementLedgers).forEach(([id, [category, question, labels, va
 Object.assign(QuestionData.L044, { materials: [{ '日付':'4/3', '証ひょう':'入金票', '摘要':'売掛金の回収', '収入':50000, '支出':'—' }, { '日付':'4/5', '証ひょう':'領収証', '摘要':'通信費の支払', '収入':'—', '支出':18000 }] });
 Object.assign(QuestionData.L045, { materials: [{ '日付':'5/1', '証ひょう':'預入票', '摘要':'当座預金へ預入', '預入':300000, '引出':'—' }, { '日付':'5/8', '証ひょう':'振込受付書', '摘要':'買掛金の振込支払', '預入':'—', '引出':85000 }] });
 Object.assign(QuestionData.L046, { materials: [{ '日付':'6/7', '証ひょう':'領収証', '摘要':'郵便・通信費', '金額':4800 }, { '日付':'6/14', '証ひょう':'交通費精算書', '摘要':'得意先訪問', '金額':7200 }], question:'定額資金前渡法で、下記支払報告を通信費と旅費交通費に分類し、当日に支払額と同額を補給する場合の補給額も記入しなさい。' });
+Object.assign(QuestionData.L050, { materials: [
+  { '資料':'取引1', '取引':'商品を現金で販売', '金額':50000 },
+  { '資料':'取引2', '取引':'備品を現金で購入', '金額':20000 },
+  { '資料':'取引3', '取引':'商品を掛けで仕入', '金額':30000 }
+] });
 
 Object.assign(QuestionData.D019, { category:'決算整理後残高試算表', format:'adjusted-trial-balance', scene:'決算・整理後残高の確認', story:'決算整理仕訳を転記し、財務諸表作成前の残高を貸借一致まで確かめる。', question:'下記の全勘定の決算整理前残高と整理事項を反映し、貸借が一致する決算整理後残高試算表を完成しなさい。', materials:[{勘定科目:'現金',整理前借方:240000,整理前貸方:'—',整理事項:'なし'},{勘定科目:'売掛金',整理前借方:200000,整理前貸方:'—',整理事項:'なし'},{勘定科目:'保険料',整理前借方:200000,整理前貸方:'—',整理事項:'前払分40,000円を振替'},{勘定科目:'備品',整理前借方:600000,整理前貸方:'—',整理事項:'間接法のため取得原価を維持'},{勘定科目:'買掛金',整理前借方:'—',整理前貸方:100000,整理事項:'なし'},{勘定科目:'資本金',整理前借方:'—',整理前貸方:300000,整理事項:'なし'},{勘定科目:'繰越利益剰余金',整理前借方:'—',整理前貸方:40000,整理事項:'なし'},{勘定科目:'売上',整理前借方:'—',整理前貸方:800000,整理事項:'なし'},{勘定科目:'前払保険料',整理前借方:'—',整理前貸方:'—',整理事項:'借方40,000円'},{勘定科目:'減価償却費',整理前借方:'—',整理前貸方:'—',整理事項:'借方60,000円'},{勘定科目:'減価償却累計額',整理前借方:'—',整理前貸方:'—',整理事項:'貸方60,000円'}], table:{columns:['勘定科目','整理後借方','整理後貸方'],rows:[{account:'現金',debit:'入力',credit:'—'},{account:'売掛金',debit:'入力',credit:'—'},{account:'保険料',debit:'入力',credit:'—'},{account:'前払保険料',debit:'入力',credit:'—'},{account:'備品',debit:'入力',credit:'—'},{account:'減価償却費',debit:'入力',credit:'—'},{account:'買掛金',debit:'—',credit:'入力'},{account:'減価償却累計額',debit:'—',credit:'入力'},{account:'資本金',debit:'—',credit:'入力'},{account:'繰越利益剰余金',debit:'—',credit:'入力'},{account:'売上',debit:'—',credit:'入力'},{account:'合計',debit:'入力',credit:'入力'}],inputCells:['cash','receivables','insurance','prepaid','equipment','depreciation','payables','accumulated','capital','retained','sales','debitTotal','creditTotal']}, answer:{cells:{cash:240000,receivables:200000,insurance:160000,prepaid:40000,equipment:600000,depreciation:60000,payables:100000,accumulated:60000,capital:300000,retained:40000,sales:800000,debitTotal:1300000,creditTotal:1300000}}, explanation:'前払分40,000円と減価償却費60,000円を転記すると、整理後の借方・貸方合計はいずれも1,300,000円です。備品は間接法なので備品勘定そのものを減額しません。' });
 Object.assign(QuestionData.D020, { category:'帳簿締切', format:'closing-entries', scene:'決算・収益費用勘定の締切', story:'損益勘定を経由して収益・費用を締め切る。', question:'売上800,000円、仕入400,000円、保険料160,000円、減価償却費60,000円だけがある。各収益・費用を損益勘定へ振り替えた後、当期純利益を繰越利益剰余金へ振り替える締切金額を完成しなさい。', table:{columns:['締切手続','金額'],rows:[{item:'売上から損益への振替',amount:'入力'},{item:'仕入から損益への振替',amount:'入力'},{item:'保険料から損益への振替',amount:'入力'},{item:'減価償却費から損益への振替',amount:'入力'},{item:'損益から繰越利益剰余金への振替',amount:'入力'}],inputCells:['sales','purchases','insurance','depreciation','profit']}, answer:{cells:{sales:800000,purchases:400000,insurance:160000,depreciation:60000,profit:180000}}, explanation:'【収益の振替】\n売上800,000円は収益の貸方残高なので、売上を借方に800,000円記入して残高をゼロにし、損益を貸方に800,000円記入します。\n\n【費用の振替】\n仕入400,000円、保険料160,000円、減価償却費60,000円は費用の借方残高です。損益を借方に合計620,000円記入し、各費用勘定を貸方に、それぞれ400,000円、160,000円、60,000円記入して締め切ります。\n\n【当期純利益の振替】\n売上800,000円－費用合計620,000円＝当期純利益180,000円です。損益勘定の貸方残高180,000円を締め切るため、損益を借方に180,000円、繰越利益剰余金を貸方に180,000円記入します。\n\n【金額確認】\n費用合計は400,000円＋160,000円＋60,000円＝620,000円、当期純利益は800,000円－620,000円＝180,000円です。' });
@@ -15924,6 +15929,108 @@ Object.values(QuestionData).forEach((item, index) => {
     .replace(/\bdate(?=\d)/gu, '日付').replaceAll('description', '摘要').replaceAll('acquisitionCost', '取得原価').replaceAll('openingAccumulated', '期首減価償却累計額').replaceAll('asset', '固定資産')
     .replace(/quantity([0-9,]+)円/gu, '数量$1個').replace(/life([0-9,]+)円/gu, '耐用年数$1年').replaceAll('quantity', '数量').replaceAll('amount', '金額');
   item.npcDialogue = npc;
+});
+
+
+/* Issue #154: attach structured explanations only after all ledger overrides and
+   generated walkthroughs are finalized, so the learner sees the model for the
+   actual runtime question rather than an earlier legacy definition. */
+Object.assign(QuestionData.L034, {
+  explanationModel: {
+    sources: [
+      {kind:'material',title:'8月2日 売上票',focus:'商品90,000円を掛けで販売',values:[{label:'日付',value:'8/2'},{label:'証憑',value:'売上票'},{label:'内容',value:'商品90,000円を掛販売'}]},
+      {kind:'material',title:'8月6日 領収証',focus:'通信費12,000円を現金で支払',values:[{label:'日付',value:'8/6'},{label:'証憑',value:'領収証'},{label:'内容',value:'通信費12,000円を現金払い'}]}
+    ],
+    summary: [
+      {text:'8月2日：掛販売なので、売掛金（資産）の増加を借方、売上（収益）の増加を貸方に記入する。'},
+      {text:'8月6日：通信費（費用）の増加を借方、現金（資産）の減少を貸方に記入する。'}
+    ],
+    calculation: [
+      {label:'8月2日の金額',expression:'90,000円（売上票の記載額）',result:90000,operands:[{label:'資料記載額',value:90000}]},
+      {label:'8月6日の金額',expression:'12,000円（領収証の記載額）',result:12000,operands:[{label:'資料記載額',value:12000}]}
+    ],
+    transfer: [
+      {from:'8/2 売上票',decision:'掛販売 → 売掛金が増える',to:'借方：売掛金（元丁113）',value:'90,000円'},
+      {from:'8/2 売上票',decision:'掛販売 → 売上が増える',to:'貸方：売上（元丁401）',value:'90,000円'},
+      {from:'8/6 領収証',decision:'通信費が発生',to:'借方：通信費（元丁521）',value:'12,000円'},
+      {from:'8/6 領収証',decision:'現金で支払 → 現金が減る',to:'貸方：現金（元丁101）',value:'12,000円'}
+    ],
+    checks: [
+      {label:'日付順',expected:'8/2 → 8/6'},
+      {label:'8/2の貸借',expected:'借方90,000円＝貸方90,000円'},
+      {label:'8/6の貸借',expected:'借方12,000円＝貸方12,000円'},
+      {label:'元丁',expected:'売掛金113・売上401・通信費521・現金101'}
+    ]
+  }
+});
+Object.assign(QuestionData.L041, {
+  explanationModel: {
+    sources: [
+      {kind:'material',title:'4月3日 取引資料',focus:'商品90,000円を掛けで販売',values:[{label:'日付',value:'4/3'},{label:'取引',value:'商品90,000円を掛販売'}]},
+      {kind:'material',title:'4月8日 取引資料',focus:'通信費12,000円を現金で支払',values:[{label:'日付',value:'4/8'},{label:'取引',value:'通信費12,000円を現金払い'}]}
+    ],
+    summary: [
+      {text:'4月3日：掛販売なので、売掛金（資産）の増加を借方、売上（収益）の増加を貸方に記入する。'},
+      {text:'4月8日：通信費（費用）の増加を借方、現金（資産）の減少を貸方に記入する。'}
+    ],
+    calculation: [
+      {label:'4月3日の金額',expression:'90,000円（取引資料の記載額）',result:90000,operands:[{label:'資料記載額',value:90000}]},
+      {label:'4月8日の金額',expression:'12,000円（取引資料の記載額）',result:12000,operands:[{label:'資料記載額',value:12000}]}
+    ],
+    transfer: [
+      {from:'4/3 取引資料',decision:'掛販売 → 売掛金が増える',to:'借方：売掛金（元丁113）',value:'90,000円'},
+      {from:'4/3 取引資料',decision:'掛販売 → 売上が増える',to:'貸方：売上（元丁401）',value:'90,000円'},
+      {from:'4/8 取引資料',decision:'通信費が発生',to:'借方：通信費（元丁521）',value:'12,000円'},
+      {from:'4/8 取引資料',decision:'現金で支払 → 現金が減る',to:'貸方：現金（元丁101）',value:'12,000円'}
+    ],
+    checks: [
+      {label:'日付順',expected:'4/3 → 4/8'},
+      {label:'4/3の貸借',expected:'借方90,000円＝貸方90,000円'},
+      {label:'4/8の貸借',expected:'借方12,000円＝貸方12,000円'},
+      {label:'元丁',expected:'売掛金113・売上401・通信費521・現金101'}
+    ]
+  }
+});
+
+// Gate 4: every final-runtime Chapter 8 ledger receives structured wrong-answer
+// guidance. Existing authored models (L034/L041) remain authoritative; the
+// remaining questions override only the reasoning summary and use generated
+// sources/calculation/transfer/check/mistake evidence.
+const chapter8ExplanationSummary = item => {
+  const format = item.format || '';
+  const category = String(item.category || '');
+  if (format === 'fixed-asset-ledger' || /固定資産台帳/u.test(category)) return '取得原価・耐用年数・償却方法・使用月数を先に確認し、年額→月割→帳簿価額の順に処理します。';
+  if (format === 'journal-book' || /仕訳帳/u.test(category)) return '取引ごとに増減する勘定科目を決め、借方・貸方・元丁を日付順に仕訳帳へ記入します。';
+  if (format === 'bookkeeping-notes-receivable') return '受取手形記入帳の対象になる約束手形だけを選び、受取日・振出人・満期日・金額を資料で確認します。';
+  if (format === 'bookkeeping-notes-payable') return '自店が振り出した約束手形だけを選び、振出日・受取人・満期日・金額を資料で確認します。';
+  if (format === 'bookkeeping-cash-book') return '現金の受入と支払を分け、受入額－支払額で残高の動きを追います。';
+  if (format === 'bookkeeping-checking-book') return '当座預金の預入と引出を分け、預入額－引出額で残高の動きを追います。';
+  if (format === 'bookkeeping-petty-cash-book') return '支払内容を費用科目ごとに分類し、定額資金前渡法では支払額と補給額の関係を確認します。';
+  if (format === 'bookkeeping-purchase-book') return '仕入と仕入返品を分け、総仕入高から返品額を差し引いて純仕入高を求めます。';
+  if (format === 'bookkeeping-sales-book') return '売上と売上返品を分け、総売上高から返品額を差し引いて純売上高を求めます。';
+  if (format === 'bookkeeping-inventory-ledger' || /商品有高帳/u.test(category)) return '数量と単価を別々に追い、指定された払出単価の計算方法で払出額と残高額を求めます。';
+  if (format === 'bookkeeping-voucher-entry') return '現金が増えるか、減るか、動かないかを確認して、使う伝票を決めます。';
+  if (format === 'bookkeeping-general-ledger' || format === 'bookkeeping-account-ledger' || /元帳/u.test(category)) return 'その勘定がどちら側で増えるかを確認し、取引ごとの増減と相手勘定を残高へ反映します。';
+  return '資料を順に確認し、必要な金額を帳簿のどこに記入するか決めます。';
+};
+Object.values(QuestionData).forEach(item => {
+  if (item.chapter !== 8 || item.explanationModel) return;
+  item.explanationModel = {summary:[{text:chapter8ExplanationSummary(item)}]};
+});
+
+const gate5ExplanationSummary = item => {
+  if (item.type === 'journal') return '取引で何が増え、何が減ったかを確認し、勘定科目を決めて借方・貸方に分けます。';
+  if (item.type === 'ledger') return chapter8ExplanationSummary(item);
+  if (item.type === 'trial_balance') return '各勘定の残高を借方と貸方に分け、それぞれを縦に合計します。';
+  if (item.type === 'correction') return '帳簿の記録と証ひょうを比べ、誤っている部分だけを訂正します。';
+  if (item.type === 'worksheet') return '試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。';
+  if (item.type === 'financial_statement') return '決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。';
+  if (item.type === 'comprehensive') return '資料を処理する順番を整理し、仕訳・転記・決算整理をつないで最終金額を求めます。';
+  return '';
+};
+Object.values(QuestionData).forEach(item => {
+  if (item.explanationModel || !['journal','ledger','trial_balance','correction','worksheet','financial_statement','comprehensive'].includes(item.type)) return;
+  item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};
 });
 
 // Top-level `const` declarations are not added to `window` in classic scripts.

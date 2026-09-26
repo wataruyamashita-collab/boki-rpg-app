@@ -15545,7 +15545,7 @@
       },
       "materials": {
         "status": "VERIFIED",
-        "finding": "表示資料3行（うち解答欄3行）と入力キー3個を一対一で照合した。"
+        "finding": "取引1〜3の3件を独立した資料として確認し、現金売上50,000円・備品の現金購入20,000円・商品30,000円の掛仕入を、入金・出金・振替の各伝票判断へつなげて照合した。"
       },
       "solvability": {
         "status": "VERIFIED",
@@ -15604,7 +15604,7 @@
         "finding": "scene「帳簿と伝票・実地記帳」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:94f7dd1767a752de419f1ba2bdd838870f49e395dbdec1f553be5b55d72bc27b",
+      "sourceHash": "sha256:a7392be0b50122939a3c251cf0739cfea9d47de29613af8a0d9b559bece5fbc0",
       "answerSchemaHash": "sha256:bd6c763ec281a0402775c1e8df2936591c73456bcf02b3ad62f31893d060d525"
     },
     {

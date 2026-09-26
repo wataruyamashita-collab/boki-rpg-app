@@ -151,3 +151,29 @@ assert(
   'coaching retry explicitly hides confidence, save button, and save status in WebKit'
 );
 console.log(`mobile layout semantic audit: ${questions.length} questions, ${ordinary.length} ordinary tables, ${columns.length} unique columns (320/375/390/430): ok`);
+// Gate 5-A T001 physical density regression.
+assert(view.includes("table.dataset.questionType = question.type"), "ordinary table renderer exposes the canonical question type for scoped responsive rules");
+assert(view.includes("row.classList.add('trial-balance-total-row')"), "trial-balance input row receives a stable semantic class without inspecting answer values");
+const trialBalanceDensityTokens = [
+  '[data-question-type="trial_balance"] tbody tr',
+  'height: 44px;',
+  'tr.trial-balance-total-row td.amount-cell',
+  'background: #fffdf3;',
+  'tr.trial-balance-total-row .table-input[data-input-type="amount"]',
+  'box-sizing: border-box;',
+  'width: 100%;',
+  'min-width: 0;',
+  'max-width: 100%;',
+  'height: 44px;',
+  'min-height: 44px;',
+  'border: 0;',
+  'font-size: 16px;'
+];
+for (const token of trialBalanceDensityTokens) assert(css.includes(token), "trial-balance physical-density CSS keeps required token: "+token);
+// Gate 5-A T001 mobile-fit regression.
+const trialBalanceTableRule = css.match(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="trial_balance"\]\s*\{([^}]*)\}/)?.[1] || "";
+assert(/width:\s*100%/.test(trialBalanceTableRule) && /max-width:\s*100%/.test(trialBalanceTableRule) && /table-layout:\s*fixed/.test(trialBalanceTableRule), "three-column trial balance is constrained to the mobile viewport instead of a max-content canvas");
+const trialBalanceAccountRule = css.match(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="trial_balance"\] td\[data-column-key="account"\]\s*\{([^}]*)\}/)?.[1] || "";
+assert(/width:\s*40%/.test(trialBalanceAccountRule) && /min-width:\s*0/.test(trialBalanceAccountRule), "trial-balance account column stays visible within a compact 40% budget");
+const trialBalanceNumericRule = css.match(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="trial_balance"\] td\[data-column-type="numeric"\]\s*\{([^}]*)\}/)?.[1] || "";
+assert(/width:\s*30%/.test(trialBalanceNumericRule) && /min-width:\s*0/.test(trialBalanceNumericRule), "trial-balance debit and credit columns each use a compact 30% budget");

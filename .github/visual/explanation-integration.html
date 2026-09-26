@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Explanation integration visual gate</title>
+<link rel="stylesheet" href="../../css/style.css">
+<style>body{background:#fff}.visual-shell{max-width:760px;margin:0 auto;padding:12px}</style>
+</head>
+<body>
+<main class="visual-shell"><section id="table-container" class="table-question-wrap" hidden></section><section id="explanation"></section></main>
+<script src="../../data/questions.js"></script>
+<script src="../../js/feedback.js"></script>
+<script src="../../js/explanation-model.js"></script>
+<script src="../../js/view.js"></script>
+<script>
+const params=new URLSearchParams(location.search),requested=params.get('case'),candidate=window.QuestionData[requested],caseId=candidate?.explanationModel?requested:'L034';
+document.body.dataset.caseId=caseId;
+const question=window.QuestionData[caseId];
+const wrong=question.type==='journal'?{debit:[],credit:[]}:{cells:Object.fromEntries((question.table?.inputCells||[]).map(id=>[id,'']))};
+const view=new window.AppView(document),tableContainer=document.getElementById('table-container');
+if(caseId==='T001'){tableContainer.hidden=false;view.renderTable(question,{cells:{}});}
+view.renderExplanation(question,{correct:false},wrong);
+</script>
+</body>
+</html>

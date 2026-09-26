@@ -526,6 +526,70 @@ select, .amount-input {
   .filter-grid { grid-template-columns: 1fr; gap: 6px; }
 }
 
+/* Gate 5-A physical QA: keep the three-column trial balance inside the mobile viewport. */
+@media (max-width: 480px) {
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tbody tr {
+    height: 44px;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] th,
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td {
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 4px;
+    vertical-align: middle;
+    line-height: 1.25;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] th {
+    font-size: .82rem;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td {
+    font-size: .85rem;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] th[data-column-key="account"],
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td[data-column-key="account"] {
+    width: 40%;
+    min-width: 0;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td[data-column-key="account"] {
+    text-align: left;
+    white-space: nowrap;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] th[data-column-type="numeric"],
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td[data-column-type="numeric"] {
+    width: 30%;
+    min-width: 0;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] td.amount-cell {
+    min-width: 0;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tr.trial-balance-total-row td.amount-cell {
+    padding: 0;
+    background: #fffdf3;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] tr.trial-balance-total-row .table-input[data-input-type="amount"] {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 4px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: 16px;
+    line-height: 1.25;
+  }
+}
+
 @media (max-width: 680px) {
   .app-header { align-items: stretch; flex-direction: column; gap: 9px; }
   .player-status { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -731,4 +795,88 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
   position: absolute !important;
   width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+/* Issue #154: structured wrong-answer explanation */
+.explanation-flow { display:grid; gap:10px; margin:16px 0; min-width:0; }
+.explanation-flow-title { margin:0; padding:0 2px; font-size:1.05rem; }
+.explanation-flow-section { min-width:0; padding:14px; border:1px solid #d5dce0; border-radius:12px; background:#fff; }
+.explanation-flow-head { display:flex; gap:10px; align-items:flex-start; margin:0 0 10px; }
+.explanation-flow-step { flex:0 0 32px; width:32px; height:32px; display:grid; place-items:center; border:2px solid var(--accent-color); border-radius:50%; font-weight:800; line-height:1; }
+.explanation-flow-head h5 { margin:4px 0 0; font-size:1rem; }
+.explanation-source-card,.explanation-formula,.explanation-transfer-card,.explanation-check-item,.explanation-mistake-card,.explanation-summary-item { min-width:0; padding:12px; border:1px solid #dbe4ea; border-radius:10px; background:#f8fafb; }
+.explanation-source-card h6,.explanation-mistake-card h6 { margin:0 0 6px; font-size:.95rem; }
+.explanation-source-focus { margin:0 0 10px; font-weight:800; }
+.explanation-source-values,.explanation-summary-list,.explanation-checks { display:grid; gap:8px; margin:0; }
+.explanation-source-value { display:grid; grid-template-columns:minmax(72px,.8fr) minmax(0,2fr); gap:8px; padding-top:6px; border-top:1px dashed #d5dce0; }
+.explanation-source-value:first-child { padding-top:0; border-top:0; }
+.explanation-source-value dt { font-weight:800; }
+.explanation-source-value dd { min-width:0; margin:0; overflow-wrap:anywhere; }
+.explanation-source-table-wrap { max-width:100%; overflow-x:auto; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; border:1px solid #d5dce0; border-radius:8px; background:#fff; }
+.explanation-source-table { width:100%; min-width:520px; border-collapse:collapse; font-size:.88rem; font-variant-numeric:tabular-nums; }
+.explanation-source-table th,.explanation-source-table td { padding:8px 10px; border-right:1px solid #e1e7eb; border-bottom:1px solid #e1e7eb; white-space:nowrap; }
+.explanation-source-table th:last-child,.explanation-source-table td:last-child { border-right:0; }
+.explanation-source-table tbody tr:last-child td { border-bottom:0; }
+.explanation-source-table th { background:#eef3f6; text-align:left; font-weight:800; }
+.explanation-source-table td.is-number { text-align:right; }
+.explanation-source-table td.explanation-source-unknown { text-align:center; font-weight:900; }
+.explanation-summary-item { margin:0; line-height:1.55; }
+.explanation-formula { font-variant-numeric:tabular-nums; }
+.explanation-formula-label { margin-bottom:5px; font-size:.8rem; font-weight:800; }
+.explanation-formula strong { display:block; min-width:0; font-size:1.08rem; line-height:1.45; white-space:normal; overflow-wrap:anywhere; }
+.explanation-operands { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.explanation-operand { max-width:100%; padding:3px 8px; border:1px solid #cbd5dc; border-radius:999px; font-size:.8rem; overflow-wrap:anywhere; }
+.explanation-transfer-card { display:grid; grid-template-columns:minmax(0,1fr) 24px minmax(0,1.2fr); gap:6px; align-items:center; }
+.explanation-transfer-from,.explanation-transfer-to { min-width:0; overflow-wrap:anywhere; }
+.explanation-transfer-from strong,.explanation-transfer-to strong { display:block; }
+.explanation-transfer-arrow { text-align:center; font-weight:900; }
+.explanation-check-item { display:grid; grid-template-columns:24px minmax(0,1fr); gap:8px; align-items:start; }
+.explanation-check-mark { font-weight:900; }
+.explanation-check-body strong,.explanation-check-body span { display:block; }
+.explanation-check-body span { margin-top:2px; font-size:.86rem; }
+.explanation-mistake-card p { margin:.35rem 0; }
+.explanation-mistake-fix { font-weight:800; }
+.explanation-flow-empty { margin:0; font-size:.9rem; }
+@media (max-width:480px) {
+  .explanation-flow-section { padding:12px; }
+  .explanation-transfer-card { grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr); }
+  .explanation-source-value { grid-template-columns:minmax(68px,.8fr) minmax(0,2fr); }
+}
+/* Gate 5-A T001 explanation-table physical QA: mirror the compact problem-table geometry. */
+@media (max-width:480px) {
+  .explanation-source-table-wrap[data-question-type="trial_balance"] {
+    overflow-x: hidden;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    table-layout: fixed;
+    font-size: .85rem;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] tr {
+    height: 44px;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] th,
+  .explanation-source-table[data-question-type="trial_balance"] td {
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 4px;
+    vertical-align: middle;
+    line-height: 1.25;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] th:first-child,
+  .explanation-source-table[data-question-type="trial_balance"] td:first-child {
+    width: 40%;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] th:nth-child(2),
+  .explanation-source-table[data-question-type="trial_balance"] td:nth-child(2),
+  .explanation-source-table[data-question-type="trial_balance"] th:nth-child(3),
+  .explanation-source-table[data-question-type="trial_balance"] td:nth-child(3) {
+    width: 30%;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .explanation-flow * { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
 }
