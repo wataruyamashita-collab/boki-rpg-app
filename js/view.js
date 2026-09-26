@@ -797,8 +797,8 @@
           const card = element('article', 'explanation-source-card');
           card.append(element('h6', '', item.title), element('p', 'explanation-source-focus', item.focus));
           if (item.table?.columns?.length && item.table?.rows?.length) {
-            const wrap = element('div', 'explanation-source-table-wrap'); wrap.tabIndex = 0; wrap.setAttribute('aria-label', `${item.title}の確認表`);
-            const table = element('table', 'explanation-source-table'), thead = element('thead', ''), headRow = element('tr', '');
+            const wrap = element('div', 'explanation-source-table-wrap'); wrap.dataset.questionType = question.type; wrap.tabIndex = 0; wrap.setAttribute('aria-label', `${item.title}の確認表`);
+            const table = element('table', 'explanation-source-table'); table.dataset.questionType = question.type; const thead = element('thead', ''), headRow = element('tr', '');
             item.table.columns.forEach(column => { const th = element('th', '', column.label); th.scope = 'col'; headRow.append(th); });
             thead.append(headRow); table.append(thead);
             const tbody = element('tbody', '');

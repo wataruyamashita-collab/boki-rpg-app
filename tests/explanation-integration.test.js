@@ -26,6 +26,11 @@ assert(/\.explanation-formula strong\s*\{[^}]*overflow-wrap:\s*anywhere/s.test(c
 assert(view.includes('explanation-source-table-wrap'),'表資料は専用の横スクロール領域で表示する');
 assert(/\.explanation-source-table-wrap\s*\{[^}]*overflow-x:\s*auto/s.test(css),'確認表は狭い画面で表だけ横スクロールできる');
 assert(/\.explanation-source-table\s*\{[^}]*min-width:\s*520px/s.test(css),'確認表の列幅を潰さない');
+assert(view.includes("wrap.dataset.questionType = question.type"),'解説の確認表ラッパーへ問題種別を付与する');
+assert(view.includes("table.dataset.questionType = question.type"),'解説の確認表へ問題種別を付与する');
+assert(css.includes('.explanation-source-table[data-question-type="trial_balance"]'),'T001解説表に試算表専用のモバイル指定を持つ');
+assert(css.includes('overflow-x: hidden;'),'T001解説表は内部横スクロールを発生させない');
+assert(css.includes('table-layout: fixed;'),'T001解説表は問題文表と同じ固定レイアウトを使う');
 const release=JSON.parse(fs.readFileSync('pwa-release-manifest.json','utf8')).release;
 const feedbackIndex=html.indexOf(`js/feedback.js?v=${release}`),modelIndex=html.indexOf(`js/explanation-model.js?v=${release}`),viewIndex=html.indexOf(`js/view.js?v=${release}`);
 assert(feedbackIndex>=0&&feedbackIndex<modelIndex&&modelIndex<viewIndex,'feedback→explanation model→viewの順に読み込む');

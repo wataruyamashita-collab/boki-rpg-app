@@ -841,6 +841,42 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
   .explanation-transfer-card { grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr); }
   .explanation-source-value { grid-template-columns:minmax(68px,.8fr) minmax(0,2fr); }
 }
+/* Gate 5-A T001 explanation-table physical QA: mirror the compact problem-table geometry. */
+@media (max-width:480px) {
+  .explanation-source-table-wrap[data-question-type="trial_balance"] {
+    overflow-x: hidden;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    table-layout: fixed;
+    font-size: .85rem;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] tr {
+    height: 44px;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] th,
+  .explanation-source-table[data-question-type="trial_balance"] td {
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 4px;
+    vertical-align: middle;
+    line-height: 1.25;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] th:first-child,
+  .explanation-source-table[data-question-type="trial_balance"] td:first-child {
+    width: 40%;
+  }
+  .explanation-source-table[data-question-type="trial_balance"] th:nth-child(2),
+  .explanation-source-table[data-question-type="trial_balance"] td:nth-child(2),
+  .explanation-source-table[data-question-type="trial_balance"] th:nth-child(3),
+  .explanation-source-table[data-question-type="trial_balance"] td:nth-child(3) {
+    width: 30%;
+  }
+}
+
 @media (prefers-reduced-motion:reduce) {
   .explanation-flow * { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
 }
