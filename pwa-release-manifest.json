@@ -1,6 +1,6 @@
 {
-  "release": "20260924-124",
-  "previousRelease": "20260924-123",
+  "release": "20260924-125",
+  "previousRelease": "20260924-124",
   "assets": {
     "css/style.css": "4fc022d3a2118d2c7e8c605b3cff066bafe10c8294ea4e69efe8c504dfb9cd58",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
