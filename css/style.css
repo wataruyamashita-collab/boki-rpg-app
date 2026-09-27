@@ -953,6 +953,7 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .calculator.calculator-contextual-float[open] {
   position: fixed;
   z-index: 90;
+  box-sizing: border-box;
   right: auto;
   bottom: auto;
   width: min(420px, calc(100vw - 16px));
