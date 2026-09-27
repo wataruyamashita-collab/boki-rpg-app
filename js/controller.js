@@ -716,7 +716,7 @@
       this.calculatorPositionFrame=null;
       this.calculatorTarget=null;
       this.updateCalculatorDisplay();
-      this.document.querySelectorAll?.('.amount-input.calculator-selected')?.forEach?.(field=>field.classList.remove('calculator-selected'));
+      this.document.querySelectorAll?.('.amount-input.calculator-selected')?.forEach?.(field=>field.classList?.remove?.('calculator-selected'));
       const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選ぶと、現在の数字を計算機で修正できます';
       const calculatorPanel=this.document.querySelector?.('.calculator');
       if(calculatorPanel){
