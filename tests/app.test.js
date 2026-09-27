@@ -988,9 +988,14 @@ assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="fina
 assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="financial_statement"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*box-sizing:\s*border-box[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*height:\s*44px/s.test(cssSource), 'F001金額入力欄は金額セル幅いっぱい・高さ44pxに統一する');
 assert(viewSource.includes("question.type === 'comprehensive' && this.compactWorksheetViewport()") && viewSource.includes("renderComprehensiveMaterialsMobile(question)"), 'C001資料はモバイルで横長汎用表ではなく縦カードへ切り替える');
 assert(viewSource.includes("flow.className = 'comprehensive-material-flow'") && viewSource.includes("card.className = 'comprehensive-material-card'"), 'C001資料カード構造を明示する');
+assert(viewSource.includes("renderComprehensiveTrialBalanceMobile(material)") && viewSource.includes("table.className = 'comprehensive-trial-balance-mobile'"), 'C001整理前残高試算表は文章列ではなく専用3列表で表示する');
+assert(viewSource.includes("['勘定科目','借方','貸方']") && viewSource.includes("total.className = 'comprehensive-trial-balance-total'"), 'C001試算表は勘定科目・借方・貸方と合計行を持つ');
 assert(viewSource.includes("String(value).split('／').filter(Boolean)") && viewSource.includes("list.className = 'comprehensive-adjustment-list'"), 'C001決算整理事項は省略せず項目ごとの縦リストで表示する');
-assert(/\.comprehensive-material-field\s*\{[^}]*grid-template-columns:\s*minmax\(4\.5rem,.8fr\) minmax\(0,2\.2fr\)/s.test(cssSource), 'C001資料カードの項目名と内容を画面幅内で読みやすく配置する');
+assert(/\.comprehensive-trial-balance-mobile\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'C001試算表はモバイル画面幅内に固定する');
+assert(/\.comprehensive-trial-balance-mobile th:first-child,[\s\S]*?\.comprehensive-trial-balance-mobile td:first-child\s*\{[^}]*width:\s*48%/s.test(cssSource), 'C001試算表は勘定科目48%・借貸各26%で配置する');
 assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\]\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'C001解答表はモバイルで横スクロールせず2列固定にする');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] th\s*\{[^}]*height:\s*auto[^}]*text-align:\s*center/s.test(cssSource), 'C001解答表ヘッダーは44px固定を外して中央揃えにする');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] th:nth-child\(2\)\s*\{[^}]*text-align:\s*center/s.test(cssSource), 'C001の金額見出しを横中央に配置する');
 assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*box-sizing:\s*border-box[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*height:\s*44px/s.test(cssSource), 'C001金額入力欄は金額セル幅いっぱい・高さ44pxに統一する');
 assert(viewSource.includes('試算表 → 修正記入 → 損益計算書 → 貸借対照表') && viewSource.includes("guide.className = 'worksheet-guide'") && !viewSource.includes('表は横にスクロールして入力してください。'), '8欄精算表はモバイルで4段階の処理順を示し、横スクロール前提にしない');
 assert(viewSource.includes("referenceLabel.textContent = 'ここを見る'") && viewSource.includes('元試算表の売上・仕入・保険料') && viewSource.includes('損益計算書の貸借差額'), 'D001モバイル各段階で参照する資料を入力欄の直前に示す');
