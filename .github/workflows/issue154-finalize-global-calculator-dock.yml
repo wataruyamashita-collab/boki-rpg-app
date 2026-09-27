@@ -1,4 +1,5 @@
 name: Issue 154 finalize global calculator dock
+# retry 1
 on:
   push:
     branches:
@@ -33,28 +34,31 @@ jobs:
           node independent-audit/tests/generation-immutability.test.js
           git diff --check
 
-      - name: Advance PWA release to 20260924-130
+      - name: Ensure PWA release 20260924-130
         run: |
           node - <<'NODE'
           const fs=require('fs');
           const crypto=require('crypto');
           const release='20260924-130';
           const previous='20260924-129';
-          const replaceOnce=(text,from,to,label)=>{
-            const parts=text.split(from);
-            if(parts.length!==2) throw new Error(label+' anchor mismatch: '+(parts.length-1));
-            return parts.join(to);
-          };
+          let manifest=JSON.parse(fs.readFileSync('pwa-release-manifest.json','utf8'));
           let html=fs.readFileSync('index.html','utf8');
-          if(!html.includes(previous)) throw new Error('index release anchor missing');
-          fs.writeFileSync('index.html',html.split(previous).join(release));
           let sw=fs.readFileSync('service-worker.js','utf8');
-          sw=replaceOnce(sw,`const RELEASE = '${previous}';`,`const RELEASE = '${release}';`,'service worker release');
-          fs.writeFileSync('service-worker.js',sw);
-          const manifest=JSON.parse(fs.readFileSync('pwa-release-manifest.json','utf8'));
-          if(manifest.release!==previous) throw new Error('manifest release mismatch');
-          manifest.release=release;
-          manifest.previousRelease=previous;
+          if(manifest.release===previous){
+            if(!html.includes(previous)) throw new Error('index previous-release anchor missing');
+            html=html.split(previous).join(release);
+            const from=`const RELEASE = '${previous}';`,to=`const RELEASE = '${release}';`;
+            if((sw.split(from).length-1)!==1) throw new Error('service worker previous-release anchor mismatch');
+            sw=sw.replace(from,to);
+            manifest.release=release;
+            manifest.previousRelease=previous;
+            fs.writeFileSync('index.html',html);
+            fs.writeFileSync('service-worker.js',sw);
+          } else if(manifest.release===release){
+            if(manifest.previousRelease!==previous) throw new Error('manifest previousRelease mismatch');
+            if(!html.includes(release)) throw new Error('index release mismatch');
+            if(!sw.includes(`const RELEASE = '${release}';`)) throw new Error('service worker release mismatch');
+          } else throw new Error('unexpected manifest release '+manifest.release);
           for(const asset of Object.keys(manifest.assets)){
             manifest.assets[asset]=crypto.createHash('sha256').update(fs.readFileSync(asset)).digest('hex');
           }
