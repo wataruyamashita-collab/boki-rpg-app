@@ -547,6 +547,46 @@ select, .amount-input {
 
 /* Gate 5-A physical QA: keep the three-column trial balance inside the mobile viewport. */
 @media (max-width: 480px) {
+  .answer-table:not(.eight-column-worksheet)[data-question-type="financial_statement"] {
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="financial_statement"] th,
+  .answer-table:not(.eight-column-worksheet)[data-question-type="financial_statement"] td {
+    box-sizing: border-box;
+    height: 44px;
+    min-width: 0;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="financial_statement"] th:first-child,
+  .answer-table:not(.eight-column-worksheet)[data-question-type="financial_statement"] td:first-child {
+    width: 62%;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="financial_statement"] th:nth-child(2),
+  .answer-table:not(.eight-column-worksheet)[data-question-type="financial_statement"] td:nth-child(2) {
+    width: 38%;
+    min-width: 0;
+    text-align: right;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="financial_statement"] td.amount-cell {
+    min-width: 0;
+    padding: 0 3px;
+  }
+  .answer-table:not(.eight-column-worksheet)[data-question-type="financial_statement"] .table-input[data-input-type="amount"] {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 44px;
+    min-height: 44px;
+    margin: 0;
+    padding: 2px 4px;
+  }
+
   .answer-table:not(.eight-column-worksheet)[data-question-type="trial_balance"] {
     box-sizing: border-box;
     width: 100%;
@@ -813,6 +853,12 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .materials-table.materials-table-compact td:first-child { width: 40%; }
 .materials-table.materials-table-compact th:not(:first-child),
 .materials-table.materials-table-compact td:not(:first-child) { width: 30%; }
+.question-materials[data-question-type="financial_statement"] .materials-table-compact th:first-child,
+.question-materials[data-question-type="financial_statement"] .materials-table-compact td:first-child { width: 30%; }
+.question-materials[data-question-type="financial_statement"] .materials-table-compact th:nth-child(2),
+.question-materials[data-question-type="financial_statement"] .materials-table-compact td:nth-child(2) { width: 40%; }
+.question-materials[data-question-type="financial_statement"] .materials-table-compact th:nth-child(3),
+.question-materials[data-question-type="financial_statement"] .materials-table-compact td:nth-child(3) { width: 30%; }
 .question-adjustments { margin-top: .85rem; padding: .75rem; border: 1px solid #cbd5e1; border-radius: .65rem; background: #fff; }
 .question-adjustments h4 { margin: 0 0 .45rem; font-size: .95rem; }
 .question-adjustments ol { margin: 0; padding-left: 1.4rem; }
