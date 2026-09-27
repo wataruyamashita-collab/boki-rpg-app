@@ -1,0 +1,104 @@
+'use strict';
+const fs=require('fs');
+const http=require('http');
+const path=require('path');
+const {chromium,webkit}=require('playwright');
+
+const ROOT=path.resolve(__dirname,'../..');
+const OUTPUT=path.join(ROOT,'artifacts','calculator-dock-all-types');
+const engines={chromium,webkit};
+const widths=[375,820];
+const cases=[
+  ['J001','journal'],
+  ['L040','ledger'],
+  ['T001','trial_balance'],
+  ['E001','correction'],
+  ['D019','worksheet'],
+  ['F001','financial_statement'],
+  ['C001','comprehensive'],
+  ['D001','worksheet-eight-column']
+];
+const mime={'.css':'text/css','.html':'text/html','.js':'text/javascript','.json':'application/json'};
+const evidence={status:'RUNNING',reports:[],failures:[]};
+const write=()=>{fs.mkdirSync(OUTPUT,{recursive:true});fs.writeFileSync(path.join(OUTPUT,'report.json'),JSON.stringify(evidence,null,2)+'\n');};
+const server=http.createServer((req,res)=>{
+  const pathname=new URL(req.url,'http://localhost').pathname;
+  const relative=pathname==='/'?'.github/visual/calculator-dock-harness.html':pathname.slice(1);
+  const file=path.resolve(ROOT,relative);
+  if(!file.startsWith(ROOT+path.sep)||!fs.existsSync(file)||fs.statSync(file).isDirectory()){res.writeHead(404);return res.end('not found');}
+  res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream'); res.end(fs.readFileSync(file));
+});
+async function run(){
+  await new Promise(r=>server.listen(0,'127.0.0.1',r)); const url='http://127.0.0.1:'+server.address().port+'/'; write();
+  try{
+    for(const [browserName,launcher] of Object.entries(engines)){
+      const browser=await launcher.launch();
+      try{
+        for(const width of widths){
+          const context=await browser.newContext({viewport:{width,height:844},hasTouch:true});
+          const page=await context.newPage();
+          try{
+            await page.goto(url,{waitUntil:'load'});
+            for(const [id,label] of cases){
+              await page.evaluate(id=>{
+                document.querySelector('.calculator')?.classList.remove('calculator-mobile-dock');
+                document.querySelector('.calculator')?.removeAttribute('open');
+                document.getElementById('question-form')?.classList.remove('calculator-dock-active');
+                window.calculatorDockHarness.render(id);
+              },id);
+              const result=await page.evaluate(async({id})=>{
+                const input=document.querySelector('.amount-input:not(:disabled)');
+                const calculator=document.querySelector('.calculator');
+                const form=document.getElementById('question-form');
+                if(!input) return {id,error:'NO_AMOUNT_INPUT'};
+                const coarse=matchMedia('(hover: none) and (pointer: coarse)').matches;
+                const readonly=input.readOnly;
+                window.__dockController.selectCalculatorTarget(input);
+                await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+                const ir=input.getBoundingClientRect(),cr=calculator.getBoundingClientRect();
+                const style=getComputedStyle(calculator);
+                const selected=input.classList.contains('calculator-selected');
+                const beforeValue=input.value;
+                window.__dockController.expression='12345';
+                window.__dockController.insertCalculatorResult(false);
+                const afterValue=input.value;
+                return {
+                  id,coarse,readonly,open:calculator.open,
+                  dockClass:calculator.classList.contains('calculator-mobile-dock'),
+                  formActive:form.classList.contains('calculator-dock-active'),
+                  position:style.position,
+                  selected,
+                  inputTop:ir.top,inputBottom:ir.bottom,
+                  calcTop:cr.top,calcBottom:cr.bottom,
+                  visibleAboveDock:ir.bottom<=cr.top-8,
+                  beforeValue,afterValue,
+                  targetText:document.getElementById('calculator-target')?.textContent||''
+                };
+              },{id});
+              const violations=[];
+              if(result.error)violations.push(result.error);
+              if(!result.coarse)violations.push('NOT_COARSE_POINTER');
+              if(!result.readonly)violations.push('AMOUNT_NOT_READONLY');
+              if(!result.open)violations.push('CALCULATOR_NOT_OPEN');
+              if(!result.dockClass)violations.push('DOCK_CLASS_MISSING');
+              if(!result.formActive)violations.push('FORM_RESERVE_MISSING');
+              if(result.position!=='fixed')violations.push('CALCULATOR_NOT_FIXED');
+              if(!result.selected)violations.push('TARGET_NOT_SELECTED');
+              if(!result.visibleAboveDock)violations.push('TARGET_OBSCURED_BY_DOCK');
+              if(result.afterValue!=='12,345')violations.push('INSERT_RESULT_FAILED');
+              evidence.reports.push({browser:browserName,width,id,label,...result,violations});
+              if(violations.length)evidence.failures.push(browserName+'/'+width+'/'+id+': '+violations.join(','));
+              fs.mkdirSync(path.join(OUTPUT,browserName),{recursive:true});
+              await page.screenshot({path:path.join(OUTPUT,browserName,id+'-'+width+'.png'),fullPage:true});
+              write();
+            }
+          } finally { await context.close(); }
+        }
+      } finally { await browser.close(); }
+    }
+    if(evidence.failures.length)throw new Error(evidence.failures.join('\n'));
+    evidence.status='PASS';write();console.log('CALCULATOR_DOCK_ALL_TYPES_PASS');
+  }catch(error){evidence.status='FAIL';evidence.error=error.message;write();throw error;}
+  finally{await new Promise(r=>server.close(r));}
+}
+run().catch(error=>{console.error(error.stack||error);process.exitCode=1;});
