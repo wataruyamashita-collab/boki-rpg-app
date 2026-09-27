@@ -982,6 +982,10 @@ assert(viewSource.includes("this.byId('explanation').before(container)"), '古�
 assert(/\.journal-header\s*\{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+120px[^}]*width:\s*max-content[^}]*min-width:\s*0/s.test(cssSource), '仕訳は過剰な620px固定床を使わずコンパクトな4列幅を保つ');
 assert(/\.journal-entry-area\s*\{[^}]*max-width:\s*100%[^}]*overflow:\s*visible/s.test(cssSource) && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(cssSource), 'iPhoneで説明を固定したまま仕訳グリッドだけを横スクロールできる');
 assert(/\.table-question-wrap\s*{[^}]*overflow-x:\s*auto/s.test(cssSource), '大きな表は小型画面で横スクロールできる');
+assert(viewSource.includes("question.type === 'financial_statement'") && viewSource.includes("columns.length <= 3"), 'F001の3列資料はモバイルでコンパクト表示する');
+assert(/\.question-materials\[data-question-type="financial_statement"\] \.materials-table-compact th:nth-child\(2\)[\s\S]*?width:\s*40%/s.test(cssSource), 'F001資料は区分30%・勘定科目40%・金額30%で画面幅に収める');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="financial_statement"\]\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'F001解答表はモバイルで横スクロールせず2列を固定配置する');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="financial_statement"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*box-sizing:\s*border-box[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*height:\s*44px/s.test(cssSource), 'F001金額入力欄は金額セル幅いっぱい・高さ44pxに統一する');
 assert(viewSource.includes('試算表 → 修正記入 → 損益計算書 → 貸借対照表') && viewSource.includes("guide.className = 'worksheet-guide'") && !viewSource.includes('表は横にスクロールして入力してください。'), '8欄精算表はモバイルで4段階の処理順を示し、横スクロール前提にしない');
 assert(viewSource.includes("referenceLabel.textContent = 'ここを見る'") && viewSource.includes('元試算表の売上・仕入・保険料') && viewSource.includes('損益計算書の貸借差額'), 'D001モバイル各段階で参照する資料を入力欄の直前に示す');
 assert(controllerSource.includes("'calculator-mobile-dock'") && controllerSource.includes("scrollIntoView?.({ block:'center'"), 'D001モバイル金額欄は計算機を画面下ドック化し選択欄を見える位置へ移す');
