@@ -151,6 +151,28 @@
       else if (question.format === 'fixed-asset-ledger') this.renderFixedAssetLedger(question, draft);
       else this.renderTable(question, draft);
     }
+    renderComprehensiveMaterialsMobile(question) {
+      const flow = this.document.createElement('div'); flow.className = 'comprehensive-material-flow';
+      question.materials.forEach((material, index) => {
+        const card = this.document.createElement('section'); card.className = 'comprehensive-material-card';
+        const title = this.document.createElement('h4'); title.textContent = material['資料区分'] || `資料${index + 1}`;
+        card.append(title);
+        Object.entries(material).forEach(([key, value]) => {
+          if (key === '資料区分' || value == null || value === '') return;
+          if (key === '内容' && title.textContent === '決算整理事項') {
+            const list = this.document.createElement('ol'); list.className = 'comprehensive-adjustment-list';
+            String(value).split('／').filter(Boolean).forEach(text => { const item = this.document.createElement('li'); item.textContent = text; list.append(item); });
+            card.append(list); return;
+          }
+          const field = this.document.createElement('div'); field.className = 'comprehensive-material-field';
+          const label = this.document.createElement('strong'); label.textContent = this.tableLabel(key);
+          const content = this.document.createElement('span'); content.textContent = typeof value === 'number' ? yen(value) : String(value);
+          field.append(label, content); card.append(field);
+        });
+        flow.append(card);
+      });
+      return flow;
+    }
     renderMaterials(question) {
       let container = this.byId('question-materials');
       if (!container) { container = this.document.createElement('section'); container.id = 'question-materials'; container.className = 'question-materials'; this.byId('q-text').after(container); }
@@ -158,6 +180,10 @@
       if (container.hidden) return;
       container.dataset.questionType = question.type;
       const heading = this.document.createElement('h3'); heading.textContent = question.materialTitle || '資料';
+      if (question.type === 'comprehensive' && this.compactWorksheetViewport()) {
+        container.append(heading, this.renderComprehensiveMaterialsMobile(question));
+        return;
+      }
       const wrap = this.document.createElement('div'); wrap.className = 'materials-table-wrap';
       const table = this.document.createElement('table'); table.className = 'materials-table';
       const columns = [...new Set(question.materials.flatMap(row => Object.keys(row)))];
