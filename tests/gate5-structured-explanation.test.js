@@ -41,6 +41,10 @@ assert.strictEqual(values.filter(q=>q.explanationModel).length,300,'all 300 ques
 const d=ExplanationModel.build(data.D001,{cells:{}},{correct:false});
 assert(d.summary.some(x=>x.text==='試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。'),'D001 summary');
 assert(d.transfer.length>0&&d.checks.length>0,'D001 structured flow');
+const worksheetInternalKey=/^(?:tb|adj|pl|bs)(?:Debit|Credit)$/;
+assert(d.transfer.every(item=>!worksheetInternalKey.test(String(item.to))&&!/(?:tb|adj|pl|bs)(?:Debit|Credit)/.test(String(item.decision))),'D001 explanation never exposes worksheet internal keys');
+assert(d.transfer.some(item=>item.to==='貸借対照表 借方'),'D001 bsDebit is localized as 貸借対照表 借方');
+assert(d.transfer.some(item=>item.to==='貸借対照表 貸方'),'D001 bsCredit is localized as 貸借対照表 貸方');
 const f=ExplanationModel.build(data.F001,{cells:{}},{correct:false});
 assert(f.summary.some(x=>x.text==='決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。'),'F001 summary');
 assert(f.transfer.length>0&&f.checks.length>0,'F001 structured flow');
