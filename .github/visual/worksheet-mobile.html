@@ -13,6 +13,7 @@
 <p id="q-text"></p>
 <section id="question-materials" class="question-materials"></section>
 <section id="table-container" class="table-question-wrap"></section>
+<section id="visual-answer-comparison" class="answer-comparison"></section>
 <details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
 <div class="calculator-readout"><input id="calculator-display" class="calculator-display" value="0" readonly inputmode="numeric" aria-label="計算機の表示"><output id="calculator-operator" class="calculator-operator-indicator"></output></div>
 <div class="calculator-transfer"><span id="calculator-target">金額欄を選ぶと、現在の数字を計算機で修正できます</span><button type="button" data-action="calc-insert">表示中の金額を反映</button></div>
@@ -37,6 +38,9 @@ const view=new window.AppView(document);
 view.calculatorFirstInput=true;
 view.renderMaterials(question);
 view.renderTable(question,{cells:{}});
+const comparisonScore={correct:false,details:question.table.inputCells.map((cellId,index)=>({cellId,correct:index%3!==0}))};
+const comparisonAnswer={cells:Object.fromEntries(question.table.inputCells.map((cellId,index)=>[cellId,index%3===0?'0':question.answer.cells[cellId]]))};
+document.getElementById('visual-answer-comparison').append(view.worksheetAnswerComparison(question,comparisonScore,comparisonAnswer));
 const fakeController={
   document,
   calculatorTarget:null,
