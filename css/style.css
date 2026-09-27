@@ -998,6 +998,8 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .explanation-source-card h6,.explanation-mistake-card h6 { margin:0 0 6px; font-size:.95rem; }
 .explanation-source-focus { margin:0 0 10px; font-weight:800; }
 .explanation-source-values,.explanation-summary-list,.explanation-checks { display:grid; gap:8px; margin:0; }
+.explanation-source-list { display:grid; gap:7px; margin:0; padding-left:1.5rem; line-height:1.55; }
+.explanation-source-list li { padding-left:2px; }
 .explanation-source-value { display:grid; grid-template-columns:minmax(72px,.8fr) minmax(0,2fr); gap:8px; padding-top:6px; border-top:1px dashed #d5dce0; }
 .explanation-source-value:first-child { padding-top:0; border-top:0; }
 .explanation-source-value dt { font-weight:800; }
@@ -1010,6 +1012,7 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .explanation-source-table th { background:#eef3f6; text-align:left; font-weight:800; }
 .explanation-source-table td.is-number { text-align:right; }
 .explanation-source-table td.explanation-source-unknown { text-align:center; font-weight:900; }
+.explanation-source-table .explanation-source-total-row td { border-top:2px double #566573; background:#f3f8fb; font-weight:800; }
 .explanation-summary-item { margin:0; line-height:1.55; }
 .explanation-formula { font-variant-numeric:tabular-nums; }
 .explanation-formula-label { margin-bottom:5px; font-size:.8rem; font-weight:800; }
@@ -1031,6 +1034,38 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
   .explanation-flow-section { padding:12px; }
   .explanation-transfer-card { grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr); }
   .explanation-source-value { grid-template-columns:minmax(68px,.8fr) minmax(0,2fr); }
+  .explanation-source-table-wrap[data-table-kind="trial-balance"],
+  .explanation-source-table-wrap[data-table-kind="timeline"],
+  .explanation-source-table-wrap[data-table-kind="key-value"],
+  .explanation-source-table-wrap[data-table-kind="compact"] { overflow-x:hidden; }
+  .explanation-source-table[data-table-kind="trial-balance"],
+  .explanation-source-table[data-table-kind="timeline"],
+  .explanation-source-table[data-table-kind="key-value"],
+  .explanation-source-table[data-table-kind="compact"] { box-sizing:border-box; width:100%; min-width:0; max-width:100%; table-layout:fixed; }
+  .explanation-source-table[data-table-kind="trial-balance"] th,
+  .explanation-source-table[data-table-kind="trial-balance"] td { box-sizing:border-box; min-height:44px; padding:7px 4px; vertical-align:middle; line-height:1.25; writing-mode:horizontal-tb; }
+  .explanation-source-table[data-table-kind="trial-balance"] th:first-child,
+  .explanation-source-table[data-table-kind="trial-balance"] td:first-child { width:40%; white-space:normal; word-break:keep-all; overflow-wrap:normal; }
+  .explanation-source-table[data-table-kind="trial-balance"] th:nth-child(2),
+  .explanation-source-table[data-table-kind="trial-balance"] td:nth-child(2),
+  .explanation-source-table[data-table-kind="trial-balance"] th:nth-child(3),
+  .explanation-source-table[data-table-kind="trial-balance"] td:nth-child(3) { width:30%; white-space:nowrap; text-align:right; }
+  .explanation-source-table[data-table-kind="timeline"] th,
+  .explanation-source-table[data-table-kind="timeline"] td,
+  .explanation-source-table[data-table-kind="compact"] th,
+  .explanation-source-table[data-table-kind="compact"] td,
+  .explanation-source-table[data-table-kind="key-value"] th,
+  .explanation-source-table[data-table-kind="key-value"] td { white-space:normal; overflow-wrap:anywhere; vertical-align:top; }
+  .explanation-source-table[data-table-kind="timeline"][data-column-count="2"] th:first-child,
+  .explanation-source-table[data-table-kind="timeline"][data-column-count="2"] td:first-child { width:28%; }
+  .explanation-source-table[data-table-kind="timeline"][data-column-count="2"] th:nth-child(2),
+  .explanation-source-table[data-table-kind="timeline"][data-column-count="2"] td:nth-child(2) { width:72%; }
+  .explanation-source-table[data-table-kind="key-value"] th:first-child,
+  .explanation-source-table[data-table-kind="key-value"] td:first-child { width:62%; }
+  .explanation-source-table[data-table-kind="key-value"] th:nth-child(2),
+  .explanation-source-table[data-table-kind="key-value"] td:nth-child(2) { width:38%; }
+  .explanation-source-table[data-table-kind="compact"] td.is-number,
+  .explanation-source-table[data-table-kind="key-value"] td.is-number { white-space:nowrap; text-align:right; }
 }
 /* Gate 5-A T001 explanation-table physical QA: mirror the compact problem-table geometry. */
 @media (max-width:480px) {
