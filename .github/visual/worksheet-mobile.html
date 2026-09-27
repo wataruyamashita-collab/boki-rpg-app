@@ -51,7 +51,8 @@ const fakeController={
   calculator:{accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null},
   clearCalculator:window.AppController.prototype.clearCalculator,
   updateCalculatorDisplay:window.AppController.prototype.updateCalculatorDisplay,
-  formatCalculatorExpression:window.AppController.prototype.formatCalculatorExpression
+  formatCalculatorExpression:window.AppController.prototype.formatCalculatorExpression,
+  positionCalculatorNearTarget:window.AppController.prototype.positionCalculatorNearTarget
 };
 const firstInput=document.querySelector('.worksheet-mobile-input');
 if(firstInput&&!explanationMode)window.AppController.prototype.selectCalculatorTarget.call(fakeController,firstInput);

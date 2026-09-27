@@ -68,12 +68,19 @@ async function measure(page,width){
       comparisonTableFit:comparisonTables.every(table=>{const section=table.closest('.worksheet-comparison-mobile-section');return rect(table).left>=rect(section).left-1&&rect(table).right<=rect(section).right+1;}),
       comparisonPairFit:comparisonPairs.every(pair=>{const cell=pair.closest('td');return rect(pair).left>=rect(cell).left-1&&rect(pair).right<=rect(cell).right+1;}),
       calculatorOpen:Boolean(calculator?.open),
-      calculatorDocked:Boolean(calculator?.classList.contains('calculator-mobile-dock')),
+      calculatorContextual:Boolean(calculator?.classList.contains('calculator-contextual-float')),
       calculatorPosition:calculator?getComputedStyle(calculator).position:'',
-      calculatorBottom:calculator?getComputedStyle(calculator).bottom:'',
+      calculatorPlacement:calculator?.dataset?.placement||'',
       formDockActive:Boolean(form?.classList.contains('calculator-dock-active')),
       formPaddingBottom:form?parseFloat(getComputedStyle(form).paddingBottom)||0:0,
-      selectedVisibleAboveDock:Boolean(selectedRect&&calculatorRect&&selectedRect.bottom<=calculatorRect.top+1),
+      selectedNonOverlapping:Boolean(selectedRect&&calculatorRect&&(calculatorRect.bottom<=selectedRect.top||calculatorRect.top>=selectedRect.bottom||calculatorRect.right<=selectedRect.left||calculatorRect.left>=selectedRect.right)),
+      selectedAnchored:Boolean(selectedRect&&calculatorRect&&(
+        calculator?.dataset?.placement==='below'
+          ? Math.abs(calculatorRect.top-(selectedRect.bottom+8))<=3
+          : calculator?.dataset?.placement==='above'
+            ? Math.abs(calculatorRect.bottom-(selectedRect.top-8))<=3
+            : false
+      )),
       selectedScrollY:selectedRect?.top||0
     };
   },width);
@@ -114,14 +121,15 @@ async function run(){
                 if(m.inputCount!==expectedIds.length||JSON.stringify([...m.inputIds].sort())!==JSON.stringify([...expectedIds].sort()))violations.push('WORKSHEET_INPUT_IDENTITY');
                 if(m.referenceCount!==4||m.referenceLabels.some(label=>label!=='ここを見る'))violations.push('WORKSHEET_REFERENCE_CUES');
                 if(!m.referenceTexts[0]?.includes('元試算表')||!m.referenceTexts[1]?.includes('決算整理事項')||!m.referenceTexts[2]?.includes('売上・仕入・保険料')||!m.referenceTexts[3]?.includes('損益計算書の貸借差額'))violations.push('WORKSHEET_REFERENCE_CONTENT');
-                if(!m.calculatorOpen||!m.calculatorDocked||m.calculatorPosition!=='fixed'||!m.formDockActive||m.formPaddingBottom<350)violations.push('WORKSHEET_CALCULATOR_DOCK');
-                if(!m.selectedVisibleAboveDock)violations.push('WORKSHEET_SELECTED_INPUT_COVERED');
+                if(!m.calculatorOpen||!m.calculatorContextual||m.calculatorPosition!=='fixed'||m.formDockActive)violations.push('WORKSHEET_CONTEXTUAL_CALCULATOR');
+                if(!['below','above'].includes(m.calculatorPlacement)||!m.selectedAnchored)violations.push('WORKSHEET_CALCULATOR_NOT_ANCHORED');
+                if(!m.selectedNonOverlapping)violations.push('WORKSHEET_SELECTED_INPUT_COVERED');
               }else{
                 if(m.pageOverflow)violations.push('EXPLANATION_PAGE_HORIZONTAL_OVERFLOW');
                 if(m.comparisonHostScroll>1||!m.comparisonFlowPresent||m.desktopComparisonCount!==0)violations.push('EXPLANATION_COMPARISON_HORIZONTAL_SCROLL');
                 if(m.comparisonSectionCount!==4||m.comparisonTableCount!==4||JSON.stringify(m.comparisonSectionTitles)!==JSON.stringify(['試算表','修正記入','損益計算書','貸借対照表']))violations.push('EXPLANATION_COMPARISON_STRUCTURE');
                 if(!m.comparisonTableFit||!m.comparisonPairFit)violations.push('EXPLANATION_COMPARISON_OVERFLOW');
-                if(m.calculatorOpen||m.calculatorDocked||m.formDockActive)violations.push('EXPLANATION_HAS_ACTIVE_CALCULATOR');
+                if(m.calculatorOpen||m.calculatorContextual||m.formDockActive)violations.push('EXPLANATION_HAS_ACTIVE_CALCULATOR');
               }
               if(errors.length)violations.push('PAGE_SCRIPT_ERROR');
               fs.mkdirSync(path.join(OUTPUT,name),{recursive:true});
