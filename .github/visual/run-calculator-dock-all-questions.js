@@ -71,7 +71,8 @@ async function run(){
                 panel.open=false; panel.classList.remove('calculator-mobile-dock'); form.classList.remove('calculator-dock-active');
                 window.scrollTo(0,0);
                 new window.AppView(document).renderQuestion(question,{},'training');
-                const inputs=[...document.querySelectorAll('.amount-input:not(:disabled)')];
+                const activeAnswerRoot=document.getElementById(question.type==='journal'?'journal-container':'table-container');
+                const inputs=[...(activeAnswerRoot?.querySelectorAll('.amount-input:not(:disabled)')||[])];
                 amountInputsSeen+=inputs.length;
                 byType[question.type]=(byType[question.type]||0)+inputs.length;
                 const input=inputs[0];
