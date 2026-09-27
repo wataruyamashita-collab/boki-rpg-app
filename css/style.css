@@ -922,14 +922,14 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .comprehensive-trial-balance-mobile td { box-sizing: border-box; padding: 5px 6px; border-top: 1px solid #e1e7eb; vertical-align: middle; }
 .comprehensive-trial-balance-mobile th { background: #f3f6f8; text-align: center; white-space: nowrap; }
 .comprehensive-trial-balance-mobile th:first-child,
-.comprehensive-trial-balance-mobile td:first-child { width: 48%; }
+.comprehensive-trial-balance-mobile td:first-child { width: 46%; }
 .comprehensive-trial-balance-mobile th:nth-child(2),
 .comprehensive-trial-balance-mobile th:nth-child(3),
 .comprehensive-trial-balance-mobile td:nth-child(2),
-.comprehensive-trial-balance-mobile td:nth-child(3) { width: 26%; }
+.comprehensive-trial-balance-mobile td:nth-child(3) { width: 27%; }
 .comprehensive-trial-balance-mobile td:first-child { text-align: left; overflow-wrap: anywhere; }
 .comprehensive-trial-balance-mobile td:nth-child(2),
-.comprehensive-trial-balance-mobile td:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.comprehensive-trial-balance-mobile td:nth-child(3) { padding-right: 4px; padding-left: 4px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .comprehensive-trial-balance-total td { font-weight: 700; background: #f8fafc; border-top: 2px solid #aab7c4; }
 .comprehensive-adjustment-list { margin: 0; padding: 8px 10px 8px 2rem; border-top: 1px solid #e1e7eb; }
 .comprehensive-adjustment-list li { line-height: 1.5; }
