@@ -151,12 +151,48 @@
       else if (question.format === 'fixed-asset-ledger') this.renderFixedAssetLedger(question, draft);
       else this.renderTable(question, draft);
     }
+    parseComprehensiveTrialBalance(value) {
+      return String(value ?? '').split('、').map(item => item.trim()).filter(Boolean).map(item => {
+        const match = item.match(/^(.*?)(-?[0-9０-９,，]+)$/u);
+        if (!match) return { account:item, amount:null };
+        return {
+          account:match[1].trim(),
+          amount:Number(normalizeNumber(match[2]).replace(/,/g, ''))
+        };
+      });
+    }
+    renderComprehensiveTrialBalanceMobile(material) {
+      const table = this.document.createElement('table'); table.className = 'comprehensive-trial-balance-mobile';
+      const head = table.createTHead().insertRow();
+      ['勘定科目','借方','貸方'].forEach(label => {
+        const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; head.append(th);
+      });
+      const body = table.createTBody();
+      const appendRow = (entry, side) => {
+        const row = body.insertRow();
+        const account = row.insertCell(); account.textContent = entry.account;
+        const debit = row.insertCell(); const credit = row.insertCell();
+        if (entry.amount != null) (side === 'debit' ? debit : credit).textContent = yen(entry.amount);
+      };
+      this.parseComprehensiveTrialBalance(material['借方']).forEach(entry => appendRow(entry, 'debit'));
+      this.parseComprehensiveTrialBalance(material['貸方']).forEach(entry => appendRow(entry, 'credit'));
+      const total = body.insertRow(); total.className = 'comprehensive-trial-balance-total';
+      const label = total.insertCell(); label.textContent = '合計';
+      const debitTotal = total.insertCell(); debitTotal.textContent = yen(material['借方合計']);
+      const creditTotal = total.insertCell(); creditTotal.textContent = yen(material['貸方合計']);
+      return table;
+    }
     renderComprehensiveMaterialsMobile(question) {
       const flow = this.document.createElement('div'); flow.className = 'comprehensive-material-flow';
       question.materials.forEach((material, index) => {
         const card = this.document.createElement('section'); card.className = 'comprehensive-material-card';
         const title = this.document.createElement('h4'); title.textContent = material['資料区分'] || `資料${index + 1}`;
         card.append(title);
+        if (title.textContent === '整理前残高試算表') {
+          card.append(this.renderComprehensiveTrialBalanceMobile(material));
+          flow.append(card);
+          return;
+        }
         Object.entries(material).forEach(([key, value]) => {
           if (key === '資料区分' || value == null || value === '') return;
           if (key === '内容' && title.textContent === '決算整理事項') {
