@@ -172,8 +172,25 @@ assert.strictEqual(calculatorTarget.value, '1,500', '電卓の計算結果を選
 assert.strictEqual(calculatorElements['calculator-display'].value, '1,500', '電卓の計算結果にも3桁区切りのカンマを表示する');
 assert.strictEqual(calculatorController.saved, true, '電卓から転記した金額を下書きへ保存する');
 assert.strictEqual(browserSandbox.window.AppController.prototype.formatCalculatorExpression('1234567＋8900.5'), '1,234,567＋8,900.5', '計算途中の各数値にもカンマを表示する');
-const editableTarget = { value: '12,500', readOnly:false, getAttribute() { return '貸方 1行目の金額'; }, classList: { toggle() {} } };
-const editableElements = { calculator: { open: false, scrollIntoView(options) { this.scrollOptions = options; } }, 'calculator-target': { textContent: '' }, 'calculator-display': { value: '' }, 'calculator-operator': { textContent: '' } };
+const classSet = () => {
+  const values = new Set();
+  return { add(value){values.add(value);}, remove(value){values.delete(value);}, contains(value){return values.has(value);}, toggle(value,force){if(force===undefined){if(values.has(value))values.delete(value);else values.add(value);}else if(force)values.add(value);else values.delete(value);} };
+};
+const editableTarget = {
+  value: '12,500', readOnly:false,
+  getAttribute() { return '貸方 1行目の金額'; },
+  scrollIntoView(options){this.scrollOptions=options;},
+  classList:classSet()
+};
+const editableCalculatorPanel = { open:false, classList:classSet() };
+const editableForm = { classList:classSet() };
+const editableElements = {
+  calculator: editableCalculatorPanel,
+  'calculator-target': { textContent: '' },
+  'calculator-display': { value: '' },
+  'calculator-operator': { textContent: '' },
+  'question-form': editableForm
+};
 const editableCalculator = {
   expression: '999', calculatorTarget: null,
   calculator: { accumulator: 999, operator: '＋', waitingForOperand: true, lastOperator: null, lastOperand: null },
@@ -187,15 +204,15 @@ assert.strictEqual(editableCalculator.expression, '12500', '入力済みの金�
 assert.strictEqual(editableElements['calculator-display'].value, '12,500', '入力欄の現在値を電卓上で確認して修正できる');
 assert.strictEqual(editableCalculator.calculator.operator, null, '別の入力欄を選んだときは以前の計算状態を引き継がない');
 assert.match(editableElements['calculator-target'].textContent, /現在値を修正できます/, '入力済み金額を修正できることを案内する');
-assert.strictEqual(editableElements.calculator.open, false, '金額欄のフォーカスだけでは閉じた計算機を開かない');
-assert.strictEqual(editableElements.calculator.scrollOptions, undefined, '金額欄のフォーカスだけでは計算機へスクロールしない');
+assert.strictEqual(editableCalculatorPanel.open, false, 'デスクトップの編集可能金額欄では閉じた計算機を自動で開かない');
+assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-mobile-dock'), false, 'デスクトップの編集可能金額欄では計算機ドックを有効化しない');
 editableTarget.readOnly = true;
 browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(editableCalculator, editableTarget);
-assert.strictEqual(editableElements.calculator.open, true, 'calculator-first金額欄のtapは既存のアプリ内計算機を開く');
-const classSet = () => {
-  const values = new Set();
-  return { add(value){values.add(value);}, remove(value){values.delete(value);}, contains(value){return values.has(value);}, toggle(value,force){if(force===undefined){if(values.has(value))values.delete(value);else values.add(value);}else if(force)values.add(value);else values.delete(value);} };
-};
+assert.strictEqual(editableCalculatorPanel.open, true, 'touch-first readOnly金額欄のtapは既存のアプリ内計算機を開く');
+assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-mobile-dock'), true, 'touch-first readOnly金額欄は問題形式を問わず計算機を下部ドック化する');
+assert.strictEqual(editableForm.classList.contains('calculator-dock-active'), true, '全問題共通ドック表示中は入力欄を隠さない下余白を確保する');
+assert.strictEqual(JSON.stringify(editableTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'全問題共通で選択した金額欄を計算機ドックの上へ表示する');
+
 const worksheetTarget = {
   value:'', readOnly:true,
   getAttribute(){return '修正記入 前払保険料 借方（金額）';},
@@ -224,10 +241,10 @@ const worksheetCalculatorController={
   formatCalculatorExpression:browserSandbox.window.AppController.prototype.formatCalculatorExpression
 };
 browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(worksheetCalculatorController,worksheetTarget);
-assert.strictEqual(worksheetCalculatorPanel.open,true,'D001モバイル金額欄を選ぶと計算機をその場で開く');
-assert.strictEqual(worksheetCalculatorPanel.classList.contains('calculator-mobile-dock'),true,'D001モバイルでは既存計算機を画面下ドックへ切り替える');
-assert.strictEqual(worksheetForm.classList.contains('calculator-dock-active'),true,'計算機ドック表示中は入力欄を隠さない下余白を確保する');
-assert.strictEqual(JSON.stringify(worksheetTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'選択したD001金額欄を計算機ドックの上へ表示する');
+assert.strictEqual(worksheetCalculatorPanel.open,true,'D001モバイル金額欄でも全問題共通計算機ドックを開く');
+assert.strictEqual(worksheetCalculatorPanel.classList.contains('calculator-mobile-dock'),true,'D001の既存ドック動作を一般化後も維持する');
+assert.strictEqual(worksheetForm.classList.contains('calculator-dock-active'),true,'D001でも入力欄を隠さない下余白を維持する');
+assert.strictEqual(JSON.stringify(worksheetTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'D001でも選択金額欄を計算機ドックの上へ表示する');
 const formatDirectAmount = value => { const input={value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',validationMessage:'',setCustomValidity(message){this.validationMessage=message;},setSelectionRange(){}}; const valid=browserSandbox.window.AppController.prototype.formatAmount(input); return {input,valid}; };
 const validAmounts = new Map([['',''],['0','0'],['12','12'],['1234','1,234'],['1234567','1,234,567'],['1,234','1,234'],['12,345','12,345'],['123,456','123,456'],['1,234,567','1,234,567'],['１２３４','1,234'],['１，２３４','1,234'],['１２，３４５','12,345']]);
 for (const [raw,expected] of validAmounts) { const {input,valid}=formatDirectAmount(raw); assert.strictEqual(valid,true,`${raw||'空欄'}を有効な金額として受理する`); assert.strictEqual(input.value,expected,`${raw||'空欄'}を正規表示する`); assert.strictEqual(input.validationMessage,'',`${raw||'空欄'}のcustom validityを解除する`); }
