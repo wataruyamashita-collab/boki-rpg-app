@@ -64,7 +64,7 @@ async function run(){
                 formatCalculatorExpression:proto.formatCalculatorExpression,
                 positionCalculatorNearTarget:proto.positionCalculatorNearTarget
               };
-              const raf=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+              const raf=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))));
               for(const id of ids){
                 const question=window.QuestionData[id];
                 const panel=document.querySelector('.calculator');
