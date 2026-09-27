@@ -204,7 +204,7 @@ try{
       rejectCandidate(
         broken,
         documents.filter(
-          document=>document.generation<54
+          document=>document.generation<55
         )
       );
     }
@@ -250,7 +250,7 @@ try{
 
   if(generation55Committed){
     test(
-      'committed Generation 54 current integrity passes',
+      'committed Generation 55 current integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCurrent().ok,
         true
@@ -258,7 +258,7 @@ try{
     );
   }else{
     test(
-      'pending Generation 54 candidate integrity passes',
+      'pending Generation 55 candidate integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCandidate(candidate).ok,
         true
