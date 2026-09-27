@@ -107,6 +107,7 @@
           calculatorPanel.style?.removeProperty?.('top');
           calculatorPanel.style?.removeProperty?.('width');
           calculatorPanel.style?.removeProperty?.('max-height');
+          this.document.getElementById('question-form')?.classList?.remove?.('calculator-workspace-active');
           if (calculatorPanel.dataset) delete calculatorPanel.dataset.placement;
         }
       });
@@ -644,6 +645,7 @@
       this.calculatorTarget = input;
       const calculatorPanel = this.document.querySelector('.calculator');
       if (input.readOnly && calculatorPanel) {
+        this.document.getElementById('question-form')?.classList?.add?.('calculator-workspace-active');
         calculatorPanel.classList?.add?.('calculator-contextual-float');
         calculatorPanel.open = true;
         const revealTarget = () => {
@@ -722,6 +724,7 @@
       this.updateCalculatorDisplay();
       this.document.querySelectorAll?.('.amount-input.calculator-selected')?.forEach?.(field=>field.classList?.remove?.('calculator-selected'));
       const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選ぶと、現在の数字を計算機で修正できます';
+      this.document.getElementById('question-form')?.classList?.remove?.('calculator-workspace-active');
       const calculatorPanel=this.document.querySelector?.('.calculator');
       if(calculatorPanel){
         calculatorPanel.open=false;

@@ -69,7 +69,7 @@ async function run(){
                 const question=window.QuestionData[id];
                 const panel=document.querySelector('.calculator');
                 const form=document.getElementById('question-form');
-                panel.open=false; panel.classList.remove('calculator-contextual-float'); form.classList.remove('calculator-dock-active');
+                panel.open=false; panel.classList.remove('calculator-contextual-float'); form.classList.remove('calculator-dock-active'); form.classList.remove('calculator-workspace-active');
                 window.scrollTo(0,0);
                 new window.AppView(document).renderQuestion(question,{},'training');
                 const activeAnswerRoot=document.getElementById(question.type==='journal'?'journal-container':'table-container');
@@ -79,7 +79,7 @@ async function run(){
                 if(!inputs.length){failures.push(id+':NO_AMOUNT_INPUT');continue;}
                 for(let inputIndex=0;inputIndex<inputs.length;inputIndex+=1){
                   const input=inputs[inputIndex];
-                  panel.open=false; panel.classList.remove('calculator-contextual-float'); form.classList.remove('calculator-dock-active');
+                  panel.open=false; panel.classList.remove('calculator-contextual-float'); form.classList.remove('calculator-dock-active'); form.classList.remove('calculator-workspace-active');
                   if(!input.readOnly){failures.push(id+'#'+(inputIndex+1)+':AMOUNT_NOT_READONLY_ON_COARSE_POINTER');continue;}
                   controller.expression='0'; controller.calculatorTarget=null;
                   controller.calculator={accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null};
@@ -92,6 +92,7 @@ async function run(){
                   if(!panel.open)issues.push('PANEL_NOT_OPEN');
                   if(!panel.classList.contains('calculator-contextual-float'))issues.push('DOCK_CLASS_MISSING');
                   if(form.classList.contains('calculator-dock-active'))issues.push('UNEXPECTED_FORM_BOTTOM_RESERVE');
+                  if(!form.classList.contains('calculator-workspace-active'))issues.push('WORKSPACE_RUNWAY_MISSING');
                   if(style.position!=='fixed')issues.push('PANEL_NOT_FIXED');
                   if(panelRect.left<-1||panelRect.right>innerWidth+1)issues.push('PANEL_HORIZONTAL_OVERFLOW');
                   const placement=panel.dataset.placement;

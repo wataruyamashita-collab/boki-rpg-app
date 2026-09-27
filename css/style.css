@@ -971,6 +971,10 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .calculator.calculator-contextual-float[open] .calculator-keys { grid-template-rows: repeat(5, 40px); gap: 4px; margin-top: 6px; }
 .calculator.calculator-contextual-float[open] .calculator-keys button { min-height: 40px; }
 .calculator.calculator-contextual-float.calculator-placement-above[open] { transform-origin: bottom center; }
+/* Temporary scroll runway exists only while a touch calculator is open. It lets the active field reach the work zone without making the calculator follow page scroll. */
+#question-form.calculator-workspace-active {
+  padding-bottom: calc(72vh + env(safe-area-inset-bottom));
+}
 @media (max-width: 768px) {
   #question-form { padding-bottom: env(safe-area-inset-bottom); }
   .materials-table.materials-table-compact th, .materials-table.materials-table-compact td { padding: .4rem .3rem; font-size: .82rem; }

@@ -212,6 +212,7 @@ browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(editab
 assert.strictEqual(editableCalculatorPanel.open, true, 'touch-first readOnly金額欄のtapは既存のアプリ内計算機を開く');
 assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-contextual-float'), true, 'touch-first readOnly金額欄は問題形式を問わず計算機を選択時の作業位置へ固定表示する');
 assert.strictEqual(editableForm.classList.contains('calculator-dock-active'), false, '全問題共通フロート表示では巨大な下余白を追加しない');
+assert.strictEqual(editableForm.classList.contains('calculator-workspace-active'), true, '計算機表示中だけ入力欄を作業位置へ移せる一時スクロール余地を確保する');
 assert.strictEqual(JSON.stringify(editableTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'全問題共通で選択した金額欄を計算機の基準位置へ表示する');
 
 const worksheetTarget = {
@@ -246,6 +247,7 @@ browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(worksh
 assert.strictEqual(worksheetCalculatorPanel.open,true,'D001モバイル金額欄でも全問題共通計算機ドックを開く');
 assert.strictEqual(worksheetCalculatorPanel.classList.contains('calculator-contextual-float'),true,'D001でも選択時固定型の計算機表示を維持する');
 assert.strictEqual(worksheetForm.classList.contains('calculator-dock-active'),false,'D001でも巨大な下余白を追加しない');
+assert.strictEqual(worksheetForm.classList.contains('calculator-workspace-active'),true,'D001でも計算機表示中だけ一時スクロール余地を確保する');
 assert.strictEqual(JSON.stringify(worksheetTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'D001でも選択金額欄を計算機の基準位置へ表示する');
 const formatDirectAmount = value => { const input={value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',validationMessage:'',setCustomValidity(message){this.validationMessage=message;},setSelectionRange(){}}; const valid=browserSandbox.window.AppController.prototype.formatAmount(input); return {input,valid}; };
 const validAmounts = new Map([['',''],['0','0'],['12','12'],['1234','1,234'],['1234567','1,234,567'],['1,234','1,234'],['12,345','12,345'],['123,456','123,456'],['1,234,567','1,234,567'],['１２３４','1,234'],['１，２３４','1,234'],['１２，３４５','12,345']]);
@@ -1021,7 +1023,8 @@ assert(viewSource.includes("referenceLabel.textContent = 'ここを見る'") && 
 assert(controllerSource.includes("if (input.readOnly && calculatorPanel)") && controllerSource.includes("calculatorPanel.classList?.add?.('calculator-contextual-float')") && controllerSource.includes("positionCalculatorNearTarget(input") && controllerSource.includes("scrollIntoView?.({ block:'center'") && controllerSource.includes("const workTop = viewportTop + viewportHeight * .3"), '全readOnly金額欄は問題形式を問わず選択時に入力欄を作業位置へ移し、計算機をその場に固定表示する');
 assert(!controllerSource.includes("scheduleCalculatorPosition") && !controllerSource.includes("document.addEventListener?.('scroll'"), '計算機表示後のスクロールで選択欄を追跡して再配置しない');
 assert(!controllerSource.includes("input.closest?.('.worksheet-mobile-section')"), '計算機ドックをD001専用条件へ戻さない');
-assert(/\.calculator\.calculator-contextual-float\[open\]\s*\{[^}]*position:\s*fixed[^}]*bottom:\s*auto/s.test(cssSource) && !/#question-form\.calculator-dock-active/.test(cssSource), '全問題共通計算機は選択欄追従の固定オーバーレイとし、巨大な下余白を追加しない');
+assert(/\.calculator\.calculator-contextual-float\[open\]\s*\{[^}]*position:\s*fixed[^}]*bottom:\s*auto/s.test(cssSource) && !/#question-form\.calculator-dock-active/.test(cssSource), '全問題共通計算機は選択時固定のオーバーレイとし、旧ドック用の恒久余白を追加しない');
+assert(/#question-form\.calculator-workspace-active\s*\{[^}]*padding-bottom:\s*calc\(72vh \+ env\(safe-area-inset-bottom\)\)/s.test(cssSource), '計算機表示中だけ作業位置確保用の一時スクロール余地を持つ');
 assert(viewSource.includes("th.scope = 'colgroup'") && viewSource.includes("accountHead.rowSpan = 2"), '8欄精算表のヘッダーを4組と借方・貸方の二段構成にする');
 assert(/\.eight-column-worksheet \.worksheet-value-cell, \.answer-table \.amount-cell\s*{[^}]*white-space:\s*nowrap/s.test(cssSource), '精算表を含む表の金額を途中で折り返さない');
 assert(/\.eight-column-worksheet th:not\(:first-child\), \.eight-column-worksheet td:not\(:first-child\)\s*{[^}]*min-width:\s*13ch/s.test(cssSource), '8桁精算表の金額列に多桁の数値を表示できる幅を確保する');

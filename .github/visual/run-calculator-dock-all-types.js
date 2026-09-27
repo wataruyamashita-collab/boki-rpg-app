@@ -44,6 +44,7 @@ async function run(){
                 document.querySelector('.calculator')?.classList.remove('calculator-contextual-float');
                 document.querySelector('.calculator')?.removeAttribute('open');
                 document.getElementById('question-form')?.classList.remove('calculator-dock-active');
+                document.getElementById('question-form')?.classList.remove('calculator-workspace-active');
                 window.calculatorDockHarness.render(id);
               },id);
               const result=await page.evaluate(async({id})=>{
@@ -67,6 +68,7 @@ async function run(){
                   id,coarse,readonly,open:calculator.open,
                   contextualClass:calculator.classList.contains('calculator-contextual-float'),
                   formActive:form.classList.contains('calculator-dock-active'),
+                  workspaceActive:form.classList.contains('calculator-workspace-active'),
                   position:style.position,
                   selected,
                   inputTop:ir.top,inputBottom:ir.bottom,
@@ -105,12 +107,13 @@ async function run(){
               if(!result.open)violations.push('CALCULATOR_NOT_OPEN');
               if(!result.contextualClass)violations.push('CONTEXTUAL_FLOAT_CLASS_MISSING');
               if(result.formActive)violations.push('UNEXPECTED_FORM_BOTTOM_RESERVE');
+              if(!result.workspaceActive)violations.push('WORKSPACE_RUNWAY_MISSING');
               if(result.position!=='fixed')violations.push('CALCULATOR_NOT_FIXED');
               if(!result.selected)violations.push('TARGET_NOT_SELECTED');
               if(!result.nonOverlapping)violations.push('TARGET_OVERLAPPED_BY_CALCULATOR');
               if(!result.anchored)violations.push('CALCULATOR_NOT_ANCHORED_TO_TARGET');
               if(!frozen.stable)violations.push('CALCULATOR_MOVED_DURING_SCROLL');
-              if(id==='C001'&&result.workZoneRatio!==null&&(result.workZoneRatio<0.18||result.workZoneRatio>0.42))violations.push('C001_TARGET_NOT_IN_WORK_ZONE');
+              if(id==='C001'&&result.workZoneRatio!==null&&(result.workZoneRatio<0.18||result.workZoneRatio>0.42))violations.push('C001_TARGET_NOT_IN_WORK_ZONE_'+String(result.workZoneRatio));
               if(result.afterValue!=='12,345')violations.push('INSERT_RESULT_FAILED');
               evidence.reports.push({browser:browserName,width,id,label,...result,frozen,coarsePointerObserved:result.coarse,violations});
               if(violations.length)evidence.failures.push(browserName+'/'+width+'/'+id+': '+violations.join(','));
