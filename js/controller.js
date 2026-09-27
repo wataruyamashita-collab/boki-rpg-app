@@ -603,19 +603,16 @@
         if (worksheetMobileInput) {
           const revealTarget = () => {
             input.scrollIntoView?.({ block:'center', inline:'nearest', behavior:'auto' });
-            const keepAboveDock = remainingPasses => {
+            const keepAboveDock = () => {
               const inputRect = input.getBoundingClientRect?.();
               const panelRect = calculatorPanel.getBoundingClientRect?.();
               if (!inputRect || !panelRect) return;
               const safeBottom = panelRect.top - 16;
               if (inputRect.bottom > safeBottom) {
                 root.scrollBy?.({ top:inputRect.bottom - safeBottom, left:0, behavior:'auto' });
-                if (remainingPasses > 0 && typeof root.requestAnimationFrame === 'function') {
-                  root.requestAnimationFrame(() => keepAboveDock(remainingPasses - 1));
-                }
               }
             };
-            if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(() => keepAboveDock(2)); else keepAboveDock(0);
+            if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(keepAboveDock); else keepAboveDock();
           };
           if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
         }
