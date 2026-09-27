@@ -146,8 +146,8 @@ try{
   const candidate=generation62Committed
     ? documents.at(-1)
     : (
-        fs.existsSync(authorityPath(61))
-          ? JSON.parse(fs.readFileSync(authorityPath(61),'utf8'))
+        fs.existsSync(authorityPath(62))
+          ? JSON.parse(fs.readFileSync(authorityPath(62),'utf8'))
           : lifecycle.createCandidate()
       );
 

@@ -61,7 +61,8 @@ async function run(){
                 calculator:{accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null},
                 clearCalculator:proto.clearCalculator,
                 updateCalculatorDisplay:proto.updateCalculatorDisplay,
-                formatCalculatorExpression:proto.formatCalculatorExpression
+                formatCalculatorExpression:proto.formatCalculatorExpression,
+                positionCalculatorNearTarget:proto.positionCalculatorNearTarget
               };
               const raf=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
               for(const id of ids){
