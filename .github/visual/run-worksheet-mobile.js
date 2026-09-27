@@ -87,41 +87,50 @@ async function run(){
       const browser=await launcher.launch();
       try{
         for(const width of viewports){
-          const page=await browser.newPage({viewport:{width,height:900}});
-          const errors=[];
-          page.on('pageerror',e=>errors.push(String(e?.stack||e?.message||e)));
-          try{
-            await page.goto(base,{waitUntil:'load'});
-            await page.waitForTimeout(80);
-            const m=await measure(page,width);
-            m.pageErrors=errors;
-            const expectedIds=await page.evaluate(()=>window.QuestionData.D001.table.inputCells);
-            const violations=[];
-            if(m.pageOverflow)violations.push('PAGE_HORIZONTAL_OVERFLOW');
-            if(m.materialScroll>1||m.materialRight>m.materialWrapRight+1.5)violations.push('SOURCE_TABLE_HORIZONTAL_SCROLL');
-            if(m.adjustments.length!==2||!m.adjustments[0].includes('40,000円')||!m.adjustments[1].includes('60,000円'))violations.push('ADJUSTMENTS_NOT_SEPARATE');
-            if(m.questionText.includes('（保険料')||!m.questionText.includes('元試算表と決算整理事項'))violations.push('QUESTION_WORDING');
-            if(m.materialHeading!=='元試算表')violations.push('SOURCE_HEADING');
-            if(m.containerScroll>1||!/worksheet-mobile-mode/.test(m.containerClass))violations.push('WORKSHEET_CONTAINER_SCROLL');
-            if(m.desktopWorksheetCount!==0)violations.push('DESKTOP_WORKSHEET_RENDERED_ON_MOBILE');
-            if(m.sectionCount!==4||m.tableCount!==4||JSON.stringify(m.sectionTitles)!==JSON.stringify(['試算表','修正記入','損益計算書','貸借対照表']))violations.push('WORKSHEET_STEP_STRUCTURE');
-            if(!m.tableFit)violations.push('WORKSHEET_TABLE_OVERFLOW');
-            if(!m.inputFit)violations.push('WORKSHEET_INPUT_OVERFLOW');
-            if(m.inputCount!==expectedIds.length||JSON.stringify([...m.inputIds].sort())!==JSON.stringify([...expectedIds].sort()))violations.push('WORKSHEET_INPUT_IDENTITY');
-            if(m.referenceCount!==4||m.referenceLabels.some(label=>label!=='ここを見る'))violations.push('WORKSHEET_REFERENCE_CUES');
-            if(!m.referenceTexts[0]?.includes('元試算表')||!m.referenceTexts[1]?.includes('決算整理事項')||!m.referenceTexts[2]?.includes('売上・仕入・保険料')||!m.referenceTexts[3]?.includes('損益計算書の貸借差額'))violations.push('WORKSHEET_REFERENCE_CONTENT');
-            if(m.comparisonHostScroll>1||!m.comparisonFlowPresent||m.desktopComparisonCount!==0)violations.push('EXPLANATION_COMPARISON_HORIZONTAL_SCROLL');
-            if(m.comparisonSectionCount!==4||m.comparisonTableCount!==4||JSON.stringify(m.comparisonSectionTitles)!==JSON.stringify(['試算表','修正記入','損益計算書','貸借対照表']))violations.push('EXPLANATION_COMPARISON_STRUCTURE');
-            if(!m.comparisonTableFit||!m.comparisonPairFit)violations.push('EXPLANATION_COMPARISON_OVERFLOW');
-            if(!m.calculatorOpen||!m.calculatorDocked||m.calculatorPosition!=='fixed'||!m.formDockActive||m.formPaddingBottom<350)violations.push('WORKSHEET_CALCULATOR_DOCK');
-            if(!m.selectedVisibleAboveDock)violations.push('WORKSHEET_SELECTED_INPUT_COVERED');
-            if(errors.length)violations.push('PAGE_SCRIPT_ERROR');
-            fs.mkdirSync(path.join(OUTPUT,name),{recursive:true});
-            await page.screenshot({path:path.join(OUTPUT,name,'D001-'+width+'.png'),fullPage:true});
-            evidence.reports.push({browser:name,...m,violations});
-            if(violations.length)evidence.failures.push(name+'/D001/'+width+': '+violations.join(','));
-            write();
-          }finally{await page.close();}
+          for(const mode of ['problem','explanation']){
+            const page=await browser.newPage({viewport:{width,height:900}});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e?.stack||e?.message||e)));
+            try{
+              const url=mode==='explanation'?base+'?view=explanation':base;
+              await page.goto(url,{waitUntil:'load'});
+              await page.waitForTimeout(100);
+              const m=await measure(page,width);
+              m.mode=mode;
+              m.pageErrors=errors;
+              const violations=[];
+              if(mode==='problem'){
+                const expectedIds=await page.evaluate(()=>window.QuestionData.D001.table.inputCells);
+                if(m.pageOverflow)violations.push('PAGE_HORIZONTAL_OVERFLOW');
+                if(m.materialScroll>1||m.materialRight>m.materialWrapRight+1.5)violations.push('SOURCE_TABLE_HORIZONTAL_SCROLL');
+                if(m.adjustments.length!==2||!m.adjustments[0].includes('40,000円')||!m.adjustments[1].includes('60,000円'))violations.push('ADJUSTMENTS_NOT_SEPARATE');
+                if(m.questionText.includes('（保険料')||!m.questionText.includes('元試算表と決算整理事項'))violations.push('QUESTION_WORDING');
+                if(m.materialHeading!=='元試算表')violations.push('SOURCE_HEADING');
+                if(m.containerScroll>1||!/worksheet-mobile-mode/.test(m.containerClass))violations.push('WORKSHEET_CONTAINER_SCROLL');
+                if(m.desktopWorksheetCount!==0)violations.push('DESKTOP_WORKSHEET_RENDERED_ON_MOBILE');
+                if(m.sectionCount!==4||m.tableCount!==4||JSON.stringify(m.sectionTitles)!==JSON.stringify(['試算表','修正記入','損益計算書','貸借対照表']))violations.push('WORKSHEET_STEP_STRUCTURE');
+                if(!m.tableFit)violations.push('WORKSHEET_TABLE_OVERFLOW');
+                if(!m.inputFit)violations.push('WORKSHEET_INPUT_OVERFLOW');
+                if(m.inputCount!==expectedIds.length||JSON.stringify([...m.inputIds].sort())!==JSON.stringify([...expectedIds].sort()))violations.push('WORKSHEET_INPUT_IDENTITY');
+                if(m.referenceCount!==4||m.referenceLabels.some(label=>label!=='ここを見る'))violations.push('WORKSHEET_REFERENCE_CUES');
+                if(!m.referenceTexts[0]?.includes('元試算表')||!m.referenceTexts[1]?.includes('決算整理事項')||!m.referenceTexts[2]?.includes('売上・仕入・保険料')||!m.referenceTexts[3]?.includes('損益計算書の貸借差額'))violations.push('WORKSHEET_REFERENCE_CONTENT');
+                if(!m.calculatorOpen||!m.calculatorDocked||m.calculatorPosition!=='fixed'||!m.formDockActive||m.formPaddingBottom<350)violations.push('WORKSHEET_CALCULATOR_DOCK');
+                if(!m.selectedVisibleAboveDock)violations.push('WORKSHEET_SELECTED_INPUT_COVERED');
+              }else{
+                if(m.pageOverflow)violations.push('EXPLANATION_PAGE_HORIZONTAL_OVERFLOW');
+                if(m.comparisonHostScroll>1||!m.comparisonFlowPresent||m.desktopComparisonCount!==0)violations.push('EXPLANATION_COMPARISON_HORIZONTAL_SCROLL');
+                if(m.comparisonSectionCount!==4||m.comparisonTableCount!==4||JSON.stringify(m.comparisonSectionTitles)!==JSON.stringify(['試算表','修正記入','損益計算書','貸借対照表']))violations.push('EXPLANATION_COMPARISON_STRUCTURE');
+                if(!m.comparisonTableFit||!m.comparisonPairFit)violations.push('EXPLANATION_COMPARISON_OVERFLOW');
+                if(m.calculatorOpen||m.calculatorDocked||m.formDockActive)violations.push('EXPLANATION_HAS_ACTIVE_CALCULATOR');
+              }
+              if(errors.length)violations.push('PAGE_SCRIPT_ERROR');
+              fs.mkdirSync(path.join(OUTPUT,name),{recursive:true});
+              await page.screenshot({path:path.join(OUTPUT,name,'D001-'+mode+'-'+width+'.png'),fullPage:true});
+              evidence.reports.push({browser:name,...m,violations});
+              if(violations.length)evidence.failures.push(name+'/D001/'+mode+'/'+width+': '+violations.join(','));
+              write();
+            }finally{await page.close();}
+          }
         }
       }finally{await browser.close();}
     }
