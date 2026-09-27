@@ -55,7 +55,13 @@ const fakeController={
   positionCalculatorNearTarget:window.AppController.prototype.positionCalculatorNearTarget
 };
 const firstInput=document.querySelector('.worksheet-mobile-input');
-if(firstInput&&!explanationMode)window.AppController.prototype.selectCalculatorTarget.call(fakeController,firstInput);
+if(firstInput&&!explanationMode){
+  addEventListener('load',()=>{
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      window.AppController.prototype.selectCalculatorTarget.call(fakeController,firstInput);
+    }));
+  },{once:true});
+}
 </script>
 </body>
 </html>
