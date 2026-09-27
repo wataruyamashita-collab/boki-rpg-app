@@ -76,9 +76,9 @@ async function measure(page,width){
       selectedNonOverlapping:Boolean(selectedRect&&calculatorRect&&(calculatorRect.bottom<=selectedRect.top||calculatorRect.top>=selectedRect.bottom||calculatorRect.right<=selectedRect.left||calculatorRect.left>=selectedRect.right)),
       selectedAnchored:Boolean(selectedRect&&calculatorRect&&(
         calculator?.dataset?.placement==='below'
-          ? Math.abs(calculatorRect.top-(selectedRect.bottom+8))<=3
+          ? Math.abs(calculatorRect.top-(selectedRect.bottom+8))<=5
           : calculator?.dataset?.placement==='above'
-            ? Math.abs(calculatorRect.bottom-(selectedRect.top-8))<=3
+            ? Math.abs(calculatorRect.bottom-(selectedRect.top-8))<=5
             : false
       )),
       selectedScrollY:selectedRect?.top||0
