@@ -206,11 +206,11 @@ assert.strictEqual(editableElements['calculator-display'].value, '12,500', '入�
 assert.strictEqual(editableCalculator.calculator.operator, null, '別の入力欄を選んだときは以前の計算状態を引き継がない');
 assert.match(editableElements['calculator-target'].textContent, /現在値を修正できます/, '入力済み金額を修正できることを案内する');
 assert.strictEqual(editableCalculatorPanel.open, false, 'デスクトップの編集可能金額欄では閉じた計算機を自動で開かない');
-assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-contextual-float'), false, 'デスクトップの編集可能金額欄では追従フロートを有効化しない');
+assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-contextual-float'), false, 'デスクトップの編集可能金額欄では固定フロートを有効化しない');
 editableTarget.readOnly = true;
 browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(editableCalculator, editableTarget);
 assert.strictEqual(editableCalculatorPanel.open, true, 'touch-first readOnly金額欄のtapは既存のアプリ内計算機を開く');
-assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-contextual-float'), true, 'touch-first readOnly金額欄は問題形式を問わず計算機を選択欄の近くへフローティング表示する');
+assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-contextual-float'), true, 'touch-first readOnly金額欄は問題形式を問わず計算機を選択時の作業位置へ固定表示する');
 assert.strictEqual(editableForm.classList.contains('calculator-dock-active'), false, '全問題共通フロート表示では巨大な下余白を追加しない');
 assert.strictEqual(JSON.stringify(editableTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'全問題共通で選択した金額欄を計算機の基準位置へ表示する');
 
@@ -244,7 +244,7 @@ const worksheetCalculatorController={
 };
 browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(worksheetCalculatorController,worksheetTarget);
 assert.strictEqual(worksheetCalculatorPanel.open,true,'D001モバイル金額欄でも全問題共通計算機ドックを開く');
-assert.strictEqual(worksheetCalculatorPanel.classList.contains('calculator-contextual-float'),true,'D001でも選択欄追従型の計算機表示を維持する');
+assert.strictEqual(worksheetCalculatorPanel.classList.contains('calculator-contextual-float'),true,'D001でも選択時固定型の計算機表示を維持する');
 assert.strictEqual(worksheetForm.classList.contains('calculator-dock-active'),false,'D001でも巨大な下余白を追加しない');
 assert.strictEqual(JSON.stringify(worksheetTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'D001でも選択金額欄を計算機の基準位置へ表示する');
 const formatDirectAmount = value => { const input={value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',validationMessage:'',setCustomValidity(message){this.validationMessage=message;},setSelectionRange(){}}; const valid=browserSandbox.window.AppController.prototype.formatAmount(input); return {input,valid}; };
@@ -1018,7 +1018,8 @@ assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comp
 assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*box-sizing:\s*border-box[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*height:\s*44px/s.test(cssSource), 'C001金額入力欄は金額セル幅いっぱい・高さ44pxに統一する');
 assert(viewSource.includes('試算表 → 修正記入 → 損益計算書 → 貸借対照表') && viewSource.includes("guide.className = 'worksheet-guide'") && !viewSource.includes('表は横にスクロールして入力してください。'), '8欄精算表はモバイルで4段階の処理順を示し、横スクロール前提にしない');
 assert(viewSource.includes("referenceLabel.textContent = 'ここを見る'") && viewSource.includes('元試算表の売上・仕入・保険料') && viewSource.includes('損益計算書の貸借差額'), 'D001モバイル各段階で参照する資料を入力欄の直前に示す');
-assert(controllerSource.includes("if (input.readOnly && calculatorPanel)") && controllerSource.includes("calculatorPanel.classList?.add?.('calculator-contextual-float')") && controllerSource.includes("positionCalculatorNearTarget(input") && controllerSource.includes("scrollIntoView?.({ block:'center'"), '全readOnly金額欄は問題形式を問わず計算機を選択欄へ追従表示し、選択欄を見える位置へ移す');
+assert(controllerSource.includes("if (input.readOnly && calculatorPanel)") && controllerSource.includes("calculatorPanel.classList?.add?.('calculator-contextual-float')") && controllerSource.includes("positionCalculatorNearTarget(input") && controllerSource.includes("scrollIntoView?.({ block:'center'") && controllerSource.includes("const workTop = viewportTop + viewportHeight * .3"), '全readOnly金額欄は問題形式を問わず選択時に入力欄を作業位置へ移し、計算機をその場に固定表示する');
+assert(!controllerSource.includes("scheduleCalculatorPosition") && !controllerSource.includes("document.addEventListener?.('scroll'"), '計算機表示後のスクロールで選択欄を追跡して再配置しない');
 assert(!controllerSource.includes("input.closest?.('.worksheet-mobile-section')"), '計算機ドックをD001専用条件へ戻さない');
 assert(/\.calculator\.calculator-contextual-float\[open\]\s*\{[^}]*position:\s*fixed[^}]*bottom:\s*auto/s.test(cssSource) && !/#question-form\.calculator-dock-active/.test(cssSource), '全問題共通計算機は選択欄追従の固定オーバーレイとし、巨大な下余白を追加しない');
 assert(viewSource.includes("th.scope = 'colgroup'") && viewSource.includes("accountHead.rowSpan = 2"), '8欄精算表のヘッダーを4組と借方・貸方の二段構成にする');

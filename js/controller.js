@@ -110,20 +110,6 @@
           if (calculatorPanel.dataset) delete calculatorPanel.dataset.placement;
         }
       });
-      const scheduleCalculatorPosition = () => {
-        const input = this.calculatorTarget;
-        const panel = this.document.querySelector?.('.calculator');
-        if (!input || !panel?.open || !panel.classList?.contains?.('calculator-contextual-float') || !this.document.body?.contains?.(input)) return;
-        const reposition = () => {
-          this.calculatorPositionFrame = null;
-          this.positionCalculatorNearTarget(input, panel);
-        };
-        if (this.calculatorPositionFrame !== null) return;
-        if (typeof root.requestAnimationFrame === 'function') this.calculatorPositionFrame = root.requestAnimationFrame(reposition);
-        else reposition();
-      };
-      this.document.addEventListener?.('scroll', scheduleCalculatorPosition, true);
-      root.addEventListener?.('resize', scheduleCalculatorPosition);
       this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select, .correction-row select, .journal-book-account')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
       this.document.getElementById('filter-query').addEventListener('input', event => { this.filters.query = event.target.value; this.renderModes(); });
       ['filter-account', 'filter-mistakes'].forEach(id => this.document.getElementById(id).addEventListener('change', event => { this.filters[id === 'filter-account' ? 'account' : 'mistakes'] = event.target.value; this.renderModes(); }));
@@ -662,8 +648,20 @@
         calculatorPanel.open = true;
         const revealTarget = () => {
           input.scrollIntoView?.({ block:'center', inline:'nearest', behavior:'auto' });
-          const position = () => this.positionCalculatorNearTarget(input, calculatorPanel);
-          if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(position); else position();
+          const inputRect = input.getBoundingClientRect?.();
+          const documentElement = this.document.documentElement || {};
+          const visualViewport = root.visualViewport;
+          const viewportTop = Number(visualViewport?.offsetTop || 0);
+          const viewportHeight = Number(visualViewport?.height || root.innerHeight || documentElement.clientHeight || 0);
+          if (inputRect && viewportHeight > 0 && typeof root.scrollBy === 'function') {
+            const workTop = viewportTop + viewportHeight * .3;
+            const delta = inputRect.top - workTop;
+            if (Math.abs(delta) > 1) {
+              try { root.scrollBy({ top:delta, left:0, behavior:'auto' }); }
+              catch (_error) { root.scrollBy(0, delta); }
+            }
+          }
+          this.positionCalculatorNearTarget(input, calculatorPanel);
         };
         if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
       }

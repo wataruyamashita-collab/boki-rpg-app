@@ -79,9 +79,26 @@ async function run(){
                       ? Math.abs(cr.bottom-(ir.top-8))<=3
                       : false,
                   beforeValue,afterValue,
-                  targetText:document.getElementById('calculator-target')?.textContent||''
+                  targetText:document.getElementById('calculator-target')?.textContent||'',
+                  viewportHeight:innerHeight,
+                  workZoneRatio:innerHeight?ir.top/innerHeight:null
                 };
               },{id});
+              const frozen=await page.evaluate(async()=>{
+                const calculator=document.querySelector('.calculator');
+                const before=calculator.getBoundingClientRect();
+                const beforeY=scrollY;
+                const maxScroll=Math.max(0,document.documentElement.scrollHeight-innerHeight);
+                window.scrollBy(0,Math.min(120,Math.max(0,maxScroll-beforeY)));
+                await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+                const after=calculator.getBoundingClientRect();
+                return {
+                  beforeTop:before.top,beforeLeft:before.left,
+                  afterTop:after.top,afterLeft:after.left,
+                  stable:Math.abs(after.top-before.top)<=1&&Math.abs(after.left-before.left)<=1,
+                  didScroll:Math.abs(scrollY-beforeY)>1
+                };
+              });
               const violations=[];
               if(result.error)violations.push(result.error);
               if(!result.readonly)violations.push('AMOUNT_NOT_READONLY');
@@ -92,8 +109,10 @@ async function run(){
               if(!result.selected)violations.push('TARGET_NOT_SELECTED');
               if(!result.nonOverlapping)violations.push('TARGET_OVERLAPPED_BY_CALCULATOR');
               if(!result.anchored)violations.push('CALCULATOR_NOT_ANCHORED_TO_TARGET');
+              if(!frozen.stable)violations.push('CALCULATOR_MOVED_DURING_SCROLL');
+              if(id==='C001'&&result.workZoneRatio!==null&&(result.workZoneRatio<0.18||result.workZoneRatio>0.42))violations.push('C001_TARGET_NOT_IN_WORK_ZONE');
               if(result.afterValue!=='12,345')violations.push('INSERT_RESULT_FAILED');
-              evidence.reports.push({browser:browserName,width,id,label,...result,coarsePointerObserved:result.coarse,violations});
+              evidence.reports.push({browser:browserName,width,id,label,...result,frozen,coarsePointerObserved:result.coarse,violations});
               if(violations.length)evidence.failures.push(browserName+'/'+width+'/'+id+': '+violations.join(','));
               fs.mkdirSync(path.join(OUTPUT,browserName),{recursive:true});
               await page.screenshot({path:path.join(OUTPUT,browserName,id+'-'+width+'.png'),fullPage:true});
