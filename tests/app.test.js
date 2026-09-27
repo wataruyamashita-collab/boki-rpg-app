@@ -969,8 +969,11 @@ assert(viewSource.includes("solutionHeading.textContent = '解き方（この順
 assert(viewSource.includes("heading.textContent = question.type === 'correction' ? '正しい訂正仕訳' : '正しい仕訳'"), '訂正問題の正解を借方・貸方の仕訳表で表示する');
 assert(viewSource.includes("heading.textContent = '最初の訂正仕訳（誤答）'") && viewSource.includes('this.journalTable(this.correctionJournal(userAnswer))'), '訂正問題の最初の誤答も仕訳形式の表で比較する');
 assert(viewSource.includes("heading.textContent = '最初の回答を決算整理表で比較'") && viewSource.includes('this.worksheetAnswerComparison(question, score, userAnswer)'), '決算整理問題は最初の回答と正答を元の行列を保った表で比較する');
-assert(/\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*minmax\(9rem, auto\) minmax\(9rem, auto\)/s.test(cssSource), '決算整理の入力値と正解に十分な横幅を確保する');
-assert(/@media \(max-width: 480px\)[\s\S]*?\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*8\.75rem 8\.75rem/s.test(cssSource), 'iPhone幅でも入力値と正解の数値欄を常に二列表示する');
+assert(viewSource.includes("if (this.compactWorksheetViewport()) return this.worksheetAnswerComparisonMobile(question, score, userAnswer)") && viewSource.includes("flow.className = 'worksheet-comparison-mobile-flow'"), 'D001解説はモバイルで横長8欄比較表ではなく4ブロック比較へ切り替える');
+assert(viewSource.includes("dataset.worksheetComparisonGroup = group.title") && viewSource.includes("['勘定科目','借方','貸方']"), 'D001解説の4ブロックは問題画面と同じ勘定科目・借方・貸方の3列構成にする');
+assert(/\.worksheet-comparison-mobile-table\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'D001モバイル解説表を画面幅内の固定3列に収める');
+assert(/\.worksheet-answer-comparison \.worksheet-comparison-pair\s*\{[^}]*grid-template-columns:\s*minmax\(9rem, auto\) minmax\(9rem, auto\)/s.test(cssSource), '入力・正解を横2列にする広幅ルールはデスクトップ8欄比較表だけに限定する');
+assert(!/\n\.worksheet-comparison-pair\s*\{[^}]*min-width:\s*18\.5rem/s.test(cssSource), 'モバイル比較セルに18rem超の最小幅を強制しない');
 assert(!viewSource.includes("heading.textContent = 'なぜ間違えた？'") && !viewSource.includes("heading.textContent = '詳しい解説'"), '意味が重なる二つの解説見出しを表示しない');
 Object.values(browserSandbox.window.QuestionData).forEach(question => {
   assert(String(question.explanation).trim(), `${question.id}にauthored explanationまたはfallbackがある`);
