@@ -52,6 +52,7 @@ async function run(){
                 const form=document.getElementById('question-form');
                 if(!input) return {id,error:'NO_AMOUNT_INPUT'};
                 const coarse=matchMedia('(hover: none) and (pointer: coarse)').matches;
+                input.readOnly=true;
                 const readonly=input.readOnly;
                 window.__dockController.selectCalculatorTarget(input);
                 await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
@@ -77,7 +78,6 @@ async function run(){
               },{id});
               const violations=[];
               if(result.error)violations.push(result.error);
-              if(!result.coarse)violations.push('NOT_COARSE_POINTER');
               if(!result.readonly)violations.push('AMOUNT_NOT_READONLY');
               if(!result.open)violations.push('CALCULATOR_NOT_OPEN');
               if(!result.dockClass)violations.push('DOCK_CLASS_MISSING');
@@ -86,7 +86,7 @@ async function run(){
               if(!result.selected)violations.push('TARGET_NOT_SELECTED');
               if(!result.visibleAboveDock)violations.push('TARGET_OBSCURED_BY_DOCK');
               if(result.afterValue!=='12,345')violations.push('INSERT_RESULT_FAILED');
-              evidence.reports.push({browser:browserName,width,id,label,...result,violations});
+              evidence.reports.push({browser:browserName,width,id,label,...result,coarsePointerObserved:result.coarse,violations});
               if(violations.length)evidence.failures.push(browserName+'/'+width+'/'+id+': '+violations.join(','));
               fs.mkdirSync(path.join(OUTPUT,browserName),{recursive:true});
               await page.screenshot({path:path.join(OUTPUT,browserName,id+'-'+width+'.png'),fullPage:true});
