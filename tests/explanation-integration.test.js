@@ -24,6 +24,10 @@ assert(view.includes('証憑に金額が示されている場合は、その金�
 assert(!view.includes('this.appendAuthoredExplanation(question, container, true)'),'構造化解説では旧authored解説を重複表示しない');
 assert(/\.explanation-formula strong\s*\{[^}]*overflow-wrap:\s*anywhere/s.test(css),'計算ブロックをiPhoneでクリップしない');
 assert(view.includes('explanation-source-table-wrap'),'表資料は専用の横スクロール領域で表示する');
+assert(view.includes("item.list?.length"),'列挙資料を番号付きリストで表示する');
+assert(view.includes("wrap.dataset.tableKind = item.table.kind"),'資料表の種類をDOMへ伝える');
+assert(css.includes('.explanation-source-list'),'列挙資料の専用スタイルを持つ');
+assert(css.includes('[data-table-kind="trial-balance"]'),'解説試算表の専用モバイルレイアウトを持つ');
 assert(/\.explanation-source-table-wrap\s*\{[^}]*overflow-x:\s*auto/s.test(css),'確認表は狭い画面で表だけ横スクロールできる');
 assert(/\.explanation-source-table\s*\{[^}]*min-width:\s*520px/s.test(css),'確認表の列幅を潰さない');
 assert(view.includes("wrap.dataset.questionType = question.type"),'解説の確認表ラッパーへ問題種別を付与する');
