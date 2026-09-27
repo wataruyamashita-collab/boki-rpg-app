@@ -735,7 +735,52 @@
       });
       wrap.append(table); return wrap;
     }
+    worksheetAnswerComparisonMobile(question, score, userAnswer) {
+      const details = new Map((score.details || []).map(detail => [detail.cellId, detail.correct === true]));
+      const cellIds = new Map(); let inputIndex = 0;
+      (question.table.rows || []).forEach((rowData, rowIndex) => Object.values(rowData).forEach((value, columnIndex) => {
+        if (value === '入力') cellIds.set(rowIndex + ':' + columnIndex, question.table.inputCells[inputIndex++]);
+      }));
+      const groups = [
+        { title:'試算表', columns:[1,2] },
+        { title:'修正記入', columns:[3,4] },
+        { title:'損益計算書', columns:[5,6] },
+        { title:'貸借対照表', columns:[7,8] }
+      ];
+      const flow = this.document.createElement('div'); flow.className = 'worksheet-comparison-mobile-flow'; flow.setAttribute('aria-label', '8欄精算表の入力と正解を4つの処理に分けて比較');
+      const appendValue = (cell, value, rowIndex, columnIndex) => {
+        if (value !== '入力') {
+          cell.textContent = value == null || value === '' ? '—' : typeof value === 'number' ? yen(value) : this.tableLabel(value);
+          return;
+        }
+        const cellId = cellIds.get(rowIndex + ':' + columnIndex); const correct = details.get(cellId) === true;
+        const pair = this.document.createElement('div'); pair.className = `worksheet-comparison-pair${correct ? '' : ' cell-mismatch'}`;
+        const actual = this.document.createElement('span'); actual.className = 'comparison-actual'; actual.textContent = `入力 ${this.comparisonValue(question, cellId, userAnswer.cells?.[cellId])}`;
+        const expected = this.document.createElement('span'); expected.className = 'comparison-expected'; expected.textContent = `正解 ${this.comparisonValue(question, cellId, question.answer.cells?.[cellId])}`;
+        pair.append(actual, expected); cell.append(pair);
+      };
+      groups.forEach((group, groupIndex) => {
+        const section = this.document.createElement('section'); section.className = 'worksheet-comparison-mobile-section'; section.dataset.worksheetComparisonGroup = group.title;
+        const header = this.document.createElement('div'); header.className = 'worksheet-comparison-mobile-head';
+        const step = this.document.createElement('span'); step.className = 'worksheet-mobile-step'; step.textContent = (groupIndex + 1) + '/4';
+        const title = this.document.createElement('h4'); title.textContent = group.title; header.append(step, title); section.append(header);
+        const table = this.document.createElement('table'); table.className = 'worksheet-comparison-mobile-table';
+        const head = table.createTHead().insertRow(); ['勘定科目','借方','貸方'].forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; head.append(th); });
+        const body = table.createTBody();
+        (question.table.rows || []).forEach((rowData, rowIndex) => {
+          const values = Object.values(rowData); const debit = values[group.columns[0]], credit = values[group.columns[1]];
+          const empty = [debit, credit].every(value => value == null || value === '' || value === '—');
+          if (empty) return;
+          const row = body.insertRow(); const account = row.insertCell(); account.className = 'worksheet-comparison-mobile-account'; account.textContent = values[0];
+          const debitCell = row.insertCell(); appendValue(debitCell, debit, rowIndex, group.columns[0]);
+          const creditCell = row.insertCell(); appendValue(creditCell, credit, rowIndex, group.columns[1]);
+        });
+        section.append(table); flow.append(section);
+      });
+      return flow;
+    }
     worksheetAnswerComparison(question, score, userAnswer) {
+      if (this.compactWorksheetViewport()) return this.worksheetAnswerComparisonMobile(question, score, userAnswer);
       const details = new Map((score.details || []).map(detail => [detail.cellId, detail.correct === true]));
       const wrap = this.document.createElement('div'); wrap.className = 'answer-comparison-table-wrap';
       const table = this.document.createElement('table'); table.className = 'answer-comparison-table worksheet-answer-comparison';
