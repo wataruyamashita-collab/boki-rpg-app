@@ -91,14 +91,20 @@ jobs:
           }
           NODE
 
-      - name: Mandatory Generation 63 verification
+      - name: Mandatory Generation 63 core tests
         run: |
           node tests/app.test.js
           node tests/gate5-structured-explanation.test.js
           node tests/explanation-integration.test.js
           node independent-audit/tests/generation-immutability.test.js
-          npm run verify
-          npm run qa:integrity
+          git diff --check
+
+      - name: Mandatory Generation 63 npm verify
+        run: timeout 12m npm run verify
+
+      - name: Mandatory Generation 63 integrity
+        run: |
+          timeout 5m npm run qa:integrity
           git diff --check
 
       - name: Install pinned CI-only Playwright
