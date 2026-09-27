@@ -992,7 +992,7 @@ assert(viewSource.includes("renderComprehensiveTrialBalanceMobile(material)") &&
 assert(viewSource.includes("['勘定科目','借方','貸方']") && viewSource.includes("total.className = 'comprehensive-trial-balance-total'"), 'C001試算表は勘定科目・借方・貸方と合計行を持つ');
 assert(viewSource.includes("String(value).split('／').filter(Boolean)") && viewSource.includes("list.className = 'comprehensive-adjustment-list'"), 'C001決算整理事項は省略せず項目ごとの縦リストで表示する');
 assert(/\.comprehensive-trial-balance-mobile\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'C001試算表はモバイル画面幅内に固定する');
-assert(/\.comprehensive-trial-balance-mobile th:first-child,[\s\S]*?\.comprehensive-trial-balance-mobile td:first-child\s*\{[^}]*width:\s*48%/s.test(cssSource), 'C001試算表は勘定科目48%・借貸各26%で配置する');
+assert(/\.comprehensive-trial-balance-mobile th:first-child,[\s\S]*?\.comprehensive-trial-balance-mobile td:first-child\s*\{[^}]*width:\s*46%/s.test(cssSource) && /\.comprehensive-trial-balance-mobile th:nth-child\(2\),[\s\S]*?\.comprehensive-trial-balance-mobile td:nth-child\(3\)\s*\{[^}]*width:\s*27%/s.test(cssSource), 'C001試算表は320px WebKitでも勘定科目46%・借貸各27%で収める');
 assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\]\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'C001解答表はモバイルで横スクロールせず2列固定にする');
 assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] th\s*\{[^}]*height:\s*auto[^}]*text-align:\s*center/s.test(cssSource), 'C001解答表ヘッダーは44px固定を外して中央揃えにする');
 assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] th:nth-child\(2\)\s*\{[^}]*text-align:\s*center/s.test(cssSource), 'C001の金額見出しを横中央に配置する');
