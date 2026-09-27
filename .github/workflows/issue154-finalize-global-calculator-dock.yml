@@ -1,4 +1,5 @@
 name: Issue 154 finalize global calculator dock
+# retry 1
 on:
   push:
     branches:
