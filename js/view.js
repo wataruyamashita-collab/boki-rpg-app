@@ -161,7 +161,7 @@
       const wrap = this.document.createElement('div'); wrap.className = 'materials-table-wrap';
       const table = this.document.createElement('table'); table.className = 'materials-table';
       const columns = [...new Set(question.materials.flatMap(row => Object.keys(row)))];
-      const compact = question.type === 'worksheet' && columns.length <= 3;
+      const compact = (question.type === 'worksheet' || question.type === 'financial_statement') && columns.length <= 3;
       wrap.classList.toggle('materials-table-wrap-compact', compact); table.classList.toggle('materials-table-compact', compact);
       const head = table.createTHead().insertRow(); columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); head.append(th); });
       const body = table.createTBody(); question.materials.forEach(material => { const row = body.insertRow(); columns.forEach(column => { const cell = row.insertCell(); const value = material[column]; cell.textContent = value == null ? '—' : typeof value === 'number' ? yen(value) : value; }); });
