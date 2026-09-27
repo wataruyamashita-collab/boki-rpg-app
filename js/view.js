@@ -999,12 +999,22 @@
           card.append(element('h6', '', item.title), element('p', 'explanation-source-focus', item.focus));
           if (item.table?.columns?.length && item.table?.rows?.length) {
             const wrap = element('div', 'explanation-source-table-wrap'); wrap.dataset.questionType = question.type; wrap.tabIndex = 0; wrap.setAttribute('aria-label', `${item.title}の確認表`);
-            const table = element('table', 'explanation-source-table'); table.dataset.questionType = question.type; const thead = element('thead', ''), headRow = element('tr', '');
-            item.table.columns.forEach(column => { const th = element('th', '', column.label); th.scope = 'col'; headRow.append(th); });
+            const table = element('table', 'explanation-source-table'); table.dataset.questionType = question.type;
+            if (item.table.kind) { wrap.dataset.tableKind = item.table.kind; table.dataset.tableKind = item.table.kind; }
+            table.dataset.columnCount = String(item.table.columns.length);
+            const thead = element('thead', ''), headRow = element('tr', '');
+            item.table.columns.forEach(column => { const th = element('th', '', column.label); th.scope = 'col'; if(column.key) th.dataset.columnKey=column.key; headRow.append(th); });
             thead.append(headRow); table.append(thead);
             const tbody = element('tbody', '');
-            item.table.rows.forEach(row => { const tr = element('tr', ''); row.forEach(cell => { const unknown = cell.value === '入力'; const className = unknown ? 'explanation-source-unknown' : (typeof cell.value === 'number' ? 'is-number' : ''); const shownValue = unknown ? '？' : (cell.value == null || cell.value === '' ? '—' : (typeof cell.value === 'number' ? cell.value.toLocaleString('ja-JP') : String(cell.value))); tr.append(element('td', className, shownValue)); }); tbody.append(tr); });
+            item.table.rows.forEach((row,rowIndex) => {
+              const tr = element('tr', '');
+              if (item.table.totalRowIndexes?.includes?.(rowIndex)) tr.classList.add('explanation-source-total-row');
+              row.forEach(cell => { const unknown = cell.value === '入力', className = unknown ? 'explanation-source-unknown' : (typeof cell.value === 'number' ? 'is-number' : ''); const shownValue = unknown ? '？' : (cell.value == null || cell.value === '' ? '—' : (typeof cell.value === 'number' ? cell.value.toLocaleString('ja-JP') : String(cell.value))); const td=element('td', className, shownValue); if(cell.key) td.dataset.columnKey=cell.key; tr.append(td); });
+              tbody.append(tr);
+            });
             table.append(tbody); wrap.append(table); card.append(wrap);
+          } else if (item.list?.length) {
+            const list = element('ol', 'explanation-source-list'); item.list.forEach(value => list.append(element('li', '', String(value)))); card.append(list);
           } else {
             const list = element('dl', 'explanation-source-values');
             (item.values || []).forEach(value => { const row = element('div', 'explanation-source-value'); row.append(element('dt', '', value.label), element('dd', '', valueText(value.value))); list.append(row); });
