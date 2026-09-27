@@ -213,7 +213,7 @@ assert.strictEqual(editableCalculatorPanel.open, true, 'touch-first readOnly金�
 assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-contextual-float'), true, 'touch-first readOnly金額欄は問題形式を問わず計算機を選択時の作業位置へ固定表示する');
 assert.strictEqual(editableForm.classList.contains('calculator-dock-active'), false, '全問題共通フロート表示では巨大な下余白を追加しない');
 assert.strictEqual(editableForm.classList.contains('calculator-workspace-active'), true, '計算機表示中だけ入力欄を作業位置へ移せる一時スクロール余地を確保する');
-assert.strictEqual(JSON.stringify(editableTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'全問題共通で選択した金額欄を計算機の基準位置へ表示する');
+assert.strictEqual(JSON.stringify(editableTarget.scrollOptions),JSON.stringify({block:'nearest',inline:'nearest',behavior:'auto'}),'全問題共通で選択した金額欄を計算機の基準位置へ表示する');
 
 const worksheetTarget = {
   value:'', readOnly:true,
@@ -248,7 +248,7 @@ assert.strictEqual(worksheetCalculatorPanel.open,true,'D001モバイル金額欄
 assert.strictEqual(worksheetCalculatorPanel.classList.contains('calculator-contextual-float'),true,'D001でも選択時固定型の計算機表示を維持する');
 assert.strictEqual(worksheetForm.classList.contains('calculator-dock-active'),false,'D001でも巨大な下余白を追加しない');
 assert.strictEqual(worksheetForm.classList.contains('calculator-workspace-active'),true,'D001でも計算機表示中だけ一時スクロール余地を確保する');
-assert.strictEqual(JSON.stringify(worksheetTarget.scrollOptions),JSON.stringify({block:'center',inline:'nearest',behavior:'auto'}),'D001でも選択金額欄を計算機の基準位置へ表示する');
+assert.strictEqual(JSON.stringify(worksheetTarget.scrollOptions),JSON.stringify({block:'nearest',inline:'nearest',behavior:'auto'}),'D001でも選択金額欄を計算機の基準位置へ表示する');
 const formatDirectAmount = value => { const input={value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',validationMessage:'',setCustomValidity(message){this.validationMessage=message;},setSelectionRange(){}}; const valid=browserSandbox.window.AppController.prototype.formatAmount(input); return {input,valid}; };
 const validAmounts = new Map([['',''],['0','0'],['12','12'],['1234','1,234'],['1234567','1,234,567'],['1,234','1,234'],['12,345','12,345'],['123,456','123,456'],['1,234,567','1,234,567'],['１２３４','1,234'],['１，２３４','1,234'],['１２，３４５','12,345']]);
 for (const [raw,expected] of validAmounts) { const {input,valid}=formatDirectAmount(raw); assert.strictEqual(valid,true,`${raw||'空欄'}を有効な金額として受理する`); assert.strictEqual(input.value,expected,`${raw||'空欄'}を正規表示する`); assert.strictEqual(input.validationMessage,'',`${raw||'空欄'}のcustom validityを解除する`); }
