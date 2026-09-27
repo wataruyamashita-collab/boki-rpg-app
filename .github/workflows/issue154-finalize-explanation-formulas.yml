@@ -30,6 +30,7 @@ jobs:
           node tests/app.test.js
           node tests/gate5-structured-explanation.test.js
           node tests/explanation-integration.test.js
+          node tests/chapter8-explanation.test.js
           node tests/explanation-formula-coverage.test.js
           node independent-audit/tests/generation-immutability.test.js
           git diff --check
@@ -97,6 +98,7 @@ jobs:
           node tests/app.test.js
           node tests/gate5-structured-explanation.test.js
           node tests/explanation-integration.test.js
+          node tests/chapter8-explanation.test.js
           node tests/explanation-formula-coverage.test.js
           node independent-audit/tests/generation-immutability.test.js
           git diff --check
@@ -144,6 +146,7 @@ jobs:
           node tests/app.test.js
           node tests/gate5-structured-explanation.test.js
           node tests/explanation-integration.test.js
+          node tests/chapter8-explanation.test.js
           node tests/explanation-formula-coverage.test.js
           npm run qa:test
           npm run qa:integrity
