@@ -1,5 +1,5 @@
 name: Issue 154 finalize global calculator dock
-# retry 1
+# retry 2
 on:
   push:
     branches:
@@ -65,24 +65,31 @@ jobs:
           fs.writeFileSync('pwa-release-manifest.json',JSON.stringify(manifest,null,2)+'\n');
           NODE
 
-      - name: Create Generation 61 candidate
+      - name: Ensure Generation 61 authority
         run: |
           node - <<'NODE'
           const fs=require('fs');
           const path=require('path');
           const lifecycle=require('./scripts/qa/phase-b-lifecycle');
           const file='reports/auto-gate/audit-locks/phase-b-generation-61.json';
-          if(fs.existsSync(file)) throw new Error('Generation 61 authority already exists');
-          const authorities=lifecycle.generationAuthorities();
-          if(authorities.at(-1)?.document?.generation!==60) throw new Error('Generation 60 is not latest authority');
-          const candidate=lifecycle.createCandidate();
-          if(candidate.generation!==61) throw new Error('expected Generation 61');
-          if(candidate.predecessor.generation!==60) throw new Error('Generation 61 predecessor mismatch');
-          const verification=lifecycle.verifyCandidate(candidate);
-          if(!verification.ok) throw new Error(verification.errors.join(', '));
-          fs.mkdirSync(path.dirname(file),{recursive:true});
-          fs.writeFileSync(file,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
-          console.log('GENERATION_61_CANDIDATE_OK '+candidate.baselineIdentity+' '+candidate.auditHash);
+          if(fs.existsSync(file)){
+            const current=lifecycle.verifyCurrent();
+            if(!current.ok || current.generation!==61) throw new Error('existing Generation 61 integrity failure: '+current.errors.join(', '));
+            const document=JSON.parse(fs.readFileSync(file,'utf8'));
+            if(document.predecessor?.generation!==60) throw new Error('existing Generation 61 predecessor mismatch');
+            console.log('GENERATION_61_EXISTING_OK '+document.baselineIdentity+' '+document.auditHash);
+          } else {
+            const authorities=lifecycle.generationAuthorities();
+            if(authorities.at(-1)?.document?.generation!==60) throw new Error('Generation 60 is not latest authority');
+            const candidate=lifecycle.createCandidate();
+            if(candidate.generation!==61) throw new Error('expected Generation 61');
+            if(candidate.predecessor.generation!==60) throw new Error('Generation 61 predecessor mismatch');
+            const verification=lifecycle.verifyCandidate(candidate);
+            if(!verification.ok) throw new Error(verification.errors.join(', '));
+            fs.mkdirSync(path.dirname(file),{recursive:true});
+            fs.writeFileSync(file,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
+            console.log('GENERATION_61_CANDIDATE_OK '+candidate.baselineIdentity+' '+candidate.auditHash);
+          }
           NODE
 
       - name: Mandatory Generation 61 verification
@@ -116,7 +123,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html service-worker.js pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-61.json
           git diff --cached --check
-          git commit -m "Finalize Generation 61 for global calculator dock"
+          if ! git diff --cached --quiet; then
+            git commit -m "Finalize Generation 61 for global calculator dock"
+          else
+            echo "Generation 61 authority and release already committed"
+          fi
 
       - name: Verify committed Generation 61
         run: |
