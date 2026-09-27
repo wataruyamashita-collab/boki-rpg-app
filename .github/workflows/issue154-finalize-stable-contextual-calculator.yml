@@ -1,4 +1,4 @@
-name: Issue 154 finalize stable contextual calculator
+name: Issue 154 finalize stable calculator and structured sources
 on:
   push:
     branches:
@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   finalize:
-    if: github.event.head_commit.message == 'Prepare Generation 63 stable contextual calculator'
+    if: github.event.head_commit.message == 'Prepare Generation 63 stable calculator and structured sources'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -107,7 +107,7 @@ jobs:
       - name: Install Chromium and WebKit
         run: npx playwright install --with-deps chromium webkit
 
-      - name: Browser stable contextual calculator and regression visual gates
+      - name: Browser stable calculator, structured sources, and regression visual gates
         run: |
           node .github/visual/run-calculator-dock-all-questions.js
           node .github/visual/run-calculator-dock-all-types.js
@@ -124,7 +124,7 @@ jobs:
           git add index.html service-worker.js pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-63.json
           git diff --cached --check
           if ! git diff --cached --quiet; then
-            git commit -m "Finalize Generation 63 stable contextual calculator"
+            git commit -m "Finalize Generation 63 stable calculator and structured sources"
           else
             echo "Generation 63 authority and release already committed"
           fi
@@ -144,7 +144,7 @@ jobs:
       - name: Remove temporary workflow
         run: |
           git rm .github/workflows/issue154-finalize-stable-contextual-calculator.yml
-          git commit -m "Remove stable contextual calculator finalizer"
+          git commit -m "Remove Generation 63 finalizer"
 
       - name: Final exact-tree verification and publish
         run: |
