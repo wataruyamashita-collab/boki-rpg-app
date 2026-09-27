@@ -649,23 +649,23 @@
         calculatorPanel.classList?.add?.('calculator-contextual-float');
         calculatorPanel.open = true;
         const revealTarget = () => {
-          input.scrollIntoView?.({ block:'center', inline:'nearest', behavior:'auto' });
+          input.scrollIntoView?.({ block:'nearest', inline:'nearest', behavior:'auto' });
           const inputRect = input.getBoundingClientRect?.();
           const documentElement = this.document.documentElement || {};
           const visualViewport = root.visualViewport;
           const viewportTop = Number(visualViewport?.offsetTop || 0);
           const viewportHeight = Number(visualViewport?.height || root.innerHeight || documentElement.clientHeight || 0);
-          if (inputRect && viewportHeight > 0 && typeof root.scrollBy === 'function') {
+          if (inputRect && viewportHeight > 0) {
             const workTop = viewportTop + viewportHeight * .3;
-            const delta = inputRect.top - workTop;
-            if (Math.abs(delta) > 1) {
-              try { root.scrollBy({ top:delta, left:0, behavior:'auto' }); }
-              catch (_error) { root.scrollBy(0, delta); }
-            }
+            const currentScrollY = Number(root.scrollY || root.pageYOffset || 0), currentScrollX = Number(root.scrollX || root.pageXOffset || 0);
+            const targetScrollY = Math.max(0, currentScrollY + inputRect.top - workTop);
+            if (typeof root.scrollTo === 'function') { try { root.scrollTo({ top:targetScrollY, left:currentScrollX, behavior:'auto' }); } catch (_error) { root.scrollTo(currentScrollX, targetScrollY); } }
+            else if (typeof root.scrollBy === 'function') { const delta = inputRect.top - workTop; try { root.scrollBy({ top:delta, left:0, behavior:'auto' }); } catch (_error) { root.scrollBy(0, delta); } }
           }
-          this.positionCalculatorNearTarget(input, calculatorPanel);
+          const position = () => this.positionCalculatorNearTarget(input, calculatorPanel);
+          if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(position); else position();
         };
-        if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
+
       }
       const currentAmount = normalizeNumber(input.value).replace(/,/g, '');
       this.clearCalculator();
