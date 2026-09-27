@@ -20,7 +20,7 @@ const auditPath=path.join(
 );
 
 const authorityBytes=new Map(
-  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61]
+  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62]
     .filter(generation=>fs.existsSync(authorityPath(generation)))
     .map(
       generation=>[
@@ -65,15 +65,15 @@ try{
   const generations=authorities.map(
     item=>item.document.generation
   );
-  const generation61Committed=committed(61);
+  const generation62Committed=committed(62);
 
   test(
-    'authority sequence is [2..60] before Generation 61 or [2..61] after commit',
+    'authority sequence is [2..61] before Generation 62 or [2..62] after commit',
     ()=>assert.deepStrictEqual(
       generations,
-      generation61Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61]
-        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60]
+      generation62Committed
+        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62]
+        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61]
     )
   );
 
@@ -143,7 +143,7 @@ try{
 
   const documents=authorities.map(item=>item.document);
 
-  const candidate=generation61Committed
+  const candidate=generation62Committed
     ? documents.at(-1)
     : (
         fs.existsSync(authorityPath(61))
@@ -151,7 +151,7 @@ try{
           : lifecycle.createCandidate()
       );
 
-  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61]){
+  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62]){
     test(
       `duplicate Generation ${generation} is rejected`,
       ()=>{
@@ -169,16 +169,16 @@ try{
   }
 
   test(
-    'stale-predecessor Generation 62 successor is rejected',
+    'stale-predecessor Generation 63 successor is rejected',
     ()=>{
       const skipped=structuredClone(candidate);
-      skipped.generation=62;
+      skipped.generation=63;
       rejectCandidate(skipped,documents);
     }
   );
 
   test(
-    'competing Generation 61 is rejected',
+    'competing Generation 62 is rejected',
     ()=>{
       const fork=structuredClone(candidate);
       fork.auditHash='f'.repeat(64);
@@ -187,7 +187,7 @@ try{
         candidate,
         [
           ...documents.filter(
-            document=>document.generation<61
+            document=>document.generation<62
           ),
           fork
         ]
@@ -196,7 +196,7 @@ try{
   );
 
   test(
-    'broken Generation 61 predecessor is rejected',
+    'broken Generation 62 predecessor is rejected',
     ()=>{
       const broken=structuredClone(candidate);
       broken.predecessor.canonicalDocumentSha256='0'.repeat(64);
@@ -204,7 +204,7 @@ try{
       rejectCandidate(
         broken,
         documents.filter(
-          document=>document.generation<61
+          document=>document.generation<62
         )
       );
     }
@@ -248,9 +248,9 @@ try{
     }
   );
 
-  if(generation61Committed){
+  if(generation62Committed){
     test(
-      'committed Generation 61 current integrity passes',
+      'committed Generation 62 current integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCurrent().ok,
         true
@@ -258,7 +258,7 @@ try{
     );
   }else{
     test(
-      'pending Generation 61 candidate integrity passes',
+      'pending Generation 62 candidate integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCandidate(candidate).ok,
         true

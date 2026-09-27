@@ -7,7 +7,7 @@ const {chromium,webkit}=require('playwright');
 const ROOT=path.resolve(__dirname,'../..');
 const OUTPUT=path.join(ROOT,'artifacts','calculator-dock-all-questions');
 const engines={chromium,webkit};
-const widths=[375,820];
+const widths=[320,375,390,430,820];
 const mime={'.css':'text/css','.html':'text/html','.js':'text/javascript','.json':'application/json'};
 const evidence={status:'RUNNING',reports:[],failures:[]};
 const write=()=>{fs.mkdirSync(OUTPUT,{recursive:true});fs.writeFileSync(path.join(OUTPUT,'report.json'),JSON.stringify(evidence,null,2)+'\n');};
@@ -68,7 +68,7 @@ async function run(){
                 const question=window.QuestionData[id];
                 const panel=document.querySelector('.calculator');
                 const form=document.getElementById('question-form');
-                panel.open=false; panel.classList.remove('calculator-mobile-dock'); form.classList.remove('calculator-dock-active');
+                panel.open=false; panel.classList.remove('calculator-contextual-float'); form.classList.remove('calculator-dock-active');
                 window.scrollTo(0,0);
                 new window.AppView(document).renderQuestion(question,{},'training');
                 const activeAnswerRoot=document.getElementById(question.type==='journal'?'journal-container':'table-container');
@@ -78,7 +78,7 @@ async function run(){
                 if(!inputs.length){failures.push(id+':NO_AMOUNT_INPUT');continue;}
                 for(let inputIndex=0;inputIndex<inputs.length;inputIndex+=1){
                   const input=inputs[inputIndex];
-                  panel.open=false; panel.classList.remove('calculator-mobile-dock'); form.classList.remove('calculator-dock-active');
+                  panel.open=false; panel.classList.remove('calculator-contextual-float'); form.classList.remove('calculator-dock-active');
                   if(!input.readOnly){failures.push(id+'#'+(inputIndex+1)+':AMOUNT_NOT_READONLY_ON_COARSE_POINTER');continue;}
                   controller.expression='0'; controller.calculatorTarget=null;
                   controller.calculator={accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null};
@@ -89,11 +89,16 @@ async function run(){
                   const style=getComputedStyle(panel);
                   const issues=[];
                   if(!panel.open)issues.push('PANEL_NOT_OPEN');
-                  if(!panel.classList.contains('calculator-mobile-dock'))issues.push('DOCK_CLASS_MISSING');
-                  if(!form.classList.contains('calculator-dock-active'))issues.push('FORM_DOCK_CLASS_MISSING');
+                  if(!panel.classList.contains('calculator-contextual-float'))issues.push('DOCK_CLASS_MISSING');
+                  if(form.classList.contains('calculator-dock-active'))issues.push('UNEXPECTED_FORM_BOTTOM_RESERVE');
                   if(style.position!=='fixed')issues.push('PANEL_NOT_FIXED');
                   if(panelRect.left<-1||panelRect.right>innerWidth+1)issues.push('PANEL_HORIZONTAL_OVERFLOW');
-                  if(inputRect.bottom>panelRect.top-8)issues.push('INPUT_OBSCURED_BY_DOCK');
+                  const placement=panel.dataset.placement;
+                  const overlap=!(panelRect.bottom<=inputRect.top||panelRect.top>=inputRect.bottom||panelRect.right<=inputRect.left||panelRect.left>=inputRect.right);
+                  if(overlap)issues.push('INPUT_OVERLAPPED_BY_CALCULATOR');
+                  if(placement==='below'&&Math.abs(panelRect.top-(inputRect.bottom+8))>3)issues.push('CALCULATOR_NOT_ANCHORED_BELOW');
+                  else if(placement==='above'&&Math.abs(panelRect.bottom-(inputRect.top-8))>3)issues.push('CALCULATOR_NOT_ANCHORED_ABOVE');
+                  else if(!['below','above'].includes(placement))issues.push('CALCULATOR_PLACEMENT_MISSING');
                   if(inputRect.left<-1||inputRect.right>innerWidth+1)issues.push('INPUT_OFFSCREEN_HORIZONTAL');
                   if(issues.length)failures.push(id+'#'+(inputIndex+1)+':'+issues.join(','));
                 }

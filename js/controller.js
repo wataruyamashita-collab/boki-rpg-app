@@ -41,6 +41,7 @@
       const storage = getStorage();
       this.model = new root.ProgressModel(questions, storage); this.rpg = new root.RPGModel(storage); this.currentId = null; this.questionStartedAt = null; this.reviewSourceId = null; this.reviewMappings = new Map(); this.expression = '0'; this.calculatorTarget = null; this.examTimerId = null;
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
+      this.calculatorPositionFrame = null;
       this.filters = { query: '', account: '', mistakes: 'all' };
       this.submitting = false;
       this.learningFlow = null;
@@ -98,9 +99,31 @@
       this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
       const calculatorPanel = this.document.querySelector?.('.calculator');
       calculatorPanel?.addEventListener?.('toggle', () => {
-        const active = Boolean(calculatorPanel.open && calculatorPanel.classList?.contains?.('calculator-mobile-dock'));
-        this.document.getElementById('question-form')?.classList?.toggle?.('calculator-dock-active', active);
+        const active = Boolean(calculatorPanel.open && calculatorPanel.classList?.contains?.('calculator-contextual-float'));
+        if (!active) {
+          calculatorPanel.classList?.remove?.('calculator-contextual-float');
+          calculatorPanel.classList?.remove?.('calculator-placement-above');
+          calculatorPanel.style?.removeProperty?.('left');
+          calculatorPanel.style?.removeProperty?.('top');
+          calculatorPanel.style?.removeProperty?.('width');
+          calculatorPanel.style?.removeProperty?.('max-height');
+          if (calculatorPanel.dataset) delete calculatorPanel.dataset.placement;
+        }
       });
+      const scheduleCalculatorPosition = () => {
+        const input = this.calculatorTarget;
+        const panel = this.document.querySelector?.('.calculator');
+        if (!input || !panel?.open || !panel.classList?.contains?.('calculator-contextual-float') || !this.document.body?.contains?.(input)) return;
+        const reposition = () => {
+          this.calculatorPositionFrame = null;
+          this.positionCalculatorNearTarget(input, panel);
+        };
+        if (this.calculatorPositionFrame !== null) return;
+        if (typeof root.requestAnimationFrame === 'function') this.calculatorPositionFrame = root.requestAnimationFrame(reposition);
+        else reposition();
+      };
+      this.document.addEventListener?.('scroll', scheduleCalculatorPosition, true);
+      root.addEventListener?.('resize', scheduleCalculatorPosition);
       this.document.addEventListener('change', event => { if (event.target.matches('.journal-row select, .correction-row select, .journal-book-account')) { this.view.updateSelectTitle(event.target); this.saveDraft(false); } });
       this.document.getElementById('filter-query').addEventListener('input', event => { this.filters.query = event.target.value; this.renderModes(); });
       ['filter-account', 'filter-mistakes'].forEach(id => this.document.getElementById(id).addEventListener('change', event => { this.filters[id === 'filter-account' ? 'account' : 'mistakes'] = event.target.value; this.renderModes(); }));
@@ -589,26 +612,52 @@
       input.setSelectionRange?.(caretAt(digitOffset(selectionStart)), caretAt(digitOffset(selectionEnd)), selectionDirection);
       return true;
     }
+    positionCalculatorNearTarget(input, calculatorPanel = this.document.querySelector?.('.calculator')) {
+      if (!input || !calculatorPanel?.open || !calculatorPanel.classList?.contains?.('calculator-contextual-float')) return false;
+      const inputRect = input.getBoundingClientRect?.();
+      if (!inputRect) return false;
+      const documentElement = this.document.documentElement || {};
+      const viewportWidth = Number(root.innerWidth || documentElement.clientWidth || 0);
+      const viewportHeight = Number(root.innerHeight || documentElement.clientHeight || 0);
+      if (!(viewportWidth > 0 && viewportHeight > 0)) return false;
+      const edge = 8;
+      const gap = 8;
+      const width = Math.max(0, Math.min(420, viewportWidth - edge * 2));
+      calculatorPanel.style.width = `${width}px`;
+      calculatorPanel.style.maxHeight = 'min(56vh, 380px)';
+      let panelRect = calculatorPanel.getBoundingClientRect?.() || { height:0 };
+      const naturalHeight = Math.max(0, Number(panelRect.height) || 0);
+      const availableBelow = Math.max(0, viewportHeight - inputRect.bottom - gap - edge);
+      const availableAbove = Math.max(0, inputRect.top - gap - edge);
+      const requiredHeight = Math.min(naturalHeight || 280, 280);
+      const placeBelow = availableBelow >= requiredHeight || availableBelow >= availableAbove;
+      const available = placeBelow ? availableBelow : availableAbove;
+      const maxHeight = Math.max(120, Math.min(380, available || 120));
+      calculatorPanel.style.maxHeight = `${maxHeight}px`;
+      panelRect = calculatorPanel.getBoundingClientRect?.() || { height:maxHeight };
+      const height = Math.min(Math.max(0, Number(panelRect.height) || maxHeight), maxHeight);
+      const maxLeft = Math.max(edge, viewportWidth - width - edge);
+      const left = Math.max(edge, Math.min(inputRect.right - width, maxLeft));
+      const desiredTop = placeBelow ? inputRect.bottom + gap : inputRect.top - gap - height;
+      const maxTop = Math.max(edge, viewportHeight - height - edge);
+      const top = Math.max(edge, Math.min(desiredTop, maxTop));
+      calculatorPanel.style.left = `${Math.round(left)}px`;
+      calculatorPanel.style.top = `${Math.round(top)}px`;
+      calculatorPanel.classList?.toggle?.('calculator-placement-above', !placeBelow);
+      if (calculatorPanel.dataset) calculatorPanel.dataset.placement = placeBelow ? 'below' : 'above';
+      return { placement: placeBelow ? 'below' : 'above', left, top, width, maxHeight };
+    }
     selectCalculatorTarget(input) {
       this.document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
       this.calculatorTarget = input;
       const calculatorPanel = this.document.querySelector('.calculator');
       if (input.readOnly && calculatorPanel) {
-        calculatorPanel.classList?.add?.('calculator-mobile-dock');
-        this.document.getElementById('question-form')?.classList?.add?.('calculator-dock-active');
+        calculatorPanel.classList?.add?.('calculator-contextual-float');
         calculatorPanel.open = true;
         const revealTarget = () => {
           input.scrollIntoView?.({ block:'center', inline:'nearest', behavior:'auto' });
-          const keepAboveDock = () => {
-            const inputRect = input.getBoundingClientRect?.();
-            const panelRect = calculatorPanel.getBoundingClientRect?.();
-            if (!inputRect || !panelRect) return;
-            const safeBottom = panelRect.top - 16;
-            if (inputRect.bottom > safeBottom) {
-              root.scrollBy?.({ top:inputRect.bottom - safeBottom, left:0, behavior:'auto' });
-            }
-          };
-          if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(keepAboveDock); else keepAboveDock();
+          const position = () => this.positionCalculatorNearTarget(input, calculatorPanel);
+          if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(position); else position();
         };
         if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
       }
@@ -662,11 +711,24 @@
       this.expression = '0'; this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
     }
     resetCalculator() {
-      this.clearCalculator(); this.calculatorTarget=null; this.updateCalculatorDisplay();
+      this.clearCalculator();
+      if (this.calculatorPositionFrame !== null && typeof root.cancelAnimationFrame === 'function') root.cancelAnimationFrame(this.calculatorPositionFrame);
+      this.calculatorPositionFrame=null;
+      this.calculatorTarget=null;
+      this.updateCalculatorDisplay();
+      this.document.querySelectorAll?.('.amount-input.calculator-selected')?.forEach?.(field=>field.classList.remove('calculator-selected'));
       const target=this.document.getElementById('calculator-target'); if(target)target.textContent='金額欄を選ぶと、現在の数字を計算機で修正できます';
       const calculatorPanel=this.document.querySelector?.('.calculator');
-      if(calculatorPanel){ calculatorPanel.open=false; calculatorPanel.classList?.remove?.('calculator-mobile-dock'); }
-      this.document.getElementById('question-form')?.classList?.remove?.('calculator-dock-active');
+      if(calculatorPanel){
+        calculatorPanel.open=false;
+        calculatorPanel.classList?.remove?.('calculator-contextual-float');
+        calculatorPanel.classList?.remove?.('calculator-placement-above');
+        calculatorPanel.style?.removeProperty?.('left');
+        calculatorPanel.style?.removeProperty?.('top');
+        calculatorPanel.style?.removeProperty?.('width');
+        calculatorPanel.style?.removeProperty?.('max-height');
+        if (calculatorPanel.dataset) delete calculatorPanel.dataset.placement;
+      }
     }
     inputCalculatorDigit(key) {
       if (this.expression === 'エラー' || this.calculator.waitingForOperand) { this.expression = '0'; this.calculator.waitingForOperand = false; }

@@ -7,7 +7,7 @@ const {chromium,webkit}=require('playwright');
 const ROOT=path.resolve(__dirname,'../..');
 const OUTPUT=path.join(ROOT,'artifacts','calculator-dock-all-types');
 const engines={chromium,webkit};
-const widths=[375,820];
+const widths=[320,375,390,430,820];
 const cases=[
   ['J001','journal'],
   ['L040','ledger'],
@@ -41,7 +41,7 @@ async function run(){
             await page.goto(url,{waitUntil:'load'});
             for(const [id,label] of cases){
               await page.evaluate(id=>{
-                document.querySelector('.calculator')?.classList.remove('calculator-mobile-dock');
+                document.querySelector('.calculator')?.classList.remove('calculator-contextual-float');
                 document.querySelector('.calculator')?.removeAttribute('open');
                 document.getElementById('question-form')?.classList.remove('calculator-dock-active');
                 window.calculatorDockHarness.render(id);
@@ -65,13 +65,19 @@ async function run(){
                 const afterValue=input.value;
                 return {
                   id,coarse,readonly,open:calculator.open,
-                  dockClass:calculator.classList.contains('calculator-mobile-dock'),
+                  contextualClass:calculator.classList.contains('calculator-contextual-float'),
                   formActive:form.classList.contains('calculator-dock-active'),
                   position:style.position,
                   selected,
                   inputTop:ir.top,inputBottom:ir.bottom,
                   calcTop:cr.top,calcBottom:cr.bottom,
-                  visibleAboveDock:ir.bottom<=cr.top-8,
+                  placement:calculator.dataset.placement||'',
+                  nonOverlapping:cr.bottom<=ir.top||cr.top>=ir.bottom||cr.right<=ir.left||cr.left>=ir.right,
+                  anchored:calculator.dataset.placement==='below'
+                    ? Math.abs(cr.top-(ir.bottom+8))<=3
+                    : calculator.dataset.placement==='above'
+                      ? Math.abs(cr.bottom-(ir.top-8))<=3
+                      : false,
                   beforeValue,afterValue,
                   targetText:document.getElementById('calculator-target')?.textContent||''
                 };
@@ -80,11 +86,12 @@ async function run(){
               if(result.error)violations.push(result.error);
               if(!result.readonly)violations.push('AMOUNT_NOT_READONLY');
               if(!result.open)violations.push('CALCULATOR_NOT_OPEN');
-              if(!result.dockClass)violations.push('DOCK_CLASS_MISSING');
-              if(!result.formActive)violations.push('FORM_RESERVE_MISSING');
+              if(!result.contextualClass)violations.push('CONTEXTUAL_FLOAT_CLASS_MISSING');
+              if(result.formActive)violations.push('UNEXPECTED_FORM_BOTTOM_RESERVE');
               if(result.position!=='fixed')violations.push('CALCULATOR_NOT_FIXED');
               if(!result.selected)violations.push('TARGET_NOT_SELECTED');
-              if(!result.visibleAboveDock)violations.push('TARGET_OBSCURED_BY_DOCK');
+              if(!result.nonOverlapping)violations.push('TARGET_OVERLAPPED_BY_CALCULATOR');
+              if(!result.anchored)violations.push('CALCULATOR_NOT_ANCHORED_TO_TARGET');
               if(result.afterValue!=='12,345')violations.push('INSERT_RESULT_FAILED');
               evidence.reports.push({browser:browserName,width,id,label,...result,coarsePointerObserved:result.coarse,violations});
               if(violations.length)evidence.failures.push(browserName+'/'+width+'/'+id+': '+violations.join(','));
