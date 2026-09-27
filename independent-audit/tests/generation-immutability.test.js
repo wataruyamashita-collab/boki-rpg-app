@@ -20,7 +20,7 @@ const auditPath=path.join(
 );
 
 const authorityBytes=new Map(
-  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59]
+  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60]
     .filter(generation=>fs.existsSync(authorityPath(generation)))
     .map(
       generation=>[
@@ -65,15 +65,15 @@ try{
   const generations=authorities.map(
     item=>item.document.generation
   );
-  const generation59Committed=committed(59);
+  const generation60Committed=committed(60);
 
   test(
-    'authority sequence is [2..58] before Generation 59 or [2..59] after commit',
+    'authority sequence is [2..59] before Generation 60 or [2..60] after commit',
     ()=>assert.deepStrictEqual(
       generations,
-      generation59Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59]
-        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58]
+      generation60Committed
+        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60]
+        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59]
     )
   );
 
@@ -143,15 +143,15 @@ try{
 
   const documents=authorities.map(item=>item.document);
 
-  const candidate=generation59Committed
+  const candidate=generation60Committed
     ? documents.at(-1)
     : (
-        fs.existsSync(authorityPath(59))
-          ? JSON.parse(fs.readFileSync(authorityPath(59),'utf8'))
+        fs.existsSync(authorityPath(60))
+          ? JSON.parse(fs.readFileSync(authorityPath(60),'utf8'))
           : lifecycle.createCandidate()
       );
 
-  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59]){
+  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60]){
     test(
       `duplicate Generation ${generation} is rejected`,
       ()=>{
@@ -169,16 +169,16 @@ try{
   }
 
   test(
-    'stale-predecessor Generation 60 successor is rejected',
+    'stale-predecessor Generation 61 successor is rejected',
     ()=>{
       const skipped=structuredClone(candidate);
-      skipped.generation=60;
+      skipped.generation=61;
       rejectCandidate(skipped,documents);
     }
   );
 
   test(
-    'competing Generation 59 is rejected',
+    'competing Generation 60 is rejected',
     ()=>{
       const fork=structuredClone(candidate);
       fork.auditHash='f'.repeat(64);
@@ -187,7 +187,7 @@ try{
         candidate,
         [
           ...documents.filter(
-            document=>document.generation<59
+            document=>document.generation<60
           ),
           fork
         ]
@@ -196,7 +196,7 @@ try{
   );
 
   test(
-    'broken Generation 59 predecessor is rejected',
+    'broken Generation 60 predecessor is rejected',
     ()=>{
       const broken=structuredClone(candidate);
       broken.predecessor.canonicalDocumentSha256='0'.repeat(64);
@@ -204,7 +204,7 @@ try{
       rejectCandidate(
         broken,
         documents.filter(
-          document=>document.generation<59
+          document=>document.generation<60
         )
       );
     }
@@ -248,9 +248,9 @@ try{
     }
   );
 
-  if(generation59Committed){
+  if(generation60Committed){
     test(
-      'committed Generation 59 current integrity passes',
+      'committed Generation 60 current integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCurrent().ok,
         true
@@ -258,7 +258,7 @@ try{
     );
   }else{
     test(
-      'pending Generation 59 candidate integrity passes',
+      'pending Generation 60 candidate integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCandidate(candidate).ok,
         true
