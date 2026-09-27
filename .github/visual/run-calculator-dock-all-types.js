@@ -53,6 +53,8 @@ async function run(){
                 const form=document.getElementById('question-form');
                 if(!input) return {id,error:'NO_AMOUNT_INPUT'};
                 const coarse=matchMedia('(hover: none) and (pointer: coarse)').matches;
+                const initialRect=input.getBoundingClientRect();
+                const initialWorkZoneRatio=innerHeight?initialRect.top/innerHeight:null;
                 input.readOnly=true;
                 const readonly=input.readOnly;
                 window.__dockController.selectCalculatorTarget(input);
@@ -83,6 +85,7 @@ async function run(){
                   beforeValue,afterValue,
                   targetText:document.getElementById('calculator-target')?.textContent||'',
                   viewportHeight:innerHeight,
+                  initialWorkZoneRatio,
                   workZoneRatio:innerHeight?ir.top/innerHeight:null
                 };
               },{id});
@@ -113,7 +116,11 @@ async function run(){
               if(!result.nonOverlapping)violations.push('TARGET_OVERLAPPED_BY_CALCULATOR');
               if(!result.anchored)violations.push('CALCULATOR_NOT_ANCHORED_TO_TARGET');
               if(!frozen.stable)violations.push('CALCULATOR_MOVED_DURING_SCROLL');
-              if(id==='C001'&&result.workZoneRatio!==null&&(result.workZoneRatio<0.18||result.workZoneRatio>0.42))violations.push('C001_TARGET_NOT_IN_WORK_ZONE_'+String(result.workZoneRatio));
+              if(id==='C001'&&result.workZoneRatio!==null){
+                const initiallyBelow=result.initialWorkZoneRatio!==null&&result.initialWorkZoneRatio>0.42;
+                if(result.workZoneRatio>0.42||(initiallyBelow&&result.workZoneRatio<0.18))violations.push('C001_TARGET_NOT_IN_WORK_ZONE_initial='+String(result.initialWorkZoneRatio)+'_final='+String(result.workZoneRatio));
+                if(initiallyBelow&&result.workZoneRatio>=result.initialWorkZoneRatio-0.05)violations.push('C001_TARGET_NOT_RAISED_initial='+String(result.initialWorkZoneRatio)+'_final='+String(result.workZoneRatio));
+              }
               if(result.afterValue!=='12,345')violations.push('INSERT_RESULT_FAILED');
               evidence.reports.push({browser:browserName,width,id,label,...result,frozen,coarsePointerObserved:result.coarse,violations});
               if(violations.length)evidence.failures.push(browserName+'/'+width+'/'+id+': '+violations.join(','));
