@@ -75,31 +75,38 @@ async function run(){
                 const inputs=[...(activeAnswerRoot?.querySelectorAll('.amount-input:not(:disabled)')||[])];
                 amountInputsSeen+=inputs.length;
                 byType[question.type]=(byType[question.type]||0)+inputs.length;
-                const input=inputs[0];
-                if(!input){failures.push(id+':NO_AMOUNT_INPUT');continue;}
-                if(!input.readOnly){failures.push(id+':AMOUNT_NOT_READONLY_ON_COARSE_POINTER');continue;}
-                controller.expression='0'; controller.calculatorTarget=null;
-                controller.calculator={accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null};
-                proto.selectCalculatorTarget.call(controller,input);
-                await raf();
-                const inputRect=input.getBoundingClientRect();
-                const panelRect=panel.getBoundingClientRect();
-                const style=getComputedStyle(panel);
-                const issues=[];
-                if(!panel.open)issues.push('PANEL_NOT_OPEN');
-                if(!panel.classList.contains('calculator-mobile-dock'))issues.push('DOCK_CLASS_MISSING');
-                if(!form.classList.contains('calculator-dock-active'))issues.push('FORM_DOCK_CLASS_MISSING');
-                if(style.position!=='fixed')issues.push('PANEL_NOT_FIXED');
-                if(panelRect.left<-1||panelRect.right>innerWidth+1)issues.push('PANEL_HORIZONTAL_OVERFLOW');
-                if(inputRect.bottom>panelRect.top-8)issues.push('INPUT_OBSCURED_BY_DOCK');
-                if(inputRect.left<-1||inputRect.right>innerWidth+1)issues.push('INPUT_OFFSCREEN_HORIZONTAL');
-                if(issues.length)failures.push(id+':'+issues.join(','));
+                if(!inputs.length){failures.push(id+':NO_AMOUNT_INPUT');continue;}
+                for(let inputIndex=0;inputIndex<inputs.length;inputIndex+=1){
+                  const input=inputs[inputIndex];
+                  panel.open=false; panel.classList.remove('calculator-mobile-dock'); form.classList.remove('calculator-dock-active');
+                  if(!input.readOnly){failures.push(id+'#'+(inputIndex+1)+':AMOUNT_NOT_READONLY_ON_COARSE_POINTER');continue;}
+                  controller.expression='0'; controller.calculatorTarget=null;
+                  controller.calculator={accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null};
+                  proto.selectCalculatorTarget.call(controller,input);
+                  await raf();
+                  const inputRect=input.getBoundingClientRect();
+                  const panelRect=panel.getBoundingClientRect();
+                  const style=getComputedStyle(panel);
+                  const issues=[];
+                  if(!panel.open)issues.push('PANEL_NOT_OPEN');
+                  if(!panel.classList.contains('calculator-mobile-dock'))issues.push('DOCK_CLASS_MISSING');
+                  if(!form.classList.contains('calculator-dock-active'))issues.push('FORM_DOCK_CLASS_MISSING');
+                  if(style.position!=='fixed')issues.push('PANEL_NOT_FIXED');
+                  if(panelRect.left<-1||panelRect.right>innerWidth+1)issues.push('PANEL_HORIZONTAL_OVERFLOW');
+                  if(inputRect.bottom>panelRect.top-8)issues.push('INPUT_OBSCURED_BY_DOCK');
+                  if(inputRect.left<-1||inputRect.right>innerWidth+1)issues.push('INPUT_OFFSCREEN_HORIZONTAL');
+                  if(issues.length)failures.push(id+'#'+(inputIndex+1)+':'+issues.join(','));
+                }
               }
               return {questionCount:ids.length,amountInputsSeen,byType,failures};
             });
             evidence.reports.push({browser:browserName,width,...report});
             if(report.questionCount!==300)evidence.failures.push(browserName+'/'+width+':QUESTION_COUNT');
-            if(report.amountInputsSeen!==794)evidence.failures.push(browserName+'/'+width+':AMOUNT_INPUT_COUNT_'+report.amountInputsSeen);
+            const expectedByType={journal:349,ledger:131,trial_balance:80,correction:40,worksheet:104,financial_statement:31,comprehensive:46};
+            if(report.amountInputsSeen!==781)evidence.failures.push(browserName+'/'+width+':AMOUNT_INPUT_COUNT_'+report.amountInputsSeen);
+            for(const [type,expected] of Object.entries(expectedByType)){
+              if(report.byType[type]!==expected)evidence.failures.push(browserName+'/'+width+':'+type.toUpperCase()+'_AMOUNT_INPUT_COUNT_'+report.byType[type]);
+            }
             if(report.failures.length)evidence.failures.push(...report.failures.map(item=>browserName+'/'+width+':'+item));
             write();
           }finally{await context.close();}
