@@ -1016,8 +1016,9 @@ assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comp
 assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*box-sizing:\s*border-box[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*height:\s*44px/s.test(cssSource), 'C001金額入力欄は金額セル幅いっぱい・高さ44pxに統一する');
 assert(viewSource.includes('試算表 → 修正記入 → 損益計算書 → 貸借対照表') && viewSource.includes("guide.className = 'worksheet-guide'") && !viewSource.includes('表は横にスクロールして入力してください。'), '8欄精算表はモバイルで4段階の処理順を示し、横スクロール前提にしない');
 assert(viewSource.includes("referenceLabel.textContent = 'ここを見る'") && viewSource.includes('元試算表の売上・仕入・保険料') && viewSource.includes('損益計算書の貸借差額'), 'D001モバイル各段階で参照する資料を入力欄の直前に示す');
-assert(controllerSource.includes("'calculator-mobile-dock'") && controllerSource.includes("scrollIntoView?.({ block:'center'"), 'D001モバイル金額欄は計算機を画面下ドック化し選択欄を見える位置へ移す');
-assert(/\.calculator\.calculator-mobile-dock\[open\]\s*\{[^}]*position:\s*fixed[^}]*bottom:/s.test(cssSource) && /#question-form\.calculator-dock-active\s*\{[^}]*padding-bottom:/s.test(cssSource), 'D001モバイル計算機ドックは固定表示と重なり防止余白を持つ');
+assert(controllerSource.includes("if (input.readOnly && calculatorPanel)") && controllerSource.includes("calculatorPanel.classList?.add?.('calculator-mobile-dock')") && controllerSource.includes("scrollIntoView?.({ block:'center'"), '全readOnly金額欄は問題形式を問わず計算機を画面下ドック化し選択欄を見える位置へ移す');
+assert(!controllerSource.includes("input.closest?.('.worksheet-mobile-section')"), '計算機ドックをD001専用条件へ戻さない');
+assert(/\.calculator\.calculator-mobile-dock\[open\]\s*\{[^}]*position:\s*fixed[^}]*bottom:/s.test(cssSource) && /#question-form\.calculator-dock-active\s*\{[^}]*padding-bottom:\s*calc\(min\(56vh, 380px\)/s.test(cssSource), '全問題共通計算機ドックは固定表示と実寸連動の重なり防止余白を持つ');
 assert(viewSource.includes("th.scope = 'colgroup'") && viewSource.includes("accountHead.rowSpan = 2"), '8欄精算表のヘッダーを4組と借方・貸方の二段構成にする');
 assert(/\.eight-column-worksheet \.worksheet-value-cell, \.answer-table \.amount-cell\s*{[^}]*white-space:\s*nowrap/s.test(cssSource), '精算表を含む表の金額を途中で折り返さない');
 assert(/\.eight-column-worksheet th:not\(:first-child\), \.eight-column-worksheet td:not\(:first-child\)\s*{[^}]*min-width:\s*13ch/s.test(cssSource), '8桁精算表の金額列に多桁の数値を表示できる幅を確保する');
