@@ -725,6 +725,20 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .worksheet-answer-comparison { width: max-content; min-width: 1180px; }
 .worksheet-answer-comparison th, .worksheet-answer-comparison td { min-width: 14ch; text-align: right; white-space: nowrap; }
 .worksheet-answer-comparison th:first-child, .worksheet-answer-comparison td:first-child { position: sticky; left: 0; z-index: 1; text-align: left; background: #f8fafb; }
+.worksheet-comparison-mobile-flow { display:grid; gap:12px; width:100%; max-width:100%; }
+.worksheet-comparison-mobile-section { min-width:0; overflow:hidden; border:1px solid #d5dce0; border-radius:10px; background:#fff; }
+.worksheet-comparison-mobile-head { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f8fafb; }
+.worksheet-comparison-mobile-head h4 { margin:0; font-size:.95rem; }
+.worksheet-comparison-mobile-table { width:100%; max-width:100%; table-layout:fixed; border-collapse:collapse; font-size:.78rem; }
+.worksheet-comparison-mobile-table th, .worksheet-comparison-mobile-table td { padding:5px 4px; border-top:1px solid #d5dce0; border-right:1px solid #d5dce0; vertical-align:middle; }
+.worksheet-comparison-mobile-table th:last-child, .worksheet-comparison-mobile-table td:last-child { border-right:0; }
+.worksheet-comparison-mobile-table th { background:#eef2f5; text-align:center; white-space:nowrap; }
+.worksheet-comparison-mobile-table th:first-child, .worksheet-comparison-mobile-table td:first-child { width:42%; text-align:left; }
+.worksheet-comparison-mobile-table th:not(:first-child), .worksheet-comparison-mobile-table td:not(:first-child) { width:29%; text-align:right; }
+.worksheet-comparison-mobile-account { overflow-wrap:anywhere; }
+.worksheet-comparison-pair { display:grid; gap:2px; min-width:0; }
+.worksheet-comparison-pair .comparison-actual, .worksheet-comparison-pair .comparison-expected { display:block; min-width:0; overflow-wrap:anywhere; white-space:normal; line-height:1.25; }
+.worksheet-comparison-pair.cell-mismatch { border:2px solid #b42318; border-radius:4px; background:#ffe4df; font-weight:700; }
 .worksheet-comparison-pair { display: grid; grid-template-columns: minmax(9rem, auto) minmax(9rem, auto); gap: 6px; align-items: stretch; min-width: 18.5rem; padding: 5px; border-radius: 5px; }
 .worksheet-comparison-pair span { display: block; padding: 7px 8px; border-radius: 4px; font-variant-numeric: tabular-nums; }
 .worksheet-comparison-pair .comparison-actual { color: #7d1d15; background: #fff0ed; }
