@@ -14,6 +14,7 @@
     "js/view.js": "63869e488964ce94db335a20436e176e4092bce01050443db134e0545b4cd4b3",
     "js/controller.js": "273d56a8efda759cf3125a7ee01e509530b4e20dd8277d552dd87a5a48d168d1",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
-    "js/explanation-model.js": "12f019defb5b701997eed11ab49484b06c06aa195129eaaa27e15b54c6513c60"
+    "js/explanation-model.js": "12f019defb5b701997eed11ab49484b06c06aa195129eaaa27e15b54c6513c60",
+    "js/explanation-formulas.js": "PENDING_GENERATION_64"
   }
 }
