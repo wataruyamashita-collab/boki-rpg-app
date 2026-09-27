@@ -27,6 +27,11 @@ async function measure(page,width){
     const tables=qs('.worksheet-mobile-table');
     const inputs=qs('.worksheet-mobile-input');
     const references=qs('.worksheet-mobile-reference');
+    const comparisonHost=document.getElementById('visual-answer-comparison');
+    const comparisonFlow=document.querySelector('.worksheet-comparison-mobile-flow');
+    const comparisonSections=qs('.worksheet-comparison-mobile-section');
+    const comparisonTables=qs('.worksheet-comparison-mobile-table');
+    const comparisonPairs=qs('.worksheet-comparison-mobile-table .worksheet-comparison-pair');
     const calculator=document.querySelector('.calculator');
     const selected=document.querySelector('.worksheet-mobile-input.calculator-selected');
     const form=document.getElementById('question-form');
@@ -54,6 +59,14 @@ async function measure(page,width){
       referenceCount:references.length,
       referenceLabels:references.map(e=>e.querySelector('strong')?.textContent||''),
       referenceTexts:references.map(e=>e.querySelector('p')?.textContent||''),
+      comparisonHostScroll:comparisonHost?comparisonHost.scrollWidth-comparisonHost.clientWidth:999,
+      comparisonFlowPresent:Boolean(comparisonFlow),
+      desktopComparisonCount:qs('.worksheet-answer-comparison').length,
+      comparisonSectionCount:comparisonSections.length,
+      comparisonSectionTitles:comparisonSections.map(e=>e.dataset.worksheetComparisonGroup),
+      comparisonTableCount:comparisonTables.length,
+      comparisonTableFit:comparisonTables.every(table=>{const section=table.closest('.worksheet-comparison-mobile-section');return rect(table).left>=rect(section).left-1&&rect(table).right<=rect(section).right+1;}),
+      comparisonPairFit:comparisonPairs.every(pair=>{const cell=pair.closest('td');return rect(pair).left>=rect(cell).left-1&&rect(pair).right<=rect(cell).right+1;}),
       calculatorOpen:Boolean(calculator?.open),
       calculatorDocked:Boolean(calculator?.classList.contains('calculator-mobile-dock')),
       calculatorPosition:calculator?getComputedStyle(calculator).position:'',
@@ -97,6 +110,9 @@ async function run(){
             if(m.inputCount!==expectedIds.length||JSON.stringify([...m.inputIds].sort())!==JSON.stringify([...expectedIds].sort()))violations.push('WORKSHEET_INPUT_IDENTITY');
             if(m.referenceCount!==4||m.referenceLabels.some(label=>label!=='ここを見る'))violations.push('WORKSHEET_REFERENCE_CUES');
             if(!m.referenceTexts[0]?.includes('元試算表')||!m.referenceTexts[1]?.includes('決算整理事項')||!m.referenceTexts[2]?.includes('売上・仕入・保険料')||!m.referenceTexts[3]?.includes('損益計算書の貸借差額'))violations.push('WORKSHEET_REFERENCE_CONTENT');
+            if(m.comparisonHostScroll>1||!m.comparisonFlowPresent||m.desktopComparisonCount!==0)violations.push('EXPLANATION_COMPARISON_HORIZONTAL_SCROLL');
+            if(m.comparisonSectionCount!==4||m.comparisonTableCount!==4||JSON.stringify(m.comparisonSectionTitles)!==JSON.stringify(['試算表','修正記入','損益計算書','貸借対照表']))violations.push('EXPLANATION_COMPARISON_STRUCTURE');
+            if(!m.comparisonTableFit||!m.comparisonPairFit)violations.push('EXPLANATION_COMPARISON_OVERFLOW');
             if(!m.calculatorOpen||!m.calculatorDocked||m.calculatorPosition!=='fixed'||!m.formDockActive||m.formPaddingBottom<350)violations.push('WORKSHEET_CALCULATOR_DOCK');
             if(!m.selectedVisibleAboveDock)violations.push('WORKSHEET_SELECTED_INPUT_COVERED');
             if(errors.length)violations.push('PAGE_SCRIPT_ERROR');
