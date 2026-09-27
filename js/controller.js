@@ -665,7 +665,7 @@
           const position = () => this.positionCalculatorNearTarget(input, calculatorPanel);
           if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(position); else position();
         };
-
+        if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
       }
       const currentAmount = normalizeNumber(input.value).replace(/,/g, '');
       this.clearCalculator();
