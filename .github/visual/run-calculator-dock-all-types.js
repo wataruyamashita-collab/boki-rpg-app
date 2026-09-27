@@ -58,7 +58,7 @@ async function run(){
                 input.readOnly=true;
                 const readonly=input.readOnly;
                 window.__dockController.selectCalculatorTarget(input);
-                await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+                await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))));
                 const ir=input.getBoundingClientRect(),cr=calculator.getBoundingClientRect();
                 const style=getComputedStyle(calculator);
                 const selected=input.classList.contains('calculator-selected');
