@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   finalize:
-    if: github.event.head_commit.message == 'Prepare Generation 55 D001 explanation compact finalization'
+    if: github.event.head_commit.message == 'Prepare Generation 55 D001 explanation compact retry 1'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
