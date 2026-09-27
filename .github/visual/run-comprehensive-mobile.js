@@ -44,8 +44,16 @@ async function run(){
               const adjustmentItems=[...(flow?.querySelectorAll('.comprehensive-adjustment-list li')||[])];
               const titles=cards.map(card=>card.querySelector('h4')?.textContent||'');
               const fieldLabels=fields.map(field=>field.querySelector('strong')?.textContent||'');
+              const trial=document.querySelector('.comprehensive-trial-balance-mobile');
+              const trialHeaders=[...(trial?.tHead?.rows?.[0]?.cells||[])].map(cell=>cell.textContent||'');
+              const trialRows=[...(trial?.tBodies?.[0]?.rows||[])].map(row=>[...row.cells].map(cell=>cell.textContent||''));
               const answerWrap=document.querySelector('#table-container');
               const answerTable=document.querySelector('.answer-table[data-question-type="comprehensive"]');
+              const answerHeaders=[...(answerTable?.tHead?.rows?.[0]?.cells||[])].map(cell=>({
+                text:cell.textContent||'',
+                align:getComputedStyle(cell).textAlign,
+                height:rect(cell).height
+              }));
               const rows=[...(answerTable?.tBodies?.[0]?.rows||[])].map(row=>{
                 const item=row.cells[0],amount=row.cells[1],input=amount?.querySelector('.table-input[data-input-type="amount"]');
                 const style=amount?getComputedStyle(amount):null;
@@ -68,12 +76,20 @@ async function run(){
                   adjustmentCount:adjustmentItems.length,
                   cardOverflow:cards.some(card=>card.scrollWidth>card.clientWidth+1),
                   fieldOverflow:fields.some(field=>field.scrollWidth>field.clientWidth+1),
-                  legacyTablePresent:Boolean(materials?.querySelector('.materials-table'))
+                  legacyTablePresent:Boolean(materials?.querySelector('.materials-table')),
+                  trial:{
+                    present:Boolean(trial),
+                    clientWidth:trial?.clientWidth||0,
+                    scrollWidth:trial?.scrollWidth||0,
+                    headers:trialHeaders,
+                    rows:trialRows
+                  }
                 },
                 answer:{
                   wrapClientWidth:answerWrap?.clientWidth||0,
                   wrapScrollWidth:answerWrap?.scrollWidth||0,
-                  tableWidth:answerTable?rect(answerTable).width:0
+                  tableWidth:answerTable?rect(answerTable).width:0,
+                  headers:answerHeaders
                 },
                 rows
               };
@@ -84,9 +100,18 @@ async function run(){
             if(metrics.materials.legacyTablePresent)violations.push('LEGACY_MATERIAL_TABLE_PRESENT');
             if(metrics.materials.cardCount!==3)violations.push('MATERIAL_CARD_COUNT');
             if(JSON.stringify(metrics.materials.titles)!==JSON.stringify(['会計期間','整理前残高試算表','決算整理事項']))violations.push('MATERIAL_TITLES');
-            for(const label of ['内容','借方','貸方','借方合計','貸方合計'])if(!metrics.materials.fieldLabels.includes(label))violations.push('MISSING_FIELD_'+label);
+            if(!metrics.materials.fieldLabels.includes('内容'))violations.push('MISSING_PERIOD_CONTENT');
+            if(!metrics.materials.trial.present)violations.push('TRIAL_BALANCE_TABLE_MISSING');
+            if(JSON.stringify(metrics.materials.trial.headers)!==JSON.stringify(['勘定科目','借方','貸方']))violations.push('TRIAL_BALANCE_HEADERS');
+            if(metrics.materials.trial.scrollWidth>metrics.materials.trial.clientWidth+1)violations.push('TRIAL_BALANCE_HORIZONTAL_SCROLL');
+            if(metrics.materials.trial.rows.length!==13)violations.push('TRIAL_BALANCE_ROW_COUNT');
+            const trialTotal=metrics.materials.trial.rows.at(-1)||[];
+            if(JSON.stringify(trialTotal)!==JSON.stringify(['合計','3,940,000','3,940,000']))violations.push('TRIAL_BALANCE_TOTAL');
             if(metrics.materials.adjustmentCount!==9)violations.push('ADJUSTMENT_COUNT');
             if(metrics.answer.wrapScrollWidth>metrics.answer.wrapClientWidth+1||metrics.answer.tableWidth>metrics.answer.wrapClientWidth+1.5)violations.push('ANSWER_HORIZONTAL_SCROLL');
+            if(metrics.answer.headers.length!==2)violations.push('ANSWER_HEADER_COUNT');
+            if(metrics.answer.headers.some(header=>header.align!=='center'))violations.push('ANSWER_HEADER_ALIGNMENT');
+            if(metrics.answer.headers.some(header=>header.height>=44))violations.push('ANSWER_HEADER_TOO_TALL');
             if(metrics.rows.length!==10)violations.push('ANSWER_ROW_COUNT');
             if(metrics.rows.some(row=>!close(row.inputWidth,row.amountContentWidth,2)))violations.push('INPUT_CELL_WIDTH_MISMATCH');
             if(metrics.rows.some(row=>Math.abs(row.inputHeight-44)>1))violations.push('INPUT_HEIGHT_MISMATCH');
