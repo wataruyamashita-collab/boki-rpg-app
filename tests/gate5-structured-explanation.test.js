@@ -53,7 +53,8 @@ assert(d.transfer.some(item=>item.to==='貸借対照表 借方'),'D001 bsDebit i
 assert(d.transfer.some(item=>item.to==='貸借対照表 貸方'),'D001 bsCredit is localized as 貸借対照表 貸方');
 const f=ExplanationModel.build(data.F001,{cells:{}},{correct:false});
 assert(f.summary.some(x=>x.text==='決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。'),'F001 summary');
-assert(f.transfer.length>0&&f.checks.length>0,'F001 structured flow');
+assert(f.transfer.length>0,'F001 keeps financial-statement placement guidance');
+assert.strictEqual(f.checks.length,0,'F001 omits a fake check that would only repeat the profit calculation');
 const c=ExplanationModel.build(data.C001,{cells:{}},{correct:false});
 assert(c.summary.some(x=>x.text.includes('整理前残高に未処理取引と決算整理を反映')),'C001 summary focuses on integrated-closing reasoning');
 assert.strictEqual(c.transfer.length,0,'C001 must not repeat calculated final answers as transfer cards');
