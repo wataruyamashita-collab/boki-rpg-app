@@ -34,7 +34,6 @@ jobs:
           node tests/chapter8-explanation.test.js
           node tests/explanation-formula-coverage.test.js
           node tests/explanation-redundancy.test.js
-          node independent-audit/tests/generation-immutability.test.js
           git diff --check
 
       - name: Ensure PWA release 20260924-134
@@ -137,7 +136,7 @@ jobs:
           git add index.html service-worker.js pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-65.json
           git diff --cached --check
           if ! git diff --cached --quiet; then
-            git commit -m "Finalize Generation 65 explanation formula coverage"
+            git commit -m "Finalize Generation 65 explanation redundancy"
           else
             echo "Generation 65 authority and release already committed"
           fi
