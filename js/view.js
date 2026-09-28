@@ -980,8 +980,8 @@
       const hasMeaningfulCalculation = (model.calculation || []).some(item => /[×÷＋+−\-＝=]/u.test(String(item.expression || '')));
       const teachingProfile = this.explanationTeachingProfile(question);
       const definitions = [
-        ['まずここを確認','sources'],
         [teachingProfile.summary,'summary'],
+        ['使う資料を整理する','sources'],
         ...(hasMeaningfulCalculation ? [['必要な金額を出す','calculation']] : []),
         [teachingProfile.transfer,'transfer'],
         ['最後に確認','checks'],
