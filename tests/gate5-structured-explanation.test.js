@@ -4,6 +4,12 @@ const ExplanationModel=require('../js/explanation-model');
 const sandbox={window:{}};
 vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),sandbox,{filename:'data/questions.js'});
 const data=sandbox.window.QuestionData,values=Object.values(data);
+const normalizeNumber=value=>String(value??'').replace(/[,\s円]/g,'');
+const assertNoCalculatedTransferEcho=(q,model)=>{
+  if(['journal','correction','worksheet'].includes(q.type))return;
+  const calculated=new Set((model.calculation||[]).filter(item=>/[×÷＋+−\-＝=]/u.test(String(item.expression||''))).map(item=>normalizeNumber(item.result)).filter(Boolean));
+  for(const transfer of model.transfer)assert(!calculated.has(normalizeNumber(transfer.value)),q.id+': transfer must add information beyond calculation');
+};
 const expected={journal:150,ledger:50,trial_balance:40,correction:20,worksheet:20,financial_statement:10,comprehensive:10};
 for(const pair of Object.entries(expected)){
   const type=pair[0],count=pair[1],qs=values.filter(q=>q.type===type);
@@ -13,9 +19,11 @@ for(const pair of Object.entries(expected)){
     const model=ExplanationModel.build(q,q.type==='journal'?{}:{cells:{}},{correct:false});
     assert.strictEqual(ExplanationModel.validate(model).valid,true,q.id+': valid model');
     assert(model.sources.length>0,q.id+': sources');
-    assert(model.summary.length>0,q.id+': summary');
+    assert(model.summary.length>=2,q.id+': strategy states goal and decision rule');
+    assert(String(model.summary[0]?.text||'').startsWith('この問題で求めるのは'),q.id+': strategy starts from requested output');
     if(q.type==='comprehensive')assert.strictEqual(model.transfer.length,0,q.id+': comprehensive must not repeat final answers as transfer cards');
-    else assert(model.transfer.length>0,q.id+': placement/transfer guidance');
+    if(['journal','correction','worksheet'].includes(q.type))assert(model.transfer.length>0,q.id+': placement-critical questions keep transfer guidance');
+    assertNoCalculatedTransferEcho(q,model);
     if(['journal','trial_balance','correction','worksheet'].includes(q.type))assert(model.checks.length>0,q.id+': independent check');
     const numericAnswers=new Set(Object.values(q.answer?.cells||{}).filter(Number.isFinite).map(value=>String(value)));
     for(const check of model.checks){
@@ -28,7 +36,7 @@ for(const pair of Object.entries(expected)){
   }
 }
 const j=ExplanationModel.build(data.J001,{}, {correct:false});
-assert(j.summary.some(x=>x.text==='取引で何が増え、何が減ったかを確認し、勘定科目を決めて借方・貸方に分けます。'),'J001 summary');
+assert(j.summary.some(x=>x.text.includes('何が増えたか・減ったか')),'J001 decision rule');
 assert(j.checks.some(x=>x.label==='借方合計と貸方合計が合っているか確認する'),'J001 check');
 const t=ExplanationModel.build(data.T001,{cells:{}},{correct:false});
 assert(t.calculation.some(x=>x.expression==='410,000 + 175,000 + 60,000 + 289,000 + 90,000 = 1,024,000'),'T001 debit total');
@@ -45,18 +53,17 @@ assert(e.checks.some(x=>x.expected==='22,500 = 22,500'),'E001 debit credit check
 assert(data.L001.explanationModel,'L001 structured explanation');
 assert.strictEqual(values.filter(q=>q.explanationModel).length,300,'all 300 questions use structured explanation');
 const d=ExplanationModel.build(data.D001,{cells:{}},{correct:false});
-assert(d.summary.some(x=>x.text==='試算表の残高を出発点に、決算整理を反映し、損益計算書と貸借対照表へ振り分けます。'),'D001 summary');
+assert(d.summary.some(x=>x.text.includes('整理前残高に決算整理を反映してから')),'D001 decision rule');
 assert(d.transfer.length>0&&d.checks.length>0,'D001 structured flow');
 const worksheetInternalKey=/^(?:tb|adj|pl|bs)(?:Debit|Credit)$/;
 assert(d.transfer.every(item=>!worksheetInternalKey.test(String(item.to))&&!/(?:tb|adj|pl|bs)(?:Debit|Credit)/.test(String(item.decision))),'D001 explanation never exposes worksheet internal keys');
 assert(d.transfer.some(item=>item.to==='貸借対照表 借方'),'D001 bsDebit is localized as 貸借対照表 借方');
 assert(d.transfer.some(item=>item.to==='貸借対照表 貸方'),'D001 bsCredit is localized as 貸借対照表 貸方');
 const f=ExplanationModel.build(data.F001,{cells:{}},{correct:false});
-assert(f.summary.some(x=>x.text==='決算整理後の金額を収益・費用・資産・負債・純資産に分け、必要な合計や利益を求めます。'),'F001 summary');
-assert(f.transfer.length>0,'F001 keeps financial-statement placement guidance');
+assert(f.summary.some(x=>x.text.includes('収益・費用は損益計算書、資産・負債・純資産は貸借対照表')),'F001 decision rule');
 assert.strictEqual(f.checks.length,0,'F001 omits a fake check that would only repeat the profit calculation');
 const c=ExplanationModel.build(data.C001,{cells:{}},{correct:false});
-assert(c.summary.some(x=>x.text.includes('整理前残高に未処理取引と決算整理を反映')),'C001 summary focuses on integrated-closing reasoning');
+assert(c.summary.some(x=>x.text.includes('整理前残高→未処理取引→決算整理')),'C001 summary focuses on integrated-closing solving order');
 assert.strictEqual(c.transfer.length,0,'C001 must not repeat calculated final answers as transfer cards');
 assert(c.checks.some(x=>x.label==='貸借対照表の左右が一致しているか確認する'),'C001 keeps only an independent balance check');
 assert(c.checks.some(x=>x.expected==='2,227,200 = 2,227,200'),'C001 independent balance equality');
@@ -77,7 +84,7 @@ assert.strictEqual(c2Opening.table.rows.length,10,'C002 opening balance rows');
 assert.strictEqual(c2.sources.find(source=>source.title==='決算整理事項')?.list?.length,10,'C002 adjustment list');
 const c4=ExplanationModel.build(data.C004,{cells:{}},{correct:false});
 assert.strictEqual(c4.transfer.length,0,'C004 must not repeat ending cash/profit as transfer cards');
-assert(c4.summary.some(x=>x.text.includes('現金残高は現金の入出金、利益は収益・費用で別々に求めます')),'C004 summary separates cash from profit');
+assert(c4.summary.some(x=>x.text.includes('現金は入出金、利益は収益・費用')),'C004 summary separates cash from profit');
 assert(c4.checks.some(x=>x.checkKind==='concept-separation'),'C004 uses a conceptual check instead of answer echo');
 assert.strictEqual(c4.sources.length,1,'C004 grouped transaction source');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(c4.sources[0].table.columns.map(column=>column.label))),['日付','取引内容'],'C004 transaction columns');
