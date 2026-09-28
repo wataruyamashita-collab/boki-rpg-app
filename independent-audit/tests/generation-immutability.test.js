@@ -20,7 +20,7 @@ const auditPath=path.join(
 );
 
 const authorityBytes=new Map(
-  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65]
+  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66]
     .filter(generation=>fs.existsSync(authorityPath(generation)))
     .map(
       generation=>[
@@ -65,15 +65,15 @@ try{
   const generations=authorities.map(
     item=>item.document.generation
   );
-  const generation65Committed=committed(65);
+  const generation66Committed=committed(66);
 
   test(
-    'authority sequence is [2..64] before Generation 65 or [2..65] after commit',
+    'authority sequence is [2..65] before Generation 66 or [2..66] after commit',
     ()=>assert.deepStrictEqual(
       generations,
-      generation65Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65]
-        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64]
+      generation66Committed
+        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66]
+        : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65]
     )
   );
 
@@ -143,11 +143,11 @@ try{
 
   const documents=authorities.map(item=>item.document);
 
-  const candidate=generation65Committed
+  const candidate=generation66Committed
     ? documents.at(-1)
     : (
-        fs.existsSync(authorityPath(65))
-          ? JSON.parse(fs.readFileSync(authorityPath(65),'utf8'))
+        fs.existsSync(authorityPath(66))
+          ? JSON.parse(fs.readFileSync(authorityPath(66),'utf8'))
           : lifecycle.createCandidate()
       );
 
@@ -172,13 +172,13 @@ try{
     'stale-predecessor Generation 66 successor is rejected',
     ()=>{
       const skipped=structuredClone(candidate);
-      skipped.generation=66;
+      skipped.generation=67;
       rejectCandidate(skipped,documents);
     }
   );
 
   test(
-    'competing Generation 65 is rejected',
+    'competing Generation 66 is rejected',
     ()=>{
       const fork=structuredClone(candidate);
       fork.auditHash='f'.repeat(64);
@@ -187,7 +187,7 @@ try{
         candidate,
         [
           ...documents.filter(
-            document=>document.generation<65
+            document=>document.generation<66
           ),
           fork
         ]
@@ -196,7 +196,7 @@ try{
   );
 
   test(
-    'broken Generation 65 predecessor is rejected',
+    'broken Generation 66 predecessor is rejected',
     ()=>{
       const broken=structuredClone(candidate);
       broken.predecessor.canonicalDocumentSha256='0'.repeat(64);
@@ -204,7 +204,7 @@ try{
       rejectCandidate(
         broken,
         documents.filter(
-          document=>document.generation<64
+          document=>document.generation<65
         )
       );
     }
@@ -248,9 +248,9 @@ try{
     }
   );
 
-  if(generation65Committed){
+  if(generation66Committed){
     test(
-      'committed Generation 65 current integrity passes',
+      'committed Generation 66 current integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCurrent().ok,
         true
@@ -258,7 +258,7 @@ try{
     );
   }else{
     test(
-      'pending Generation 65 candidate integrity passes',
+      'pending Generation 66 candidate integrity passes',
       ()=>assert.strictEqual(
         lifecycle.verifyCandidate(candidate).ok,
         true
