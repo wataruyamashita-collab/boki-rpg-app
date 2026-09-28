@@ -1,3 +1,4 @@
+# Generation 65 retry after adaptive-flow test alignment
 name: Issue 154 finalize explanation redundancy
 on:
   push:
