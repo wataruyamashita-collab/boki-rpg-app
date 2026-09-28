@@ -660,6 +660,15 @@
         calculatorPanel.classList?.add?.('calculator-contextual-float');
         calculatorPanel.open = true;
         const revealTarget = () => {
+          const horizontalScroller = input.closest?.('.journal-grid-scroll, .table-question-wrap');
+          if (horizontalScroller && horizontalScroller.scrollWidth > horizontalScroller.clientWidth + 1) {
+            const targetRect = input.getBoundingClientRect?.();
+            const scrollerRect = horizontalScroller.getBoundingClientRect?.();
+            if (targetRect && scrollerRect) {
+              if (targetRect.left < scrollerRect.left) horizontalScroller.scrollLeft -= scrollerRect.left - targetRect.left;
+              else if (targetRect.right > scrollerRect.right) horizontalScroller.scrollLeft += targetRect.right - scrollerRect.right;
+            }
+          }
           const inputRect = input.getBoundingClientRect?.();
           const documentElement = this.document.documentElement || {};
           const visualViewport = root.visualViewport;
