@@ -665,8 +665,15 @@
             const targetRect = input.getBoundingClientRect?.();
             const scrollerRect = horizontalScroller.getBoundingClientRect?.();
             if (targetRect && scrollerRect) {
-              if (targetRect.left < scrollerRect.left) horizontalScroller.scrollLeft -= scrollerRect.left - targetRect.left;
-              else if (targetRect.right > scrollerRect.right) horizontalScroller.scrollLeft += targetRect.right - scrollerRect.right;
+              const documentElement = this.document.documentElement || {};
+              const visualViewport = root.visualViewport;
+              const viewportLeft = Number(visualViewport?.offsetLeft || 0);
+              const viewportWidth = Number(visualViewport?.width || root.innerWidth || documentElement.clientWidth || 0);
+              const viewportRight = viewportLeft + viewportWidth;
+              const visibleLeft = Math.max(scrollerRect.left, viewportLeft);
+              const visibleRight = Math.min(scrollerRect.right, viewportRight);
+              if (targetRect.left < visibleLeft) horizontalScroller.scrollLeft -= visibleLeft - targetRect.left;
+              else if (targetRect.right > visibleRight) horizontalScroller.scrollLeft += targetRect.right - visibleRight;
             }
           }
           const inputRect = input.getBoundingClientRect?.();
