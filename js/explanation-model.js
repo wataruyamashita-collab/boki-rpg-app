@@ -208,10 +208,77 @@
     return null;
   }
   function calculations(q){const formulaItems=FormulaEngine?.build?.(q);if(Array.isArray(formulaItems)&&formulaItems.length)return formulaItems;if(q.type==='journal')return [...(q.answer?.debit||[]),...(q.answer?.credit||[])].map(r=>({label:r.account,expression:null,result:r.amount,operands:[],evidenceRefs:['answer']}));if(q.type==='trial_balance'){const cells=q.answer?.cells||{},rows=q.table?.rows||[],debits=rows.map(r=>r?.debit).filter(v=>typeof v==='number'&&Number.isFinite(v)),credits=rows.map(r=>r?.credit).filter(v=>typeof v==='number'&&Number.isFinite(v)),out=[];if(debits.length&&Number.isFinite(cells.total_debit))out.push(calcItem('借方合計',debits.map(comma).join(' + ')+' = '+comma(cells.total_debit),cells.total_debit,['table.rows','answer.cells.total_debit']));if(credits.length&&Number.isFinite(cells.total_credit))out.push(calcItem('貸方合計',credits.map(comma).join(' + ')+' = '+comma(cells.total_credit),cells.total_credit,['table.rows','answer.cells.total_credit']));return out;}const special=chapter8Calculations(q);if(special)return special;const cells=q.answer?.cells||{},locs=locations(q);return Object.entries(cells).map(([id,expected])=>{const p=locs.get(id);if(typeof expected==='number'&&p?.c==='balance'&&p.ri>0){const prev=valueAt(q,cells,locs,p.ri-1,'balance'),d=valueAt(q,cells,locs,p.ri,'debit')||0,c=valueAt(q,cells,locs,p.ri,'credit')||0;if(Number.isFinite(prev)&&prev+d-c===expected){const parts=[num(prev)];if(d)parts.push('+',num(d));if(c)parts.push('−',num(c));parts.push('=',num(expected));return{label:cellLabel(q,id,p),expression:parts.join(' '),result:expected,operands:[{label:'直前残高',value:prev},...(d?[{label:'借方記入（増加）',value:d}]:[]),...(c?[{label:'貸方記入（減少）',value:c}]:[])],evidenceRefs:[`table.rows[${p.ri-1}]`,`table.rows[${p.ri}]`,`answer.cells.${id}`]};}}if(typeof expected==='number'&&p?.c==='amount'){const qty=valueAt(q,cells,locs,p.ri,'quantity'),unit=valueAt(q,cells,locs,p.ri,'unitPrice');if(Number.isFinite(qty)&&Number.isFinite(unit)&&qty*unit===expected)return{label:cellLabel(q,id,p),expression:`${num(qty)} × ${num(unit)} = ${num(expected)}`,result:expected,operands:[{label:'数量',value:qty},{label:'単価',value:unit}],evidenceRefs:[`table.rows[${p.ri}]`,`answer.cells.${id}`]};}return{label:cellLabel(q,id,p),expression:null,result:expected,operands:[],evidenceRefs:[p?`table.rows[${p.ri}]`:'answer.cells',`answer.cells.${id}`]};});}
-  function transfer(q){if(q.type==='journal')return['debit','credit'].flatMap(side=>(q.answer?.[side]||[]).map(r=>({from:'問題文・証憑',decision:r.account,to:side==='debit'?'借方':'貸方',debitCredit:side,value:r.amount,evidenceRefs:['answer.'+side]})));if(q.type==='correction'){const c=q.answer?.cells||{},out=[];if(c.debitAccount&&Number.isFinite(c.debitAmount))out.push({from:'帳簿と証ひょうの差',decision:'訂正仕訳',to:'借方',debitCredit:'debit',value:c.debitAccount+' '+comma(c.debitAmount)+'円',evidenceRefs:['materials','answer.cells.debitAccount','answer.cells.debitAmount']});if(c.creditAccount&&Number.isFinite(c.creditAmount))out.push({from:'帳簿と証ひょうの差',decision:'訂正仕訳',to:'貸方',debitCredit:'credit',value:c.creditAccount+' '+comma(c.creditAmount)+'円',evidenceRefs:['materials','answer.cells.creditAccount','answer.cells.creditAmount']});return out;}const locs=locations(q);return Object.entries(q.answer?.cells||{}).map(([id,value])=>{const p=locs.get(id);return{from:p?rowName(q,p.r,p.ri):(q.category||'問題資料'),decision:cellLabel(q,id,p),to:labels[p?.c]||p?.c||id,debitCredit:null,value,evidenceRefs:[p?`table.rows[${p.ri}]`:'table',`answer.cells.${id}`]};});}
-  function checks(q){if(q.type==='journal'){const d=(q.answer?.debit||[]).reduce((s,r)=>s+(Number(r.amount)||0),0),c=(q.answer?.credit||[]).reduce((s,r)=>s+(Number(r.amount)||0),0);return[{label:'借方合計と貸方合計が合っているか確認する',expected:d===c?num(d)+' = '+num(c):'不一致',evidenceRefs:['answer.debit','answer.credit']}];}const cells=q.answer?.cells||{};if(q.type==='trial_balance'){const d=cells.total_debit,c=cells.total_credit;return[{label:'借方合計と貸方合計が一致しているか確認する',expected:Number.isFinite(d)&&Number.isFinite(c)?num(d)+' = '+num(c):'合計欄を確認',evidenceRefs:['answer.cells.total_debit','answer.cells.total_credit']}];}if(q.type==='correction'){const d=cells.debitAmount,c=cells.creditAmount;return[{label:'訂正する部分だけを直せているか確認する',expected:'正しい部分は残す',evidenceRefs:['materials','answer.cells']},{label:'訂正仕訳の借方と貸方の金額が合っているか確認する',expected:Number.isFinite(d)&&Number.isFinite(c)?num(d)+' = '+num(c):'借方・貸方を確認',evidenceRefs:['answer.cells.debitAmount','answer.cells.creditAmount']}];}const locs=locations(q),out=Object.entries(q.answer?.cells||{}).map(([id,v])=>({label:`${cellLabel(q,id,locs.get(id))}を確認する`,expected:num(v),evidenceRefs:[`answer.cells.${id}`]})),format=q.format||'',category=String(q.category||'');if(format==='bookkeeping-voucher-entry'){out.unshift({label:'現金の動きに合った伝票を選べているか確認する',expected:'増える → 入金伝票 / 減る → 出金伝票 / 動かない → 振替伝票',evidenceRefs:['table.rows']});return out;}if(format==='bookkeeping-inventory-ledger'||/商品有高帳/u.test(category)){out.unshift({label:'数量・単価・金額の流れを確認する',expected:'払出後の残りを次の行へつなげる',evidenceRefs:['table.rows']});return out;}if(['bookkeeping-general-ledger','bookkeeping-account-ledger','bookkeeping-cash-book','bookkeeping-checking-book'].includes(format)||/元帳/u.test(category))out.unshift({label:'残高を上から順に確認する',expected:'前の残高に増減を反映して、次の残高を求める',evidenceRefs:['table.rows']});return out;}
+  function transfer(q){
+    if(q.type==='journal')return['debit','credit'].flatMap(side=>(q.answer?.[side]||[]).map(r=>({from:'問題文・証憑',decision:r.account,to:side==='debit'?'借方':'貸方',debitCredit:side,value:r.amount,evidenceRefs:['answer.'+side]})));
+    if(q.type==='correction'){
+      const c=q.answer?.cells||{},out=[];
+      if(c.debitAccount&&Number.isFinite(c.debitAmount))out.push({from:'帳簿と証ひょうの差',decision:'訂正仕訳',to:'借方',debitCredit:'debit',value:c.debitAccount+' '+comma(c.debitAmount)+'円',evidenceRefs:['materials','answer.cells.debitAccount','answer.cells.debitAmount']});
+      if(c.creditAccount&&Number.isFinite(c.creditAmount))out.push({from:'帳簿と証ひょうの差',decision:'訂正仕訳',to:'貸方',debitCredit:'credit',value:c.creditAccount+' '+comma(c.creditAmount)+'円',evidenceRefs:['materials','answer.cells.creditAccount','answer.cells.creditAmount']});
+      return out;
+    }
+    // Comprehensive questions already expose the final destination in the answer rows.
+    // Repeating each calculated result as a second "transfer" card adds no new learning.
+    if(q.type==='comprehensive')return[];
+    const locs=locations(q);
+    return Object.entries(q.answer?.cells||{}).map(([id,value])=>{
+      const p=locs.get(id);
+      return{from:p?rowName(q,p.r,p.ri):(q.category||'問題資料'),decision:cellLabel(q,id,p),to:labels[p?.c]||p?.c||id,debitCredit:null,value,evidenceRefs:[p?`table.rows[${p.ri}]`:'table',`answer.cells.${id}`]};
+    });
+  }
+  function checks(q){
+    if(q.type==='journal'){
+      const d=(q.answer?.debit||[]).reduce((s,r)=>s+(Number(r.amount)||0),0),c=(q.answer?.credit||[]).reduce((s,r)=>s+(Number(r.amount)||0),0);
+      return[{label:'借方合計と貸方合計が合っているか確認する',expected:d===c?num(d)+' = '+num(c):'不一致',evidenceRefs:['answer.debit','answer.credit'],checkKind:'independent-balance'}];
+    }
+    const cells=q.answer?.cells||{};
+    if(q.type==='trial_balance'){
+      const d=cells.total_debit,c=cells.total_credit;
+      return[{label:'借方合計と貸方合計が一致しているか確認する',expected:Number.isFinite(d)&&Number.isFinite(c)?num(d)+' = '+num(c):'合計欄を確認',evidenceRefs:['answer.cells.total_debit','answer.cells.total_credit'],checkKind:'independent-balance'}];
+    }
+    if(q.type==='correction'){
+      const d=cells.debitAmount,c=cells.creditAmount;
+      return[
+        {label:'訂正する部分だけを直せているか確認する',expected:'正しい部分は残す',evidenceRefs:['materials','answer.cells'],checkKind:'scope'},
+        {label:'訂正仕訳の借方と貸方の金額が合っているか確認する',expected:Number.isFinite(d)&&Number.isFinite(c)?num(d)+' = '+num(c):'借方・貸方を確認',evidenceRefs:['answer.cells.debitAmount','answer.cells.creditAmount'],checkKind:'independent-balance'}
+      ];
+    }
+    const format=q.format||'',category=String(q.category||'');
+    if(q.type==='comprehensive'){
+      if(Number.isFinite(cells.totalAssets)&&Number.isFinite(cells.totalEquityLiabilities)){
+        return[{label:'貸借対照表の左右が一致しているか確認する',expected:num(cells.totalAssets)+' = '+num(cells.totalEquityLiabilities),evidenceRefs:['answer.cells.totalAssets','answer.cells.totalEquityLiabilities'],checkKind:'independent-balance'}];
+      }
+      if(Object.prototype.hasOwnProperty.call(cells,'endingCash')&&Object.prototype.hasOwnProperty.call(cells,'profit')){
+        return[{label:'現金残高と利益を別々の考え方で求めたか確認する',expected:'現金残高＝期首現金＋現金収入－現金支出／利益＝収益－費用',evidenceRefs:['materials'],checkKind:'concept-separation'}];
+      }
+      return[];
+    }
+    if(q.type==='worksheet'){
+      return[{label:'整理後残高を重複なく振り分けたか確認する',expected:'各残高は損益計算書または貸借対照表の所定欄へ一度だけ',evidenceRefs:['answer.cells'],checkKind:'classification'}];
+    }
+    if(q.type==='financial_statement'){
+      if(Number.isFinite(cells.assetsTotal)&&Number.isFinite(cells.liabilitiesEquityTotal)){
+        return[{label:'資産合計と負債・純資産合計が一致しているか確認する',expected:num(cells.assetsTotal)+' = '+num(cells.liabilitiesEquityTotal),evidenceRefs:['answer.cells.assetsTotal','answer.cells.liabilitiesEquityTotal'],checkKind:'independent-balance'}];
+      }
+      return[];
+    }
+    if(format==='bookkeeping-voucher-entry')return[{label:'現金の動きに合った伝票を選べているか確認する',expected:'増える → 入金伝票 / 減る → 出金伝票 / 動かない → 振替伝票',evidenceRefs:['table.rows'],checkKind:'classification'}];
+    if(format==='bookkeeping-inventory-ledger'||/商品有高帳/u.test(category))return[{label:'数量・単価・金額の流れを確認する',expected:'払出後の残りを次の行へつなげる',evidenceRefs:['table.rows'],checkKind:'continuity'}];
+    if(['bookkeeping-general-ledger','bookkeeping-account-ledger','bookkeeping-cash-book','bookkeeping-checking-book'].includes(format)||/元帳/u.test(category))return[{label:'残高を上から順に確認する',expected:'前の残高に増減を反映して次の残高へつなげる',evidenceRefs:['table.rows'],checkKind:'continuity'}];
+    if(format==='bookkeeping-notes-receivable')return[{label:'受取手形だけを選べているか確認する',expected:'約束手形の受取だけを記帳対象にする',evidenceRefs:['materials'],checkKind:'selection'}];
+    if(format==='bookkeeping-notes-payable')return[{label:'支払手形だけを選べているか確認する',expected:'自店振出の約束手形だけを記帳対象にする',evidenceRefs:['materials'],checkKind:'selection'}];
+    return[];
+  }
   function diagnostics(q,a,s,o){return Array.isArray(o?.diagnostics)?o.diagnostics:(Feedback?.diagnoseWrongAnswer?Feedback.diagnoseWrongAnswer(q,a||{},s||{correct:false}):[]);}
   function generated(q,a,s,o){const ds=diagnostics(q,a,s,o);return{schemaVersion:SCHEMA_VERSION,source:'generated',sources:sources(q),summary:String(q.question||'').trim()?[{text:String(q.question).trim(),evidenceRef:'question'}]:[],calculation:calculations(q),transfer:transfer(q),checks:checks(q),mistakes:ds.slice(0,3).map(x=>({title:x.title||'今回の間違い',reason:x.reason||'',correction:x.nextRule||x.thinking||'',diagnosticKind:x.kind||'general',cause:x.cause||x.kind||'general'})),fallback:{authoredExplanation:String(q.explanation||''),diagnostics:clone(ds)}};}
+  function optimizeInstruction(q,m){
+    const out={...m};
+    if(q.type==='comprehensive'&&q.format==='exam-question-3'){
+      out.summary=[{text:'整理前残高に未処理取引と決算整理を反映し、途中計算を損益計算書・貸借対照表の最終金額へつなげます。各金額は、どの資料から出たかを分けて追います。',evidenceRef:'question'}];
+    }else if(q.type==='comprehensive'&&!q.format){
+      out.summary=[{text:'現金残高は現金の入出金、利益は収益・費用で別々に求めます。現金が動いても収益・費用にならない取引がある点を見分けます。',evidenceRef:'question'}];
+    }
+    return out;
+  }
   function merge(g,a){
     if(!obj(a))return g;
     const m={...g,source:'authored'};
@@ -225,6 +292,6 @@
     return m;
   }
   function validate(m){const e=[];if(!obj(m))return{valid:false,errors:['model must be an object']};if(m.schemaVersion!==SCHEMA_VERSION)e.push(`schemaVersion must be ${SCHEMA_VERSION}`);REQUIRED_SECTIONS.forEach(k=>{if(!Array.isArray(m[k]))e.push(`${k} must be an array`);});if(!obj(m.fallback))e.push('fallback must be an object');if(m.fallback&&typeof m.fallback.authoredExplanation!=='string')e.push('fallback.authoredExplanation must be a string');if(m.fallback&&!Array.isArray(m.fallback.diagnostics))e.push('fallback.diagnostics must be an array');return{valid:e.length===0,errors:e};}
-  function build(q,a={},s={correct:false},o={}){if(!obj(q))throw new TypeError('question must be an object');const m=merge(generated(q,a,s,o),q.explanationModel),v=validate(m);if(!v.valid)throw new Error(`invalid explanation model: ${v.errors.join('; ')}`);return m;}
+  function build(q,a={},s={correct:false},o={}){if(!obj(q))throw new TypeError('question must be an object');const m=optimizeInstruction(q,merge(generated(q,a,s,o),q.explanationModel)),v=validate(m);if(!v.valid)throw new Error(`invalid explanation model: ${v.errors.join('; ')}`);return m;}
   return Object.freeze({SCHEMA_VERSION,REQUIRED_SECTIONS,build,validate});
 });
