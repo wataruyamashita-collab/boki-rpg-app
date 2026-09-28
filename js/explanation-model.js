@@ -275,13 +275,81 @@
     const text=String(v??'').replace(/[\s,円]/g,'');
     return /^-?\d+(?:\.\d+)?$/u.test(text)?String(Number(text)):null;
   };
+  function requestedOutputLabels(q){
+    const labelsOut=[],metadata=q?.table?.inputMetadata||{},cells=arr(q?.table?.inputCells);
+    cells.forEach(id=>{const label=metadata?.[id]?.label;if(label&&!labelsOut.includes(label))labelsOut.push(label);});
+    if(labelsOut.length)return labelsOut.slice(0,4);
+    for(const row of arr(q?.table?.rows)){
+      if(!obj(row)||!Object.values(row).includes('入力'))continue;
+      const label=['item','account','description','section','asset'].map(key=>row?.[key]).find(shown);
+      if(label&&!labelsOut.includes(String(label)))labelsOut.push(String(label));
+    }
+    return labelsOut.slice(0,4);
+  }
+  function learnerStrategy(q){
+    const format=q.format||'',category=String(q.category||''),outputs=requestedOutputLabels(q);
+    const goalSuffix=outputs.length?outputs.join('・'):'必要な金額';
+    if(q.type==='journal')return[
+      'この問題で求めるのは、取引を借方と貸方に分けた仕訳です。',
+      'まず「何が増えたか・減ったか」を決め、次に勘定科目、最後に借方・貸方を決めます。'
+    ];
+    if(q.type==='trial_balance')return[
+      'この問題で求めるのは、各勘定残高を借方・貸方に分けた合計です。',
+      '残高の側を変えずに集計し、最後に借方合計と貸方合計を別々に求めます。'
+    ];
+    if(q.type==='correction')return[
+      'この問題で求めるのは、誤った記録を正しい残高へ直すための訂正仕訳です。',
+      '帳簿の記録と本来の正しい処理を比べ、違っている部分だけを仕訳します。'
+    ];
+    if(q.type==='worksheet')return[
+      `この問題で求めるのは、決算整理後の${goalSuffix}です。`,
+      '整理前残高に決算整理を反映してから、損益計算書と貸借対照表のどちらへ入るかを判断します。'
+    ];
+    if(q.type==='financial_statement')return[
+      `この問題で求めるのは、財務諸表の${goalSuffix}です。`,
+      '収益・費用は損益計算書、資産・負債・純資産は貸借対照表という区分を先に決めてから計算します。'
+    ];
+    if(q.type==='comprehensive'&&q.format==='exam-question-3')return[
+      `この問題で求めるのは、決算整理を反映した最終的な${goalSuffix}です。`,
+      '整理前残高→未処理取引→決算整理→損益計算書・貸借対照表の順に、1つの修正がどこへ波及するかを追います。'
+    ];
+    if(q.type==='comprehensive')return[
+      `この問題で求めるのは、${goalSuffix}です。`,
+      '求める金額ごとに使う取引を分けます。現金は入出金、利益は収益・費用という別の物差しで判断します。'
+    ];
+    if(format==='fixed-asset-ledger'||/固定資産台帳/u.test(category))return[
+      `この問題で求めるのは、固定資産台帳の${goalSuffix}です。`,
+      '取得原価・耐用年数・使用月数を確認し、年額→月割額→累計額・帳簿価額の順に求めます。'
+    ];
+    if(format==='bookkeeping-inventory-ledger'||/商品有高帳/u.test(category))return[
+      `この問題で求めるのは、商品有高帳の${goalSuffix}です。`,
+      '数量と単価を分けて追い、指定された払出単価の方法で払出額と残高額を順につなげます。'
+    ];
+    if(format==='bookkeeping-voucher-entry')return[
+      'この問題で求めるのは、取引に合う伝票と記入内容です。',
+      '現金が増える・減る・動かないの3つに分けて、入金伝票・出金伝票・振替伝票を選びます。'
+    ];
+    if(format==='journal-book'||/仕訳帳/u.test(category))return[
+      'この問題で求めるのは、取引を日付順に仕訳帳へ記入した結果です。',
+      '取引ごとに仕訳を完成させてから、日付・摘要・元丁・貸借金額を所定欄へ移します。'
+    ];
+    if(format==='bookkeeping-notes-receivable'||format==='bookkeeping-notes-payable')return[
+      `この問題で求めるのは、${category||'手形記入帳'}の記入内容です。`,
+      'まず記入対象になる手形だけを選び、その後に日付・相手先・満期日・金額を資料から拾います。'
+    ];
+    if(q.type==='ledger')return[
+      `この問題で求めるのは、${category||'元帳'}の${goalSuffix}です。`,
+      'その勘定がどちら側で増えるかを決め、取引を上から順に反映して残高をつなげます。'
+    ];
+    return[
+      `この問題で求めるのは、${goalSuffix}です。`,
+      '問題文の条件を分類し、使う数字と使わない数字を分けてから計算します。'
+    ];
+  }
   function optimizeInstruction(q,m){
     const out={...m};
-    if(q.type==='comprehensive'&&q.format==='exam-question-3'){
-      out.summary=[{text:'整理前残高に未処理取引と決算整理を反映し、途中計算を損益計算書・貸借対照表の最終金額へつなげます。各金額は、どの資料から出たかを分けて追います。',evidenceRef:'question'}];
-    }else if(q.type==='comprehensive'&&!q.format){
-      out.summary=[{text:'現金残高は現金の入出金、利益は収益・費用で別々に求めます。現金が動いても収益・費用にならない取引がある点を見分けます。',evidenceRef:'question'}];
-    }
+    const strategy=learnerStrategy(q);
+    out.summary=strategy.map(text=>({text,evidenceRef:'question'}));
     const placementCritical=['journal','correction','worksheet'].includes(q.type);
     const calculatedValues=new Set(arr(out.calculation).filter(item=>/[×÷＋+−\-＝=]/u.test(String(item?.expression||''))).map(item=>comparableValue(item?.result)).filter(Boolean));
     if(!placementCritical&&calculatedValues.size){
