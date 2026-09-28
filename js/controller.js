@@ -674,9 +674,19 @@
             else if (typeof root.scrollBy === 'function') { const delta = inputRect.top - workTop; try { root.scrollBy({ top:delta, left:0, behavior:'auto' }); } catch (_error) { root.scrollBy(0, delta); } }
           }
           const position = () => this.positionCalculatorNearTarget(input, calculatorPanel);
+          const settlePosition = () => {
+            if (this.calculatorTarget !== input || !calculatorPanel.open || !calculatorPanel.classList?.contains?.('calculator-contextual-float')) return;
+            position();
+          };
           if (typeof root.requestAnimationFrame === 'function') {
-            root.requestAnimationFrame(() => root.requestAnimationFrame(position));
-          } else position();
+            root.requestAnimationFrame(() => root.requestAnimationFrame(() => {
+              position();
+              root.setTimeout?.(settlePosition, 50);
+            }));
+          } else {
+            position();
+            root.setTimeout?.(settlePosition, 50);
+          }
         };
         if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
       }
