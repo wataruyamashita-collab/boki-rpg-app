@@ -660,25 +660,24 @@
         calculatorPanel.classList?.add?.('calculator-contextual-float');
         calculatorPanel.open = true;
         const revealTarget = () => {
-          const horizontalScroller = [
+          const horizontalScrollers = [...new Set([
             input.closest?.('.journal-grid-scroll'),
             input.closest?.('.correction-entry'),
             input.closest?.('.table-question-wrap')
-          ].find(element => element && element.scrollWidth > element.clientWidth + 1);
-          if (horizontalScroller) {
+          ].filter(element => element && element.scrollWidth > element.clientWidth + 1))];
+          for (const horizontalScroller of horizontalScrollers) {
             const targetRect = input.getBoundingClientRect?.();
             const scrollerRect = horizontalScroller.getBoundingClientRect?.();
-            if (targetRect && scrollerRect) {
-              const documentElement = this.document.documentElement || {};
-              const visualViewport = root.visualViewport;
-              const viewportLeft = Number(visualViewport?.offsetLeft || 0);
-              const viewportWidth = Number(visualViewport?.width || root.innerWidth || documentElement.clientWidth || 0);
-              const viewportRight = viewportLeft + viewportWidth;
-              const visibleLeft = Math.max(scrollerRect.left, viewportLeft);
-              const visibleRight = Math.min(scrollerRect.right, viewportRight);
-              if (targetRect.left < visibleLeft) horizontalScroller.scrollLeft -= visibleLeft - targetRect.left;
-              else if (targetRect.right > visibleRight) horizontalScroller.scrollLeft += targetRect.right - visibleRight;
-            }
+            if (!targetRect || !scrollerRect) continue;
+            const documentElement = this.document.documentElement || {};
+            const visualViewport = root.visualViewport;
+            const viewportLeft = Number(visualViewport?.offsetLeft || 0);
+            const viewportWidth = Number(visualViewport?.width || root.innerWidth || documentElement.clientWidth || 0);
+            const viewportRight = viewportLeft + viewportWidth;
+            const visibleLeft = Math.max(scrollerRect.left, viewportLeft);
+            const visibleRight = Math.min(scrollerRect.right, viewportRight);
+            if (targetRect.left < visibleLeft) horizontalScroller.scrollLeft -= visibleLeft - targetRect.left;
+            else if (targetRect.right > visibleRight) horizontalScroller.scrollLeft += targetRect.right - visibleRight;
           }
           const inputRect = input.getBoundingClientRect?.();
           const documentElement = this.document.documentElement || {};
