@@ -757,14 +757,24 @@
       const columnHead = tableHead.insertRow();
       ['借方科目', '借方金額', '貸方科目', '貸方金額'].forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; columnHead.append(th); });
       const body = table.createTBody(); const rows = Math.max(answer.debit.length, answer.credit.length, 1);
+      const mobile = this.document.createElement('div'); mobile.className = 'journal-review-mobile'; mobile.setAttribute('aria-label', '仕訳の借方と貸方');
       for (let index = 0; index < rows; index += 1) {
         const row = body.insertRow();
+        const mobileRow = this.document.createElement('article'); mobileRow.className = 'journal-review-row';
         ['debit', 'credit'].forEach(side => {
           const item = answer[side][index]; const account = row.insertCell(); account.append(this.accountLabel(item?.account));
           const amount = row.insertCell(); amount.className = 'journal-amount'; amount.textContent = item?.amount ? `${yen(item.amount)}円` : '—';
+
+          const sideCard = this.document.createElement('section'); sideCard.className = `journal-review-side journal-review-${side}`;
+          const sideLabel = this.document.createElement('strong'); sideLabel.className = 'journal-review-side-label'; sideLabel.textContent = side === 'debit' ? '借方' : '貸方';
+          const detail = this.document.createElement('div'); detail.className = 'journal-review-detail';
+          const accountValue = this.document.createElement('span'); accountValue.className = 'journal-review-account'; accountValue.append(this.accountLabel(item?.account));
+          const amountValue = this.document.createElement('span'); amountValue.className = 'journal-review-amount'; amountValue.textContent = item?.amount ? `${yen(item.amount)}円` : '—';
+          detail.append(accountValue, amountValue); sideCard.append(sideLabel, detail); mobileRow.append(sideCard);
         });
+        mobile.append(mobileRow);
       }
-      wrap.append(table); return wrap;
+      wrap.append(table, mobile); return wrap;
     }
     correctionJournal(answer = {}) {
       const cells = answer.cells || answer;
@@ -786,16 +796,36 @@
       const head = table.createTHead().insertRow();
       ['項目', 'あなたの解答', '正しい解答', '判定'].forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; head.append(th); });
       const body = table.createTBody();
+      const mobile = this.document.createElement('div'); mobile.className = 'answer-comparison-mobile-list'; mobile.setAttribute('aria-label', '自分の解答と正しい解答の比較');
       question.table.inputCells.forEach(cellId => {
         const correct = detailMap.get(cellId)?.correct === true; const row = body.insertRow();
         if (!correct) row.className = 'comparison-row-mismatch';
-        const label = row.insertCell(); label.textContent = question.table.inputMetadata?.[cellId]?.label || this.cellLabel(question, cellId);
-        const actual = row.insertCell(); actual.textContent = this.comparisonValue(question, cellId, userAnswer.cells?.[cellId]);
+        const labelText = question.table.inputMetadata?.[cellId]?.label || this.cellLabel(question, cellId);
+        const actualText = this.comparisonValue(question, cellId, userAnswer.cells?.[cellId]);
+        const expectedText = this.comparisonValue(question, cellId, question.answer.cells?.[cellId]);
+        const label = row.insertCell(); label.textContent = labelText;
+        const actual = row.insertCell(); actual.textContent = actualText;
         if (!correct) actual.className = 'cell-mismatch';
-        const expected = row.insertCell(); expected.textContent = this.comparisonValue(question, cellId, question.answer.cells?.[cellId]);
+        const expected = row.insertCell(); expected.textContent = expectedText;
         const status = row.insertCell(); status.className = `comparison-status ${correct ? 'comparison-status-match' : 'comparison-status-mismatch'}`; status.textContent = correct ? '一致' : '要確認';
+
+        const card = this.document.createElement('article'); card.className = `answer-comparison-mobile-card${correct ? '' : ' comparison-row-mismatch'}`;
+        const cardHead = this.document.createElement('div'); cardHead.className = 'answer-comparison-mobile-head';
+        const item = this.document.createElement('strong'); item.textContent = labelText;
+        const badge = this.document.createElement('span'); badge.className = `comparison-status ${correct ? 'comparison-status-match' : 'comparison-status-mismatch'}`; badge.textContent = correct ? '一致' : '要確認';
+        cardHead.append(item, badge);
+        const pair = this.document.createElement('div'); pair.className = 'answer-comparison-mobile-pair';
+        const actualBox = this.document.createElement('div'); actualBox.className = `answer-comparison-mobile-value comparison-actual${correct ? '' : ' cell-mismatch'}`;
+        const actualLabel = this.document.createElement('span'); actualLabel.className = 'answer-comparison-mobile-label'; actualLabel.textContent = 'あなたの解答';
+        const actualValue = this.document.createElement('strong'); actualValue.textContent = actualText;
+        actualBox.append(actualLabel, actualValue);
+        const expectedBox = this.document.createElement('div'); expectedBox.className = 'answer-comparison-mobile-value comparison-expected';
+        const expectedLabel = this.document.createElement('span'); expectedLabel.className = 'answer-comparison-mobile-label'; expectedLabel.textContent = '正しい解答';
+        const expectedValue = this.document.createElement('strong'); expectedValue.textContent = expectedText;
+        expectedBox.append(expectedLabel, expectedValue);
+        pair.append(actualBox, expectedBox); card.append(cardHead, pair); mobile.append(card);
       });
-      wrap.append(table); return wrap;
+      wrap.append(table, mobile); return wrap;
     }
     worksheetAnswerComparisonMobile(question, score, userAnswer) {
       const details = new Map((score.details || []).map(detail => [detail.cellId, detail.correct === true]));
