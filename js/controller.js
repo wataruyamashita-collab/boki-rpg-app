@@ -90,13 +90,18 @@
     }
     bindEvents() {
       this.document.addEventListener('click', event => {
+        const calculatorInput = event.target.closest?.('.amount-input[readonly]:not(:disabled)');
+        if (calculatorInput) this.selectCalculatorTarget(calculatorInput);
         const action = event.target.closest('[data-action]'); if (!action) return;
       const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0]), next: () => this.next(), save: () => this.saveDraft(true), 'hint-1': () => this.showHint(1), 'hint-2': () => this.showHint(2), 'coaching-retry': () => this.beginCoachingRetry(), 'coaching-retry-result': () => this.beginCoachingRetry(), 'reveal-answer': () => this.revealAnswer(), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target, event); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
-      this.document.addEventListener('pointerdown', event => { if (event.target.matches('.amount-input[readonly]:not(:disabled)')) this.selectCalculatorTarget(event.target); });
-      this.document.addEventListener('focusin', event => { if (event.target.matches('.amount-input:not(:disabled)')) this.selectCalculatorTarget(event.target); });
+      this.document.addEventListener('focusin', event => {
+        if (!event.target.matches('.amount-input:not(:disabled)')) return;
+        if (event.target.readOnly && this.view?.calculatorFirstInput) return;
+        this.selectCalculatorTarget(event.target);
+      });
       const calculatorPanel = this.document.querySelector?.('.calculator');
       calculatorPanel?.addEventListener?.('toggle', () => {
         const active = Boolean(calculatorPanel.open && calculatorPanel.classList?.contains?.('calculator-contextual-float'));
@@ -660,6 +665,8 @@
         calculatorPanel.classList?.add?.('calculator-contextual-float');
         calculatorPanel.open = true;
         const revealTarget = () => {
+          if (this.calculatorTarget !== input) return;
+          if (this.document.body?.contains && !this.document.body.contains(input)) return;
           const horizontalScrollers = [...new Set([
             input.closest?.('.journal-grid-scroll'),
             input.closest?.('.correction-entry'),
@@ -699,7 +706,9 @@
           } else if (typeof root.scrollTo !== 'function' && typeof root.scrollBy !== 'function') {
             input.scrollIntoView?.({ block:'nearest', inline:'nearest', behavior:'auto' });
           }
-          const position = () => this.positionCalculatorNearTarget(input, calculatorPanel);
+          const position = () => this.calculatorTarget === input
+            ? this.positionCalculatorNearTarget(input, calculatorPanel)
+            : false;
           if (typeof root.requestAnimationFrame === 'function') {
             root.requestAnimationFrame(() => root.requestAnimationFrame(position));
           } else position();

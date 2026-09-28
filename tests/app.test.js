@@ -133,8 +133,11 @@ assert(controllerSource.includes('if (this.submitting || !this.currentId') && co
 assert(html.includes('data-action="calc-insert"'), '電卓の表示金額を入力するボタンを表示する');
 assert(controllerSource.includes("'calc-insert': () => this.insertCalculatorResult(false)"), '電卓の入力ボタンを転記処理へ接続する');
 assert(controllerSource.includes("else if (key === '＝') this.calculateEquals()"), 'イコールキーで計算結果を表示する');
-assert(controllerSource.includes("addEventListener('focusin'"), '選択した金額欄を電卓の転記先にする');
-assert(controllerSource.includes("addEventListener('pointerdown'") && controllerSource.includes(".amount-input[readonly]:not(:disabled)"), 'calculator-first端末のtapでフォーカス前に転記先を選ぶ');
+assert(controllerSource.includes("addEventListener('focusin'"), 'キーボード操作ではfocusinから金額欄を電卓の転記先にできる');
+assert(controllerSource.includes("const calculatorInput = event.target.closest?.('.amount-input[readonly]:not(:disabled)')"), 'calculator-first端末はtap完了後のclickで転記先を確定する');
+assert(!controllerSource.includes("addEventListener('pointerdown'"), 'pointerdown中に画面を動かしてtap対象をずらさない');
+assert(controllerSource.includes("if (event.target.readOnly && this.view?.calculatorFirstInput) return;"), 'calculator-first端末ではfocusinとclickの二重選択を防ぐ');
+assert(controllerSource.includes("if (this.calculatorTarget !== input) return;"), '古いtapの遅延RAFが新しい転記先を上書きしない');
 assert(/input\.readOnly && calculatorPanel[\s\S]*?calculatorPanel\.open = true/.test(controllerSource), 'calculator-first金額欄だけは選択時に計算機を開く');
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
@@ -1034,8 +1037,11 @@ assert(!/\.calculator\s*{[^}]*position:\s*sticky/s.test(cssSource), '計算機�
 assert(/\.answer-table \[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(cssSource), '横スクロール中もsemantic context列を累積offsetで固定する');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
 assert(/\.journal-row\s*{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+120px/s.test(cssSource), '仕訳はコンパクトな借方科目・借方金額・貸方科目・貸方金額の4列にする');
-assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*184px\s+112px\s+184px\s+112px/s.test(cssSource), '狭い画面では184/112pxの監査済み幅で仕訳の4列を横並びにする');
-assert(/\.journal-row select:focus,[\s\S]*?\.journal-row select:active\s*{[^}]*font-size:\s*16px/s.test(cssSource) && /\.journal-row \.amount-input\s*{[^}]*font-size:\s*16px/s.test(cssSource), 'iPhoneでは科目selectの操作中と金額入力を16pxに保ち自動ズームを防ぐ');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row,\s*\.correction-header,\s*\.correction-row\s*{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*grid-template-columns:\s*minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)\s+minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)/s.test(cssSource), 'スマホでも借方科目・借方金額・貸方科目・貸方金額の4列を同一画面に収める');
+assert(/\.journal-row select:focus,[\s\S]*?\.journal-row \.amount-input:focus,[\s\S]*?font-size:\s*16px/s.test(cssSource), '操作中は16pxへ戻してiPhone自動ズームを防ぐ');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-grid-scroll\s*{[^}]*overflow-x:\s*hidden/s.test(cssSource), 'スマホ仕訳は横スクロールを要求しない');
+assert(cssSource.includes('font-size: clamp(8px, calc(var(--journal-account-font-size, 16px) - 5px), 11px);'), '表示時は長い勘定科目だけ段階的に縮小する');
+assert(viewSource.includes("select.classList?.contains('correction-account')"), '訂正仕訳にも通常仕訳と同じ勘定科目の適応表示を使う');
 assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦並び用ラベルを追加しない');
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
 assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('acquisitionCost'), '取得原価', '表の英語見出しを日本語で表示する');

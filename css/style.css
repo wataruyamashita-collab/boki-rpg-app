@@ -486,40 +486,62 @@ select, .amount-input {
     font-size: 1rem;
   }
 
-  .journal-header,
-  .journal-row {
-    grid-template-columns: 184px 112px 184px 112px;
-    gap: 2px;
+  .journal-grid-scroll {
+    overflow-x: hidden;
+    overscroll-behavior-x: auto;
   }
 
+  .journal-header,
+  .journal-row,
   .correction-header,
   .correction-row {
-    grid-template-columns: minmax(232px, 3fr) minmax(112px, 2fr) minmax(232px, 3fr) minmax(112px, 2fr);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1.48fr) minmax(0, .72fr) minmax(0, 1.48fr) minmax(0, .72fr);
     gap: 2px;
   }
 
+  .correction-entry {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   .journal-header,
-  .correction-header { display: grid; font-size: 0.7rem; }
+  .correction-header {
+    display: grid;
+    font-size: clamp(9px, 2.7vw, 11px);
+    line-height: 1.1;
+  }
 
   .journal-row select,
-  .journal-row .amount-input {
-    padding: 8px 2px;
-    letter-spacing: -.035em;
+  .correction-row .correction-account {
+    min-width: 0;
+    padding: 8px 0;
+    font-size: clamp(8px, calc(var(--journal-account-font-size, 16px) - 5px), 11px);
+    letter-spacing: -.055em;
   }
 
-  .journal-row .amount-input { font-size: 16px; }
-  .journal-row select:focus,
-  .journal-row select:active { font-size: 16px; }
-
-  .correction-row .table-input {
-    padding: 8px 2px;
-    font-size: 16px;
-    letter-spacing: -.035em;
-  }
-
-  .journal-row .amount-input {
+  .journal-row .amount-input,
+  .correction-row .correction-amount {
+    min-width: 0;
+    padding: 8px 0;
     font-family: "Arial Narrow", "Helvetica Neue", sans-serif;
+    font-size: clamp(10px, 3vw, 12px);
     font-variant-numeric: tabular-nums;
+    letter-spacing: -.075em;
+  }
+
+  .journal-row select:focus,
+  .journal-row select:active,
+  .journal-row .amount-input:focus,
+  .correction-row .correction-account:focus,
+  .correction-row .correction-account:active,
+  .correction-row .correction-amount:focus {
+    font-size: 16px;
   }
 
   .amount-input::placeholder {

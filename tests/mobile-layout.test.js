@@ -129,30 +129,22 @@ const longestJournalAmountGlyphs = Math.max(...journalAmounts.map(value => glyph
 assert.strictEqual(longestJournalAccountGlyphs, 12, 'canonical journal account maximum remains 12 glyphs');
 assert.strictEqual(longestJournalAmountGlyphs, 9, 'canonical formatted journal amount maximum remains 9 glyphs');
 
-const mobileJournalMatch = css.match(
-  /@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*\{\s*grid-template-columns:\s*(\d+)px\s+(\d+)px\s+(\d+)px\s+(\d+)px/s
-);
-assert(mobileJournalMatch, 'mobile journal sizing rule is present');
+const mobileJournalRule = css.match(
+  /@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-header,\s*\.journal-row,\s*\.correction-header,\s*\.correction-row\s*\{([^}]*)\}/s
+)?.[1] || '';
+assert(/width:\s*100%/.test(mobileJournalRule) && /max-width:\s*100%/.test(mobileJournalRule), 'mobile journal uses the available viewport width');
+assert(/grid-template-columns:\s*minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)\s+minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)/.test(mobileJournalRule), 'mobile journal preserves four horizontal debit/credit columns with account-weighted ratios');
+assert(/@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*hidden/s.test(css), 'mobile journal no longer requires horizontal scrolling');
+assert(/@media\s*\(max-width:\s*480px\)[\s\S]*?\.correction-entry\s*\{[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*overflow-x:\s*hidden/s.test(css), 'mobile correction journal uses the same no-horizontal-scroll contract');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('仕入'), 16, 'short account names retain the normal source size');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('クレジット売掛金'), 15, 'six-to-eight glyph accounts compact one source step');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('ABCDEFGHI'), 14, 'nine-to-ten glyph accounts compact two source steps');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('法人税、住民税及び事業税'), 13, 'the canonical 12-glyph maximum retains the guarded source size');
+assert(css.includes('font-size: clamp(8px, calc(var(--journal-account-font-size, 16px) - 5px), 11px);'), 'mobile display scales only the rendered journal account text down to an 8px floor when needed');
+assert(css.includes('font-size: clamp(10px, 3vw, 12px);'), 'mobile journal amounts use a narrow readable display size');
+assert(/\.journal-row select:focus,[\s\S]*?\.journal-row \.amount-input:focus,[\s\S]*?font-size:\s*16px/s.test(css), 'focused/tapped journal controls return to 16px to prevent iPhone zoom');
+assert(longestJournalAccountGlyphs === 12 && longestJournalAmountGlyphs === 9, 'canonical journal content bounds stay unchanged while only presentation is compacted');
 
-const mobileAccountWidth = Number(mobileJournalMatch[1]);
-const mobileAmountWidth = Number(mobileJournalMatch[2]);
-
-assert.strictEqual(mobileAccountWidth, 184, 'mobile journal account column avoids the former over-wide 232px floor');
-assert.strictEqual(mobileAmountWidth, 112, 'mobile journal amount width preserves the audited 9-glyph budget');
-assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('仕入'), 16, 'short account names retain the normal readable size');
-assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('クレジット売掛金'), 15, 'six-to-eight glyph accounts compact one step');
-assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('ABCDEFGHI'), 14, 'nine-to-ten glyph accounts compact two steps');
-assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('法人税、住民税及び事業税'), 13, 'the canonical 12-glyph maximum uses the guarded minimum size');
-assert(mobileAccountWidth >= longestJournalAccountGlyphs * 13 + 28, '184px still budgets the longest account at the guarded 13px minimum plus native select chrome');
-assert(mobileAmountWidth >= longestJournalAmountGlyphs * 10 + 22, 'mobile amount control preserves the longest formatted amount');
-assert(/\.journal-row select\s*\{[^}]*text-align:\s*center[^}]*text-align-last:\s*center[^}]*var\(--journal-account-font-size,\s*16px\)/s.test(css), 'selected account names are centered and use adaptive display sizing');
-assert(/\.journal-row select:focus,[\s\S]*?\.journal-row select:active\s*\{[^}]*font-size:\s*16px/s.test(css), 'focused or tapped account selects return to 16px to prevent iPhone zoom');
-
-const mobilePairWidth = mobileAccountWidth + 2 + mobileAmountWidth;
-assert(mobilePairWidth <= 320 - 20, '320px iPhone can show one debit account-and-amount pair without horizontal clipping');
-assert(mobilePairWidth <= 375 - 20, '375px iPhone shows one debit account-and-amount pair without horizontal clipping');
-assert(mobilePairWidth <= 390 - 20, '390px iPhone shows one debit account-and-amount pair without horizontal clipping');
-assert(mobilePairWidth <= 430 - 20, '430px iPhone shows one debit account-and-amount pair without horizontal clipping');
 const coachingHiddenRule = css.match(/\.confidence-selector\[hidden\],\s*\.question-actions \.save-button\[hidden\],\s*#save-status\[hidden\]\s*\{([^}]*)\}/)?.[1] || '';
 assert(
   /display:\s*none\s*!important/.test(coachingHiddenRule),

@@ -268,7 +268,7 @@
     }
     updateSelectTitle(select) {
       select.title = select.selectedOptions[0]?.textContent || '';
-      if (select.classList?.contains('debit-account') || select.classList?.contains('credit-account')) this.updateJournalAccountPresentation(select);
+      if (select.classList?.contains('debit-account') || select.classList?.contains('credit-account') || select.classList?.contains('correction-account')) this.updateJournalAccountPresentation(select);
     }
     renderJournal(question, draft = {}, mode = 'story') {
       const container = this.byId('journal-container'); container.replaceChildren();
