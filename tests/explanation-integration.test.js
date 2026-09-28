@@ -14,6 +14,8 @@ assert(view.includes("format === 'bookkeeping-notes-receivable'"),'受取手形�
 assert(view.includes("format === 'bookkeeping-inventory-ledger'"),'商品有高帳専用の教育プロファイルを持つ');
 assert(view.includes("format === 'bookkeeping-voucher-entry'"),'伝票専用の教育プロファイルを持つ');
 assert(view.includes("...(hasMeaningfulCalculation ? [['必要な金額を出す','calculation']] : [])"),'算術計算がない問題では計算セクションを表示しない');
+assert(view.includes("].filter(([,key]) => (model[key] || []).length > 0)"),'情報がない解説段階は見出しごと表示しない');
+assert(!view.includes('explanation-flow-empty'),'空段階の埋め草メッセージを表示しない');
 assert(view.includes('score.correct || !question.explanationModel'),'構造化解説は誤答かつ対象問題だけに限定する');
 assert(view.includes('appendAuthoredExplanation(question, container, authoredOnly = false)'),'authored proseだけを分離表示できる');
 assert(view.includes("const markers = ['【この問題への当てはめ】','【使用する資料】']"),'旧生成長文をstructured PoCへ重複表示しない');
