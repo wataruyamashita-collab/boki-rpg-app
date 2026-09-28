@@ -114,7 +114,19 @@ async function run(){
             try{
               const url=mode==='explanation'?base+'?view=explanation':base;
               await page.goto(url,{waitUntil:'load'});
-              await page.waitForTimeout(100);
+              if(mode==='problem'){
+                try{
+                  await page.waitForFunction(()=>Boolean(
+                    document.querySelector('.worksheet-mobile-input.calculator-selected') &&
+                    document.querySelector('.calculator')?.open &&
+                    document.querySelector('.calculator')?.classList.contains('calculator-contextual-float') &&
+                    ['below','above'].includes(document.querySelector('.calculator')?.dataset?.placement||'')
+                  ),null,{timeout:2000});
+                }catch(_error){}
+                await page.waitForTimeout(80);
+              }else{
+                await page.waitForTimeout(100);
+              }
               const m=await measure(page,width);
               m.mode=mode;
               m.pageErrors=errors;
