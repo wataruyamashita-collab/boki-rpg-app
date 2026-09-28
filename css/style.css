@@ -807,8 +807,10 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .journal-table th { background: #eef2f5; }
 .journal-table .journal-side-debit, .journal-table .journal-side-credit { background: #dce7ee; font-size: 1rem; }
 .journal-amount { text-align: right; white-space: nowrap; }
+.journal-review-mobile { display: none; }
 .answer-comparison-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
 .answer-comparison-table { width: 100%; min-width: 520px; border-collapse: collapse; background: #fff; }
+.answer-comparison-mobile-list { display: none; }
 .answer-comparison-table th, .answer-comparison-table td { padding: 9px 8px; border: 1px solid #bdc3c7; text-align: left; overflow-wrap: anywhere; }
 .answer-comparison-table th { background: #eef2f5; white-space: nowrap; }
 .answer-comparison-table .comparison-row-mismatch { background: #fff4f2; }
@@ -835,9 +837,89 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .worksheet-answer-comparison .worksheet-comparison-pair span { display: block; padding: 7px 8px; border-radius: 4px; font-variant-numeric: tabular-nums; }
 .worksheet-comparison-pair .comparison-actual { color: #7d1d15; background: #fff0ed; }
 .worksheet-comparison-pair .comparison-expected { color: #0e5d2d; background: #e8f7ee; font-weight: 800; }
+@media (max-width: 600px) {
+  .journal-table-wrap,
+  .answer-comparison-table-wrap {
+    overflow-x: visible;
+    overscroll-behavior-x: auto;
+    -webkit-overflow-scrolling: auto;
+  }
+  .journal-table,
+  .answer-comparison-table { display: none; }
+  .journal-review-mobile,
+  .answer-comparison-mobile-list { display: grid; width: 100%; min-width: 0; gap: 8px; }
+  .journal-review-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    min-width: 0;
+  }
+  .journal-review-side {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .journal-review-side-label {
+    display: block;
+    padding: 6px 8px;
+    background: #dce7ee;
+    text-align: center;
+  }
+  .journal-review-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+  }
+  .journal-review-account { min-width: 0; overflow-wrap: anywhere; }
+  .journal-review-amount { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+  .answer-comparison-mobile-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .answer-comparison-mobile-card.comparison-row-mismatch { border-color: #e6b0aa; background: #fff8f7; }
+  .answer-comparison-mobile-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #eef2f5;
+  }
+  .answer-comparison-mobile-head strong { min-width: 0; overflow-wrap: anywhere; }
+  .answer-comparison-mobile-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px;
+  }
+  .answer-comparison-mobile-value {
+    min-width: 0;
+    padding: 8px;
+    border-radius: 6px;
+  }
+  .answer-comparison-mobile-value strong {
+    display: block;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+  .answer-comparison-mobile-label {
+    display: block;
+    margin-bottom: 3px;
+    font-size: .72rem;
+    font-weight: 700;
+  }
+}
 @media (max-width: 480px) {
   .answer-comparison { padding-right: 8px; padding-left: 8px; }
-  .answer-comparison-table-wrap { margin-right: -8px; padding-bottom: 8px; touch-action: pan-x pan-y; }
+  .answer-comparison-table-wrap { margin-right: 0; padding-bottom: 0; touch-action: auto; }
   .worksheet-answer-comparison .worksheet-comparison-pair { grid-template-columns: 8.75rem 8.75rem; min-width: 18rem; }
 }
 .comparison-status { font-weight: 700; white-space: nowrap; }
