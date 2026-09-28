@@ -1,0 +1,30 @@
+name: Issue 154 worksheet anchor debug
+on:
+  push:
+    branches:
+      - codex/issue-154-explanation-ux-integration
+  workflow_dispatch:
+
+jobs:
+  worksheet-anchor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pinned CI-only Playwright
+        run: npm install --no-save --package-lock=false playwright@1.55.0
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run D001 worksheet mobile gate
+        run: node .github/visual/run-worksheet-mobile.js
+      - name: Upload worksheet diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worksheet-anchor-debug
+          path: artifacts/worksheet-mobile/
+          if-no-files-found: error
+          retention-days: 3
