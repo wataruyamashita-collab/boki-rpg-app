@@ -911,9 +911,8 @@
       const format = question.format || '', category = String(question.category || '');
       const profile = (summary, transfer, takeaway) => ({summary, transfer, takeaway});
       if (question.type === 'journal') return profile('どういう取引か考える','借方・貸方を決めて仕訳する',[
-        '取引で何が増え、何が減ったかを確認してから勘定科目を決めます。',
-        '資産・費用の増加は借方、負債・純資産・収益の増加は貸方に置き、減少は反対側に置きます。',
-        '最後に借方合計と貸方合計が一致しているか確認します。'
+        '勘定科目は、取引で何が増え、何が減ったかを基準に選びます。',
+        '借方・貸方は勘定の性質と増減で決め、最後に貸借一致で確認します。'
       ]);
       if (format === 'journal-book' || /仕訳帳/u.test(category)) return profile('どういう取引か考える','借方・貸方を決めて仕訳帳に記入する',[
         '仕訳帳は、取引を日付順に記録します。',
@@ -921,9 +920,8 @@
         '証憑に金額が示されている場合は、その金額をそのまま記入し、計算が必要かどうかを先に見分けます。'
       ]);
       if (format === 'fixed-asset-ledger' || /固定資産台帳/u.test(category)) return profile('償却条件を整理する','固定資産台帳に記入する',[
-        '定額法では、まず取得原価と耐用年数から1年分の減価償却費を求めます。',
-        '期中取得・売却があるときは使用月数を確認し、年額を月割りします。',
-        '帳簿価額は取得原価から減価償却累計額を差し引いて求めます。'
+        '減価償却は、固定資産の取得原価を使用期間へ配分する処理です。',
+        '期中取得・売却は月割りし、帳簿価額は取得原価－減価償却累計額で考えます。'
       ]);
       if (format === 'bookkeeping-notes-receivable') return profile('記帳する受取手形を選ぶ','受取手形記入帳に記入する',[
         '受取手形記入帳には、受け取った約束手形を受取日順に記録します。',
@@ -965,11 +963,12 @@
         '元帳では、その勘定が借方・貸方のどちらで増えるかを先に確認します。',
         '取引ごとに相手勘定と金額を転記し、残高を順に更新します。'
       ]);
-      if (question.type === 'trial_balance') return profile('残高の置き場所を決める','試算表に記入する',['各勘定の最終残高を残高方向に応じて借方列または貸方列へ集計します。','借方合計と貸方合計の一致で転記漏れや二重計上を確認します。']);
-      if (question.type === 'correction') return profile('どこが違うか整理する','訂正仕訳を書く',['まず誤った仕訳と本来の正しい仕訳を分けて考えます。','誤りを取り消し、最終的に正しい残高になるよう訂正仕訳を作ります。']);
-      if (question.type === 'worksheet') return profile('決算整理を反映する','精算表に記入する',['整理前残高に決算整理を反映し、損益計算書と貸借対照表へ振り分けます。','どの欄へ移すかは勘定科目の性質と決算整理後の残高で判断します。']);
-      if (question.type === 'financial_statement') return profile('どの区分に入るか決める','財務諸表に記入する',['確定した残高を収益・費用・資産・負債・純資産の区分へ正しく表示します。','計算だけでなく表示区分を間違えないことが重要です。']);
-      if (question.type === 'comprehensive') return profile('処理の順番を整理する','答えに反映する',['資料ごとに仕訳し、転記・集計・決算整理の順に処理します。','各段階で貸借や残高を確認してから次へ進みます。']);
+      if (question.type === 'trial_balance') return profile('残高の置き場所を決める','試算表に記入する',['試算表は、各勘定の最終残高を残高方向ごとに集計する表です。','貸借一致は正解の保証ではなく、転記漏れや二重計上を見つけるための検算です。']);
+      if (question.type === 'correction') return profile('どこが違うか整理する','訂正仕訳を書く',['訂正仕訳は、既存の記録と本来の正しい処理との差だけを直す仕訳です。','正しい部分まで取り消さず、誤っている部分だけを修正します。']);
+      if (question.type === 'worksheet') return profile('決算整理を反映する','精算表に記入する',['精算表は「整理前残高 → 決算整理 → 損益計算書・貸借対照表」をつなぐ表です。','決算整理後の各勘定は、その性質に応じて損益計算書か貸借対照表へ振り分けます。']);
+      if (question.type === 'financial_statement') return profile('どの区分に入るか決める','財務諸表に記入する',['損益計算書は期間の収益・費用と利益、貸借対照表は期末の資産・負債・純資産を示します。','金額が合っていても表示区分が違えば誤りなので、区分まで確認します。']);
+      if (question.type === 'comprehensive' && format === 'exam-question-3') return profile('決算整理を順に反映する','答えに反映する',['総合決算では、個々の整理事項が利益と貸借対照表の両方へ波及します。','最後の確認は答えの再読ではなく、貸借一致など別の根拠で行います。']);
+      if (question.type === 'comprehensive') return profile('現金と利益を分けて考える','答えに反映する',['現金残高は現金の入出金、利益は収益と費用で求めるため、同じものではありません。','借入・売掛金回収・備品購入・前払いなどは、現金と損益への影響が一致しない代表例です。']);
       return profile('問題文の条件を整理する','答えに記入する',['問題文の条件を整理し、必要な会計処理を一つずつ決めます。','答えを書いたら、問題の条件に合っているか確認します。']);
     }
     renderStructuredExplanation(question, userAnswer, score) {
@@ -987,13 +986,12 @@
         [teachingProfile.transfer,'transfer'],
         ['最後に確認','checks'],
         ['間違えやすいところ','mistakes']
-      ];
+      ].filter(([,key]) => (model[key] || []).length > 0);
       const element = (tag, className, text) => { const node = this.document.createElement(tag); if (className) node.className = className; if (text != null) node.textContent = text; return node; };
       definitions.forEach(([label, key], index) => {
         const section = element('section', 'explanation-flow-section'); section.dataset.section = key;
         const head = element('div', 'explanation-flow-head'); head.append(element('div', 'explanation-flow-step', String(index + 1)), element('h5', '', label)); section.append(head);
         const items = model[key] || [];
-        if (!items.length) section.append(element('p', 'explanation-flow-empty', 'ここで確認する追加の資料はありません。'));
         if (key === 'sources') items.forEach(item => {
           const card = element('article', 'explanation-source-card');
           card.append(element('h6', '', item.title), element('p', 'explanation-source-focus', item.focus));
