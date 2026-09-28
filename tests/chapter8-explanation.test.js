@@ -13,8 +13,10 @@ for(const q of questions){
   const model=ExplanationModel.build(q,wrong,{correct:false});
   assert.strictEqual(ExplanationModel.validate(model).valid,true,`${q.id}: model valid`);
   assert(model.sources.length>0,`${q.id}: sources`);
-  assert(model.summary.length>0,`${q.id}: summary`);
-  assert(model.transfer.length>0,`${q.id}: transfer`);
+  assert(model.summary.length>=2,`${q.id}: learner strategy`);
+  assert(String(model.summary[0]?.text||'').startsWith('この問題で求めるのは'),`${q.id}: requested output first`);
+  const calculated=new Set((model.calculation||[]).filter(item=>/[×÷＋+−\-＝=]/u.test(String(item.expression||''))).map(item=>String(item.result??'').replace(/[,\s円]/g,'')).filter(Boolean));
+  for(const transfer of model.transfer)assert(!calculated.has(String(transfer.value??'').replace(/[,\s円]/g,'')),`${q.id}: transfer adds information beyond calculation`);
   const answerValues=new Set(Object.values(q.answer?.cells||{}).filter(Number.isFinite).map(value=>String(value)));
   for(const check of model.checks){
     const normalized=String(check.expected??'').replace(/[\s,円]/g,'');
@@ -65,7 +67,7 @@ assert(voucherTransactions.includes('備品を現金で購入'),'L050は備品�
 assert(voucherTransactions.includes('商品を掛けで仕入'),'L050は掛仕入取引を資料に含む');
 assert(!/\b(?:item|account):/u.test(JSON.stringify(voucherModel.sources)),'L050の資料表示へ内部英語キーを漏らさない');
 assert.strictEqual(voucherModel.sources[0].focus,'取引内容と金額を確認する','L050は何を見る資料かを具体的に示す');
-assert(voucherModel.summary.some(item=>item.text==='現金が増えるか、減るか、動かないかを確認して、使う伝票を決めます。'),'L050は初学者がそのまま行動できる表現で説明する');
+assert(voucherModel.summary.some(item=>item.text.includes('現金が増える・減る・動かないの3つに分けて')),'L050は初学者がそのまま行動できる判断ルールを示す');
 assert(voucherModel.checks.some(item=>item.label==='現金の動きに合った伝票を選べているか確認する'),'L050は自然な日本語で最後の確認を表示する');
 assert(voucherModel.checks.some(item=>item.expected==='増える → 入金伝票 / 減る → 出金伝票 / 動かない → 振替伝票'),'L050は現金の増減と伝票の対応を短く示す');
 assert(!/取引ごとに現金の動きと伝票の種類を対応づける|現金の受取＝入金伝票|正答値|帳簿値|資料の項目と数値/u.test(JSON.stringify(voucherModel)),'L050へ旧来の硬い表現を残さない');
