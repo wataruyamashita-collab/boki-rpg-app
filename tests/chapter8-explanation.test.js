@@ -15,7 +15,11 @@ for(const q of questions){
   assert(model.sources.length>0,`${q.id}: sources`);
   assert(model.summary.length>0,`${q.id}: summary`);
   assert(model.transfer.length>0,`${q.id}: transfer`);
-  assert(model.checks.length>0,`${q.id}: checks`);
+  const answerValues=new Set(Object.values(q.answer?.cells||{}).filter(Number.isFinite).map(value=>String(value)));
+  for(const check of model.checks){
+    const normalized=String(check.expected??'').replace(/[\s,円]/g,'');
+    assert(!(answerValues.has(normalized)&&!/[=＝→／/]/u.test(String(check.expected??''))),`${q.id}: check must add independent information`);
+  }
   assert(model.mistakes.length>0,`${q.id}: mistakes`);
   const learnerMeta=[...model.sources.map(item=>item.focus||''),...model.checks.map(item=>item.label||'')].join(' ');
   assert(!/正答値|項目と数値|記載されている数値|帳簿値|対応づける|条件と整合/u.test(learnerMeta),`${q.id}: 学習者向け解説にシステム寄り表現を残さない`);
