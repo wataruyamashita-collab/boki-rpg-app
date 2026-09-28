@@ -81,6 +81,19 @@ async function measure(page,width){
             ? Math.abs(calculatorRect.bottom-(selectedRect.top-8))<=5
             : false
       )),
+      anchorDelta:selectedRect&&calculatorRect
+        ? calculator?.dataset?.placement==='below'
+          ? calculatorRect.top-(selectedRect.bottom+8)
+          : calculator?.dataset?.placement==='above'
+            ? calculatorRect.bottom-(selectedRect.top-8)
+            : null
+        : null,
+      selectedTop:selectedRect?.top??null,
+      selectedBottom:selectedRect?.bottom??null,
+      calculatorTop:calculatorRect?.top??null,
+      calculatorBottom:calculatorRect?.bottom??null,
+      visualViewportTop:Number(window.visualViewport?.offsetTop||0),
+      pageScrollY:Number(window.scrollY||window.pageYOffset||0),
       selectedScrollY:selectedRect?.top||0
     };
   },width);
@@ -122,7 +135,7 @@ async function run(){
                 if(m.referenceCount!==4||m.referenceLabels.some(label=>label!=='ここを見る'))violations.push('WORKSHEET_REFERENCE_CUES');
                 if(!m.referenceTexts[0]?.includes('元試算表')||!m.referenceTexts[1]?.includes('決算整理事項')||!m.referenceTexts[2]?.includes('売上・仕入・保険料')||!m.referenceTexts[3]?.includes('損益計算書の貸借差額'))violations.push('WORKSHEET_REFERENCE_CONTENT');
                 if(!m.calculatorOpen||!m.calculatorContextual||m.calculatorPosition!=='fixed'||m.formDockActive)violations.push('WORKSHEET_CONTEXTUAL_CALCULATOR');
-                if(!['below','above'].includes(m.calculatorPlacement)||!m.selectedAnchored)violations.push('WORKSHEET_CALCULATOR_NOT_ANCHORED');
+                if(!['below','above'].includes(m.calculatorPlacement)||!m.selectedAnchored)violations.push('WORKSHEET_CALCULATOR_NOT_ANCHORED'+JSON.stringify({placement:m.calculatorPlacement,anchorDelta:m.anchorDelta,selectedTop:m.selectedTop,selectedBottom:m.selectedBottom,calculatorTop:m.calculatorTop,calculatorBottom:m.calculatorBottom,visualViewportTop:m.visualViewportTop,pageScrollY:m.pageScrollY}));
                 if(!m.selectedNonOverlapping)violations.push('WORKSHEET_SELECTED_INPUT_COVERED');
               }else{
                 if(m.pageOverflow)violations.push('EXPLANATION_PAGE_HORIZONTAL_OVERFLOW');
