@@ -17,6 +17,11 @@ assert(view.includes("...(hasMeaningfulCalculation ? [['必要な金額を出す
 assert(view.includes("].filter(([,key]) => (model[key] || []).length > 0)"),'情報がない解説段階は見出しごと表示しない');
 assert(view.indexOf("[teachingProfile.summary,'summary']")<view.indexOf("['使う資料を整理する','sources']"),'判断ルールを資料確認より先に表示する');
 assert(!view.includes('explanation-flow-empty'),'空段階の埋め草メッセージを表示しない');
+assert(view.includes('journal-review-mobile'),'仕訳の誤答・正解比較にスマホ専用の借方/貸方表示を持つ');
+assert(view.includes('answer-comparison-mobile-list'),'C001等の回答比較にスマホ専用カード表示を持つ');
+assert(/@media\s*\(max-width:\s*600px\)[\s\S]*?\.journal-table,[\s\S]*?\.answer-comparison-table\s*\{\s*display:\s*none;/s.test(css),'600px以下では横長の比較表を非表示にする');
+assert(/@media\s*\(max-width:\s*600px\)[\s\S]*?\.journal-review-mobile,[\s\S]*?\.answer-comparison-mobile-list\s*\{[^}]*display:\s*grid/s.test(css),'600px以下では比較専用カードを表示する');
+assert(/@media\s*\(max-width:\s*600px\)[\s\S]*?\.journal-table-wrap,[\s\S]*?\.answer-comparison-table-wrap\s*\{[^}]*overflow-x:\s*visible/s.test(css),'比較画面ではスマホ横スクロールを発生させない');
 assert(view.includes('score.correct || !question.explanationModel'),'構造化解説は誤答かつ対象問題だけに限定する');
 assert(view.includes('appendAuthoredExplanation(question, container, authoredOnly = false)'),'authored proseだけを分離表示できる');
 assert(view.includes("const markers = ['【この問題への当てはめ】','【使用する資料】']"),'旧生成長文をstructured PoCへ重複表示しない');
