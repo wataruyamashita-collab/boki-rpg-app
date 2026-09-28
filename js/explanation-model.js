@@ -270,12 +270,25 @@
   }
   function diagnostics(q,a,s,o){return Array.isArray(o?.diagnostics)?o.diagnostics:(Feedback?.diagnoseWrongAnswer?Feedback.diagnoseWrongAnswer(q,a||{},s||{correct:false}):[]);}
   function generated(q,a,s,o){const ds=diagnostics(q,a,s,o);return{schemaVersion:SCHEMA_VERSION,source:'generated',sources:sources(q),summary:String(q.question||'').trim()?[{text:String(q.question).trim(),evidenceRef:'question'}]:[],calculation:calculations(q),transfer:transfer(q),checks:checks(q),mistakes:ds.slice(0,3).map(x=>({title:x.title||'今回の間違い',reason:x.reason||'',correction:x.nextRule||x.thinking||'',diagnosticKind:x.kind||'general',cause:x.cause||x.kind||'general'})),fallback:{authoredExplanation:String(q.explanation||''),diagnostics:clone(ds)}};}
+  const comparableValue=v=>{
+    if(typeof v==='number'&&Number.isFinite(v))return String(v);
+    const text=String(v??'').replace(/[\s,円]/g,'');
+    return /^-?\d+(?:\.\d+)?$/u.test(text)?String(Number(text)):null;
+  };
   function optimizeInstruction(q,m){
     const out={...m};
     if(q.type==='comprehensive'&&q.format==='exam-question-3'){
       out.summary=[{text:'整理前残高に未処理取引と決算整理を反映し、途中計算を損益計算書・貸借対照表の最終金額へつなげます。各金額は、どの資料から出たかを分けて追います。',evidenceRef:'question'}];
     }else if(q.type==='comprehensive'&&!q.format){
       out.summary=[{text:'現金残高は現金の入出金、利益は収益・費用で別々に求めます。現金が動いても収益・費用にならない取引がある点を見分けます。',evidenceRef:'question'}];
+    }
+    const placementCritical=['journal','correction','worksheet'].includes(q.type);
+    const calculatedValues=new Set(arr(out.calculation).filter(item=>/[×÷＋+−\-＝=]/u.test(String(item?.expression||''))).map(item=>comparableValue(item?.result)).filter(Boolean));
+    if(!placementCritical&&calculatedValues.size){
+      out.transfer=arr(out.transfer).filter(item=>{
+        const key=comparableValue(item?.value);
+        return !key||!calculatedValues.has(key);
+      });
     }
     return out;
   }
