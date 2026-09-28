@@ -11,7 +11,7 @@ jobs:
   finalize:
     if: github.event.head_commit.message == 'Prepare Generation 64 explanation formula coverage'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
