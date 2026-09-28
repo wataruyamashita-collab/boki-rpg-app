@@ -660,7 +660,6 @@
         calculatorPanel.classList?.add?.('calculator-contextual-float');
         calculatorPanel.open = true;
         const revealTarget = () => {
-          input.scrollIntoView?.({ block:'nearest', inline:'nearest', behavior:'auto' });
           const inputRect = input.getBoundingClientRect?.();
           const documentElement = this.document.documentElement || {};
           const visualViewport = root.visualViewport;
@@ -670,23 +669,21 @@
             const workTop = viewportTop + viewportHeight * .3;
             const currentScrollY = Number(root.scrollY || root.pageYOffset || 0), currentScrollX = Number(root.scrollX || root.pageXOffset || 0);
             const targetScrollY = Math.max(0, currentScrollY + inputRect.top - workTop);
-            if (typeof root.scrollTo === 'function') { try { root.scrollTo({ top:targetScrollY, left:currentScrollX, behavior:'auto' }); } catch (_error) { root.scrollTo(currentScrollX, targetScrollY); } }
-            else if (typeof root.scrollBy === 'function') { const delta = inputRect.top - workTop; try { root.scrollBy({ top:delta, left:0, behavior:'auto' }); } catch (_error) { root.scrollBy(0, delta); } }
+            if (typeof root.scrollTo === 'function') {
+              try { root.scrollTo(currentScrollX, targetScrollY); }
+              catch (_error) { root.scrollTo({ top:targetScrollY, left:currentScrollX, behavior:'auto' }); }
+            } else if (typeof root.scrollBy === 'function') {
+              const delta = inputRect.top - workTop;
+              try { root.scrollBy(0, delta); }
+              catch (_error) { root.scrollBy({ top:delta, left:0, behavior:'auto' }); }
+            } else input.scrollIntoView?.({ block:'nearest', inline:'nearest', behavior:'auto' });
+          } else if (typeof root.scrollTo !== 'function' && typeof root.scrollBy !== 'function') {
+            input.scrollIntoView?.({ block:'nearest', inline:'nearest', behavior:'auto' });
           }
           const position = () => this.positionCalculatorNearTarget(input, calculatorPanel);
-          const settlePosition = () => {
-            if (this.calculatorTarget !== input || !calculatorPanel.open || !calculatorPanel.classList?.contains?.('calculator-contextual-float')) return;
-            position();
-          };
           if (typeof root.requestAnimationFrame === 'function') {
-            root.requestAnimationFrame(() => root.requestAnimationFrame(() => {
-              position();
-              root.setTimeout?.(settlePosition, 50);
-            }));
-          } else {
-            position();
-            root.setTimeout?.(settlePosition, 50);
-          }
+            root.requestAnimationFrame(() => root.requestAnimationFrame(position));
+          } else position();
         };
         if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(revealTarget); else revealTarget();
       }
