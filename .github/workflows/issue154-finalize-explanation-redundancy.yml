@@ -1,0 +1,172 @@
+name: Issue 154 finalize explanation redundancy
+on:
+  push:
+    branches:
+      - codex/issue-154-explanation-ux-integration
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.head_commit.message == 'Prepare Generation 65 explanation redundancy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/issue-154-explanation-ux-integration
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Pre-authority Generation 65 checks
+        run: |
+          node tests/app.test.js
+          node tests/gate5-structured-explanation.test.js
+          node tests/explanation-integration.test.js
+          node tests/chapter8-explanation.test.js
+          node tests/explanation-formula-coverage.test.js
+          node tests/explanation-redundancy.test.js
+          node independent-audit/tests/generation-immutability.test.js
+          git diff --check
+
+      - name: Ensure PWA release 20260924-134
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const crypto=require('crypto');
+          const release='20260924-134';
+          const previous='20260924-133';
+          let manifest=JSON.parse(fs.readFileSync('pwa-release-manifest.json','utf8'));
+          let html=fs.readFileSync('index.html','utf8');
+          let sw=fs.readFileSync('service-worker.js','utf8');
+          if(manifest.release===previous){
+            if(!html.includes(previous)) throw new Error('index previous-release anchor missing');
+            html=html.split(previous).join(release);
+            const from=`const RELEASE = '${previous}';`,to=`const RELEASE = '${release}';`;
+            if((sw.split(from).length-1)!==1) throw new Error('service worker previous-release anchor mismatch');
+            sw=sw.replace(from,to);
+            manifest.release=release;
+            manifest.previousRelease=previous;
+            fs.writeFileSync('index.html',html);
+            fs.writeFileSync('service-worker.js',sw);
+          } else if(manifest.release===release){
+            if(manifest.previousRelease!==previous) throw new Error('manifest previousRelease mismatch');
+            if(!html.includes(release)) throw new Error('index release mismatch');
+            if(!sw.includes(`const RELEASE = '${release}';`)) throw new Error('service worker release mismatch');
+          } else throw new Error('unexpected manifest release '+manifest.release);
+          for(const asset of Object.keys(manifest.assets)){
+            manifest.assets[asset]=crypto.createHash('sha256').update(fs.readFileSync(asset)).digest('hex');
+          }
+          fs.writeFileSync('pwa-release-manifest.json',JSON.stringify(manifest,null,2)+'\n');
+          NODE
+
+      - name: Ensure Generation 65 authority
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const path=require('path');
+          const lifecycle=require('./scripts/qa/phase-b-lifecycle');
+          const file='reports/auto-gate/audit-locks/phase-b-generation-65.json';
+          if(fs.existsSync(file)){
+            const current=lifecycle.verifyCurrent();
+            if(!current.ok || current.generation!==65) throw new Error('existing Generation 65 integrity failure: '+current.errors.join(', '));
+            const document=JSON.parse(fs.readFileSync(file,'utf8'));
+            if(document.predecessor?.generation!==64) throw new Error('existing Generation 65 predecessor mismatch');
+            console.log('GENERATION_65_EXISTING_OK '+document.baselineIdentity+' '+document.auditHash);
+          } else {
+            const authorities=lifecycle.generationAuthorities();
+            if(authorities.at(-1)?.document?.generation!==64) throw new Error('Generation 64 is not latest authority');
+            const candidate=lifecycle.createCandidate();
+            if(candidate.generation!==65) throw new Error('expected Generation 65');
+            if(candidate.predecessor.generation!==64) throw new Error('Generation 65 predecessor mismatch');
+            const verification=lifecycle.verifyCandidate(candidate);
+            if(!verification.ok) throw new Error(verification.errors.join(', '));
+            fs.mkdirSync(path.dirname(file),{recursive:true});
+            fs.writeFileSync(file,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
+            console.log('GENERATION_65_CANDIDATE_OK '+candidate.baselineIdentity+' '+candidate.auditHash);
+          }
+          NODE
+
+      - name: Mandatory Generation 65 core tests
+        run: |
+          node tests/app.test.js
+          node tests/gate5-structured-explanation.test.js
+          node tests/explanation-integration.test.js
+          node tests/chapter8-explanation.test.js
+          node tests/explanation-formula-coverage.test.js
+          node tests/explanation-redundancy.test.js
+          node independent-audit/tests/generation-immutability.test.js
+          git diff --check
+
+      - name: Mandatory Generation 65 npm verify
+        run: timeout 12m npm run verify
+
+      - name: Mandatory Generation 65 integrity
+        run: |
+          timeout 5m npm run qa:integrity
+          git diff --check
+
+      - name: Install pinned CI-only Playwright
+        run: npm install --no-save --package-lock=false playwright@1.55.0
+
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Browser explanation redundancy and regression visual gates
+        run: |
+          node .github/visual/run-calculator-dock-all-questions.js
+          node .github/visual/run-calculator-dock-all-types.js
+          node .github/visual/run-comprehensive-mobile.js
+          node .github/visual/run-financial-statement-mobile.js
+          node .github/visual/run-explanation-integration.js
+          node .github/visual/run-worksheet-mobile.js
+          node .github/visual/run-visual.js strict
+
+      - name: Commit verified Generation 65
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html service-worker.js pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-65.json
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m "Finalize Generation 65 explanation formula coverage"
+          else
+            echo "Generation 65 authority and release already committed"
+          fi
+
+      - name: Verify committed Generation 65
+        run: |
+          rm -rf artifacts node_modules
+          npm ci
+          node tests/app.test.js
+          node tests/gate5-structured-explanation.test.js
+          node tests/explanation-integration.test.js
+          node tests/chapter8-explanation.test.js
+          node tests/explanation-formula-coverage.test.js
+          node tests/explanation-redundancy.test.js
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+
+      - name: Remove temporary workflow
+        run: |
+          git rm .github/workflows/issue154-finalize-explanation-redundancy.yml
+          git commit -m "Remove Generation 65 finalizer"
+
+      - name: Final exact-tree verification and publish
+        run: |
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+          rm -rf artifacts node_modules
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git push origin HEAD:codex/issue-154-explanation-ux-integration
