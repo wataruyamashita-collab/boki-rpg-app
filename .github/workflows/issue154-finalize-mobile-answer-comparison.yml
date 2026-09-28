@@ -1,4 +1,5 @@
 # Generation 67 mobile answer-comparison finalizer
+# Retry after authority-byte immutability fix
 name: Issue 154 finalize mobile answer comparison
 on:
   push:
