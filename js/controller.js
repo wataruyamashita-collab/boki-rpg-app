@@ -660,8 +660,12 @@
         calculatorPanel.classList?.add?.('calculator-contextual-float');
         calculatorPanel.open = true;
         const revealTarget = () => {
-          const horizontalScroller = input.closest?.('.journal-grid-scroll, .correction-entry, .table-question-wrap');
-          if (horizontalScroller && horizontalScroller.scrollWidth > horizontalScroller.clientWidth + 1) {
+          const horizontalScroller = [
+            input.closest?.('.journal-grid-scroll'),
+            input.closest?.('.correction-entry'),
+            input.closest?.('.table-question-wrap')
+          ].find(element => element && element.scrollWidth > element.clientWidth + 1);
+          if (horizontalScroller) {
             const targetRect = input.getBoundingClientRect?.();
             const scrollerRect = horizontalScroller.getBoundingClientRect?.();
             if (targetRect && scrollerRect) {
