@@ -636,9 +636,20 @@
         : inputRect.top - gap - height;
       calculatorPanel.style.left = `${Math.round(left)}px`;
       calculatorPanel.style.top = `${Math.round(top)}px`;
+      const anchoredRect = calculatorPanel.getBoundingClientRect?.();
+      let anchoredTop = top;
+      if (anchoredRect) {
+        const expectedEdge = placeBelow ? inputRect.bottom + gap : inputRect.top - gap;
+        const actualEdge = placeBelow ? anchoredRect.top : anchoredRect.bottom;
+        const correction = expectedEdge - actualEdge;
+        if (Number.isFinite(correction) && Math.abs(correction) > .5) {
+          anchoredTop = top + correction;
+          calculatorPanel.style.top = `${Math.round(anchoredTop)}px`;
+        }
+      }
       calculatorPanel.classList?.toggle?.('calculator-placement-above', !placeBelow);
       if (calculatorPanel.dataset) calculatorPanel.dataset.placement = placeBelow ? 'below' : 'above';
-      return { placement: placeBelow ? 'below' : 'above', left, top, width, maxHeight };
+      return { placement: placeBelow ? 'below' : 'above', left, top:anchoredTop, width, maxHeight };
     }
     selectCalculatorTarget(input) {
       this.document.querySelectorAll('.amount-input').forEach(field => field.classList.toggle('calculator-selected', field === input));
