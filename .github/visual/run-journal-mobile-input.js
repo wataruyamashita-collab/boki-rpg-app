@@ -21,12 +21,22 @@ async function run(){
             await page.evaluate(()=>{
               const ensure=(tag,id)=>{let node=document.getElementById(id);if(!node){node=document.createElement(tag);node.id=id;node.hidden=true;document.body.append(node);}return node;};
               ensure('input','filter-query');ensure('select','filter-account');ensure('select','filter-mistakes');ensure('form','placement-form');
+              window.calculatorDockHarness.render('J001');
               const proto=window.AppController.prototype,controller=window.__dockController;
               controller.view=new window.AppView(document);controller.filters={query:'',account:'',mistakes:'all'};controller.saveDraft=()=>{};controller.renderModes=()=>{};
               proto.bindEvents.call(controller);
+              window.__targetController=controller;
             });
             for(const [id,label] of cases){
-              await page.evaluate(id=>window.calculatorDockHarness.render(id),id);
+              await page.evaluate(id=>{
+                const q=window.QuestionData[id];
+                const panel=document.querySelector('.calculator'),form=document.getElementById('question-form');
+                panel.open=false;panel.classList.remove('calculator-contextual-float','calculator-placement-above');
+                form.classList.remove('calculator-workspace-active');
+                window.__targetController.calculatorTarget=null;
+                document.querySelectorAll('.amount-input.calculator-selected').forEach(field=>field.classList.remove('calculator-selected'));
+                new window.AppView(document).renderQuestion(q,{},'training');
+              },id);
               const layout=await page.evaluate(id=>{
                 const q=window.QuestionData[id],root=q.type==='journal'?document.querySelector('.journal-grid-scroll'):document.querySelector('.correction-entry'),header=q.type==='journal'?document.querySelector('.journal-header'):document.querySelector('.correction-header'),rows=[...(q.type==='journal'?document.querySelectorAll('.journal-row'):document.querySelectorAll('.correction-row'))];
                 return {rootClientWidth:root?.clientWidth||0,rootScrollWidth:root?.scrollWidth||0,headerWidth:header?.getBoundingClientRect().width||0,viewportWidth:innerWidth,rowReports:rows.map(row=>{const controls=[...row.querySelectorAll('select,input')],rects=controls.map(control=>{const r=control.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width,fontSize:getComputedStyle(control).fontSize};});return {controlCount:controls.length,rects,rowWidth:row.getBoundingClientRect().width};})};
@@ -45,10 +55,10 @@ async function run(){
                 if(targeting.error)violations.push(targeting.error);if(targeting.selectedAfterFocusIndex!==-1)violations.push('READONLY_FOCUS_SELECTED_BEFORE_CLICK');
                 const inputs=page.locator('.journal-row .amount-input:not(:disabled)');
                 await inputs.nth(0).tap();await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-                const debitSelected=await page.evaluate(()=>{const all=[...document.querySelectorAll('.journal-row .amount-input:not(:disabled)')],selected=document.querySelector('.amount-input.calculator-selected');return {index:all.indexOf(selected),targetIsSelected:window.__dockController.calculatorTarget===selected};});
+                const debitSelected=await page.evaluate(()=>{const all=[...document.querySelectorAll('.journal-row .amount-input:not(:disabled)')],selected=document.querySelector('.amount-input.calculator-selected');return {index:all.indexOf(selected),targetIsSelected:window.__targetController.calculatorTarget===selected};});
                 if(debitSelected.index!==0||!debitSelected.targetIsSelected)violations.push('DEBIT_TAP_WRONG_TARGET_'+debitSelected.index);
                 await inputs.nth(1).tap();await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-                const creditSelected=await page.evaluate(()=>{const all=[...document.querySelectorAll('.journal-row .amount-input:not(:disabled)')],selected=document.querySelector('.amount-input.calculator-selected');return {index:all.indexOf(selected),targetIsSelected:window.__dockController.calculatorTarget===selected,count:document.querySelectorAll('.amount-input.calculator-selected').length};});
+                const creditSelected=await page.evaluate(()=>{const all=[...document.querySelectorAll('.journal-row .amount-input:not(:disabled)')],selected=document.querySelector('.amount-input.calculator-selected');return {index:all.indexOf(selected),targetIsSelected:window.__targetController.calculatorTarget===selected,count:document.querySelectorAll('.amount-input.calculator-selected').length};});
                 if(creditSelected.index!==1||!creditSelected.targetIsSelected||creditSelected.count!==1)violations.push('CREDIT_TAP_WRONG_TARGET_'+creditSelected.index+'_COUNT_'+creditSelected.count);
                 targeting={...targeting,debitSelected,creditSelected};
               }
