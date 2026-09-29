@@ -267,8 +267,19 @@
       select.dataset.accountGlyphs = String([...String(value)].length);
     }
     updateSelectTitle(select) {
-      select.title = select.selectedOptions[0]?.textContent || '';
+      const text = select.selectedOptions[0]?.textContent || '';
+      select.title = text;
       if (select.classList?.contains('debit-account') || select.classList?.contains('credit-account') || select.classList?.contains('correction-account')) this.updateJournalAccountPresentation(select);
+      const display = select.parentElement?.querySelector?.('.journal-account-display');
+      if (display) {
+        display.textContent = text;
+        display.dataset.empty = select.value ? 'false' : 'true';
+      }
+    }
+    journalAccountControl(select) {
+      const control = this.document.createElement('span'); control.className = 'journal-account-control';
+      const display = this.document.createElement('span'); display.className = 'journal-account-display'; display.setAttribute('aria-hidden', 'true');
+      control.append(select, display); this.updateSelectTitle(select); return control;
     }
     renderJournal(question, draft = {}, mode = 'story') {
       const container = this.byId('journal-container'); container.replaceChildren();
@@ -288,10 +299,9 @@
           select.innerHTML = `<option value="">${enabled ? '--勘定科目--' : '--入力なし--'}</option>`;
           if (enabled) root.AppController.accountChoices(question, answer?.account, mode).forEach(name => select.append(new Option(name, name)));
           const saved = draft[side] && draft[side][index]; if (saved) select.value = saved.account;
-          this.updateSelectTitle(select);
           const amount = this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : '');
           if (!enabled) amount.disabled = true;
-          row.append(select, amount);
+          row.append(this.journalAccountControl(select), amount);
         }); grid.append(row);
       }
       container.append(grid);
@@ -310,9 +320,10 @@
           input = this.document.createElement('select'); input.className = 'table-input correction-account'; input.setAttribute('aria-label', label);
           input.append(new Option('--勘定科目--', ''));
           root.AppController.accountChoices(question, question.answer.cells[cellId]).forEach(name => input.append(new Option(name, name)));
-          input.value = draft.cells?.[cellId] ?? ''; this.updateSelectTitle(input);
+          input.value = draft.cells?.[cellId] ?? '';
         } else input = this.makeAmount('table-input correction-amount', `${label}（金額）`, draft.cells?.[cellId] ?? '');
-        input.dataset.cellId = cellId; input.dataset.inputType = inputType; row.append(input);
+        input.dataset.cellId = cellId; input.dataset.inputType = inputType;
+        row.append(inputType === 'account' ? this.journalAccountControl(input) : input);
       });
       entry.append(header, row); container.append(entry);
     }

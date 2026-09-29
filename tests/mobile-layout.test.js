@@ -140,7 +140,9 @@ assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('仕入'), 16, 
 assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('クレジット売掛金'), 15, 'six-to-eight glyph accounts compact one source step');
 assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('ABCDEFGHI'), 14, 'nine-to-ten glyph accounts compact two source steps');
 assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('法人税、住民税及び事業税'), 13, 'the canonical 12-glyph maximum retains the guarded source size');
-assert(css.includes('font-size: clamp(8px, calc(var(--journal-account-font-size, 16px) - 5px), 11px);'), 'mobile display scales only the rendered journal account text down to an 8px floor when needed');
+assert(css.includes('font-size: clamp(10px, 2.8vw, 12px);'), 'mobile journal account overlay keeps readable 10-12px text and can wrap long names');
+assert(/\.journal-account-display\s*\{[\s\S]*?white-space:\s*normal[\s\S]*?overflow-wrap:\s*anywhere/s.test(css), 'mobile journal account overlay can wrap the canonical 12-glyph account without widening the four-column grid');
+assert(/\.journal-account-control > select\s*\{[\s\S]*?font-size:\s*16px/s.test(css), 'native journal select stays 16px for iPhone zoom safety while its visible label is overlaid');
 assert(css.includes('font-size: clamp(10px, 3vw, 12px);'), 'mobile journal amounts use a narrow readable display size');
 assert(/\.journal-row select:focus,[\s\S]*?\.journal-row \.amount-input:focus,[\s\S]*?font-size:\s*16px/s.test(css), 'focused/tapped journal controls return to 16px to prevent iPhone zoom');
 assert(longestJournalAccountGlyphs === 12 && longestJournalAmountGlyphs === 9, 'canonical journal content bounds stay unchanged while only presentation is compacted');

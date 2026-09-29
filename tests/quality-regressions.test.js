@@ -31,6 +31,8 @@ assert(/\.journal-row\s*\{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+
 assert(!/\.journal-row select\s*\{[^}]*text-overflow:\s*ellipsis/s.test(css));
 assert(/\.journal-row select\s*\{[^}]*text-align:\s*center[^}]*text-align-last:\s*center[^}]*font-size:\s*var\(--journal-account-font-size,\s*16px\)/s.test(css), 'selected journal accounts are centered and adapt their display size');
 assert(/\.journal-row select:focus,[\s\S]*?\.journal-row select:active\s*\{[^}]*font-size:\s*16px/s.test(css), 'focused or tapped journal accounts remain 16px for iPhone zoom safety');
+assert(/\.journal-account-display\s*\{[\s\S]*?font-size:\s*clamp\(10px,\s*2\.8vw,\s*12px\)[\s\S]*?white-space:\s*normal[\s\S]*?overflow-wrap:\s*anywhere/s.test(css), 'mobile journal renders the full selected account through a readable wrapping overlay');
+assert(viewSource.includes('journalAccountControl(select)') && viewSource.includes("display.textContent = text"), 'journal account overlay stays synchronized with the native select value');
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row,\s*\.correction-header,\s*\.correction-row\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)\s+minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)/s.test(css), 'mobile journal keeps debit and credit horizontal while fitting all four columns in the viewport');
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-grid-scroll\s*{[^}]*overflow-x:\s*hidden/s.test(css), 'mobile journal does not require horizontal scrolling');
 console.log('quality regression tests: ok');

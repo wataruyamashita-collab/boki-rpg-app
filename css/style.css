@@ -451,7 +451,9 @@ button.secondary-button:hover { color: #fff; }
   min-width: 0;
 }
 
-.journal-row > .credit-account { border-left-width: 2px; border-left-color: #7f8c8d; }
+.journal-row .credit-account { border-left-width: 2px; border-left-color: #7f8c8d; }
+.journal-account-control { position: relative; display: block; width: 100%; min-width: 0; }
+.journal-account-display { display: none; }
 .journal-row select { overflow: visible; text-overflow: clip; white-space: nowrap; text-align: center; text-align-last: center; font-size: var(--journal-account-font-size, 16px); }
 .journal-row select:focus,
 .journal-row select:active { font-size: 16px; text-overflow: clip; outline: 3px solid rgba(52, 152, 219, .25); outline-offset: 1px; }
@@ -517,12 +519,70 @@ select, .amount-input {
     line-height: 1.1;
   }
 
-  .journal-row select,
-  .correction-row .correction-account {
+  .journal-account-control {
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .journal-account-control > select {
+    position: absolute;
+    inset: 0;
     min-width: 0;
-    padding: 8px 0;
-    font-size: clamp(8px, calc(var(--journal-account-font-size, 16px) - 5px), 11px);
-    letter-spacing: -.055em;
+    width: 100%;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    background: #fff;
+    font-size: 16px;
+  }
+
+  .journal-account-control > select option {
+    color: var(--primary-color);
+    -webkit-text-fill-color: var(--primary-color);
+    font-size: 16px;
+  }
+
+  .journal-account-control::after {
+    content: "⌄";
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    right: 3px;
+    transform: translateY(-54%);
+    color: #263746;
+    font-size: 10px;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .journal-account-display {
+    position: absolute;
+    z-index: 1;
+    inset: 2px 13px 2px 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--primary-color);
+    font-size: clamp(10px, 2.8vw, 12px);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -.03em;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+  }
+
+  .journal-account-display[data-empty="true"] {
+    color: #566573;
+    font-size: clamp(9px, 2.6vw, 11px);
   }
 
   .journal-row .amount-input,

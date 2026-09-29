@@ -2,7 +2,7 @@
 const fs=require('fs'),http=require('http'),path=require('path');
 const {chromium,webkit}=require('playwright');
 const ROOT=path.resolve(__dirname,'../..'),OUTPUT=path.join(ROOT,'artifacts','journal-mobile-input');
-const engines={chromium,webkit},widths=[320,375,390,430],cases=[['J001','journal-basic'],['J128','journal-multi'],['E001','correction']];
+const engines={chromium,webkit},widths=[320,375,390,430],cases=[['J001','journal-basic'],['J128','journal-multi'],['E001','correction'],['J101','journal-max-amount'],['J135','journal-longest-account']];
 const mime={'.css':'text/css','.html':'text/html','.js':'text/javascript','.json':'application/json'};
 const evidence={status:'RUNNING',reports:[],failures:[]};
 const write=()=>{fs.mkdirSync(OUTPUT,{recursive:true});fs.writeFileSync(path.join(OUTPUT,'report.json'),JSON.stringify(evidence,null,2)+'\n');};
@@ -35,11 +35,14 @@ async function run(){
                 form.classList.remove('calculator-workspace-active');
                 window.__targetController.calculatorTarget=null;
                 document.querySelectorAll('.amount-input.calculator-selected').forEach(field=>field.classList.remove('calculator-selected'));
-                new window.AppView(document).renderQuestion(q,{},'training');
+                const draft=q.type==='journal'?{debit:(q.answer?.debit||[]).map(item=>({account:item.account,amount:item.amount})),credit:(q.answer?.credit||[]).map(item=>({account:item.account,amount:item.amount}))}:q.type==='correction'?{cells:{...(q.answer?.cells||{})}}:{};
+                new window.AppView(document).renderQuestion(q,draft,'training');
               },id);
               const layout=await page.evaluate(id=>{
                 const q=window.QuestionData[id],root=q.type==='journal'?document.querySelector('.journal-grid-scroll'):document.querySelector('.correction-entry'),header=q.type==='journal'?document.querySelector('.journal-header'):document.querySelector('.correction-header'),rows=[...(q.type==='journal'?document.querySelectorAll('.journal-row'):document.querySelectorAll('.correction-row'))];
-                return {rootClientWidth:root?.clientWidth||0,rootScrollWidth:root?.scrollWidth||0,headerWidth:header?.getBoundingClientRect().width||0,viewportWidth:innerWidth,rowReports:rows.map(row=>{const controls=[...row.querySelectorAll('select,input')],rects=controls.map(control=>{const r=control.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width,fontSize:getComputedStyle(control).fontSize};});return {controlCount:controls.length,rects,rowWidth:row.getBoundingClientRect().width};})};
+                const accountDisplays=[...root.querySelectorAll('.journal-account-display')].map(display=>{const r=display.getBoundingClientRect(),style=getComputedStyle(display);return {text:display.textContent,clientWidth:display.clientWidth,scrollWidth:display.scrollWidth,clientHeight:display.clientHeight,scrollHeight:display.scrollHeight,left:r.left,right:r.right,fontSize:style.fontSize,lineHeight:style.lineHeight};});
+                const amountValues=[...root.querySelectorAll('.amount-input:not(:disabled), .correction-amount:not(:disabled)')].map(input=>input.value);
+                return {rootClientWidth:root?.clientWidth||0,rootScrollWidth:root?.scrollWidth||0,headerWidth:header?.getBoundingClientRect().width||0,viewportWidth:innerWidth,accountDisplays,amountValues,rowReports:rows.map(row=>{const controls=[...row.querySelectorAll('select,input')],rects=controls.map(control=>{const r=control.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width,fontSize:getComputedStyle(control).fontSize};});return {controlCount:controls.length,rects,rowWidth:row.getBoundingClientRect().width};})};
               },id);
               const violations=[];
               if(layout.rootScrollWidth>layout.rootClientWidth+1)violations.push('HORIZONTAL_SCROLL_'+layout.rootScrollWidth+'>'+layout.rootClientWidth);
@@ -49,6 +52,12 @@ async function run(){
                 for(let ci=1;ci<row.rects.length;ci++)if(row.rects[ci].left<row.rects[ci-1].right-1)violations.push('ROW_'+ri+'_CONTROL_OVERLAP_'+ci);
                 const last=row.rects.at(-1);if(last&&last.right>layout.viewportWidth+1)violations.push('ROW_'+ri+'_RIGHT_OVERFLOW');if(row.rects[0]&&row.rects[0].left<-1)violations.push('ROW_'+ri+'_LEFT_OVERFLOW');
               }
+              for(const [di,display] of layout.accountDisplays.entries()){
+                if(display.scrollWidth>display.clientWidth+1||display.scrollHeight>display.clientHeight+1)violations.push('ACCOUNT_DISPLAY_CLIPPED_'+di);
+                if(display.left<-1||display.right>layout.viewportWidth+1)violations.push('ACCOUNT_DISPLAY_OFFSCREEN_'+di);
+              }
+              if(id==='J135'&&!layout.accountDisplays.some(display=>display.text==='法人税、住民税及び事業税'))violations.push('LONGEST_ACCOUNT_NOT_FULLY_RENDERED');
+              if(id==='J101'&&!layout.amountValues.some(value=>String(value).replace(/,/g,'')==='3020000'))violations.push('MAX_AMOUNT_NOT_RENDERED');
               let targeting=null;
               if(id==='J001'){
                 targeting=await page.evaluate(async()=>{const inputs=[...document.querySelectorAll('.journal-row .amount-input:not(:disabled)')];if(inputs.length<2)return {error:'MISSING_AMOUNT_INPUTS'};inputs[0].focus();await new Promise(r=>requestAnimationFrame(r));const selected=document.querySelector('.amount-input.calculator-selected');return {selectedAfterFocusIndex:selected?inputs.indexOf(selected):-1};});

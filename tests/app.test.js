@@ -1040,14 +1040,16 @@ assert(/\.journal-row\s*{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+1
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row,\s*\.correction-header,\s*\.correction-row\s*{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*grid-template-columns:\s*minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)\s+minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)/s.test(cssSource), 'スマホでも借方科目・借方金額・貸方科目・貸方金額の4列を同一画面に収める');
 assert(/\.journal-row select:focus,[\s\S]*?\.journal-row \.amount-input:focus,[\s\S]*?font-size:\s*16px/s.test(cssSource), '操作中は16pxへ戻してiPhone自動ズームを防ぐ');
 assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-grid-scroll\s*{[^}]*overflow-x:\s*hidden/s.test(cssSource), 'スマホ仕訳は横スクロールを要求しない');
-assert(cssSource.includes('font-size: clamp(8px, calc(var(--journal-account-font-size, 16px) - 5px), 11px);'), '表示時は長い勘定科目だけ段階的に縮小する');
+assert(cssSource.includes('font-size: clamp(10px, 2.8vw, 12px);'), 'スマホでは長い勘定科目を2行表示できる専用表示レイヤーを使う');
+assert(cssSource.includes('-webkit-text-fill-color: transparent;') && cssSource.includes('.journal-account-display'), 'スマホのnative selectは操作担当、科目名表示は専用レイヤーへ分離する');
 assert(viewSource.includes("select.classList?.contains('correction-account')"), '訂正仕訳にも通常仕訳と同じ勘定科目の適応表示を使う');
 assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦並び用ラベルを追加しない');
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
 assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('acquisitionCost'), '取得原価', '表の英語見出しを日本語で表示する');
 assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('debitAccount'), '借方科目', '表内の内部用英語IDを日本語で表示する');
 assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('現金'), '現金', '日本語の表示値はそのまま保つ');
-assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの入力要素を仕訳行の直下に配置する');
+assert(viewSource.includes('row.append(this.journalAccountControl(select), amount)'), 'iPhoneでも4列構造を保ったまま科目セルだけ表示ラッパー化する');
+assert(viewSource.includes("display.textContent = text") && viewSource.includes("display.dataset.empty = select.value ? 'false' : 'true'"), '選択変更時に科目名オーバーレイを同期する');
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');
