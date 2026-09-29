@@ -119,6 +119,14 @@ const retryEnd = controllerSource.indexOf('\n    revealAnswer(', retryStart);
 assert(retryStart >= 0 && retryEnd > retryStart, 'coaching retry実装を監査できる');
 const retrySource = controllerSource.slice(retryStart, retryEnd);
 assert(!retrySource.includes('recordAttempt'), 'coaching retryはauthoritative attemptを追加せず習熟度を水増ししない');
+assert(controllerSource.includes("['全体正答率（累積）', percent(overall), evidence(overall)]"), '過去ログ分析に累積正答率を明示する');
+assert(controllerSource.includes("['直近5回の正答率', percent(recent), evidence(recent)]"), '過去ログ分析で直近5回を累積と分離する');
+assert(controllerSource.includes("this.model.learningMastery(id)"), '問題別表示を説明可能なlearningMasteryへ接続する');
+assert(controllerSource.includes("習熟度 ${mastery.state}（指標 ${mastery.score}/100）"), '習熟度指標は状態ラベルと一緒に表示する');
+
+const cssSource = fs.readFileSync('css/style.css', 'utf8');
+assert(cssSource.includes('grid-template-columns: repeat(auto-fit, minmax(170px, 1fr))'), '問題別分析は固定横幅テーブルではなく可変gridで表示する');
+assert(cssSource.includes('@media (max-width: 560px)') && cssSource.includes('.learning-problem-metrics { grid-template-columns: 1fr; }'), 'モバイルでは問題別指標を1列にして横スクロールを要求しない');
 
 const backup = JSON.parse(JSON.stringify(progress.state));
 assert.strictEqual(ProgressModel.validateBackupState(backup, questions), true, '派生分析追加後も既存backup schemaを変更しない');
