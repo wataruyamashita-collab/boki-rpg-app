@@ -184,10 +184,79 @@
     }
     openLogAnalysis() {
       if (this.rpg.level < 10) return false;
-      const attempts = this.model.state.attempts || [], correct = attempts.filter(item => item.correct).length;
-      const weak = Object.entries(this.model.state.mistakeCounts || {}).sort((a,b) => b[1] - a[1]).slice(0, 3).map(([id, count]) => `${this.questions[id]?.category || id}（${count}回）`);
       const panel = this.document.getElementById('log-analysis'); panel.hidden = false;
-      panel.textContent = `直近${attempts.length}件の正答率：${attempts.length ? Math.round(correct / attempts.length * 100) : 0}%｜重点確認：${weak.join('、') || 'まだありません'}`;
+      const percent = metric => metric?.attempts ? `${Math.round(metric.accuracy * 100)}%` : '未回答';
+      const evidence = metric => metric?.attempts ? `${metric.correctCount}/${metric.attempts}` : '回答なし';
+      const make = (tag, className, text) => {
+        const node = this.document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+
+      panel.replaceChildren();
+      panel.append(
+        make('h4', 'log-analysis-title', '学習ログ分析'),
+        make('p', 'log-analysis-note', '累積はこれまでの全回答、直近5回は最近の回答だけを集計しています。')
+      );
+
+      const summary = make('div', 'learning-metric-grid');
+      const overall = this.model.overallAccuracy();
+      const recent = this.model.recentAccuracy({ limit:5 });
+      [
+        ['全体正答率（累積）', percent(overall), evidence(overall)],
+        ['直近5回の正答率', percent(recent), evidence(recent)]
+      ].forEach(([label, value, detail]) => {
+        const card = make('section', 'learning-metric-card');
+        card.append(make('small', '', label), make('strong', '', value), make('span', '', detail));
+        summary.append(card);
+      });
+      panel.append(summary);
+
+      const categories = [...new Set(Object.values(this.questions).map(question => question.category).filter(Boolean))]
+        .map(category => ({ category, metric:this.model.categoryAccuracy(category) }))
+        .filter(item => item.metric.attempts > 0)
+        .sort((a,b) => a.category.localeCompare(b.category, 'ja'));
+      const categorySection = make('section', 'log-analysis-section');
+      categorySection.append(make('h5', '', '分野別正答率（累積）'));
+      if (!categories.length) categorySection.append(make('p', 'analysis-empty', 'まだ回答データがありません。'));
+      else {
+        const list = make('div', 'learning-analysis-list');
+        categories.forEach(({ category, metric }) => {
+          const row = make('div', 'learning-analysis-item');
+          row.append(make('strong', '', category), make('span', '', `${percent(metric)}（${evidence(metric)}）`));
+          list.append(row);
+        });
+        categorySection.append(list);
+      }
+      panel.append(categorySection);
+
+      const answered = Object.keys(this.model.state.questionStats || {})
+        .map(id => ({ id, question:this.questions[id], mastery:this.model.learningMastery(id), recent:this.model.recentAccuracy({ questionId:id, limit:5 }) }))
+        .filter(item => item.question && item.mastery?.attempts > 0)
+        .sort((a,b) => b.mastery.lastAnsweredAt - a.mastery.lastAnsweredAt || a.id.localeCompare(b.id));
+      const problemSection = make('section', 'log-analysis-section');
+      problemSection.append(make('h5', '', `問題別の習熟度（回答済み${answered.length}問）`));
+      if (!answered.length) problemSection.append(make('p', 'analysis-empty', '問題に回答すると、ここに累積成績と習熟度が表示されます。'));
+      else {
+        const list = make('div', 'learning-problem-list');
+        answered.forEach(({ id, question, mastery, recent:recentMetric }) => {
+          const card = make('article', 'learning-problem-card');
+          const header = make('div', 'learning-problem-heading');
+          header.append(make('strong', '', `${id}｜${question.category || '未分類'}`), make('span', 'mastery-state', mastery.state));
+          const metrics = make('div', 'learning-problem-metrics');
+          metrics.append(
+            make('span', '', `累積 ${percent(mastery)}（${evidence(mastery)}）`),
+            make('span', '', `直近5回 ${percent(recentMetric)}（${evidence(recentMetric)}）`),
+            make('span', '', `最終結果 ${mastery.lastResult === true ? '正解' : mastery.lastResult === false ? '誤答' : '未回答'}`),
+            make('span', '', `連続 正解${mastery.correctStreak}回 / 誤答${mastery.incorrectStreak}回`),
+            make('span', '', `習熟度 ${mastery.state}（指標 ${mastery.score}/100）`)
+          );
+          card.append(header, metrics); list.append(card);
+        });
+        problemSection.append(list);
+      }
+      panel.append(problemSection);
       return true;
     }
     startBoss(kind) {
