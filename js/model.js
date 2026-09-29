@@ -152,6 +152,58 @@
     }
     overallAccuracy() { return this.aggregateAccuracy(); }
     categoryAccuracy(category) { return this.aggregateAccuracy(question => question?.category === category); }
+    questionAccuracy(id) {
+      if (!this.questions[id]) return null;
+      const stats = this.statsForQuestion(id);
+      const attempts = stats.correctCount + stats.incorrectCount;
+      return {
+        correctCount:stats.correctCount,
+        incorrectCount:stats.incorrectCount,
+        attempts,
+        accuracy:attempts ? stats.correctCount / attempts : null
+      };
+    }
+    recentAccuracy({ questionId = null, category = null, limit = 5 } = {}) {
+      const safeLimit = Number.isSafeInteger(limit) && limit > 0 ? limit : 5;
+      const filtered = this.state.attempts.filter(item => {
+        const id = item.questionId || item.id;
+        if (questionId && id !== questionId) return false;
+        if (category && item.category !== category && item.concept !== category) return false;
+        return true;
+      });
+      const recent = filtered.slice(-safeLimit);
+      const correctCount = recent.filter(item => item.correct === true).length;
+      const incorrectCount = recent.length - correctCount;
+      return {
+        correctCount,
+        incorrectCount,
+        attempts:recent.length,
+        accuracy:recent.length ? correctCount / recent.length : null
+      };
+    }
+    learningMastery(id) {
+      const accuracy = this.questionAccuracy(id);
+      if (!accuracy) return null;
+      const stats = this.statsForQuestion(id);
+      const evidenceFactor = Math.min(1, accuracy.attempts / 3);
+      const score = accuracy.attempts ? Math.round(100 * accuracy.accuracy * evidenceFactor) : 0;
+      let state = '未着手';
+      if (accuracy.attempts > 0) {
+        if (stats.lastResult === false || stats.incorrectStreak >= 2) state = '要復習';
+        else if (accuracy.attempts < 3 || score < 80 || stats.correctStreak < 2) state = '学習中';
+        else if (stats.lastResult === true) state = '定着';
+      }
+      return {
+        ...accuracy,
+        evidenceFactor,
+        score,
+        state,
+        correctStreak:stats.correctStreak,
+        incorrectStreak:stats.incorrectStreak,
+        lastResult:stats.lastResult,
+        lastAnsweredAt:stats.lastAnsweredAt
+      };
+    }
     validExamSession(session) {
       if (!(session && typeof session === 'object' && Array.isArray(session.ids) && session.ids.length === 15 &&
         session.ids.every(id => this.questions[id]) && new Set(session.ids).size === session.ids.length &&
