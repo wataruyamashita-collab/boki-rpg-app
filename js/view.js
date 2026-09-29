@@ -779,16 +779,19 @@
         const debit = answer.debit[index]; const credit = answer.credit[index];
         const row = body.insertRow();
         [debit, credit].forEach(item => {
-          const account = row.insertCell(); account.append(this.accountLabel(item?.account));
-          const amount = row.insertCell(); amount.className = 'journal-amount'; amount.textContent = item?.amount ? `${yen(item.amount)}円` : '—';
+          const account = row.insertCell();
+          const amount = row.insertCell(); amount.className = 'journal-amount';
+          if (!item) return;
+          account.append(this.accountLabel(item.account));
+          amount.textContent = Number.isFinite(Number(item.amount)) ? `${yen(item.amount)}円` : '—';
         });
 
         const mobileRow = this.document.createElement('div'); mobileRow.className = 'journal-review-row';
         [
-          ['journal-review-account', debit?.account || '（未入力）'],
-          ['journal-review-amount', debit?.amount ? yen(debit.amount) : '—'],
-          ['journal-review-account', credit?.account || '（未入力）'],
-          ['journal-review-amount', credit?.amount ? yen(credit.amount) : '—']
+          ['journal-review-account', debit ? (debit.account || '（未入力）') : ''],
+          ['journal-review-amount', debit ? (Number.isFinite(Number(debit.amount)) ? yen(debit.amount) : '—') : ''],
+          ['journal-review-account', credit ? (credit.account || '（未入力）') : ''],
+          ['journal-review-amount', credit ? (Number.isFinite(Number(credit.amount)) ? yen(credit.amount) : '—') : '']
         ].forEach(([className, text]) => {
           const cell = this.document.createElement('span'); cell.className = `journal-review-cell ${className}`; cell.textContent = text; mobileRow.append(cell);
         });

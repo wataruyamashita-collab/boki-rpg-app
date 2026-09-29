@@ -654,6 +654,19 @@ assert.deepStrictEqual(mobileJournalSurface.children[0].children.map(cell => cel
 mobileJournalSurface.children.slice(1).forEach(row => assert.strictEqual(row.children.length, 4, '解説の仕訳票も全行を借方科目・借方金額・貸方科目・貸方金額の4列にする'));
 assert(domText(mobileJournalSurface).includes('法人税、住民税及び事業税'), '最長勘定科目も解説の仕訳票へ全文表示する');
 assert(!viewSource.includes("sideLabel.className = 'journal-review-side-label'"), 'スマホ解説で借方・貸方カードへ分割しない');
+const compoundJournalTicket = journalDomView.journalTable(browserSandbox.window.QuestionData.J128.answer);
+const compoundDesktopRows = descendants(compoundJournalTicket, 'tr').slice(2);
+assert.strictEqual(domText(compoundDesktopRows[1].children[0]), '', '複合仕訳の行数合わせだけの借方科目セルは空欄にする');
+assert.strictEqual(compoundDesktopRows[1].children[1].textContent, '', '複合仕訳の行数合わせだけの借方金額セルは空欄にする');
+assert.strictEqual(domText(compoundDesktopRows[2].children[0]), '', '複合仕訳3行目の構造空欄へ未入力表示を出さない');
+assert.strictEqual(compoundDesktopRows[2].children[1].textContent, '', '複合仕訳3行目の構造空欄へダッシュを出さない');
+const compoundMobileSurface = descendants(compoundJournalTicket).find(node => String(node.className || '').split(/\\s+/).includes('journal-review-mobile'));
+assert.strictEqual(compoundMobileSurface.children[2].children[0].textContent, '', 'スマホ解説の構造空欄は未入力表示ではなく空欄にする');
+assert.strictEqual(compoundMobileSurface.children[2].children[1].textContent, '', 'スマホ解説の構造空欄金額はダッシュではなく空欄にする');
+assert.strictEqual(compoundMobileSurface.children[3].children[0].textContent, '', 'スマホ解説3行目の構造空欄も空欄にする');
+assert.strictEqual(compoundMobileSurface.children[3].children[1].textContent, '', 'スマホ解説3行目の構造空欄金額も空欄にする');
+assert(!domText(compoundMobileSurface).includes('（未入力）'), '正解の複合仕訳で構造空欄を入力漏れのように表示しない');
+
 
 allJournalAccounts.forEach(account => assert.notStrictEqual(comparisonView.accountType(account), 'unknown', `${account}を簿記の5要素へ分類する`));
 assert.strictEqual(comparisonView.accountType('減価償却累計額'), 'contraAsset', '減価償却累計額は負債ではなく資産の控除項目とする');

@@ -46,6 +46,11 @@ async function run(){
               }
               if(id==='J135'&&!report.rowReports.some(row=>row.cells.some(cell=>cell.text==='法人税、住民税及び事業税')))violations.push('LONGEST_ACCOUNT_MISSING');
               if(id==='J101'&&!report.rowReports.some(row=>row.cells.some(cell=>cell.text==='3,020,000')))violations.push('MAX_AMOUNT_MISSING');
+              if(id==='J128'){
+                const structuralRows=report.rowReports.slice(1);
+                if(structuralRows.some(row=>row.cells[0]?.text!==''||row.cells[1]?.text!==''))violations.push('STRUCTURAL_BLANK_MARKER');
+                if(report.rowReports.some(row=>row.cells.some(cell=>cell.text==='（未入力）')))violations.push('FALSE_MISSING_LABEL');
+              }
               evidence.reports.push({browser:browserName,width,...report,violations});
               if(violations.length)evidence.failures.push(browserName+'/'+width+'/'+id+':'+violations.join(','));
               fs.mkdirSync(path.join(OUTPUT,browserName),{recursive:true});await page.screenshot({path:path.join(OUTPUT,browserName,id+'-'+width+'.png'),fullPage:true});write();
