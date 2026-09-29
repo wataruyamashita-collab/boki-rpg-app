@@ -28,7 +28,13 @@
     <button type="button" id="install-app" hidden>アプリをインストール</button>
     <button type="button" data-action="backup-export">進捗をJSONでバックアップ</button>
     <label class="button-like" for="backup-import">JSONバックアップを復元</label><input id="backup-import" type="file" accept="application/json,.json" hidden>
-  </div><p id="backup-status" role="status" aria-live="polite"></p></dialog>
+  </div><p id="backup-status" role="status" aria-live="polite"></p>
+    <section class="data-reset-panel" aria-labelledby="data-reset-title">
+      <h3 id="data-reset-title">学習データの初期化</h3>
+      <p>進捗・回答履歴・復習予定・経験値・役職をこの端末から削除します。必要な場合は先にJSONバックアップを書き出してください。</p>
+      <button type="button" class="danger-button" data-action="reset-learning-data">すべての学習データを初期化</button>
+    </section>
+  </dialog>
   <p id="storage-warning" class="storage-warning" role="alert" aria-live="assertive" hidden>端末へ保存できません。進捗はこの画面を閉じるまでメモリ上で保持されます。JSONバックアップをご利用ください。</p>
   <aside id="app-toast" class="app-toast" role="status" aria-live="polite" hidden><span id="app-toast-message"></span><button type="button" id="app-toast-action" hidden></button></aside>
   <aside id="exam-hud" class="exam-hud" aria-label="総合演習模試の進行状況"><p id="exam-timer" class="exam-timer" aria-live="off">残り 60:00</p><p id="exam-timer-announcement" class="visually-hidden" role="status" aria-live="polite"></p><p id="exam-progress" aria-live="polite"></p><button type="button" data-action="finish-exam">試験を終了して採点</button></aside>
