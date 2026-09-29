@@ -1,0 +1,73 @@
+name: Issue 154 journal stress audit
+on:
+  push:
+    branches:
+      - codex/issue-154-explanation-ux-integration
+permissions:
+  contents: write
+jobs:
+  stress-audit:
+    if: github.event.head_commit.message == 'Run journal stress audit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/issue-154-explanation-ux-integration
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Install pinned CI-only Playwright
+        run: npm install --no-save --package-lock=false playwright@1.55.0
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Build stress-case runner
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const src='.github/visual/run-journal-mobile-input.js';
+          const dst='.github/visual/run-journal-mobile-stress-temp.js';
+          let code=fs.readFileSync(src,'utf8');
+          const from="cases=[['J001','journal-basic'],['J128','journal-multi'],['E001','correction']]";
+          const to="cases=[['J001','journal-basic'],['J128','journal-multi'],['E001','correction'],['J101','journal-max-amount'],['J135','journal-longest-account']]";
+          if(!code.includes(from))throw new Error('journal mobile case anchor missing');
+          code=code.replace(from,to);
+          code=code.replace("OUTPUT=path.join(ROOT,'artifacts','journal-mobile-input')","OUTPUT=path.join(ROOT,'artifacts','journal-mobile-stress')");
+          fs.writeFileSync(dst,code);
+          NODE
+      - name: Run 320-430px stress audit
+        run: node .github/visual/run-journal-mobile-stress-temp.js
+      - name: Verify stress report contract
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const report=JSON.parse(fs.readFileSync('artifacts/journal-mobile-stress/report.json','utf8'));
+          if(report.status!=='PASS')throw new Error('stress report did not PASS');
+          const expectedBrowsers=['chromium','webkit'];
+          const expectedWidths=[320,375,390,430];
+          const expectedIds=['J001','J128','E001','J101','J135'];
+          for(const browser of expectedBrowsers)for(const width of expectedWidths)for(const id of expectedIds){
+            const hit=report.reports.find(item=>item.browser===browser&&item.width===width&&item.id===id);
+            if(!hit)throw new Error('missing '+browser+'/'+width+'/'+id);
+            if(hit.violations?.length)throw new Error('violations '+browser+'/'+width+'/'+id+': '+hit.violations.join(','));
+          }
+          const stress=report.reports.filter(item=>['J101','J135'].includes(item.id));
+          if(stress.length!==16)throw new Error('expected 16 stress reports, got '+stress.length);
+          console.log('JOURNAL_STRESS_CASES_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: journal-mobile-stress-audit
+          path: artifacts/journal-mobile-stress
+          retention-days: 14
+      - name: Remove temporary workflow
+        run: |
+          rm -f .github/visual/run-journal-mobile-stress-temp.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/issue154-journal-stress-audit.yml
+          git commit -m "Remove journal stress audit workflow"
+          git push origin HEAD:codex/issue-154-explanation-ux-integration
