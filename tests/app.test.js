@@ -956,7 +956,7 @@ const desktopAmount = desktopAmountView.makeAmount('table-input', '金額', '30,
 assert.deepStrictEqual([desktopAmount.readOnly,desktopAmount.inputmode,desktopAmount.value],[false,'numeric','30,000'],'desktopでは直接キーボード入力と既存値を保つ');
 const amountPattern=viewSource.match(/input\.setAttribute\('pattern', '([^']+)'\)/)?.[1];assert(amountPattern,'金額欄にnative patternを設定する');const nativeAmountPattern=new RegExp(`^(?:${amountPattern})$`);for(const raw of validAmounts.keys())assert(raw===''||nativeAmountPattern.test(raw),`${raw||'空欄'}をnative patternで受理する`);for(const raw of invalidAmounts)assert(!nativeAmountPattern.test(raw),`${raw}をnative patternで拒否する`);
 assert(viewSource.includes('必要に応じて計算機も使えます'), '金額欄は直接入力と任意の計算機を案内する');
-assert(viewSource.includes('select.title = select.selectedOptions[0]?.textContent'), '選択中の勘定科目をtitleに反映する');
+assert(viewSource.includes("const text = select.selectedOptions[0]?.textContent || ''") && viewSource.includes('select.title = text;'), '選択中の勘定科目をtitleに反映する');
 const cssSource = fs.readFileSync('css/style.css', 'utf8');
 assert(viewSource.includes("else if (question.type === 'correction') this.renderCorrection(question, draft)"), '記帳訂正は通常の縦型表ではなく専用の仕訳入力欄で表示する');
 assert(viewSource.includes("header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'"), '記帳訂正に借方・貸方の科目欄と金額欄を明示する');
