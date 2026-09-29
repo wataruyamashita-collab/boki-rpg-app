@@ -1,6 +1,6 @@
 (function (root) {
   'use strict';
-  const CONTENT_REVISION = 3;
+  const CONTENT_REVISION = 4;
   const FIXED_ASSET_SCHEMA_REVISION_2_IDS = new Set(['L005','L010','L015','L020','L025','L030','L033','L040']);
   class ProgressModel {
     static validateBackupState(value, questions = {}) {
@@ -11,6 +11,11 @@
         (Array.isArray(item) && item.every(safeValue)) || (plain(item) && Object.keys(item).every(key => !dangerousKeys.has(key) && safeValue(item[key])));
       const knownId = id => typeof id === 'string' && Boolean(questions[id]);
       const idList = item => Array.isArray(item) && item.every(knownId);
+      const validQuestionStat = (id, item) => knownId(id) && plain(item) &&
+        ['correctCount', 'incorrectCount', 'correctStreak', 'incorrectStreak'].every(key => Number.isSafeInteger(item[key]) && item[key] >= 0) &&
+        finite(item.lastAnsweredAt) && item.lastAnsweredAt >= 0 &&
+        (item.lastResult === null || ['correct', 'incorrect'].includes(item.lastResult)) &&
+        typeof item.historyComplete === 'boolean';
       if (!plain(value) || !safeValue(value)) return false;
       const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
       if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
@@ -18,6 +23,8 @@
       if (value.mode !== undefined && !['story', 'training', 'review', 'exam', 'desk'].includes(value.mode)) return false;
       if (value.currentQuestionId !== undefined && value.currentQuestionId !== null && !knownId(value.currentQuestionId)) return false;
       for (const key of ['answeredIds', 'correctIds', 'incorrectIds']) if (value[key] !== undefined && !idList(value[key])) return false;
+      if (value.questionStats !== undefined && (!plain(value.questionStats) || Object.entries(value.questionStats).some(([id, item]) => !validQuestionStat(id, item)))) return false;
+      if (value.lastLearningAt !== undefined && !(finite(value.lastLearningAt) && value.lastLearningAt >= 0)) return false;
       if (value.completed !== undefined && typeof value.completed !== 'boolean') return false;
       if (value.examAttempt !== undefined && !(Number.isSafeInteger(value.examAttempt) && value.examAttempt >= 0)) return false;
       if (value.mistakeCounts !== undefined && (!plain(value.mistakeCounts) || Object.entries(value.mistakeCounts).some(([id, count]) => !knownId(id) || !Number.isSafeInteger(count) || count <= 0))) return false;
@@ -44,7 +51,7 @@
     }
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { contentRevision:CONTENT_REVISION, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state = { contentRevision:CONTENT_REVISION, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], questionStats: {}, lastLearningAt: 0, drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
@@ -55,12 +62,23 @@
           const savedContentRevision = Number.isSafeInteger(saved.contentRevision) ? saved.contentRevision : 1;
           const needsRevision2Migration = savedContentRevision < 2;
           const needsRevision3Migration = savedContentRevision < 3;
+          const needsRevision4Migration = savedContentRevision < 4;
           const needsContentMigration = savedContentRevision < CONTENT_REVISION;
           const migratedDrafts = saved.drafts && typeof saved.drafts === 'object' && !Array.isArray(saved.drafts)
             ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object' &&
               !(needsRevision2Migration && FIXED_ASSET_SCHEMA_REVISION_2_IDS.has(id)) &&
               !(needsRevision3Migration && id === 'L030'))) : {};
           const incompatibleExam = needsRevision2Migration && saved.examSession?.ids?.some(id => id === 'L033' || id === 'L040');
+          const migratedAttempts = Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.questionId || item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [];
+          const loadedQuestionStats = saved.questionStats && typeof saved.questionStats === 'object' && !Array.isArray(saved.questionStats)
+            ? Object.fromEntries(Object.entries(saved.questionStats).filter(([id, item]) => this.questions[id] && item && typeof item === 'object' && !Array.isArray(item) &&
+              ['correctCount', 'incorrectCount', 'correctStreak', 'incorrectStreak'].every(key => Number.isSafeInteger(item[key]) && item[key] >= 0) &&
+              Number.isFinite(item.lastAnsweredAt) && item.lastAnsweredAt >= 0 &&
+              (item.lastResult === null || ['correct', 'incorrect'].includes(item.lastResult)) &&
+              typeof item.historyComplete === 'boolean')) : null;
+          const questionStats = loadedQuestionStats || (needsRevision4Migration ? this.migrateLegacyQuestionStats(saved, migratedAttempts) : {});
+          const derivedLastLearningAt = Math.max(0, ...Object.values(questionStats).map(item => Number(item.lastAnsweredAt) || 0));
+          const lastLearningAt = Number.isFinite(saved.lastLearningAt) && saved.lastLearningAt >= 0 ? saved.lastLearningAt : derivedLastLearningAt;
           this.state = Object.assign(this.state, saved, {
           contentRevision:CONTENT_REVISION,
           mode: ['story', 'training', 'review', 'exam', 'desk'].includes(saved.mode) ? saved.mode : 'story',
@@ -82,7 +100,9 @@
               item.sourceQuestionId === sourceId && this.questions[item.reviewQuestionId] && typeof item.conceptId === 'string' &&
               Number.isSafeInteger(item.stage) && item.stage >= 0 && item.stage <= 4 && Number.isFinite(item.dueAt) &&
               Number.isFinite(item.assignedAt) && ['assigned', 'completed'].includes(item.status))) : {},
-          attempts: Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.questionId || item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [],
+          attempts: migratedAttempts,
+          questionStats,
+          lastLearningAt,
           completed: saved.completed === true,
           placement: saved.placement && saved.placement.completed === true && this.questions[saved.placement.startQuestionId] &&
             Number.isFinite(saved.placement.foundation) && Number.isFinite(saved.placement.closing)
@@ -97,6 +117,34 @@
         }
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
     }
+    migrateLegacyQuestionStats(saved = {}, attempts = []) {
+      const correctIds = new Set(Array.isArray(saved.correctIds) ? saved.correctIds.filter(id => this.questions[id]) : []);
+      const answeredIds = new Set(Array.isArray(saved.answeredIds) ? saved.answeredIds.filter(id => this.questions[id]) : []);
+      const mistakes = saved.mistakeCounts && typeof saved.mistakeCounts === 'object' && !Array.isArray(saved.mistakeCounts) ? saved.mistakeCounts : {};
+      const ids = new Set([...answeredIds, ...correctIds, ...Object.keys(mistakes).filter(id => this.questions[id]), ...attempts.map(item => item.questionId || item.id).filter(id => this.questions[id])]);
+      const out = {};
+      ids.forEach(id => {
+        const recent = attempts.filter(item => (item.questionId || item.id) === id);
+        const correctRecent = recent.filter(item => item.correct).length;
+        const incorrectRecent = recent.length - correctRecent;
+        const last = recent.at(-1) || null;
+        let streak = 0;
+        if (last) {
+          for (let index = recent.length - 1; index >= 0 && recent[index].correct === last.correct; index -= 1) streak += 1;
+        }
+        const lastAnsweredAt = last && Number.isFinite(last.timestamp ?? last.at) && Number(last.timestamp ?? last.at) >= 0 ? Number(last.timestamp ?? last.at) : 0;
+        out[id] = {
+          correctCount: Math.max(correctIds.has(id) ? 1 : 0, correctRecent),
+          incorrectCount: Math.max(Number.isSafeInteger(mistakes[id]) && mistakes[id] > 0 ? mistakes[id] : 0, incorrectRecent),
+          lastAnsweredAt,
+          correctStreak: last?.correct === true ? streak : 0,
+          incorrectStreak: last?.correct === false ? streak : 0,
+          lastResult: last ? (last.correct ? 'correct' : 'incorrect') : null,
+          historyComplete: false
+        };
+      });
+      return out;
+    }
     validExamSession(session) {
       if (!(session && typeof session === 'object' && Array.isArray(session.ids) && session.ids.length === 15 &&
         session.ids.every(id => this.questions[id]) && new Set(session.ids).size === session.ids.length &&
@@ -110,24 +158,43 @@
     save() { try { return this.storage?.setItem?.(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
     setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; return this.save(); }
     record(id, correct, now = Date.now()) {
-      if (!this.questions[id]) return false;
+      if (!this.questions[id] || typeof correct !== 'boolean') return false;
+      const answeredAt = Number.isFinite(now) && now >= 0 ? now : Date.now();
       if (!this.state.answeredIds.includes(id)) this.state.answeredIds.push(id);
       if (correct && !this.state.correctIds.includes(id)) this.state.correctIds.push(id);
+      const previousStat = this.state.questionStats[id] || {
+        correctCount:0, incorrectCount:0, lastAnsweredAt:0, correctStreak:0, incorrectStreak:0, lastResult:null, historyComplete:true
+      };
+      const stat = { ...previousStat };
+      if (correct) {
+        stat.correctCount += 1;
+        stat.correctStreak += 1;
+        stat.incorrectStreak = 0;
+        stat.lastResult = 'correct';
+      } else {
+        stat.incorrectCount += 1;
+        stat.incorrectStreak += 1;
+        stat.correctStreak = 0;
+        stat.lastResult = 'incorrect';
+      }
+      stat.lastAnsweredAt = answeredAt;
+      this.state.questionStats[id] = stat;
+      this.state.lastLearningAt = Math.max(Number(this.state.lastLearningAt) || 0, answeredAt);
       const intervals = [20 * 60 * 1000, 24 * 60 * 60 * 1000, 3 * 24 * 60 * 60 * 1000, 7 * 24 * 60 * 60 * 1000];
       const scheduled = this.state.reviewSchedule[id];
       if (!correct) {
         if (!this.state.incorrectIds.includes(id)) this.state.incorrectIds.push(id);
         this.state.mistakeCounts[id] = (this.state.mistakeCounts[id] || 0) + 1;
-        this.state.reviewSchedule[id] = { stage:0, dueAt:now + intervals[0] };
-      } else if (scheduled && now >= scheduled.dueAt) {
+        this.state.reviewSchedule[id] = { stage:0, dueAt:answeredAt + intervals[0] };
+      } else if (scheduled && answeredAt >= scheduled.dueAt) {
         const nextStage = scheduled.stage + 1;
         if (nextStage >= intervals.length) {
           this.state.incorrectIds = this.state.incorrectIds.filter(value => value !== id);
           delete this.state.reviewSchedule[id];
-        } else this.state.reviewSchedule[id] = { stage:nextStage, dueAt:now + intervals[nextStage] };
+        } else this.state.reviewSchedule[id] = { stage:nextStage, dueAt:answeredAt + intervals[nextStage] };
       } else if (!scheduled) {
         this.state.incorrectIds = this.state.incorrectIds.filter(value => value !== id);
-        this.state.reviewSchedule[id] = { stage:0, dueAt:now + intervals[0] };
+        this.state.reviewSchedule[id] = { stage:0, dueAt:answeredAt + intervals[0] };
       }
       delete this.state.drafts[id]; this.save(); return true;
     }

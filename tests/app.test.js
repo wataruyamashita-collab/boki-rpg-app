@@ -35,6 +35,19 @@ assert.deepStrictEqual(progress.state.incorrectIds, ['J1']);
 assert.strictEqual(progress.state.mistakeCounts.J1, 1, '問題ごとの累積誤答回数を記録する');
 progress.record('J1', false);
 assert.strictEqual(progress.state.mistakeCounts.J1, 2, '同じ問題の再誤答も頻度へ加算する');
+const statsValues = {};
+const statsStorage = { getItem(key) { return statsValues[key] || null; }, setItem(key, value) { statsValues[key] = value; } };
+const statsProgress = new ProgressModel({ S1: {} }, statsStorage, 'phase1-question-stats');
+statsProgress.record('S1', true, 1000);
+assert.deepStrictEqual(statsProgress.state.questionStats.S1, { correctCount:1, incorrectCount:0, lastAnsweredAt:1000, correctStreak:1, incorrectStreak:0, lastResult:'correct', historyComplete:true }, '初回正解を問題別永続統計へ記録する');
+statsProgress.record('S1', true, 2000);
+assert.deepStrictEqual([statsProgress.state.questionStats.S1.correctCount, statsProgress.state.questionStats.S1.correctStreak], [2, 2], '連続正解数と正解回数を累積する');
+statsProgress.record('S1', false, 3000);
+assert.deepStrictEqual(statsProgress.state.questionStats.S1, { correctCount:2, incorrectCount:1, lastAnsweredAt:3000, correctStreak:0, incorrectStreak:1, lastResult:'incorrect', historyComplete:true }, '誤答で正解streakを切り替え、最終結果と日時を更新する');
+assert.strictEqual(statsProgress.state.lastLearningAt, 3000, '権威ある最終回答日時をtop-levelへ保存する');
+const invalidStatsBackup = JSON.parse(JSON.stringify(statsProgress.state));
+invalidStatsBackup.questionStats.S1.correctCount = -1;
+assert.strictEqual(ProgressModel.validateBackupState(invalidStatsBackup, { S1:{} }), false, '不正な問題別統計をバックアップとして受理しない');
 const dueAt = progress.state.reviewSchedule.J1.dueAt;
 progress.record('J1', true, dueAt - 1);
 assert(progress.state.incorrectIds.includes('J1'), '直後の正解だけでは克服扱いにしない');
@@ -73,6 +86,27 @@ const corruptValues = {
 const corruptStorage = { getItem(key) { return corruptValues[key] || null; }, setItem() {} };
 const recoveredProgress = new ProgressModel({ J1: {} }, corruptStorage);
 assert.deepStrictEqual([recoveredProgress.state.mode, recoveredProgress.state.answeredIds.length, recoveredProgress.state.completed], ['story', 0, false], '破損した進捗の各フィールドを安全な初期値へ戻す');
+const legacyStatsValues = {
+  'legacy-phase1': JSON.stringify({
+    contentRevision:3,
+    mode:'story',
+    currentQuestionId:'S1',
+    answeredIds:['S1'],
+    correctIds:['S1'],
+    incorrectIds:['S1'],
+    mistakeCounts:{ S1:2 },
+    attempts:[
+      { questionId:'S1', id:'S1', correct:true, responseMs:1000, timestamp:100 },
+      { questionId:'S1', id:'S1', correct:false, responseMs:1000, timestamp:200 }
+    ]
+  })
+};
+const legacyStatsStorage = { getItem(key) { return legacyStatsValues[key] || null; }, setItem(key, value) { legacyStatsValues[key] = value; } };
+const migratedStats = new ProgressModel({ S1:{} }, legacyStatsStorage, 'legacy-phase1');
+assert.strictEqual(migratedStats.state.contentRevision, 4, '既存progressをcontentRevision 4へ移行する');
+assert.deepStrictEqual(migratedStats.state.questionStats.S1, { correctCount:1, incorrectCount:2, lastAnsweredAt:200, correctStreak:0, incorrectStreak:1, lastResult:'incorrect', historyComplete:false }, '旧履歴から捏造せず復元可能な問題別統計だけを移行する');
+assert.strictEqual(migratedStats.state.lastLearningAt, 200, '旧attemptから復元可能な最終学習日時を移行する');
+assert.strictEqual(JSON.parse(legacyStatsValues['legacy-phase1']).contentRevision, 4, 'migration後の保存データをrevision 4として書き戻す');
 const recoveredRpg = new RPGModel(corruptStorage);
 assert.deepStrictEqual([recoveredRpg.state.xp, recoveredRpg.state.rewardedIds.length, recoveredRpg.state.companyHP, recoveredRpg.state.totalTransactionAmount], [0, 0, 0, 0], '破損したRPG状態を型検証し範囲内へ補正する');
 const graduationQuestions = { J1:{ type:'journal' } };

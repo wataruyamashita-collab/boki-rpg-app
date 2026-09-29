@@ -34,11 +34,23 @@ export interface WrongAnswerFeedbackEngine {
   diagnoseWrongAnswer(question: Question, answer: JournalAnswer | TableAnswer | null | undefined, score: { correct: boolean }): WrongAnswerDiagnostic[];
   MISCONCEPTIONS: Readonly<Record<string, readonly [string, string]>>;
 }
+export interface QuestionStats {
+  correctCount: number;
+  incorrectCount: number;
+  lastAnsweredAt: number;
+  correctStreak: number;
+  incorrectStreak: number;
+  lastResult: 'correct' | 'incorrect' | null;
+  historyComplete: boolean;
+}
 export interface ProgressState {
   mode: 'story' | 'training' | 'review' | 'exam';
   currentQuestionId: string | null;
   answeredIds: string[];
+  correctIds: string[];
   incorrectIds: string[];
+  questionStats: Record<string, QuestionStats>;
+  lastLearningAt: number;
   mistakeCounts: Record<string, number>;
   drafts: Record<string, JournalAnswer | TableAnswer>;
   completed: boolean;
