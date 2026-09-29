@@ -781,7 +781,7 @@
         [debit, credit].forEach(item => {
           const account = row.insertCell();
           const amount = row.insertCell(); amount.className = 'journal-amount';
-          if (!item) return;
+          if (!item) { account.textContent = ''; amount.textContent = ''; return; }
           account.append(this.accountLabel(item.account));
           amount.textContent = Number.isFinite(Number(item.amount)) ? `${yen(item.amount)}円` : '—';
         });
