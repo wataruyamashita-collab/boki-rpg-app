@@ -647,6 +647,14 @@ for (const answer of [wrongJ001, browserSandbox.window.QuestionData.J001.answer,
   assert(domText(rows[2].children[2]).includes(answer.credit[0]?.account || '（未入力）'), '貸方科目を右側グループへ表示する');
   assert(domText(rows[2].children[3]).includes(answer.credit[0]?.amount?.toLocaleString('ja-JP') || '—'), '貸方金額を第4列へ表示する');
 }
+const mobileJournalTicket = journalDomView.journalTable(browserSandbox.window.QuestionData.J135.answer);
+const mobileJournalSurface = descendants(mobileJournalTicket).find(node => String(node.className || '').split(/\\s+/).includes('journal-review-mobile'));
+assert(mobileJournalSurface, '解説用のモバイル仕訳票を生成する');
+assert.deepStrictEqual(mobileJournalSurface.children[0].children.map(cell => cell.textContent), ['借方科目','借方金額','貸方科目','貸方金額'], '解説の仕訳票も問題入力と同じ4列見出しにする');
+mobileJournalSurface.children.slice(1).forEach(row => assert.strictEqual(row.children.length, 4, '解説の仕訳票も全行を借方科目・借方金額・貸方科目・貸方金額の4列にする'));
+assert(domText(mobileJournalSurface).includes('法人税、住民税及び事業税'), '最長勘定科目も解説の仕訳票へ全文表示する');
+assert(!viewSource.includes("sideLabel.className = 'journal-review-side-label'"), 'スマホ解説で借方・貸方カードへ分割しない');
+
 allJournalAccounts.forEach(account => assert.notStrictEqual(comparisonView.accountType(account), 'unknown', `${account}を簿記の5要素へ分類する`));
 assert.strictEqual(comparisonView.accountType('減価償却累計額'), 'contraAsset', '減価償却累計額は負債ではなく資産の控除項目とする');
 assert.strictEqual(comparisonView.accountType('貸倒引当金'), 'contraAsset', '貸倒引当金は資産の控除項目とする');

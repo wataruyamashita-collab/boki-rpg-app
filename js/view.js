@@ -766,22 +766,31 @@
       const tableHead = table.createTHead(); const sideHead = tableHead.insertRow();
       [['借方', 'debit'], ['貸方', 'credit']].forEach(([label, side]) => { const th = this.document.createElement('th'); th.colSpan = 2; th.scope = 'colgroup'; th.className = `journal-side-${side}`; th.textContent = label; sideHead.append(th); });
       const columnHead = tableHead.insertRow();
-      ['借方科目', '借方金額', '貸方科目', '貸方金額'].forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; columnHead.append(th); });
+      const columnLabels = ['借方科目', '借方金額', '貸方科目', '貸方金額'];
+      columnLabels.forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; columnHead.append(th); });
       const body = table.createTBody(); const rows = Math.max(answer.debit.length, answer.credit.length, 1);
-      const mobile = this.document.createElement('div'); mobile.className = 'journal-review-mobile'; mobile.setAttribute('aria-label', '仕訳の借方と貸方');
-      for (let index = 0; index < rows; index += 1) {
-        const row = body.insertRow();
-        const mobileRow = this.document.createElement('article'); mobileRow.className = 'journal-review-row';
-        ['debit', 'credit'].forEach(side => {
-          const item = answer[side][index]; const account = row.insertCell(); account.append(this.accountLabel(item?.account));
-          const amount = row.insertCell(); amount.className = 'journal-amount'; amount.textContent = item?.amount ? `${yen(item.amount)}円` : '—';
 
-          const sideCard = this.document.createElement('section'); sideCard.className = `journal-review-side journal-review-${side}`;
-          const sideLabel = this.document.createElement('strong'); sideLabel.className = 'journal-review-side-label'; sideLabel.textContent = side === 'debit' ? '借方' : '貸方';
-          const detail = this.document.createElement('div'); detail.className = 'journal-review-detail';
-          const accountValue = this.document.createElement('span'); accountValue.className = 'journal-review-account'; accountValue.append(this.accountLabel(item?.account));
-          const amountValue = this.document.createElement('span'); amountValue.className = 'journal-review-amount'; amountValue.textContent = item?.amount ? `${yen(item.amount)}円` : '—';
-          detail.append(accountValue, amountValue); sideCard.append(sideLabel, detail); mobileRow.append(sideCard);
+      const mobile = this.document.createElement('div'); mobile.className = 'journal-review-mobile'; mobile.setAttribute('aria-label', '仕訳票');
+      const mobileHeader = this.document.createElement('div'); mobileHeader.className = 'journal-review-header';
+      columnLabels.forEach(label => { const cell = this.document.createElement('span'); cell.textContent = label; mobileHeader.append(cell); });
+      mobile.append(mobileHeader);
+
+      for (let index = 0; index < rows; index += 1) {
+        const debit = answer.debit[index]; const credit = answer.credit[index];
+        const row = body.insertRow();
+        [debit, credit].forEach(item => {
+          const account = row.insertCell(); account.append(this.accountLabel(item?.account));
+          const amount = row.insertCell(); amount.className = 'journal-amount'; amount.textContent = item?.amount ? `${yen(item.amount)}円` : '—';
+        });
+
+        const mobileRow = this.document.createElement('div'); mobileRow.className = 'journal-review-row';
+        [
+          ['journal-review-account', debit?.account || '（未入力）'],
+          ['journal-review-amount', debit?.amount ? `${yen(debit.amount)}円` : '—'],
+          ['journal-review-account', credit?.account || '（未入力）'],
+          ['journal-review-amount', credit?.amount ? `${yen(credit.amount)}円` : '—']
+        ].forEach(([className, text]) => {
+          const cell = this.document.createElement('span'); cell.className = `journal-review-cell ${className}`; cell.textContent = text; mobileRow.append(cell);
         });
         mobile.append(mobileRow);
       }

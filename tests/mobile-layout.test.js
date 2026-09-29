@@ -144,6 +144,11 @@ assert(css.includes('font-size: clamp(10px, 2.8vw, 12px);'), 'mobile journal acc
 assert(/\.journal-account-display\s*\{[\s\S]*?white-space:\s*normal[\s\S]*?overflow-wrap:\s*anywhere/s.test(css), 'mobile journal account overlay can wrap the canonical 12-glyph account without widening the four-column grid');
 assert(/\.journal-account-control > select\s*\{[\s\S]*?font-size:\s*16px/s.test(css), 'native journal select stays 16px for iPhone zoom safety while its visible label is overlaid');
 assert(css.includes('font-size: clamp(10px, 3vw, 12px);'), 'mobile journal amounts use a narrow readable display size');
+assert(/\.journal-row \.amount-input,[\s\S]*?\.correction-row \.correction-amount\s*\{[^}]*height:\s*44px[^}]*min-height:\s*44px/s.test(css), 'mobile journal account and amount controls share the same 44px height');
+assert(/\.journal-review-header,[\s\S]*?\.journal-review-row\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)\s+minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)/s.test(css), 'mobile explanation journal preserves the same four-column journal-ticket proportions');
+assert(/\.journal-review-cell\s*\{[^}]*height:\s*44px[^}]*min-height:\s*44px/s.test(css), 'mobile explanation journal cells match the 44px input-control height');
+assert(!/\.journal-review-side\s*\{/.test(css), 'mobile explanation no longer falls back to debit/credit cards');
+
 assert(/\.journal-row select:focus,[\s\S]*?\.journal-row \.amount-input:focus,[\s\S]*?font-size:\s*16px/s.test(css), 'focused/tapped journal controls return to 16px to prevent iPhone zoom');
 assert(longestJournalAccountGlyphs === 12 && longestJournalAmountGlyphs === 9, 'canonical journal content bounds stay unchanged while only presentation is compacted');
 

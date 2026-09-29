@@ -587,8 +587,11 @@ select, .amount-input {
 
   .journal-row .amount-input,
   .correction-row .correction-amount {
+    box-sizing: border-box;
     min-width: 0;
-    padding: 8px 0;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 2px;
     font-family: "Arial Narrow", "Helvetica Neue", sans-serif;
     font-size: clamp(10px, 3vw, 12px);
     font-variant-numeric: tabular-nums;
@@ -928,36 +931,68 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
   }
   .journal-table,
   .answer-comparison-table { display: none; }
-  .journal-review-mobile,
+  .journal-review-mobile {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    gap: 2px;
+  }
   .answer-comparison-mobile-list { display: grid; width: 100%; min-width: 0; gap: 8px; }
+  .journal-review-header,
   .journal-review-row {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: minmax(0, 1.48fr) minmax(0, .72fr) minmax(0, 1.48fr) minmax(0, .72fr);
+    gap: 2px;
+    width: 100%;
     min-width: 0;
   }
-  .journal-review-side {
+  .journal-review-header span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     min-width: 0;
-    overflow: hidden;
-    border: 1px solid #bdc3c7;
-    border-radius: 8px;
-    background: #fff;
-  }
-  .journal-review-side-label {
-    display: block;
-    padding: 6px 8px;
-    background: #dce7ee;
+    min-height: 24px;
+    padding: 2px 1px;
+    background: #eef2f5;
+    border: 1px solid #d5dce0;
+    border-radius: 4px;
+    font-size: clamp(9px, 2.7vw, 11px);
+    font-weight: 700;
+    line-height: 1.1;
     text-align: center;
   }
-  .journal-review-detail {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+  .journal-review-cell {
+    box-sizing: border-box;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px;
+    min-width: 0;
+    height: 44px;
+    min-height: 44px;
+    padding: 2px;
+    overflow: hidden;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    background: #fff;
   }
-  .journal-review-account { min-width: 0; overflow-wrap: anywhere; }
-  .journal-review-amount { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+  .journal-review-account {
+    justify-content: center;
+    overflow-wrap: anywhere;
+    font-size: clamp(10px, 2.8vw, 12px);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -.03em;
+    text-align: center;
+  }
+  .journal-review-amount {
+    justify-content: flex-end;
+    padding-right: 2px;
+    white-space: nowrap;
+    text-align: right;
+    font-family: "Arial Narrow", "Helvetica Neue", sans-serif;
+    font-size: clamp(10px, 3vw, 12px);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.075em;
+  }
   .answer-comparison-mobile-card {
     min-width: 0;
     overflow: hidden;
