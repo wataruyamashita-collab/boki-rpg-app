@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('assert'),childProcess=require('child_process'),crypto=require('crypto'),fs=require('fs');
+const core=require('../../scripts/qa/audit-core'),lifecycle=require('../../scripts/qa/phase-b-lifecycle'),finalizer=require('../../scripts/qa/finalize-phase-b-generation-45');
+let count=0;const test=(name,fn)=>{fn();count++;console.log(`ok ${count} - ${name}`);};const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const authorities=lifecycle.generationAuthorities(),g44=authorities.find(x=>x.document.generation===44),g45=authorities.find(x=>x.document.generation===45);
+test('Generation 45 is discoverable',()=>assert(g45));
+test('Generation 45 predecessor is exact Generation 44',()=>assert.deepStrictEqual(g45.document.predecessor,lifecycle.identity(g44.document)));
+test('Generation 45 production identity changes for TAC-style voucher guidance',()=>assert.notStrictEqual(g45.document.baselineIdentity,g44.document.baselineIdentity));
+test('committed Generation 45 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+test('duplicate Generation 45 issuance fails',()=>assert.notStrictEqual(childProcess.spawnSync(process.execPath,['scripts/qa/finalize-phase-b-generation-45.js'],{cwd:core.ROOT,encoding:'utf8'}).status,0));
+test('historical authority raw SHA values are pinned',()=>assert.deepStrictEqual(finalizer.authorityPaths.map(f=>digest(fs.readFileSync(f))),finalizer.expectedAuthoritySha256));
+console.log(`Generation 45 finalizer regressions: ${count}/${count}`);

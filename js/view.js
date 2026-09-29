@@ -151,18 +151,89 @@
       else if (question.format === 'fixed-asset-ledger') this.renderFixedAssetLedger(question, draft);
       else this.renderTable(question, draft);
     }
+    parseComprehensiveTrialBalance(value) {
+      return String(value ?? '').split('、').map(item => item.trim()).filter(Boolean).map(item => {
+        const match = item.match(/^(.*?)(-?[0-9０-９,，]+)$/u);
+        if (!match) return { account:item, amount:null };
+        return {
+          account:match[1].trim(),
+          amount:Number(normalizeNumber(match[2]).replace(/,/g, ''))
+        };
+      });
+    }
+    renderComprehensiveTrialBalanceMobile(material) {
+      const table = this.document.createElement('table'); table.className = 'comprehensive-trial-balance-mobile';
+      const head = table.createTHead().insertRow();
+      ['勘定科目','借方','貸方'].forEach(label => {
+        const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; head.append(th);
+      });
+      const body = table.createTBody();
+      const appendRow = (entry, side) => {
+        const row = body.insertRow();
+        const account = row.insertCell(); account.textContent = entry.account;
+        const debit = row.insertCell(); const credit = row.insertCell();
+        if (entry.amount != null) (side === 'debit' ? debit : credit).textContent = yen(entry.amount);
+      };
+      this.parseComprehensiveTrialBalance(material['借方']).forEach(entry => appendRow(entry, 'debit'));
+      this.parseComprehensiveTrialBalance(material['貸方']).forEach(entry => appendRow(entry, 'credit'));
+      const total = body.insertRow(); total.className = 'comprehensive-trial-balance-total';
+      const label = total.insertCell(); label.textContent = '合計';
+      const debitTotal = total.insertCell(); debitTotal.textContent = yen(material['借方合計']);
+      const creditTotal = total.insertCell(); creditTotal.textContent = yen(material['貸方合計']);
+      return table;
+    }
+    renderComprehensiveMaterialsMobile(question) {
+      const flow = this.document.createElement('div'); flow.className = 'comprehensive-material-flow';
+      question.materials.forEach((material, index) => {
+        const card = this.document.createElement('section'); card.className = 'comprehensive-material-card';
+        const title = this.document.createElement('h4'); title.textContent = material['資料区分'] || `資料${index + 1}`;
+        card.append(title);
+        if (title.textContent === '整理前残高試算表') {
+          card.append(this.renderComprehensiveTrialBalanceMobile(material));
+          flow.append(card);
+          return;
+        }
+        Object.entries(material).forEach(([key, value]) => {
+          if (key === '資料区分' || value == null || value === '') return;
+          if (key === '内容' && title.textContent === '決算整理事項') {
+            const list = this.document.createElement('ol'); list.className = 'comprehensive-adjustment-list';
+            String(value).split('／').filter(Boolean).forEach(text => { const item = this.document.createElement('li'); item.textContent = text; list.append(item); });
+            card.append(list); return;
+          }
+          const field = this.document.createElement('div'); field.className = 'comprehensive-material-field';
+          const label = this.document.createElement('strong'); label.textContent = this.tableLabel(key);
+          const content = this.document.createElement('span'); content.textContent = typeof value === 'number' ? yen(value) : String(value);
+          field.append(label, content); card.append(field);
+        });
+        flow.append(card);
+      });
+      return flow;
+    }
     renderMaterials(question) {
       let container = this.byId('question-materials');
       if (!container) { container = this.document.createElement('section'); container.id = 'question-materials'; container.className = 'question-materials'; this.byId('q-text').after(container); }
       container.replaceChildren(); container.hidden = !Array.isArray(question.materials) || question.materials.length === 0;
       if (container.hidden) return;
+      container.dataset.questionType = question.type;
       const heading = this.document.createElement('h3'); heading.textContent = question.materialTitle || '資料';
+      if (question.type === 'comprehensive' && this.compactWorksheetViewport()) {
+        container.append(heading, this.renderComprehensiveMaterialsMobile(question));
+        return;
+      }
       const wrap = this.document.createElement('div'); wrap.className = 'materials-table-wrap';
       const table = this.document.createElement('table'); table.className = 'materials-table';
       const columns = [...new Set(question.materials.flatMap(row => Object.keys(row)))];
+      const compact = (question.type === 'worksheet' || question.type === 'financial_statement') && columns.length <= 3;
+      wrap.classList.toggle('materials-table-wrap-compact', compact); table.classList.toggle('materials-table-compact', compact);
       const head = table.createTHead().insertRow(); columns.forEach(column => { const th = this.document.createElement('th'); th.textContent = this.tableLabel(column); head.append(th); });
       const body = table.createTBody(); question.materials.forEach(material => { const row = body.insertRow(); columns.forEach(column => { const cell = row.insertCell(); const value = material[column]; cell.textContent = value == null ? '—' : typeof value === 'number' ? yen(value) : value; }); });
       wrap.append(table); container.append(heading, wrap);
+      if (Array.isArray(question.adjustments) && question.adjustments.length) {
+        const section = this.document.createElement('section'); section.className = 'question-adjustments'; section.setAttribute('aria-label', '決算整理事項');
+        const title = this.document.createElement('h4'); title.textContent = '決算整理事項';
+        const list = this.document.createElement('ol'); question.adjustments.forEach(text => { const item = this.document.createElement('li'); item.textContent = text; list.append(item); });
+        section.append(title, list); container.append(section);
+      }
     }
     makeAmount(className, label, value = '') {
       const input = this.document.createElement('input'); input.type = 'text'; input.setAttribute('inputmode', this.calculatorFirstInput ? 'none' : 'numeric');
@@ -196,8 +267,19 @@
       select.dataset.accountGlyphs = String([...String(value)].length);
     }
     updateSelectTitle(select) {
-      select.title = select.selectedOptions[0]?.textContent || '';
-      if (select.classList?.contains('debit-account') || select.classList?.contains('credit-account')) this.updateJournalAccountPresentation(select);
+      const text = select.selectedOptions[0]?.textContent || '';
+      select.title = text;
+      if (select.classList?.contains('debit-account') || select.classList?.contains('credit-account') || select.classList?.contains('correction-account')) this.updateJournalAccountPresentation(select);
+      const display = select.parentElement?.querySelector?.('.journal-account-display');
+      if (display) {
+        display.textContent = text;
+        display.dataset.empty = select.value ? 'false' : 'true';
+      }
+    }
+    journalAccountControl(select) {
+      const control = this.document.createElement('span'); control.className = 'journal-account-control';
+      const display = this.document.createElement('span'); display.className = 'journal-account-display'; display.setAttribute('aria-hidden', 'true');
+      control.append(select, display); this.updateSelectTitle(select); return control;
     }
     renderJournal(question, draft = {}, mode = 'story') {
       const container = this.byId('journal-container'); container.replaceChildren();
@@ -217,10 +299,9 @@
           select.innerHTML = `<option value="">${enabled ? '--勘定科目--' : '--入力なし--'}</option>`;
           if (enabled) root.AppController.accountChoices(question, answer?.account, mode).forEach(name => select.append(new Option(name, name)));
           const saved = draft[side] && draft[side][index]; if (saved) select.value = saved.account;
-          this.updateSelectTitle(select);
           const amount = this.makeAmount(`${side}-amount`, `${side === 'debit' ? '借方' : '貸方'} ${index + 1}行目の金額`, saved ? saved.amount : '');
           if (!enabled) amount.disabled = true;
-          row.append(select, amount);
+          row.append(this.journalAccountControl(select), amount);
         }); grid.append(row);
       }
       container.append(grid);
@@ -239,9 +320,10 @@
           input = this.document.createElement('select'); input.className = 'table-input correction-account'; input.setAttribute('aria-label', label);
           input.append(new Option('--勘定科目--', ''));
           root.AppController.accountChoices(question, question.answer.cells[cellId]).forEach(name => input.append(new Option(name, name)));
-          input.value = draft.cells?.[cellId] ?? ''; this.updateSelectTitle(input);
+          input.value = draft.cells?.[cellId] ?? '';
         } else input = this.makeAmount('table-input correction-amount', `${label}（金額）`, draft.cells?.[cellId] ?? '');
-        input.dataset.cellId = cellId; input.dataset.inputType = inputType; row.append(input);
+        input.dataset.cellId = cellId; input.dataset.inputType = inputType;
+        row.append(inputType === 'account' ? this.journalAccountControl(input) : input);
       });
       entry.append(header, row); container.append(entry);
     }
@@ -346,16 +428,102 @@
       if (account) { const type = this.accountType(account); const badge = this.document.createElement('span'); badge.className = `account-badge account-badge-${type}`; badge.textContent = DOMAIN.typeLabels[type] || '科目'; wrap.append(badge); }
       return wrap;
     }
+    compactWorksheetViewport() {
+      return Boolean(root.matchMedia?.('(max-width: 900px)').matches);
+    }
+    renderWorksheetMobile(question, draft, wrap) {
+      const adjustmentGuide = Array.isArray(question.adjustments) && question.adjustments.length
+        ? question.adjustments.join('／')
+        : '決算整理事項を確認します。';
+      const groups = [
+        {
+          title:'試算表',
+          instruction:'元の残高を確認します。',
+          reference:'元試算表：勘定科目ごとの借方・貸方残高を確認します。',
+          columns:[1,2]
+        },
+        {
+          title:'修正記入',
+          instruction:'決算整理事項を借方・貸方へ反映します。',
+          reference:`決算整理事項：${adjustmentGuide}`,
+          columns:[3,4]
+        },
+        {
+          title:'損益計算書',
+          instruction:'収益・費用を損益計算書へ振り分けます。',
+          reference:'元試算表の売上・仕入・保険料と、修正記入で反映した決算整理事項を確認します。',
+          columns:[5,6]
+        },
+        {
+          title:'貸借対照表',
+          instruction:'資産・負債・純資産を貸借対照表へ振り分けます。',
+          reference:'元試算表の資産・負債・純資産と、修正記入で反映した決算整理事項、損益計算書の貸借差額を確認します。',
+          columns:[7,8]
+        }
+      ];
+      const cellIds = new Map(); let inputIndex = 0;
+      (question.table.rows || []).forEach((rowData, rowIndex) => Object.values(rowData).forEach((value, columnIndex) => {
+        if (value === '入力') cellIds.set(rowIndex + ':' + columnIndex, question.table.inputCells[inputIndex++]);
+      }));
+      const flow = this.document.createElement('div'); flow.className = 'worksheet-mobile-flow'; flow.setAttribute('aria-label', '8欄精算表を4つの処理に分けて入力');
+      const appendValue = (cell, value, rowIndex, columnIndex) => {
+        if (value !== '入力') {
+          cell.textContent = value == null || value === '' ? '—' : typeof value === 'number' ? yen(value) : this.tableLabel(value);
+          if (typeof value === 'number') cell.classList.add('amount-cell');
+          return;
+        }
+        const id = cellIds.get(rowIndex + ':' + columnIndex);
+        const inputType = question.table.inputTypes?.[id] || 'amount';
+        const metadata = question.table.inputMetadata?.[id];
+        const label = metadata?.label || this.cellLabel(question, id);
+        const input = inputType === 'amount'
+          ? this.makeAmount('table-input worksheet-mobile-input', label + '（金額）', draft.cells?.[id] ?? '')
+          : this.makeText('table-input worksheet-mobile-input', label, draft.cells?.[id] ?? '');
+        input.dataset.cellId = id; input.dataset.inputType = inputType; cell.classList.add('worksheet-mobile-editable');
+        cell.append(input);
+      };
+      groups.forEach((group, groupIndex) => {
+        const section = this.document.createElement('section'); section.className = 'worksheet-mobile-section'; section.dataset.worksheetGroup = group.title;
+        const header = this.document.createElement('div'); header.className = 'worksheet-mobile-section-head';
+        const step = this.document.createElement('span'); step.className = 'worksheet-mobile-step'; step.textContent = (groupIndex + 1) + '/4';
+        const title = this.document.createElement('h3'); title.textContent = group.title;
+        const instruction = this.document.createElement('p'); instruction.textContent = group.instruction;
+        const reference = this.document.createElement('aside'); reference.className = 'worksheet-mobile-reference';
+        const referenceLabel = this.document.createElement('strong'); referenceLabel.textContent = 'ここを見る';
+        const referenceText = this.document.createElement('p'); referenceText.textContent = group.reference;
+        reference.append(referenceLabel, referenceText);
+        header.append(step, title); section.append(header, instruction, reference);
+        const table = this.document.createElement('table'); table.className = 'worksheet-mobile-table';
+        const head = table.createTHead().insertRow(); ['勘定科目','借方','貸方'].forEach(label => { const th = this.document.createElement('th'); th.textContent = label; th.scope = 'col'; head.append(th); });
+        const body = table.createTBody();
+        (question.table.rows || []).forEach((rowData, rowIndex) => {
+          const values = Object.values(rowData); const debit = values[group.columns[0]], credit = values[group.columns[1]];
+          const empty = [debit, credit].every(value => value == null || value === '' || value === '—');
+          if (empty) return;
+          const row = body.insertRow(); const account = row.insertCell(); account.className = 'worksheet-mobile-account'; account.textContent = values[0];
+          const debitCell = row.insertCell(); appendValue(debitCell, debit, rowIndex, group.columns[0]);
+          const creditCell = row.insertCell(); appendValue(creditCell, credit, rowIndex, group.columns[1]);
+        });
+        section.append(table); flow.append(section);
+      });
+      wrap.append(flow);
+    }
     renderTable(question, draft = {}) {
       const wrap = this.byId('table-container'); wrap.replaceChildren();
-      wrap.classList.toggle('worksheet-scroll', question.format === 'eight-column-worksheet');
+      const compactWorksheet = question.format === 'eight-column-worksheet' && this.compactWorksheetViewport();
+      wrap.classList.toggle('worksheet-scroll', question.format === 'eight-column-worksheet' && !compactWorksheet);
+      wrap.classList.toggle('worksheet-mobile-mode', compactWorksheet);
       if (question.format === 'eight-column-worksheet') {
         const guide = this.document.createElement('aside'); guide.className = 'worksheet-guide';
-        const title = this.document.createElement('strong'); title.textContent = '「8桁」は、金額の桁数ではなく8つの金額欄という意味です';
-        const detail = this.document.createElement('p'); detail.textContent = '試算表・修正記入・損益計算書・貸借対照表に、それぞれ借方と貸方があるため、2欄×4組＝8欄です。表は横にスクロールして入力してください。';
+        const title = this.document.createElement('strong'); title.textContent = '8欄精算表は、4組の借方・貸方を一つにつないだ表です';
+        const detail = this.document.createElement('p'); detail.textContent = compactWorksheet
+          ? 'スマートフォンでは、試算表 → 修正記入 → 損益計算書 → 貸借対照表の順に3列ずつ表示します。'
+          : '試算表・修正記入・損益計算書・貸借対照表に、それぞれ借方と貸方があります。';
         guide.append(title, detail); wrap.append(guide);
+        if (compactWorksheet) { this.renderWorksheetMobile(question, draft, wrap); return; }
       }
       const table = this.document.createElement('table'); table.className = `answer-table${question.format === 'eight-column-worksheet' ? ' eight-column-worksheet' : ''}`;
+      table.dataset.questionType = question.type;
       const columnTypes = new Map((question.table.columns || []).map(column => [column, 'text']));
       const inputCharacters = genericTableInputCharacters(question);
       if (question.format !== 'eight-column-worksheet') {
@@ -391,7 +559,7 @@
       }
       const body = table.createTBody(); let inputIndex = 0;
       question.table.rows.forEach(rowData => {
-        const row = body.insertRow(); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
+        const row = body.insertRow(); if (question.type === 'trial_balance' && Object.values(rowData).includes('入力')) row.classList.add('trial-balance-total-row'); if (question.format === 'eight-column-worksheet') row.setAttribute('role', 'row'); Object.values(rowData).forEach((value, columnIndex) => {
           const cell = row.insertCell();
           if (question.format !== 'eight-column-worksheet') { cell.dataset.columnKey = question.table.columns[columnIndex]; cell.dataset.columnType = columnTypes.get(question.table.columns[columnIndex]); }
           if (question.format === 'eight-column-worksheet') cell.setAttribute('role', 'gridcell');
@@ -598,16 +766,38 @@
       const tableHead = table.createTHead(); const sideHead = tableHead.insertRow();
       [['借方', 'debit'], ['貸方', 'credit']].forEach(([label, side]) => { const th = this.document.createElement('th'); th.colSpan = 2; th.scope = 'colgroup'; th.className = `journal-side-${side}`; th.textContent = label; sideHead.append(th); });
       const columnHead = tableHead.insertRow();
-      ['借方科目', '借方金額', '貸方科目', '貸方金額'].forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; columnHead.append(th); });
+      const columnLabels = ['借方科目', '借方金額', '貸方科目', '貸方金額'];
+      columnLabels.forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; columnHead.append(th); });
       const body = table.createTBody(); const rows = Math.max(answer.debit.length, answer.credit.length, 1);
+
+      const mobile = this.document.createElement('div'); mobile.className = 'journal-review-mobile'; mobile.setAttribute('aria-label', '仕訳票');
+      const mobileHeader = this.document.createElement('div'); mobileHeader.className = 'journal-review-header';
+      columnLabels.forEach(label => { const cell = this.document.createElement('span'); cell.textContent = label; mobileHeader.append(cell); });
+      mobile.append(mobileHeader);
+
       for (let index = 0; index < rows; index += 1) {
+        const debit = answer.debit[index]; const credit = answer.credit[index];
         const row = body.insertRow();
-        ['debit', 'credit'].forEach(side => {
-          const item = answer[side][index]; const account = row.insertCell(); account.append(this.accountLabel(item?.account));
-          const amount = row.insertCell(); amount.className = 'journal-amount'; amount.textContent = item?.amount ? `${yen(item.amount)}円` : '—';
+        [debit, credit].forEach(item => {
+          const account = row.insertCell();
+          const amount = row.insertCell(); amount.className = 'journal-amount';
+          if (!item) { account.textContent = ''; amount.textContent = ''; return; }
+          account.append(this.accountLabel(item.account));
+          amount.textContent = Number.isFinite(Number(item.amount)) ? `${yen(item.amount)}円` : '—';
         });
+
+        const mobileRow = this.document.createElement('div'); mobileRow.className = 'journal-review-row';
+        [
+          ['journal-review-account', debit ? (debit.account || '（未入力）') : ''],
+          ['journal-review-amount', debit ? (Number.isFinite(Number(debit.amount)) ? yen(debit.amount) : '—') : ''],
+          ['journal-review-account', credit ? (credit.account || '（未入力）') : ''],
+          ['journal-review-amount', credit ? (Number.isFinite(Number(credit.amount)) ? yen(credit.amount) : '—') : '']
+        ].forEach(([className, text]) => {
+          const cell = this.document.createElement('span'); cell.className = `journal-review-cell ${className}`; cell.textContent = text; mobileRow.append(cell);
+        });
+        mobile.append(mobileRow);
       }
-      wrap.append(table); return wrap;
+      wrap.append(table, mobile); return wrap;
     }
     correctionJournal(answer = {}) {
       const cells = answer.cells || answer;
@@ -629,18 +819,83 @@
       const head = table.createTHead().insertRow();
       ['項目', 'あなたの解答', '正しい解答', '判定'].forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; head.append(th); });
       const body = table.createTBody();
+      const mobile = this.document.createElement('div'); mobile.className = 'answer-comparison-mobile-list'; mobile.setAttribute('aria-label', '自分の解答と正しい解答の比較');
       question.table.inputCells.forEach(cellId => {
         const correct = detailMap.get(cellId)?.correct === true; const row = body.insertRow();
         if (!correct) row.className = 'comparison-row-mismatch';
-        const label = row.insertCell(); label.textContent = question.table.inputMetadata?.[cellId]?.label || this.cellLabel(question, cellId);
-        const actual = row.insertCell(); actual.textContent = this.comparisonValue(question, cellId, userAnswer.cells?.[cellId]);
+        const labelText = question.table.inputMetadata?.[cellId]?.label || this.cellLabel(question, cellId);
+        const actualText = this.comparisonValue(question, cellId, userAnswer.cells?.[cellId]);
+        const expectedText = this.comparisonValue(question, cellId, question.answer.cells?.[cellId]);
+        const label = row.insertCell(); label.textContent = labelText;
+        const actual = row.insertCell(); actual.textContent = actualText;
         if (!correct) actual.className = 'cell-mismatch';
-        const expected = row.insertCell(); expected.textContent = this.comparisonValue(question, cellId, question.answer.cells?.[cellId]);
+        const expected = row.insertCell(); expected.textContent = expectedText;
         const status = row.insertCell(); status.className = `comparison-status ${correct ? 'comparison-status-match' : 'comparison-status-mismatch'}`; status.textContent = correct ? '一致' : '要確認';
+
+        const card = this.document.createElement('article'); card.className = `answer-comparison-mobile-card${correct ? '' : ' comparison-row-mismatch'}`;
+        const cardHead = this.document.createElement('div'); cardHead.className = 'answer-comparison-mobile-head';
+        const item = this.document.createElement('strong'); item.textContent = labelText;
+        const badge = this.document.createElement('span'); badge.className = `comparison-status ${correct ? 'comparison-status-match' : 'comparison-status-mismatch'}`; badge.textContent = correct ? '一致' : '要確認';
+        cardHead.append(item, badge);
+        const pair = this.document.createElement('div'); pair.className = 'answer-comparison-mobile-pair';
+        const actualBox = this.document.createElement('div'); actualBox.className = `answer-comparison-mobile-value comparison-actual${correct ? '' : ' cell-mismatch'}`;
+        const actualLabel = this.document.createElement('span'); actualLabel.className = 'answer-comparison-mobile-label'; actualLabel.textContent = 'あなたの解答';
+        const actualValue = this.document.createElement('strong'); actualValue.textContent = actualText;
+        actualBox.append(actualLabel, actualValue);
+        const expectedBox = this.document.createElement('div'); expectedBox.className = 'answer-comparison-mobile-value comparison-expected';
+        const expectedLabel = this.document.createElement('span'); expectedLabel.className = 'answer-comparison-mobile-label'; expectedLabel.textContent = '正しい解答';
+        const expectedValue = this.document.createElement('strong'); expectedValue.textContent = expectedText;
+        expectedBox.append(expectedLabel, expectedValue);
+        pair.append(actualBox, expectedBox); card.append(cardHead, pair); mobile.append(card);
       });
-      wrap.append(table); return wrap;
+      wrap.append(table, mobile); return wrap;
+    }
+    worksheetAnswerComparisonMobile(question, score, userAnswer) {
+      const details = new Map((score.details || []).map(detail => [detail.cellId, detail.correct === true]));
+      const cellIds = new Map(); let inputIndex = 0;
+      (question.table.rows || []).forEach((rowData, rowIndex) => Object.values(rowData).forEach((value, columnIndex) => {
+        if (value === '入力') cellIds.set(rowIndex + ':' + columnIndex, question.table.inputCells[inputIndex++]);
+      }));
+      const groups = [
+        { title:'試算表', columns:[1,2] },
+        { title:'修正記入', columns:[3,4] },
+        { title:'損益計算書', columns:[5,6] },
+        { title:'貸借対照表', columns:[7,8] }
+      ];
+      const flow = this.document.createElement('div'); flow.className = 'worksheet-comparison-mobile-flow'; flow.setAttribute('aria-label', '8欄精算表の入力と正解を4つの処理に分けて比較');
+      const appendValue = (cell, value, rowIndex, columnIndex) => {
+        if (value !== '入力') {
+          cell.textContent = value == null || value === '' ? '—' : typeof value === 'number' ? yen(value) : this.tableLabel(value);
+          return;
+        }
+        const cellId = cellIds.get(rowIndex + ':' + columnIndex); const correct = details.get(cellId) === true;
+        const pair = this.document.createElement('div'); pair.className = `worksheet-comparison-pair${correct ? '' : ' cell-mismatch'}`;
+        const actual = this.document.createElement('span'); actual.className = 'comparison-actual'; actual.textContent = `入力 ${this.comparisonValue(question, cellId, userAnswer.cells?.[cellId])}`;
+        const expected = this.document.createElement('span'); expected.className = 'comparison-expected'; expected.textContent = `正解 ${this.comparisonValue(question, cellId, question.answer.cells?.[cellId])}`;
+        pair.append(actual, expected); cell.append(pair);
+      };
+      groups.forEach((group, groupIndex) => {
+        const section = this.document.createElement('section'); section.className = 'worksheet-comparison-mobile-section'; section.dataset.worksheetComparisonGroup = group.title;
+        const header = this.document.createElement('div'); header.className = 'worksheet-comparison-mobile-head';
+        const step = this.document.createElement('span'); step.className = 'worksheet-mobile-step'; step.textContent = (groupIndex + 1) + '/4';
+        const title = this.document.createElement('h4'); title.textContent = group.title; header.append(step, title); section.append(header);
+        const table = this.document.createElement('table'); table.className = 'worksheet-comparison-mobile-table';
+        const head = table.createTHead().insertRow(); ['勘定科目','借方','貸方'].forEach(label => { const th = this.document.createElement('th'); th.scope = 'col'; th.textContent = label; head.append(th); });
+        const body = table.createTBody();
+        (question.table.rows || []).forEach((rowData, rowIndex) => {
+          const values = Object.values(rowData); const debit = values[group.columns[0]], credit = values[group.columns[1]];
+          const empty = [debit, credit].every(value => value == null || value === '' || value === '—');
+          if (empty) return;
+          const row = body.insertRow(); const account = row.insertCell(); account.className = 'worksheet-comparison-mobile-account'; account.textContent = values[0];
+          const debitCell = row.insertCell(); appendValue(debitCell, debit, rowIndex, group.columns[0]);
+          const creditCell = row.insertCell(); appendValue(creditCell, credit, rowIndex, group.columns[1]);
+        });
+        section.append(table); flow.append(section);
+      });
+      return flow;
     }
     worksheetAnswerComparison(question, score, userAnswer) {
+      if (this.compactWorksheetViewport()) return this.worksheetAnswerComparisonMobile(question, score, userAnswer);
       const details = new Map((score.details || []).map(detail => [detail.cellId, detail.correct === true]));
       const wrap = this.document.createElement('div'); wrap.className = 'answer-comparison-table-wrap';
       const table = this.document.createElement('table'); table.className = 'answer-comparison-table worksheet-answer-comparison';
@@ -705,6 +960,148 @@
       const next = this.document.createElement('p'); next.className = 'diagnostic-next'; next.textContent = `次の確認：${diagnostic.nextRule}`; section.append(next);
       return section;
     }
+    explanationTeachingProfile(question) {
+      const format = question.format || '', category = String(question.category || '');
+      const profile = (summary, transfer, takeaway) => ({summary, transfer, takeaway});
+      if (question.type === 'journal') return profile('どういう取引か考える','借方・貸方を決めて仕訳する',[
+        '勘定科目は、取引で何が増え、何が減ったかを基準に選びます。',
+        '借方・貸方は勘定の性質と増減で決め、最後に貸借一致で確認します。'
+      ]);
+      if (format === 'journal-book' || /仕訳帳/u.test(category)) return profile('どういう取引か考える','借方・貸方を決めて仕訳帳に記入する',[
+        '仕訳帳は、取引を日付順に記録します。',
+        '摘要欄には勘定科目、元丁には総勘定元帳の転記先を示す番号、借方・貸方には証憑に基づく金額を記入します。',
+        '証憑に金額が示されている場合は、その金額をそのまま記入し、計算が必要かどうかを先に見分けます。'
+      ]);
+      if (format === 'fixed-asset-ledger' || /固定資産台帳/u.test(category)) return profile('償却条件を整理する','固定資産台帳に記入する',[
+        '減価償却は、固定資産の取得原価を使用期間へ配分する処理です。',
+        '期中取得・売却は月割りし、帳簿価額は取得原価－減価償却累計額で考えます。'
+      ]);
+      if (format === 'bookkeeping-notes-receivable') return profile('記帳する受取手形を選ぶ','受取手形記入帳に記入する',[
+        '受取手形記入帳には、受け取った約束手形を受取日順に記録します。',
+        '小切手など対象外の資料を混ぜず、振出人・満期日・支払場所・金額を手形ごとに確認します。'
+      ]);
+      if (format === 'bookkeeping-notes-payable') return profile('記帳する支払手形を選ぶ','支払手形記入帳に記入する',[
+        '支払手形記入帳には、自店が振り出した約束手形を振出日順に記録します。',
+        '他店振出手形の受取などを混ぜず、受取人・満期日・支払場所・金額を確認します。'
+      ]);
+      if (format === 'bookkeeping-cash-book') return profile('受入と支払を分ける','現金出納帳に記入する',[
+        '現金出納帳は、現金の受入と支払を日付順に記録します。',
+        '残高は、受入を加え、支払を差し引いて更新します。'
+      ]);
+      if (format === 'bookkeeping-checking-book') return profile('預入と引出を分ける','当座預金出納帳に記入する',[
+        '当座預金出納帳は、預入と引出を日付順に記録します。',
+        '残高は、預入を加え、引出を差し引いて更新します。'
+      ]);
+      if (format === 'bookkeeping-petty-cash-book') return profile('支払内容を科目に分ける','小口現金出納帳に記入する',[
+        '小口現金の支払は、領収証や精算書の内容から費用科目を判断します。',
+        '定額資金前渡法で支払額と同額を補給する場合、補給額はその期間の支払合計になります。'
+      ]);
+      if (format === 'bookkeeping-purchase-book') return profile('仕入と返品を分ける','仕入帳に記入する',[
+        '仕入帳では仕入と仕入返品を区別して記録します。',
+        '純仕入高は、総仕入高から仕入返品を差し引いて求めます。'
+      ]);
+      if (format === 'bookkeeping-sales-book') return profile('売上と返品を分ける','売上帳に記入する',[
+        '売上帳では売上と売上返品を区別して記録します。',
+        '純売上高は、総売上高から売上返品を差し引いて求めます。'
+      ]);
+      if (format === 'bookkeeping-inventory-ledger' || /商品有高帳/u.test(category)) return profile('数量と単価の動きを整理する','商品有高帳に記入する',[
+        '商品有高帳では、数量と単価を分けて追います。',
+        '払出単価は問題で指定された方法に従い、払出後の数量と金額まで連続して確認します。'
+      ]);
+      if (format === 'bookkeeping-voucher-entry') return profile('現金が増えるか、減るか、動かないかを確認する','使う伝票を決めて記入する',[
+        '現金が増えるなら入金伝票、減るなら出金伝票に記入します。',
+        '現金が動かない取引は振替伝票に記入します。'
+      ]);
+      if (format === 'bookkeeping-general-ledger' || format === 'bookkeeping-account-ledger' || /元帳/u.test(category)) return profile('増減と相手勘定を整理する','元帳に転記する',[
+        '元帳では、その勘定が借方・貸方のどちらで増えるかを先に確認します。',
+        '取引ごとに相手勘定と金額を転記し、残高を順に更新します。'
+      ]);
+      if (question.type === 'trial_balance') return profile('残高の置き場所を決める','試算表に記入する',['試算表は、各勘定の最終残高を残高方向ごとに集計する表です。','貸借一致は正解の保証ではなく、転記漏れや二重計上を見つけるための検算です。']);
+      if (question.type === 'correction') return profile('どこが違うか整理する','訂正仕訳を書く',['訂正仕訳は、既存の記録と本来の正しい処理との差だけを直す仕訳です。','正しい部分まで取り消さず、誤っている部分だけを修正します。']);
+      if (question.type === 'worksheet') return profile('決算整理を反映する','精算表に記入する',['精算表は「整理前残高 → 決算整理 → 損益計算書・貸借対照表」をつなぐ表です。','決算整理後の各勘定は、その性質に応じて損益計算書か貸借対照表へ振り分けます。']);
+      if (question.type === 'financial_statement') return profile('どの区分に入るか決める','財務諸表に記入する',['損益計算書は期間の収益・費用と利益、貸借対照表は期末の資産・負債・純資産を示します。','金額が合っていても表示区分が違えば誤りなので、区分まで確認します。']);
+      if (question.type === 'comprehensive' && format === 'exam-question-3') return profile('決算整理を順に反映する','答えに反映する',['総合決算では、個々の整理事項が利益と貸借対照表の両方へ波及します。','最後の確認は答えの再読ではなく、貸借一致など別の根拠で行います。']);
+      if (question.type === 'comprehensive') return profile('現金と利益を分けて考える','答えに反映する',['現金残高は現金の入出金、利益は収益と費用で求めるため、同じものではありません。','借入・売掛金回収・備品購入・前払いなどは、現金と損益への影響が一致しない代表例です。']);
+      return profile('問題文の条件を整理する','答えに記入する',['問題文の条件を整理し、必要な会計処理を一つずつ決めます。','答えを書いたら、問題の条件に合っているか確認します。']);
+    }
+    renderStructuredExplanation(question, userAnswer, score) {
+      if (score.correct || !question.explanationModel || !root.ExplanationModel?.build) return null;
+      const model = root.ExplanationModel.build(question, userAnswer || {}, score);
+      const valueText = value => typeof value === 'number' ? `${yen(value)}円` : value === true ? '確認' : String(value ?? '');
+      const flow = this.document.createElement('section'); flow.className = 'explanation-flow'; flow.setAttribute('aria-label', 'この問題をもう一度解く手順');
+      const intro = this.document.createElement('h4'); intro.className = 'explanation-flow-title'; intro.textContent = 'この問題をもう一度解く手順'; flow.append(intro);
+      const hasMeaningfulCalculation = (model.calculation || []).some(item => /[×÷＋+−\-＝=]/u.test(String(item.expression || '')));
+      const teachingProfile = this.explanationTeachingProfile(question);
+      const definitions = [
+        [teachingProfile.summary,'summary'],
+        ['使う資料を整理する','sources'],
+        ...(hasMeaningfulCalculation ? [['必要な金額を出す','calculation']] : []),
+        [teachingProfile.transfer,'transfer'],
+        ['最後に確認','checks'],
+        ['間違えやすいところ','mistakes']
+      ].filter(([,key]) => (model[key] || []).length > 0);
+      const element = (tag, className, text) => { const node = this.document.createElement(tag); if (className) node.className = className; if (text != null) node.textContent = text; return node; };
+      definitions.forEach(([label, key], index) => {
+        const section = element('section', 'explanation-flow-section'); section.dataset.section = key;
+        const head = element('div', 'explanation-flow-head'); head.append(element('div', 'explanation-flow-step', String(index + 1)), element('h5', '', label)); section.append(head);
+        const items = model[key] || [];
+        if (key === 'sources') items.forEach(item => {
+          const card = element('article', 'explanation-source-card');
+          card.append(element('h6', '', item.title), element('p', 'explanation-source-focus', item.focus));
+          if (item.table?.columns?.length && item.table?.rows?.length) {
+            const wrap = element('div', 'explanation-source-table-wrap'); wrap.dataset.questionType = question.type; wrap.tabIndex = 0; wrap.setAttribute('aria-label', `${item.title}の確認表`);
+            const table = element('table', 'explanation-source-table'); table.dataset.questionType = question.type;
+            if (item.table.kind) { wrap.dataset.tableKind = item.table.kind; table.dataset.tableKind = item.table.kind; }
+            table.dataset.columnCount = String(item.table.columns.length);
+            const thead = element('thead', ''), headRow = element('tr', '');
+            item.table.columns.forEach(column => { const th = element('th', '', column.label); th.scope = 'col'; if(column.key) th.dataset.columnKey=column.key; headRow.append(th); });
+            thead.append(headRow); table.append(thead);
+            const tbody = element('tbody', '');
+            item.table.rows.forEach((row,rowIndex) => {
+              const tr = element('tr', '');
+              if (item.table.totalRowIndexes?.includes?.(rowIndex)) tr.classList.add('explanation-source-total-row');
+              row.forEach(cell => { const unknown = cell.value === '入力', className = unknown ? 'explanation-source-unknown' : (typeof cell.value === 'number' ? 'is-number' : ''); const shownValue = unknown ? '？' : (cell.value == null || cell.value === '' ? '—' : (typeof cell.value === 'number' ? cell.value.toLocaleString('ja-JP') : String(cell.value))); const td=element('td', className, shownValue); if(cell.key) td.dataset.columnKey=cell.key; tr.append(td); });
+              tbody.append(tr);
+            });
+            table.append(tbody); wrap.append(table); card.append(wrap);
+          } else if (item.list?.length) {
+            const list = element('ol', 'explanation-source-list'); item.list.forEach(value => list.append(element('li', '', String(value)))); card.append(list);
+          } else {
+            const list = element('dl', 'explanation-source-values');
+            (item.values || []).forEach(value => { const row = element('div', 'explanation-source-value'); row.append(element('dt', '', value.label), element('dd', '', valueText(value.value))); list.append(row); });
+            card.append(list);
+          }
+          section.append(card);
+        });
+        if (key === 'summary') { const list = element('div', 'explanation-summary-list'); items.forEach(item => list.append(element('p', 'explanation-summary-item', item.text))); section.append(list); }
+        if (key === 'calculation') items.forEach(item => { const card = element('article', 'explanation-formula'); const shownFormula = item.derivation === 'direct' ? (item.note || `計算不要：${valueText(item.result)}を使用`) : (item.expression || `答え：${valueText(item.result)}`); card.append(element('div', 'explanation-formula-label', item.label), element('strong', '', shownFormula)); if (item.operands?.length) { const operands = element('div', 'explanation-operands'); item.operands.forEach(value => operands.append(element('span', 'explanation-operand', `${value.label} ${valueText(value.value)}`))); card.append(operands); } section.append(card); });
+        if (key === 'transfer') items.forEach(item => { const card = element('article', 'explanation-transfer-card'), from = element('div', 'explanation-transfer-from'), to = element('div', 'explanation-transfer-to'); from.append(element('strong', '', item.from), element('div', '', item.decision)); to.append(element('strong', '', item.to), element('div', '', valueText(item.value))); const arrow = element('div', 'explanation-transfer-arrow', '→'); arrow.setAttribute('aria-hidden', 'true'); card.append(from, arrow, to); section.append(card); });
+        if (key === 'checks') { const list = element('div', 'explanation-checks'); items.forEach(item => { const card = element('article', 'explanation-check-item'); card.append(element('div', 'explanation-check-mark', '✓')); const body = element('div', 'explanation-check-body'); body.append(element('strong', '', item.label), element('span', '', valueText(item.expected))); card.append(body); list.append(card); }); section.append(list); }
+        if (key === 'mistakes') items.forEach(item => { const card = element('article', 'explanation-mistake-card'); card.append(element('h6', '', item.title), element('p', '', item.reason), element('p', 'explanation-mistake-fix', `直し方：${item.correction}`)); section.append(card); });
+        flow.append(section);
+      });
+      return flow;
+    }
+    renderLearningTakeaway(question, container) {
+      const rules = this.explanationTeachingProfile(question).takeaway;
+      const card = this.document.createElement('section'); card.className = 'explanation-card explanation-takeaway';
+      const heading = this.document.createElement('h4'); heading.textContent = 'この問題で覚えること';
+      const list = this.document.createElement('ul'); list.className = 'explanation-takeaway-list';
+      rules.forEach(rule => { const item = this.document.createElement('li'); item.textContent = rule; list.append(item); });
+      card.append(heading, list); container.append(card);
+      this.renderKnowledgeLinks(question, container);
+    }
+    appendAuthoredExplanation(question, container, authoredOnly = false) {
+      if (question.npcDialogue) { const dialogue = this.document.createElement('blockquote'); dialogue.className = 'npc-dialogue'; dialogue.textContent = question.npcDialogue; container.append(dialogue); }
+      if (question.type === 'journal' && question.answer) { const badges = this.document.createElement('div'); badges.className = 'explanation-accounts'; [...question.answer.debit, ...question.answer.credit].forEach(item => badges.append(this.accountLabel(item.account))); container.append(badges); }
+      let explanation = String(question.explanation || '');
+      if (authoredOnly) {
+        const markers = ['【この問題への当てはめ】','【使用する資料】'].map(marker => explanation.indexOf(marker)).filter(index => index >= 0);
+        if (markers.length) explanation = explanation.slice(0, Math.min(...markers)).trimEnd();
+      }
+      this.explanationSections(explanation).forEach(section => { const card = this.document.createElement('section'); card.className = `explanation-card explanation-card-${section.kind}`; const title = this.document.createElement('h4'); title.textContent = section.label; const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = section.text; card.append(title, text); container.append(card); });
+      this.renderKnowledgeLinks(question, container);
+    }
     renderExplanation(question, score, userAnswer) {
       const container = this.byId('explanation'); container.replaceChildren();
       const heading = this.document.createElement('h3'); heading.textContent = '今回の解説'; container.append(heading);
@@ -713,35 +1110,25 @@
         ? '正解です。答えの根拠、実務での使い方、試験での見分け方を順に確認しましょう。'
         : 'もう一歩です。誤答の原因から正しい考え方へつなげ、実務と試験で使える判断手順まで一続きで確認しましょう。';
       container.append(lead);
+      const structured = this.renderStructuredExplanation(question, userAnswer, score);
+      if (structured) { container.append(structured); this.renderLearningTakeaway(question, container); return; }
       const solution = this.document.createElement('section'); solution.className = 'solution-steps';
       const solutionHeading = this.document.createElement('h4'); solutionHeading.textContent = '解き方（この順番で考える）';
       const list = this.document.createElement('ol');
       const steps = {
         journal:['取引によって増えたものと減ったものを拾います。','それぞれに適切な勘定科目を当てはめます。','資産・費用の増加は借方、負債・純資産・収益の増加は貸方に置き、減少は反対側に置きます。','借方合計と貸方合計が一致するまで金額を確認します。'],
-        correction:['帳簿に記録済みの仕訳を、借方・貸方に分けて書き出します。','証憑から本来の正しい仕訳を作ります。','誤った部分を逆向きにして取り消し、正しい処理との差額だけを訂正仕訳にします。','訂正仕訳を元の帳簿へ加え、証憑どおりの科目・金額になるか検算します。'],
+        correction:['帳簿に記録済みの仕訳を、借方・貸方に分けて書き出します。','証憑から本来の正しい仕訳を作ります。','誤った部分を逆向きにして取り消し、正しい処理との差額だけを訂正仕訳にします。','訂正仕訳を元の帳簿へ加え、証憑どおりの科目・金額になっているか確認します。'],
         ledger:['証憑を日付順に並べ、記帳する取引を選びます。','相手勘定と増減額を該当する行へ転記します。','直前残高へ増加を足し、減少を引いて新しい残高を求めます。','日付・相手勘定・最終残高を資料と照合します。'],
-        trial_balance:['各勘定の最終残高と残高方向を確認します。','借方残高は借方列、貸方残高は貸方列へ一度だけ転記します。','各列を合計します。','借方合計と貸方合計の一致で転記漏れや二重計上を検算します。'],
+        trial_balance:['各勘定の最終残高と残高方向を確認します。','借方残高は借方列、貸方残高は貸方列へ一度だけ転記します。','各列を合計します。','借方合計と貸方合計が一致するか見て、転記漏れや二重計上がないか確認します。'],
         worksheet:['試算表の残高を出発点にします。','決算整理事項を仕訳にし、修正記入の借方・貸方へ記入します。','修正後の各勘定を、収益・費用は損益計算書、資産・負債・純資産は貸借対照表へ振り分けます。','各欄の借方・貸方を合計し、差額となる当期純利益まで一致を確認します。'],
         financial_statement:['資料から収益・費用・資産・負債・純資産を分類します。','収益から売上原価と費用を差し引いて利益を求めます。','期末残高を対応する財務諸表の欄へ転記します。','合計や貸借の一致を確認します。'],
-        comprehensive:['資料ごとに必要な取引を仕訳します。','仕訳を帳簿へ転記して残高を集計します。','決算整理事項を反映します。','各段階の貸借一致を確認して最終数値を記入します。']
-      }[question.type] || ['資料の条件を整理します。','必要な会計処理を決めます。','計算して対応する欄へ転記します。','合計と資料を照合して検算します。'];
+        comprehensive:['資料ごとに必要な取引を仕訳します。','仕訳を帳簿へ転記して残高を集計します。','決算整理事項を反映します。','各段階で貸借が合っているか確認し、最後の金額を記入します。']
+      }[question.type] || ['資料の条件を整理します。','必要な会計処理を決めます。','計算して対応する欄へ転記します。','合計が合っているか、元の資料と見比べて確認します。'];
       steps.forEach(step => { const item = this.document.createElement('li'); item.textContent = step; list.append(item); });
       solution.append(solutionHeading, list); container.append(solution);
       const diagnostics = this.renderDiagnostics(question, userAnswer, score);
       if (diagnostics) container.append(diagnostics);
-      if (question.npcDialogue) { const dialogue = this.document.createElement('blockquote'); dialogue.className = 'npc-dialogue'; dialogue.textContent = question.npcDialogue; container.append(dialogue); }
-      if (question.type === 'journal' && question.answer) {
-        const badges = this.document.createElement('div'); badges.className = 'explanation-accounts';
-        [...question.answer.debit, ...question.answer.credit].forEach(item => badges.append(this.accountLabel(item.account)));
-        container.append(badges);
-      }
-      this.explanationSections(question.explanation).forEach(section => {
-        const card = this.document.createElement('section'); card.className = `explanation-card explanation-card-${section.kind}`;
-        const title = this.document.createElement('h4'); title.textContent = section.label;
-        const text = this.document.createElement('p'); text.className = 'explanation-text'; text.textContent = section.text;
-        card.append(title, text); container.append(card);
-      });
-      this.renderKnowledgeLinks(question, container);
+      this.appendAuthoredExplanation(question, container);
     }
     renderKnowledgeLinks(question, container) {
       const links = question.knowledgeLinks;

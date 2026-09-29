@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/css/style.css"><title>Calculator dock audit</title>
+</head>
+<body><main class="container">
+<section id="view-question" class="view active">
+<form id="question-form">
+<p id="q-category"></p><section id="q-story"><h2 id="q-scene"></h2><p id="q-context"></p><p id="q-task"></p></section>
+<div id="q-text" tabindex="-1"></div><section id="question-materials"></section>
+<div id="journal-container" class="journal-entry-area"></div><div id="table-container" class="table-question-wrap"></div>
+<details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
+<div class="calculator-readout"><input id="calculator-display" class="calculator-display" value="0" readonly><output id="calculator-operator"></output></div>
+<div class="calculator-transfer"><span id="calculator-target"></span><button type="button" data-action="calc-insert">表示中の金額を反映</button></div>
+<div class="calculator-keys"></div>
+</div></details>
+</form></section>
+</main>
+<script src="/data/accounting-domain.js"></script>
+<script src="/data/questions.js"></script>
+<script src="/js/view.js"></script>
+<script src="/js/controller.js"></script>
+<script>
+window.calculatorDockHarness={
+ render(id){
+   const q=window.QuestionData[id]; if(!q) throw new Error('missing '+id);
+   const view=new window.AppView(document); view.renderQuestion(q,{},'training');
+   const controller=Object.create(window.AppController.prototype);
+   controller.document=document; controller.expression='0'; controller.calculator={accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null};
+   controller.calculatorTarget=null; controller.saveDraft=()=>{}; controller.updateCalculatorDisplay=window.AppController.prototype.updateCalculatorDisplay.bind(controller);
+   controller.clearCalculator=window.AppController.prototype.clearCalculator.bind(controller);
+   controller.formatAmount=window.AppController.prototype.formatAmount.bind(controller);
+   controller.selectCalculatorTarget=window.AppController.prototype.selectCalculatorTarget.bind(controller);
+   controller.insertCalculatorResult=window.AppController.prototype.insertCalculatorResult.bind(controller);
+   window.__dockController=controller; return {id:q.id,type:q.type,format:q.format||''};
+ }
+};
+</script>
+</body></html>

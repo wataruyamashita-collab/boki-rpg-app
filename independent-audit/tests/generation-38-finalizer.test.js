@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('assert'),childProcess=require('child_process'),crypto=require('crypto'),fs=require('fs');
+const core=require('../../scripts/qa/audit-core'),lifecycle=require('../../scripts/qa/phase-b-lifecycle'),finalizer=require('../../scripts/qa/finalize-phase-b-generation-38');
+let count=0;const test=(name,fn)=>{fn();count++;console.log(`ok ${count} - ${name}`);};const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const authorities=lifecycle.generationAuthorities(),g37=authorities.find(x=>x.document.generation===37),g38=authorities.find(x=>x.document.generation===38);
+test('Generation 38 is discoverable',()=>assert(g38));
+test('Generation 38 predecessor is exact Generation 37',()=>assert.deepStrictEqual(g38.document.predecessor,lifecycle.identity(g37.document)));
+test('Generation 38 production identity changes for structured explanation integration',()=>assert.notStrictEqual(g38.document.baselineIdentity,g37.document.baselineIdentity));
+test('committed Generation 38 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+test('duplicate Generation 38 issuance fails',()=>assert.notStrictEqual(childProcess.spawnSync(process.execPath,['scripts/qa/finalize-phase-b-generation-38.js'],{cwd:core.ROOT,encoding:'utf8'}).status,0));
+test('historical authority raw SHA values are pinned',()=>assert.deepStrictEqual(finalizer.authorityPaths.map(f=>digest(fs.readFileSync(f))),finalizer.expectedAuthoritySha256));
+console.log(`Generation 38 finalizer regressions: ${count}/${count}`);

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>D001 mobile worksheet gate</title>
+<link rel="stylesheet" href="../../css/style.css">
+<style>body{background:#fff}.visual-shell{max-width:760px;margin:0 auto;padding:12px}</style>
+</head>
+<body>
+<main class="visual-shell">
+<form id="question-form">
+<p id="q-text"></p>
+<section id="question-materials" class="question-materials"></section>
+<section id="table-container" class="table-question-wrap"></section>
+<section id="visual-answer-comparison" class="answer-comparison"></section>
+<details class="calculator"><summary>計算機を使う</summary><div class="calculator-body">
+<div class="calculator-readout"><input id="calculator-display" class="calculator-display" value="0" readonly inputmode="numeric" aria-label="計算機の表示"><output id="calculator-operator" class="calculator-operator-indicator"></output></div>
+<div class="calculator-transfer"><span id="calculator-target">金額欄を選ぶと、現在の数字を計算機で修正できます</span><button type="button" data-action="calc-insert">表示中の金額を反映</button></div>
+<div class="calculator-keys" aria-label="計算機">
+<button type="button" data-action="calc" data-calc="AC">AC</button><button type="button" data-action="calc" data-calc="C">C</button><button type="button" data-action="calc" data-calc="÷">÷</button><button type="button" data-action="calc" data-calc="×">×</button>
+<button type="button" data-action="calc" data-calc="7">7</button><button type="button" data-action="calc" data-calc="8">8</button><button type="button" data-action="calc" data-calc="9">9</button><button type="button" data-action="calc" data-calc="−">−</button>
+<button type="button" data-action="calc" data-calc="4">4</button><button type="button" data-action="calc" data-calc="5">5</button><button type="button" data-action="calc" data-calc="6">6</button><button type="button" data-action="calc" data-calc="＋">＋</button>
+<button type="button" data-action="calc" data-calc="1">1</button><button type="button" data-action="calc" data-calc="2">2</button><button type="button" data-action="calc" data-calc="3">3</button><button type="button" data-action="calc" data-calc="＝">＝</button>
+<button type="button" data-action="calc" data-calc="0">0</button><button type="button" data-action="calc" data-calc="00">00</button><button type="button" data-action="calc" data-calc=".">.</button>
+</div>
+</div></details>
+</form>
+</main>
+<script src="../../data/questions.js"></script>
+<script src="../../js/calculator.js"></script>
+<script src="../../js/view.js"></script>
+<script src="../../js/controller.js"></script>
+<script>
+const question=window.QuestionData.D001;
+document.getElementById('q-text').textContent=question.question;
+const view=new window.AppView(document);
+view.calculatorFirstInput=true;
+view.renderMaterials(question);
+view.renderTable(question,{cells:{}});
+const explanationMode=new URLSearchParams(location.search).get('view')==='explanation';
+if(explanationMode){
+  const comparisonScore={correct:false,details:question.table.inputCells.map((cellId,index)=>({cellId,correct:index%3!==0}))};
+  const comparisonAnswer={cells:Object.fromEntries(question.table.inputCells.map((cellId,index)=>[cellId,index%3===0?'0':question.answer.cells[cellId]]))};
+  document.getElementById('visual-answer-comparison').append(view.worksheetAnswerComparison(question,comparisonScore,comparisonAnswer));
+}
+const fakeController={
+  document,
+  calculatorTarget:null,
+  expression:'0',
+  calculator:{accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null},
+  clearCalculator:window.AppController.prototype.clearCalculator,
+  updateCalculatorDisplay:window.AppController.prototype.updateCalculatorDisplay,
+  formatCalculatorExpression:window.AppController.prototype.formatCalculatorExpression,
+  positionCalculatorNearTarget:window.AppController.prototype.positionCalculatorNearTarget
+};
+const firstInput=document.querySelector('.worksheet-mobile-input');
+if(firstInput&&!explanationMode){
+  addEventListener('load',()=>{
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      window.AppController.prototype.selectCalculatorTarget.call(fakeController,firstInput);
+    }));
+  },{once:true});
+}
+</script>
+</body>
+</html>

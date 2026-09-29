@@ -133,8 +133,11 @@ assert(controllerSource.includes('if (this.submitting || !this.currentId') && co
 assert(html.includes('data-action="calc-insert"'), '電卓の表示金額を入力するボタンを表示する');
 assert(controllerSource.includes("'calc-insert': () => this.insertCalculatorResult(false)"), '電卓の入力ボタンを転記処理へ接続する');
 assert(controllerSource.includes("else if (key === '＝') this.calculateEquals()"), 'イコールキーで計算結果を表示する');
-assert(controllerSource.includes("addEventListener('focusin'"), '選択した金額欄を電卓の転記先にする');
-assert(controllerSource.includes("addEventListener('pointerdown'") && controllerSource.includes(".amount-input[readonly]:not(:disabled)"), 'calculator-first端末のtapでフォーカス前に転記先を選ぶ');
+assert(controllerSource.includes("addEventListener('focusin'"), 'キーボード操作ではfocusinから金額欄を電卓の転記先にできる');
+assert(controllerSource.includes("const calculatorInput = event.target.closest?.('.amount-input[readonly]:not(:disabled)')"), 'calculator-first端末はtap完了後のclickで転記先を確定する');
+assert(!controllerSource.includes("addEventListener('pointerdown'"), 'pointerdown中に画面を動かしてtap対象をずらさない');
+assert(controllerSource.includes("if (event.target.readOnly && this.view?.calculatorFirstInput) return;"), 'calculator-first端末ではfocusinとclickの二重選択を防ぐ');
+assert(controllerSource.includes("if (this.calculatorTarget !== input) return;"), '古いtapの遅延RAFが新しい転記先を上書きしない');
 assert(/input\.readOnly && calculatorPanel[\s\S]*?calculatorPanel\.open = true/.test(controllerSource), 'calculator-first金額欄だけは選択時に計算機を開く');
 const browserSandbox = { window: {} };
 vm.runInNewContext(controllerSource, browserSandbox);
@@ -172,26 +175,83 @@ assert.strictEqual(calculatorTarget.value, '1,500', '電卓の計算結果を選
 assert.strictEqual(calculatorElements['calculator-display'].value, '1,500', '電卓の計算結果にも3桁区切りのカンマを表示する');
 assert.strictEqual(calculatorController.saved, true, '電卓から転記した金額を下書きへ保存する');
 assert.strictEqual(browserSandbox.window.AppController.prototype.formatCalculatorExpression('1234567＋8900.5'), '1,234,567＋8,900.5', '計算途中の各数値にもカンマを表示する');
-const editableTarget = { value: '12,500', readOnly:false, getAttribute() { return '貸方 1行目の金額'; }, classList: { toggle() {} } };
-const editableElements = { calculator: { open: false, scrollIntoView(options) { this.scrollOptions = options; } }, 'calculator-target': { textContent: '' }, 'calculator-display': { value: '' }, 'calculator-operator': { textContent: '' } };
+const classSet = () => {
+  const values = new Set();
+  return { add(value){values.add(value);}, remove(value){values.delete(value);}, contains(value){return values.has(value);}, toggle(value,force){if(force===undefined){if(values.has(value))values.delete(value);else values.add(value);}else if(force)values.add(value);else values.delete(value);} };
+};
+const editableTarget = {
+  value: '12,500', readOnly:false,
+  getAttribute() { return '貸方 1行目の金額'; },
+  scrollIntoView(options){this.scrollOptions=options;},
+  classList:classSet()
+};
+const editableCalculatorPanel = { open:false, classList:classSet() };
+const editableForm = { classList:classSet() };
+const editableElements = {
+  calculator: editableCalculatorPanel,
+  'calculator-target': { textContent: '' },
+  'calculator-display': { value: '' },
+  'calculator-operator': { textContent: '' },
+  'question-form': editableForm
+};
 const editableCalculator = {
   expression: '999', calculatorTarget: null,
   calculator: { accumulator: 999, operator: '＋', waitingForOperand: true, lastOperator: null, lastOperand: null },
   document: { querySelector: selector => selector === '.calculator' ? editableElements.calculator : null, querySelectorAll: selector => selector === '.amount-input' ? [editableTarget] : [], getElementById: id => editableElements[id] },
   clearCalculator: browserSandbox.window.AppController.prototype.clearCalculator,
   updateCalculatorDisplay: browserSandbox.window.AppController.prototype.updateCalculatorDisplay,
-  formatCalculatorExpression: browserSandbox.window.AppController.prototype.formatCalculatorExpression
+  formatCalculatorExpression: browserSandbox.window.AppController.prototype.formatCalculatorExpression,
+  positionCalculatorNearTarget: browserSandbox.window.AppController.prototype.positionCalculatorNearTarget
 };
 browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(editableCalculator, editableTarget);
 assert.strictEqual(editableCalculator.expression, '12500', '入力済みの金額欄を選ぶと現在値を電卓へ読み込む');
 assert.strictEqual(editableElements['calculator-display'].value, '12,500', '入力欄の現在値を電卓上で確認して修正できる');
 assert.strictEqual(editableCalculator.calculator.operator, null, '別の入力欄を選んだときは以前の計算状態を引き継がない');
 assert.match(editableElements['calculator-target'].textContent, /現在値を修正できます/, '入力済み金額を修正できることを案内する');
-assert.strictEqual(editableElements.calculator.open, false, '金額欄のフォーカスだけでは閉じた計算機を開かない');
-assert.strictEqual(editableElements.calculator.scrollOptions, undefined, '金額欄のフォーカスだけでは計算機へスクロールしない');
+assert.strictEqual(editableCalculatorPanel.open, false, 'デスクトップの編集可能金額欄では閉じた計算機を自動で開かない');
+assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-contextual-float'), false, 'デスクトップの編集可能金額欄では固定フロートを有効化しない');
 editableTarget.readOnly = true;
 browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(editableCalculator, editableTarget);
-assert.strictEqual(editableElements.calculator.open, true, 'calculator-first金額欄のtapは既存のアプリ内計算機を開く');
+assert.strictEqual(editableCalculatorPanel.open, true, 'touch-first readOnly金額欄のtapは既存のアプリ内計算機を開く');
+assert.strictEqual(editableCalculatorPanel.classList.contains('calculator-contextual-float'), true, 'touch-first readOnly金額欄は問題形式を問わず計算機を選択時の作業位置へ固定表示する');
+assert.strictEqual(editableForm.classList.contains('calculator-dock-active'), false, '全問題共通フロート表示では巨大な下余白を追加しない');
+assert.strictEqual(editableForm.classList.contains('calculator-workspace-active'), true, '計算機表示中だけ入力欄を作業位置へ移せる一時スクロール余地を確保する');
+assert.strictEqual(JSON.stringify(editableTarget.scrollOptions),JSON.stringify({block:'nearest',inline:'nearest',behavior:'auto'}),'全問題共通で選択した金額欄を計算機の基準位置へ表示する');
+
+const worksheetTarget = {
+  value:'', readOnly:true,
+  getAttribute(){return '修正記入 前払保険料 借方（金額）';},
+  closest(selector){return selector === '.worksheet-mobile-section' ? {} : null;},
+  scrollIntoView(options){this.scrollOptions=options;},
+  classList:classSet()
+};
+const worksheetCalculatorPanel={open:false,classList:classSet()};
+const worksheetForm={classList:classSet()};
+const worksheetElements={
+  'calculator-target':{textContent:''},
+  'calculator-display':{value:''},
+  'calculator-operator':{textContent:''},
+  'question-form':worksheetForm
+};
+const worksheetCalculatorController={
+  expression:'0',calculatorTarget:null,
+  calculator:{accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null},
+  document:{
+    querySelector:selector=>selector==='.calculator'?worksheetCalculatorPanel:null,
+    querySelectorAll:selector=>selector==='.amount-input'?[worksheetTarget]:[],
+    getElementById:id=>worksheetElements[id]
+  },
+  clearCalculator:browserSandbox.window.AppController.prototype.clearCalculator,
+  updateCalculatorDisplay:browserSandbox.window.AppController.prototype.updateCalculatorDisplay,
+  formatCalculatorExpression:browserSandbox.window.AppController.prototype.formatCalculatorExpression,
+  positionCalculatorNearTarget:browserSandbox.window.AppController.prototype.positionCalculatorNearTarget
+};
+browserSandbox.window.AppController.prototype.selectCalculatorTarget.call(worksheetCalculatorController,worksheetTarget);
+assert.strictEqual(worksheetCalculatorPanel.open,true,'D001モバイル金額欄でも全問題共通計算機ドックを開く');
+assert.strictEqual(worksheetCalculatorPanel.classList.contains('calculator-contextual-float'),true,'D001でも選択時固定型の計算機表示を維持する');
+assert.strictEqual(worksheetForm.classList.contains('calculator-dock-active'),false,'D001でも巨大な下余白を追加しない');
+assert.strictEqual(worksheetForm.classList.contains('calculator-workspace-active'),true,'D001でも計算機表示中だけ一時スクロール余地を確保する');
+assert.strictEqual(JSON.stringify(worksheetTarget.scrollOptions),JSON.stringify({block:'nearest',inline:'nearest',behavior:'auto'}),'D001でも選択金額欄を計算機の基準位置へ表示する');
 const formatDirectAmount = value => { const input={value,selectionStart:value.length,selectionEnd:value.length,selectionDirection:'none',validationMessage:'',setCustomValidity(message){this.validationMessage=message;},setSelectionRange(){}}; const valid=browserSandbox.window.AppController.prototype.formatAmount(input); return {input,valid}; };
 const validAmounts = new Map([['',''],['0','0'],['12','12'],['1234','1,234'],['1234567','1,234,567'],['1,234','1,234'],['12,345','12,345'],['123,456','123,456'],['1,234,567','1,234,567'],['１２３４','1,234'],['１，２３４','1,234'],['１２，３４５','12,345']]);
 for (const [raw,expected] of validAmounts) { const {input,valid}=formatDirectAmount(raw); assert.strictEqual(valid,true,`${raw||'空欄'}を有効な金額として受理する`); assert.strictEqual(input.value,expected,`${raw||'空欄'}を正規表示する`); assert.strictEqual(input.validationMessage,'',`${raw||'空欄'}のcustom validityを解除する`); }
@@ -587,6 +647,27 @@ for (const answer of [wrongJ001, browserSandbox.window.QuestionData.J001.answer,
   assert(domText(rows[2].children[2]).includes(answer.credit[0]?.account || '（未入力）'), '貸方科目を右側グループへ表示する');
   assert(domText(rows[2].children[3]).includes(answer.credit[0]?.amount?.toLocaleString('ja-JP') || '—'), '貸方金額を第4列へ表示する');
 }
+const mobileJournalTicket = journalDomView.journalTable(browserSandbox.window.QuestionData.J135.answer);
+const mobileJournalSurface = descendants(mobileJournalTicket).find(node => String(node.className || '').split(/\\s+/).includes('journal-review-mobile'));
+assert(mobileJournalSurface, '解説用のモバイル仕訳票を生成する');
+assert.deepStrictEqual(mobileJournalSurface.children[0].children.map(cell => cell.textContent), ['借方科目','借方金額','貸方科目','貸方金額'], '解説の仕訳票も問題入力と同じ4列見出しにする');
+mobileJournalSurface.children.slice(1).forEach(row => assert.strictEqual(row.children.length, 4, '解説の仕訳票も全行を借方科目・借方金額・貸方科目・貸方金額の4列にする'));
+assert(domText(mobileJournalSurface).includes('法人税、住民税及び事業税'), '最長勘定科目も解説の仕訳票へ全文表示する');
+assert(!viewSource.includes("sideLabel.className = 'journal-review-side-label'"), 'スマホ解説で借方・貸方カードへ分割しない');
+const compoundJournalTicket = journalDomView.journalTable(browserSandbox.window.QuestionData.J128.answer);
+const compoundDesktopRows = descendants(compoundJournalTicket, 'tr').slice(2);
+assert.strictEqual(domText(compoundDesktopRows[1].children[0]), '', '複合仕訳の行数合わせだけの借方科目セルは空欄にする');
+assert.strictEqual(compoundDesktopRows[1].children[1].textContent, '', '複合仕訳の行数合わせだけの借方金額セルは空欄にする');
+assert.strictEqual(domText(compoundDesktopRows[2].children[0]), '', '複合仕訳3行目の構造空欄へ未入力表示を出さない');
+assert.strictEqual(compoundDesktopRows[2].children[1].textContent, '', '複合仕訳3行目の構造空欄へダッシュを出さない');
+const compoundMobileSurface = descendants(compoundJournalTicket).find(node => String(node.className || '').split(/\\s+/).includes('journal-review-mobile'));
+assert.strictEqual(compoundMobileSurface.children[2].children[0].textContent, '', 'スマホ解説の構造空欄は未入力表示ではなく空欄にする');
+assert.strictEqual(compoundMobileSurface.children[2].children[1].textContent, '', 'スマホ解説の構造空欄金額はダッシュではなく空欄にする');
+assert.strictEqual(compoundMobileSurface.children[3].children[0].textContent, '', 'スマホ解説3行目の構造空欄も空欄にする');
+assert.strictEqual(compoundMobileSurface.children[3].children[1].textContent, '', 'スマホ解説3行目の構造空欄金額も空欄にする');
+assert(!domText(compoundMobileSurface).includes('（未入力）'), '正解の複合仕訳で構造空欄を入力漏れのように表示しない');
+
+
 allJournalAccounts.forEach(account => assert.notStrictEqual(comparisonView.accountType(account), 'unknown', `${account}を簿記の5要素へ分類する`));
 assert.strictEqual(comparisonView.accountType('減価償却累計額'), 'contraAsset', '減価償却累計額は負債ではなく資産の控除項目とする');
 assert.strictEqual(comparisonView.accountType('貸倒引当金'), 'contraAsset', '貸倒引当金は資産の控除項目とする');
@@ -896,7 +977,7 @@ const desktopAmount = desktopAmountView.makeAmount('table-input', '金額', '30,
 assert.deepStrictEqual([desktopAmount.readOnly,desktopAmount.inputmode,desktopAmount.value],[false,'numeric','30,000'],'desktopでは直接キーボード入力と既存値を保つ');
 const amountPattern=viewSource.match(/input\.setAttribute\('pattern', '([^']+)'\)/)?.[1];assert(amountPattern,'金額欄にnative patternを設定する');const nativeAmountPattern=new RegExp(`^(?:${amountPattern})$`);for(const raw of validAmounts.keys())assert(raw===''||nativeAmountPattern.test(raw),`${raw||'空欄'}をnative patternで受理する`);for(const raw of invalidAmounts)assert(!nativeAmountPattern.test(raw),`${raw}をnative patternで拒否する`);
 assert(viewSource.includes('必要に応じて計算機も使えます'), '金額欄は直接入力と任意の計算機を案内する');
-assert(viewSource.includes('select.title = select.selectedOptions[0]?.textContent'), '選択中の勘定科目をtitleに反映する');
+assert(viewSource.includes("const text = select.selectedOptions[0]?.textContent || ''") && viewSource.includes('select.title = text;'), '選択中の勘定科目をtitleに反映する');
 const cssSource = fs.readFileSync('css/style.css', 'utf8');
 assert(viewSource.includes("else if (question.type === 'correction') this.renderCorrection(question, draft)"), '記帳訂正は通常の縦型表ではなく専用の仕訳入力欄で表示する');
 assert(viewSource.includes("header.innerHTML = '<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>'"), '記帳訂正に借方・貸方の科目欄と金額欄を明示する');
@@ -933,8 +1014,11 @@ assert(viewSource.includes("solutionHeading.textContent = '解き方（この順
 assert(viewSource.includes("heading.textContent = question.type === 'correction' ? '正しい訂正仕訳' : '正しい仕訳'"), '訂正問題の正解を借方・貸方の仕訳表で表示する');
 assert(viewSource.includes("heading.textContent = '最初の訂正仕訳（誤答）'") && viewSource.includes('this.journalTable(this.correctionJournal(userAnswer))'), '訂正問題の最初の誤答も仕訳形式の表で比較する');
 assert(viewSource.includes("heading.textContent = '最初の回答を決算整理表で比較'") && viewSource.includes('this.worksheetAnswerComparison(question, score, userAnswer)'), '決算整理問題は最初の回答と正答を元の行列を保った表で比較する');
-assert(/\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*minmax\(9rem, auto\) minmax\(9rem, auto\)/s.test(cssSource), '決算整理の入力値と正解に十分な横幅を確保する');
-assert(/@media \(max-width: 480px\)[\s\S]*?\.worksheet-comparison-pair\s*{[^}]*grid-template-columns:\s*8\.75rem 8\.75rem/s.test(cssSource), 'iPhone幅でも入力値と正解の数値欄を常に二列表示する');
+assert(viewSource.includes("if (this.compactWorksheetViewport()) return this.worksheetAnswerComparisonMobile(question, score, userAnswer)") && viewSource.includes("flow.className = 'worksheet-comparison-mobile-flow'"), 'D001解説はモバイルで横長8欄比較表ではなく4ブロック比較へ切り替える');
+assert(viewSource.includes("dataset.worksheetComparisonGroup = group.title") && viewSource.includes("['勘定科目','借方','貸方']"), 'D001解説の4ブロックは問題画面と同じ勘定科目・借方・貸方の3列構成にする');
+assert(/\.worksheet-comparison-mobile-table\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'D001モバイル解説表を画面幅内の固定3列に収める');
+assert(/\.worksheet-answer-comparison \.worksheet-comparison-pair\s*\{[^}]*grid-template-columns:\s*minmax\(9rem, auto\) minmax\(9rem, auto\)/s.test(cssSource), '入力・正解を横2列にする広幅ルールはデスクトップ8欄比較表だけに限定する');
+assert(!/\n\.worksheet-comparison-pair\s*\{[^}]*min-width:\s*18\.5rem/s.test(cssSource), 'モバイル比較セルに18rem超の最小幅を強制しない');
 assert(!viewSource.includes("heading.textContent = 'なぜ間違えた？'") && !viewSource.includes("heading.textContent = '詳しい解説'"), '意味が重なる二つの解説見出しを表示しない');
 Object.values(browserSandbox.window.QuestionData).forEach(question => {
   assert(String(question.explanation).trim(), `${question.id}にauthored explanationまたはfallbackがある`);
@@ -943,7 +1027,28 @@ assert(viewSource.includes("this.byId('explanation').before(container)"), '古�
 assert(/\.journal-header\s*\{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+120px[^}]*width:\s*max-content[^}]*min-width:\s*0/s.test(cssSource), '仕訳は過剰な620px固定床を使わずコンパクトな4列幅を保つ');
 assert(/\.journal-entry-area\s*\{[^}]*max-width:\s*100%[^}]*overflow:\s*visible/s.test(cssSource) && /\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*auto/s.test(cssSource), 'iPhoneで説明を固定したまま仕訳グリッドだけを横スクロールできる');
 assert(/\.table-question-wrap\s*{[^}]*overflow-x:\s*auto/s.test(cssSource), '大きな表は小型画面で横スクロールできる');
-assert(viewSource.includes('2欄×4組＝8欄') && viewSource.includes("guide.className = 'worksheet-guide'"), '8桁精算表の構成と横スクロール操作を表の直前で説明する');
+assert(viewSource.includes("question.type === 'financial_statement'") && viewSource.includes("columns.length <= 3"), 'F001の3列資料はモバイルでコンパクト表示する');
+assert(/\.question-materials\[data-question-type="financial_statement"\] \.materials-table-compact th:nth-child\(2\)[\s\S]*?width:\s*40%/s.test(cssSource), 'F001資料は区分30%・勘定科目40%・金額30%で画面幅に収める');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="financial_statement"\]\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'F001解答表はモバイルで横スクロールせず2列を固定配置する');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="financial_statement"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*box-sizing:\s*border-box[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*height:\s*44px/s.test(cssSource), 'F001金額入力欄は金額セル幅いっぱい・高さ44pxに統一する');
+assert(viewSource.includes("question.type === 'comprehensive' && this.compactWorksheetViewport()") && viewSource.includes("renderComprehensiveMaterialsMobile(question)"), 'C001資料はモバイルで横長汎用表ではなく縦カードへ切り替える');
+assert(viewSource.includes("flow.className = 'comprehensive-material-flow'") && viewSource.includes("card.className = 'comprehensive-material-card'"), 'C001資料カード構造を明示する');
+assert(viewSource.includes("renderComprehensiveTrialBalanceMobile(material)") && viewSource.includes("table.className = 'comprehensive-trial-balance-mobile'"), 'C001整理前残高試算表は文章列ではなく専用3列表で表示する');
+assert(viewSource.includes("['勘定科目','借方','貸方']") && viewSource.includes("total.className = 'comprehensive-trial-balance-total'"), 'C001試算表は勘定科目・借方・貸方と合計行を持つ');
+assert(viewSource.includes("String(value).split('／').filter(Boolean)") && viewSource.includes("list.className = 'comprehensive-adjustment-list'"), 'C001決算整理事項は省略せず項目ごとの縦リストで表示する');
+assert(/\.comprehensive-trial-balance-mobile\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'C001試算表はモバイル画面幅内に固定する');
+assert(/\.comprehensive-trial-balance-mobile th:first-child,[\s\S]*?\.comprehensive-trial-balance-mobile td:first-child\s*\{[^}]*width:\s*46%/s.test(cssSource) && /\.comprehensive-trial-balance-mobile th:nth-child\(2\),[\s\S]*?\.comprehensive-trial-balance-mobile td:nth-child\(3\)\s*\{[^}]*width:\s*27%/s.test(cssSource), 'C001試算表は320px WebKitでも勘定科目46%・借貸各27%で収める');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\]\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*table-layout:\s*fixed/s.test(cssSource), 'C001解答表はモバイルで横スクロールせず2列固定にする');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] th\s*\{[^}]*height:\s*auto[^}]*text-align:\s*center/s.test(cssSource), 'C001解答表ヘッダーは44px固定を外して中央揃えにする');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] th:nth-child\(2\)\s*\{[^}]*text-align:\s*center/s.test(cssSource), 'C001の金額見出しを横中央に配置する');
+assert(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="comprehensive"\] \.table-input\[data-input-type="amount"\]\s*\{[^}]*box-sizing:\s*border-box[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*height:\s*44px/s.test(cssSource), 'C001金額入力欄は金額セル幅いっぱい・高さ44pxに統一する');
+assert(viewSource.includes('試算表 → 修正記入 → 損益計算書 → 貸借対照表') && viewSource.includes("guide.className = 'worksheet-guide'") && !viewSource.includes('表は横にスクロールして入力してください。'), '8欄精算表はモバイルで4段階の処理順を示し、横スクロール前提にしない');
+assert(viewSource.includes("referenceLabel.textContent = 'ここを見る'") && viewSource.includes('元試算表の売上・仕入・保険料') && viewSource.includes('損益計算書の貸借差額'), 'D001モバイル各段階で参照する資料を入力欄の直前に示す');
+assert(controllerSource.includes("if (input.readOnly && calculatorPanel)") && controllerSource.includes("calculatorPanel.classList?.add?.('calculator-contextual-float')") && controllerSource.includes("positionCalculatorNearTarget(input") && controllerSource.includes("scrollIntoView?.({ block:'nearest'") && controllerSource.includes("const targetScrollY = Math.max(0, currentScrollY + inputRect.top - workTop)") && controllerSource.includes("root.scrollTo"), '全readOnly金額欄は選択時だけwindowスクロールで作業位置へ移し、計算機をその場に固定表示する');
+assert(!controllerSource.includes("scheduleCalculatorPosition") && !controllerSource.includes("document.addEventListener?.('scroll'"), '計算機表示後のスクロールで選択欄を追跡して再配置しない');
+assert(!controllerSource.includes("input.closest?.('.worksheet-mobile-section')"), '計算機ドックをD001専用条件へ戻さない');
+assert(/\.calculator\.calculator-contextual-float\[open\]\s*\{[^}]*position:\s*fixed[^}]*bottom:\s*auto/s.test(cssSource) && !/#question-form\.calculator-dock-active/.test(cssSource), '全問題共通計算機は選択時固定のオーバーレイとし、旧ドック用の恒久余白を追加しない');
+assert(/#question-form\.calculator-workspace-active\s*\{[^}]*padding-bottom:\s*calc\(72vh \+ env\(safe-area-inset-bottom\)\)/s.test(cssSource), '計算機表示中だけ作業位置確保用の一時スクロール余地を持つ');
 assert(viewSource.includes("th.scope = 'colgroup'") && viewSource.includes("accountHead.rowSpan = 2"), '8欄精算表のヘッダーを4組と借方・貸方の二段構成にする');
 assert(/\.eight-column-worksheet \.worksheet-value-cell, \.answer-table \.amount-cell\s*{[^}]*white-space:\s*nowrap/s.test(cssSource), '精算表を含む表の金額を途中で折り返さない');
 assert(/\.eight-column-worksheet th:not\(:first-child\), \.eight-column-worksheet td:not\(:first-child\)\s*{[^}]*min-width:\s*13ch/s.test(cssSource), '8桁精算表の金額列に多桁の数値を表示できる幅を確保する');
@@ -953,14 +1058,19 @@ assert(!/\.calculator\s*{[^}]*position:\s*sticky/s.test(cssSource), '計算機�
 assert(/\.answer-table \[data-sticky-context="true"\]\s*\{[^}]*position:\s*sticky[^}]*left:\s*var\(--sticky-left\)/s.test(cssSource), '横スクロール中もsemantic context列を累積offsetで固定する');
 assert(/\.journal-table\s*{[^}]*table-layout:\s*fixed/s.test(cssSource), '正しい仕訳表を画面幅に収める');
 assert(/\.journal-row\s*{[^}]*grid-template-columns:\s*200px\s+120px\s+200px\s+120px/s.test(cssSource), '仕訳はコンパクトな借方科目・借方金額・貸方科目・貸方金額の4列にする');
-assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*{[^}]*grid-template-columns:\s*184px\s+112px\s+184px\s+112px/s.test(cssSource), '狭い画面では184/112pxの監査済み幅で仕訳の4列を横並びにする');
-assert(/\.journal-row select:focus,[\s\S]*?\.journal-row select:active\s*{[^}]*font-size:\s*16px/s.test(cssSource) && /\.journal-row \.amount-input\s*{[^}]*font-size:\s*16px/s.test(cssSource), 'iPhoneでは科目selectの操作中と金額入力を16pxに保ち自動ズームを防ぐ');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-header,\s*\.journal-row,\s*\.correction-header,\s*\.correction-row\s*{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*grid-template-columns:\s*minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)\s+minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)/s.test(cssSource), 'スマホでも借方科目・借方金額・貸方科目・貸方金額の4列を同一画面に収める');
+assert(/\.journal-row select:focus,[\s\S]*?\.journal-row \.amount-input:focus,[\s\S]*?font-size:\s*16px/s.test(cssSource), '操作中は16pxへ戻してiPhone自動ズームを防ぐ');
+assert(/@media \(max-width: 480px\)[\s\S]*?\.journal-grid-scroll\s*{[^}]*overflow-x:\s*hidden/s.test(cssSource), 'スマホ仕訳は横スクロールを要求しない');
+assert(cssSource.includes('font-size: clamp(10px, 2.8vw, 12px);'), 'スマホでは長い勘定科目を2行表示できる専用表示レイヤーを使う');
+assert(cssSource.includes('-webkit-text-fill-color: transparent;') && cssSource.includes('.journal-account-display'), 'スマホのnative selectは操作担当、科目名表示は専用レイヤーへ分離する');
+assert(viewSource.includes("select.classList?.contains('correction-account')"), '訂正仕訳にも通常仕訳と同じ勘定科目の適応表示を使う');
 assert(!viewSource.includes('dataset.sideLabel'), '横並びの仕訳票に縦並び用ラベルを追加しない');
 assert(viewSource.includes("<span>借方科目</span><span>借方金額</span><span>貸方科目</span><span>貸方金額</span>"), '仕訳票の4列見出しを表示する');
 assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('acquisitionCost'), '取得原価', '表の英語見出しを日本語で表示する');
 assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('debitAccount'), '借方科目', '表内の内部用英語IDを日本語で表示する');
 assert.strictEqual(browserSandbox.window.AppView.prototype.tableLabel('現金'), '現金', '日本語の表示値はそのまま保つ');
-assert(viewSource.includes('row.append(select, amount)'), 'iPhoneでも4つの入力要素を仕訳行の直下に配置する');
+assert(viewSource.includes('row.append(this.journalAccountControl(select), amount)'), 'iPhoneでも4列構造を保ったまま科目セルだけ表示ラッパー化する');
+assert(viewSource.includes("display.textContent = text") && viewSource.includes("display.dataset.empty = select.value ? 'false' : 'true'"), '選択変更時に科目名オーバーレイを同期する');
 assert(viewSource.includes("inputType === 'amount'") && viewSource.includes("this.makeText('table-input'"), '表セルの明示型に応じて金額入力と日本語文字入力を分ける');
 assert(viewSource.includes("this.byId('q-context').textContent = question.story"), 'ストーリーモードで問題の場面と物語を表示する');
 assert(!cssSource.includes('display: contents'), 'iPhoneの仕訳配置をdisplay: contentsに依存させない');

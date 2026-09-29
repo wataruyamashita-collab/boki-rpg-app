@@ -99,7 +99,15 @@ assert(t001Widths.size>0&&[...t001Widths.values()].every(width => width === 9), 
 assert(/min-width:\s*var\(--column-input-ch,\s*9ch\)/.test(numericCellRule), 'ordinary amount cells keep the nine-glyph semantic floor without double-counting input chrome');
 assert(/box-sizing:\s*content-box/.test(numericInputRule) && /width:\s*var\(--table-input-ch,\s*9ch\)/.test(numericInputRule), 'ordinary amount controls reserve nine content glyphs with padding and borders outside that content box');
 assert(view.includes("cell.style.setProperty('--column-input-ch'") && view.includes("table.style.setProperty('--table-input-ch'"), 'renderer applies bounded per-column budgets and one shared compact numeric-input width per ordinary table');
-assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'eight-column worksheets retain their separate wide-canvas design');
+assert(/\.eight-column-worksheet\s*\{[^}]*width:\s*max\(100%,\s*1320px\)/.test(css), 'desktop eight-column worksheets retain the canonical wide worksheet');
+assert(view.includes('compactWorksheetViewport()') && view.includes('renderWorksheetMobile(question, draft, wrap)') && view.includes("'(max-width: 900px)'"), 'mobile worksheet renderer switches to the four-block flow without duplicating inputs');
+assert(view.includes('試算表 → 修正記入 → 損益計算書 → 貸借対照表'), 'mobile worksheet guide teaches the accounting processing order');
+assert(!view.includes('表は横にスクロールして入力してください。'), 'worksheet guidance no longer instructs phone users to solve by horizontal scrolling');
+assert(/\.worksheet-mobile-mode\s*\{[^}]*overflow:\s*visible/.test(css), 'mobile worksheet removes the nested scroll container');
+assert(/\.worksheet-mobile-table\s*\{[^}]*width:\s*100%[^}]*table-layout:\s*fixed/.test(css), 'mobile worksheet uses a viewport-width three-column table');
+assert(/\.worksheet-mobile-table th:first-child,[\s\S]*\.worksheet-mobile-table td:first-child\s*\{[^}]*width:\s*44%/.test(css), 'mobile worksheet repeats the account context in a stable 44% first column');
+assert(/\.worksheet-mobile-input\s*\{[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*font-size:\s*16px/s.test(css), 'mobile worksheet inputs stay inside their cells and avoid iPhone zoom');
+assert(view.includes("(question.type === 'worksheet' || question.type === 'financial_statement') && columns.length <= 3") && /\.materials-table\.materials-table-compact\s*\{[^}]*min-width:\s*0[^}]*table-layout:\s*fixed/.test(css), 'worksheet and financial-statement three-column sources fit the mobile viewport instead of inheriting the generic 28rem floor');
 const numericFloor = 11 * 8 + 26; const fixedAssetMinimum = fixedKeys.reduce((sum, key) => sum + (['acquisitionCost','life','openingAccumulated','currentDepreciation','closingBookValue'].includes(key) ? numericFloor : Math.max(8 * 16, glyphs(label(key)) * 16)), 0);
 for (const viewport of [320, 375, 390, 430]) assert(fixedAssetMinimum > viewport && /overflow-x:\s*auto/.test(css), `${viewport}px: fixed-asset content remains wider than its viewport and horizontally scrollable`);
 const desktopJournalMatch = css.match(/\.journal-row\s*\{[^}]*grid-template-columns:\s*(\d+)px\s+(\d+)px\s+(\d+)px\s+(\d+)px/s);
@@ -121,33 +129,58 @@ const longestJournalAmountGlyphs = Math.max(...journalAmounts.map(value => glyph
 assert.strictEqual(longestJournalAccountGlyphs, 12, 'canonical journal account maximum remains 12 glyphs');
 assert.strictEqual(longestJournalAmountGlyphs, 9, 'canonical formatted journal amount maximum remains 9 glyphs');
 
-const mobileJournalMatch = css.match(
-  /@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-header,\s*\.journal-row\s*\{\s*grid-template-columns:\s*(\d+)px\s+(\d+)px\s+(\d+)px\s+(\d+)px/s
-);
-assert(mobileJournalMatch, 'mobile journal sizing rule is present');
+const mobileJournalRule = css.match(
+  /@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-header,\s*\.journal-row,\s*\.correction-header,\s*\.correction-row\s*\{([^}]*)\}/s
+)?.[1] || '';
+assert(/width:\s*100%/.test(mobileJournalRule) && /max-width:\s*100%/.test(mobileJournalRule), 'mobile journal uses the available viewport width');
+assert(/grid-template-columns:\s*minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)\s+minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)/.test(mobileJournalRule), 'mobile journal preserves four horizontal debit/credit columns with account-weighted ratios');
+assert(/@media\s*\(max-width:\s*480px\)[\s\S]*?\.journal-grid-scroll\s*\{[^}]*overflow-x:\s*hidden/s.test(css), 'mobile journal no longer requires horizontal scrolling');
+assert(/@media\s*\(max-width:\s*480px\)[\s\S]*?\.correction-entry\s*\{[^}]*width:\s*100%[^}]*min-width:\s*0[^}]*overflow-x:\s*hidden/s.test(css), 'mobile correction journal uses the same no-horizontal-scroll contract');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('仕入'), 16, 'short account names retain the normal source size');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('クレジット売掛金'), 15, 'six-to-eight glyph accounts compact one source step');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('ABCDEFGHI'), 14, 'nine-to-ten glyph accounts compact two source steps');
+assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('法人税、住民税及び事業税'), 13, 'the canonical 12-glyph maximum retains the guarded source size');
+assert(css.includes('font-size: clamp(10px, 2.8vw, 12px);'), 'mobile journal account overlay keeps readable 10-12px text and can wrap long names');
+assert(/\.journal-account-display\s*\{[\s\S]*?white-space:\s*normal[\s\S]*?overflow-wrap:\s*anywhere/s.test(css), 'mobile journal account overlay can wrap the canonical 12-glyph account without widening the four-column grid');
+assert(/\.journal-account-control > select\s*\{[\s\S]*?font-size:\s*16px/s.test(css), 'native journal select stays 16px for iPhone zoom safety while its visible label is overlaid');
+assert(css.includes('font-size: clamp(10px, 3vw, 12px);'), 'mobile journal amounts use a narrow readable display size');
+assert(/\.journal-row \.amount-input,[\s\S]*?\.correction-row \.correction-amount\s*\{[^}]*height:\s*44px[^}]*min-height:\s*44px/s.test(css), 'mobile journal account and amount controls share the same 44px height');
+assert(/\.journal-review-header,[\s\S]*?\.journal-review-row\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)\s+minmax\(0,\s*1\.48fr\)\s+minmax\(0,\s*\.72fr\)/s.test(css), 'mobile explanation journal preserves the same four-column journal-ticket proportions');
+assert(/\.journal-review-cell\s*\{[^}]*height:\s*44px[^}]*min-height:\s*44px/s.test(css), 'mobile explanation journal cells match the 44px input-control height');
+assert(!/\.journal-review-side\s*\{/.test(css), 'mobile explanation no longer falls back to debit/credit cards');
 
-const mobileAccountWidth = Number(mobileJournalMatch[1]);
-const mobileAmountWidth = Number(mobileJournalMatch[2]);
+assert(/\.journal-row select:focus,[\s\S]*?\.journal-row \.amount-input:focus,[\s\S]*?font-size:\s*16px/s.test(css), 'focused/tapped journal controls return to 16px to prevent iPhone zoom');
+assert(longestJournalAccountGlyphs === 12 && longestJournalAmountGlyphs === 9, 'canonical journal content bounds stay unchanged while only presentation is compacted');
 
-assert.strictEqual(mobileAccountWidth, 184, 'mobile journal account column avoids the former over-wide 232px floor');
-assert.strictEqual(mobileAmountWidth, 112, 'mobile journal amount width preserves the audited 9-glyph budget');
-assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('仕入'), 16, 'short account names retain the normal readable size');
-assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('クレジット売掛金'), 15, 'six-to-eight glyph accounts compact one step');
-assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('ABCDEFGHI'), 14, 'nine-to-ten glyph accounts compact two steps');
-assert.strictEqual(sandbox.window.AppView.journalAccountFontSize('法人税、住民税及び事業税'), 13, 'the canonical 12-glyph maximum uses the guarded minimum size');
-assert(mobileAccountWidth >= longestJournalAccountGlyphs * 13 + 28, '184px still budgets the longest account at the guarded 13px minimum plus native select chrome');
-assert(mobileAmountWidth >= longestJournalAmountGlyphs * 10 + 22, 'mobile amount control preserves the longest formatted amount');
-assert(/\.journal-row select\s*\{[^}]*text-align:\s*center[^}]*text-align-last:\s*center[^}]*var\(--journal-account-font-size,\s*16px\)/s.test(css), 'selected account names are centered and use adaptive display sizing');
-assert(/\.journal-row select:focus,[\s\S]*?\.journal-row select:active\s*\{[^}]*font-size:\s*16px/s.test(css), 'focused or tapped account selects return to 16px to prevent iPhone zoom');
-
-const mobilePairWidth = mobileAccountWidth + 2 + mobileAmountWidth;
-assert(mobilePairWidth <= 320 - 20, '320px iPhone can show one debit account-and-amount pair without horizontal clipping');
-assert(mobilePairWidth <= 375 - 20, '375px iPhone shows one debit account-and-amount pair without horizontal clipping');
-assert(mobilePairWidth <= 390 - 20, '390px iPhone shows one debit account-and-amount pair without horizontal clipping');
-assert(mobilePairWidth <= 430 - 20, '430px iPhone shows one debit account-and-amount pair without horizontal clipping');
 const coachingHiddenRule = css.match(/\.confidence-selector\[hidden\],\s*\.question-actions \.save-button\[hidden\],\s*#save-status\[hidden\]\s*\{([^}]*)\}/)?.[1] || '';
 assert(
   /display:\s*none\s*!important/.test(coachingHiddenRule),
   'coaching retry explicitly hides confidence, save button, and save status in WebKit'
 );
 console.log(`mobile layout semantic audit: ${questions.length} questions, ${ordinary.length} ordinary tables, ${columns.length} unique columns (320/375/390/430): ok`);
+// Gate 5-A T001 physical density regression.
+assert(view.includes("table.dataset.questionType = question.type"), "ordinary table renderer exposes the canonical question type for scoped responsive rules");
+assert(view.includes("row.classList.add('trial-balance-total-row')"), "trial-balance input row receives a stable semantic class without inspecting answer values");
+const trialBalanceDensityTokens = [
+  '[data-question-type="trial_balance"] tbody tr',
+  'height: 44px;',
+  'tr.trial-balance-total-row td.amount-cell',
+  'background: #fffdf3;',
+  'tr.trial-balance-total-row .table-input[data-input-type="amount"]',
+  'box-sizing: border-box;',
+  'width: 100%;',
+  'min-width: 0;',
+  'max-width: 100%;',
+  'height: 44px;',
+  'min-height: 44px;',
+  'border: 0;',
+  'font-size: 16px;'
+];
+for (const token of trialBalanceDensityTokens) assert(css.includes(token), "trial-balance physical-density CSS keeps required token: "+token);
+// Gate 5-A T001 mobile-fit regression.
+const trialBalanceTableRule = css.match(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="trial_balance"\]\s*\{([^}]*)\}/)?.[1] || "";
+assert(/width:\s*100%/.test(trialBalanceTableRule) && /max-width:\s*100%/.test(trialBalanceTableRule) && /table-layout:\s*fixed/.test(trialBalanceTableRule), "three-column trial balance is constrained to the mobile viewport instead of a max-content canvas");
+const trialBalanceAccountRule = css.match(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="trial_balance"\] td\[data-column-key="account"\]\s*\{([^}]*)\}/)?.[1] || "";
+assert(/width:\s*40%/.test(trialBalanceAccountRule) && /min-width:\s*0/.test(trialBalanceAccountRule), "trial-balance account column stays visible within a compact 40% budget");
+const trialBalanceNumericRule = css.match(/\.answer-table:not\(\.eight-column-worksheet\)\[data-question-type="trial_balance"\] td\[data-column-type="numeric"\]\s*\{([^}]*)\}/)?.[1] || "";
+assert(/width:\s*30%/.test(trialBalanceNumericRule) && /min-width:\s*0/.test(trialBalanceNumericRule), "trial-balance debit and credit columns each use a compact 30% budget");

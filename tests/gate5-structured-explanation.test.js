@@ -1,0 +1,106 @@
+'use strict';
+const assert=require('assert'),fs=require('fs'),vm=require('vm');
+const ExplanationModel=require('../js/explanation-model');
+const sandbox={window:{}};
+vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),sandbox,{filename:'data/questions.js'});
+const data=sandbox.window.QuestionData,values=Object.values(data);
+const normalizeNumber=value=>String(value??'').replace(/[,\s円]/g,'');
+const assertNoCalculatedTransferEcho=(q,model)=>{
+  if(['journal','correction','worksheet'].includes(q.type))return;
+  const calculated=new Set((model.calculation||[]).filter(item=>/[×÷＋+−\-＝=]/u.test(String(item.expression||''))).map(item=>normalizeNumber(item.result)).filter(Boolean));
+  for(const transfer of model.transfer)assert(!calculated.has(normalizeNumber(transfer.value)),q.id+': transfer must add information beyond calculation');
+};
+const expected={journal:150,ledger:50,trial_balance:40,correction:20,worksheet:20,financial_statement:10,comprehensive:10};
+for(const pair of Object.entries(expected)){
+  const type=pair[0],count=pair[1],qs=values.filter(q=>q.type===type);
+  assert.strictEqual(qs.length,count,type+': question count');
+  assert.strictEqual(qs.filter(q=>q.explanationModel).length,count,type+': all questions use structured explanation');
+  for(const q of qs){
+    const model=ExplanationModel.build(q,q.type==='journal'?{}:{cells:{}},{correct:false});
+    assert.strictEqual(ExplanationModel.validate(model).valid,true,q.id+': valid model');
+    assert(model.sources.length>0,q.id+': sources');
+    assert(model.summary.length>=2,q.id+': strategy states goal and decision rule');
+    assert(String(model.summary[0]?.text||'').startsWith('この問題で求めるのは'),q.id+': strategy starts from requested output');
+    if(q.type==='comprehensive')assert.strictEqual(model.transfer.length,0,q.id+': comprehensive must not repeat final answers as transfer cards');
+    if(['journal','correction','worksheet'].includes(q.type))assert(model.transfer.length>0,q.id+': placement-critical questions keep transfer guidance');
+    assertNoCalculatedTransferEcho(q,model);
+    if(['journal','trial_balance','correction','worksheet'].includes(q.type))assert(model.checks.length>0,q.id+': independent check');
+    const numericAnswers=new Set(Object.values(q.answer?.cells||{}).filter(Number.isFinite).map(value=>String(value)));
+    for(const check of model.checks){
+      const normalized=String(check.expected??'').replaceAll(',','').replace(/円/g,'').trim();
+      assert(!(numericAnswers.has(normalized)&&!/[=＝→／/]/u.test(String(check.expected??''))),q.id+': check must not merely repeat one answer value');
+    }
+    const raw=model.sources.flatMap(source=>(source.values||[]).map(value=>String(value.label||'')));
+    assert(!raw.some(label=>/^(?:date|description|transaction|account|item|value|answer|recorded|evidence|quantity|unitPrice|amount)$/u.test(label)),q.id+': no raw internal source labels');
+    assert(!/正答値|資料の項目と数値|帳簿値|対応づける/u.test(JSON.stringify({sources:model.sources,summary:model.summary,checks:model.checks})),q.id+': no system-facing learner wording');
+  }
+}
+const j=ExplanationModel.build(data.J001,{}, {correct:false});
+assert(j.summary.some(x=>x.text.includes('何が増えたか・減ったか')),'J001 decision rule');
+assert(j.checks.some(x=>x.label==='借方合計と貸方合計が合っているか確認する'),'J001 check');
+const t=ExplanationModel.build(data.T001,{cells:{}},{correct:false});
+assert(t.calculation.some(x=>x.expression==='410,000 + 175,000 + 60,000 + 289,000 + 90,000 = 1,024,000'),'T001 debit total');
+assert(t.calculation.some(x=>x.expression==='134,000 + 400,000 + 490,000 = 1,024,000'),'T001 credit total');
+assert.strictEqual(t.checks[0].label,'借方合計と貸方合計が一致しているか確認する','T001 final check');
+assert.strictEqual(t.checks[0].expected,'1,024,000 = 1,024,000','T001 equality');
+const e=ExplanationModel.build(data.E001,{cells:{}},{correct:false});
+assert.deepStrictEqual(JSON.parse(JSON.stringify(e.sources[0].values.map(x=>x.label))),['帳簿の記録','証ひょう'],'E001 labels');
+assert.strictEqual(e.sources[0].focus,'帳簿の記録と証ひょうを比べる','E001 focus');
+assert.strictEqual(e.transfer.length,2,'E001 transfer pair');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(e.transfer.map(x=>[x.to,x.value]))),[['借方','広告宣伝費 22,500円'],['貸方','備品 22,500円']],'E001 entry');
+assert(e.checks.some(x=>x.label==='訂正する部分だけを直せているか確認する'),'E001 keep correct portion');
+assert(e.checks.some(x=>x.expected==='22,500 = 22,500'),'E001 debit credit check');
+assert(data.L001.explanationModel,'L001 structured explanation');
+assert.strictEqual(values.filter(q=>q.explanationModel).length,300,'all 300 questions use structured explanation');
+const d=ExplanationModel.build(data.D001,{cells:{}},{correct:false});
+assert(d.summary.some(x=>x.text.includes('整理前残高に決算整理を反映してから')),'D001 decision rule');
+assert(d.transfer.length>0&&d.checks.length>0,'D001 structured flow');
+const worksheetInternalKey=/^(?:tb|adj|pl|bs)(?:Debit|Credit)$/;
+assert(d.transfer.every(item=>!worksheetInternalKey.test(String(item.to))&&!/(?:tb|adj|pl|bs)(?:Debit|Credit)/.test(String(item.decision))),'D001 explanation never exposes worksheet internal keys');
+assert(d.transfer.some(item=>item.to==='貸借対照表 借方'),'D001 bsDebit is localized as 貸借対照表 借方');
+assert(d.transfer.some(item=>item.to==='貸借対照表 貸方'),'D001 bsCredit is localized as 貸借対照表 貸方');
+const f=ExplanationModel.build(data.F001,{cells:{}},{correct:false});
+assert(f.summary.some(x=>x.text.includes('収益・費用は損益計算書、資産・負債・純資産は貸借対照表')),'F001 decision rule');
+assert.strictEqual(f.checks.length,0,'F001 omits a fake check that would only repeat the profit calculation');
+const c=ExplanationModel.build(data.C001,{cells:{}},{correct:false});
+assert(c.summary.some(x=>x.text.includes('整理前残高→未処理取引→決算整理')),'C001 summary focuses on integrated-closing solving order');
+assert.strictEqual(c.transfer.length,0,'C001 must not repeat calculated final answers as transfer cards');
+assert(c.checks.some(x=>x.label==='貸借対照表の左右が一致しているか確認する'),'C001 keeps only an independent balance check');
+assert(c.checks.some(x=>x.expected==='2,227,200 = 2,227,200'),'C001 independent balance equality');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(c.sources.map(source=>source.title))),['会計期間','整理前残高試算表','決算整理事項'],'C001 semantic source titles');
+const cTrial=c.sources.find(source=>source.title==='整理前残高試算表');
+assert(cTrial?.table,'C001 trial balance table');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(cTrial.table.columns.map(column=>column.label))),['勘定科目','借方','貸方'],'C001 trial balance columns');
+assert.strictEqual(cTrial.table.rows.length,13,'C001 trial balance rows');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(cTrial.table.rows.at(-1).map(cell=>cell.value))),['合計',3940000,3940000],'C001 totals');
+assert.strictEqual(c.sources.find(source=>source.title==='決算整理事項')?.list?.length,9,'C001 adjustment list');
+const c2=ExplanationModel.build(data.C002,{cells:{}},{correct:false});
+assert.strictEqual(c2.transfer.length,0,'C002 must not repeat calculated final answers as transfer cards');
+assert.strictEqual(c2.checks.length,0,'C002 must not show a fake check that only repeats answers');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(c2.sources.map(source=>source.title))),['会計期間・決算日','整理前残高','決算整理事項'],'C002 semantic source titles');
+const c2Opening=c2.sources.find(source=>source.title==='整理前残高');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(c2Opening.table.columns.map(column=>column.label))),['項目','金額'],'C002 opening balance table');
+assert.strictEqual(c2Opening.table.rows.length,10,'C002 opening balance rows');
+assert.strictEqual(c2.sources.find(source=>source.title==='決算整理事項')?.list?.length,10,'C002 adjustment list');
+const c4=ExplanationModel.build(data.C004,{cells:{}},{correct:false});
+assert.strictEqual(c4.transfer.length,0,'C004 must not repeat ending cash/profit as transfer cards');
+assert(c4.summary.some(x=>x.text.includes('現金は入出金、利益は収益・費用')),'C004 summary separates cash from profit');
+assert(c4.checks.some(x=>x.checkKind==='concept-separation'),'C004 uses a conceptual check instead of answer echo');
+assert.strictEqual(c4.sources.length,1,'C004 grouped transaction source');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(c4.sources[0].table.columns.map(column=>column.label))),['日付','取引内容'],'C004 transaction columns');
+assert.strictEqual(c4.sources[0].table.rows.length,6,'C004 transaction rows');
+assert(d.sources[0].table,'D001 source table');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(d.sources[0].table.columns.map(column=>column.label))),['勘定科目','借方','貸方'],'D001 source columns');
+assert.strictEqual(d.sources[0].table.rows.length,9,'D001 source rows');
+assert(f.sources[0].table,'F001 source table');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(f.sources[0].table.columns.map(column=>column.label))),['区分','勘定科目','金額'],'F001 source columns');
+const l35=ExplanationModel.build(data.L035,{cells:{}},{correct:false});
+assert.strictEqual(l35.sources.length,1,'L035 grouped source');
+assert(l35.sources[0].table&&l35.sources[0].table.rows.length===4,'L035 source table rows');
+for(const q of values.filter(question=>Array.isArray(question.materials)&&question.materials.length>1)){
+  const sourceModel=ExplanationModel.build(q,{cells:{}},{correct:false});
+  const schemas=q.materials.map(material=>material&&typeof material==='object'&&!Array.isArray(material)?Object.keys(material).sort().join('|'):'');
+  const homogeneous=schemas.every(schema=>schema===schemas[0])&&!q.materials.some(material=>material&&Object.prototype.hasOwnProperty.call(material,'資料区分'));
+  if(homogeneous)assert(sourceModel.sources.some(source=>source.table),q.id+': homogeneous materials render as table');
+}
+console.log('Gate 5 structured explanation tests (A+B): PASS');

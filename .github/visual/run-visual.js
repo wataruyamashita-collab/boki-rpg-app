@@ -51,15 +51,28 @@ async function measure(page, caseName) {
     };
     const isJournal = measuredCase === 'journal';
     const isJournalBook = measuredCase === 'journal-book';
-    const cardRoot = isJournalBook ? null : document.querySelector(measuredCase === 'fixed-asset' ? '.fixed-asset-ledger' : '.bookkeeping-form');
+    const isWorksheetCards = measuredCase === 'worksheet' && Boolean(document.querySelector('.worksheet-mobile-flow'));
+    const cardRoot = isJournalBook ? null : document.querySelector(
+      measuredCase === 'fixed-asset' ? '.fixed-asset-ledger'
+        : isWorksheetCards ? '.worksheet-mobile-flow'
+        : '.bookkeeping-form'
+    );
     if (cardRoot) {
       const wrapper = requireElement(document.querySelector('#table-container'), 'wrapper');
-      const cards = [...cardRoot.querySelectorAll(measuredCase === 'fixed-asset' ? '.fixed-asset-card' : '.bookkeeping-record')];
-      const fields = [...cardRoot.querySelectorAll(measuredCase === 'fixed-asset' ? '.fixed-asset-field' : '.bookkeeping-field')];
+      const cards = [...cardRoot.querySelectorAll(
+        measuredCase === 'fixed-asset' ? '.fixed-asset-card'
+          : isWorksheetCards ? '.worksheet-mobile-section'
+          : '.bookkeeping-record'
+      )];
+      const fields = [...cardRoot.querySelectorAll(
+        measuredCase === 'fixed-asset' ? '.fixed-asset-field'
+          : isWorksheetCards ? '.worksheet-mobile-editable'
+          : '.bookkeeping-field'
+      )];
       const controls = [...cardRoot.querySelectorAll('input,select')];
       const columns = Object.fromEntries(fields.map((field, index) => {
         const control = field.querySelector('input,select');
-        const key = field.dataset.cell || field.dataset.field || `field${index}`;
+        const key = control?.dataset.cellId || field.dataset.cell || field.dataset.field || `field${index}`;
         const representative = control ? window.visualHarness.representativeControl(key) : null;
         const format = value => typeof value === 'number' ? value.toLocaleString('ja-JP') : String(value ?? '');
         const editableAnswers = representative ? representative.editableAnswers.map(format) : [];
