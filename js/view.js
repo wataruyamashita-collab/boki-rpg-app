@@ -786,9 +786,9 @@
         const mobileRow = this.document.createElement('div'); mobileRow.className = 'journal-review-row';
         [
           ['journal-review-account', debit?.account || '（未入力）'],
-          ['journal-review-amount', debit?.amount ? `${yen(debit.amount)}円` : '—'],
+          ['journal-review-amount', debit?.amount ? yen(debit.amount) : '—'],
           ['journal-review-account', credit?.account || '（未入力）'],
-          ['journal-review-amount', credit?.amount ? `${yen(credit.amount)}円` : '—']
+          ['journal-review-amount', credit?.amount ? yen(credit.amount) : '—']
         ].forEach(([className, text]) => {
           const cell = this.document.createElement('span'); cell.className = `journal-review-cell ${className}`; cell.textContent = text; mobileRow.append(cell);
         });
