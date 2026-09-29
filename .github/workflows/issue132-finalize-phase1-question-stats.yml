@@ -25,7 +25,7 @@ jobs:
         run: |
           node tests/app.test.js
           npm run typecheck
-          timeout 12m npm run verify
+          npm run audit:explanations
           git diff --check
       - name: Ensure PWA release 20260924-141
         run: |
