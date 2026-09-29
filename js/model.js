@@ -1,6 +1,7 @@
 (function (root) {
   'use strict';
   const CONTENT_REVISION = 3;
+  const LEARNING_SCHEMA_VERSION = 1;
   const FIXED_ASSET_SCHEMA_REVISION_2_IDS = new Set(['L005','L010','L015','L020','L025','L030','L033','L040']);
   class ProgressModel {
     static validateBackupState(value, questions = {}) {
@@ -15,6 +16,14 @@
       const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
       if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
       if (value.contentRevision !== undefined && !(Number.isSafeInteger(value.contentRevision) && value.contentRevision >= 1 && value.contentRevision <= CONTENT_REVISION)) return false;
+      if (value.learningSchemaVersion !== undefined && value.learningSchemaVersion !== LEARNING_SCHEMA_VERSION) return false;
+      if (value.lastLearningAt !== undefined && !(finite(value.lastLearningAt) && value.lastLearningAt >= 0)) return false;
+      if (value.questionStats !== undefined) {
+        const validStats = item => plain(item) && ['correctCount','incorrectCount','correctStreak','incorrectStreak'].every(key => nonnegativeSafeInteger(item[key])) &&
+          (item.lastResult === null || typeof item.lastResult === 'boolean') && finite(item.lastAnsweredAt) && item.lastAnsweredAt >= 0;
+        function nonnegativeSafeInteger(number) { return Number.isSafeInteger(number) && number >= 0; }
+        if (!plain(value.questionStats) || Object.entries(value.questionStats).some(([id, item]) => !knownId(id) || !validStats(item))) return false;
+      }
       if (value.mode !== undefined && !['story', 'training', 'review', 'exam', 'desk'].includes(value.mode)) return false;
       if (value.currentQuestionId !== undefined && value.currentQuestionId !== null && !knownId(value.currentQuestionId)) return false;
       for (const key of ['answeredIds', 'correctIds', 'incorrectIds']) if (value[key] !== undefined && !idList(value[key])) return false;
@@ -44,7 +53,7 @@
     }
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { contentRevision:CONTENT_REVISION, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state = { contentRevision:CONTENT_REVISION, learningSchemaVersion:LEARNING_SCHEMA_VERSION, lastLearningAt:0, questionStats:{}, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
@@ -61,8 +70,19 @@
               !(needsRevision2Migration && FIXED_ASSET_SCHEMA_REVISION_2_IDS.has(id)) &&
               !(needsRevision3Migration && id === 'L030'))) : {};
           const incompatibleExam = needsRevision2Migration && saved.examSession?.ids?.some(id => id === 'L033' || id === 'L040');
+          const migratedAttempts = Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.questionId || item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [];
+          const hasLearningSchema = saved.learningSchemaVersion === LEARNING_SCHEMA_VERSION;
+          const migratedQuestionStats = hasLearningSchema && saved.questionStats && typeof saved.questionStats === 'object' && !Array.isArray(saved.questionStats)
+            ? Object.fromEntries(Object.entries(saved.questionStats).filter(([id, item]) => this.questions[id] && this.validQuestionStats(item)))
+            : this.aggregateQuestionStats(migratedAttempts);
+          const migratedLastLearningAt = hasLearningSchema && Number.isFinite(saved.lastLearningAt) && saved.lastLearningAt >= 0
+            ? saved.lastLearningAt
+            : migratedAttempts.reduce((latest, item) => Math.max(latest, Number(item.timestamp || item.at || 0) || 0), 0);
           this.state = Object.assign(this.state, saved, {
           contentRevision:CONTENT_REVISION,
+          learningSchemaVersion:LEARNING_SCHEMA_VERSION,
+          lastLearningAt:migratedLastLearningAt,
+          questionStats:migratedQuestionStats,
           mode: ['story', 'training', 'review', 'exam', 'desk'].includes(saved.mode) ? saved.mode : 'story',
           currentQuestionId: this.questions[saved.currentQuestionId] ? saved.currentQuestionId : null,
           answeredIds: Array.isArray(saved.answeredIds) ? saved.answeredIds.filter(id => this.questions[id]) : [],
@@ -82,7 +102,7 @@
               item.sourceQuestionId === sourceId && this.questions[item.reviewQuestionId] && typeof item.conceptId === 'string' &&
               Number.isSafeInteger(item.stage) && item.stage >= 0 && item.stage <= 4 && Number.isFinite(item.dueAt) &&
               Number.isFinite(item.assignedAt) && ['assigned', 'completed'].includes(item.status))) : {},
-          attempts: Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.questionId || item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [],
+          attempts:migratedAttempts,
           completed: saved.completed === true,
           placement: saved.placement && saved.placement.completed === true && this.questions[saved.placement.startQuestionId] &&
             Number.isFinite(saved.placement.foundation) && Number.isFinite(saved.placement.closing)
@@ -97,6 +117,41 @@
         }
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
     }
+    validQuestionStats(item) {
+      return item && typeof item === 'object' && !Array.isArray(item) &&
+        ['correctCount','incorrectCount','correctStreak','incorrectStreak'].every(key => Number.isSafeInteger(item[key]) && item[key] >= 0) &&
+        (item.lastResult === null || typeof item.lastResult === 'boolean') && Number.isFinite(item.lastAnsweredAt) && item.lastAnsweredAt >= 0;
+    }
+    aggregateQuestionStats(attempts = []) {
+      const stats = {};
+      attempts.forEach(item => {
+        const id = item?.questionId || item?.id;
+        if (!this.questions[id] || typeof item.correct !== 'boolean') return;
+        this.applyQuestionStat(stats, id, item.correct, Number(item.timestamp || item.at || 0) || 0);
+      });
+      return stats;
+    }
+    applyQuestionStat(target, id, correct, answeredAt) {
+      const previous = target[id] || { correctCount:0, incorrectCount:0, correctStreak:0, incorrectStreak:0, lastResult:null, lastAnsweredAt:0 };
+      const next = { ...previous };
+      if (correct) {
+        next.correctCount += 1; next.correctStreak = previous.lastResult === true ? previous.correctStreak + 1 : 1; next.incorrectStreak = 0;
+      } else {
+        next.incorrectCount += 1; next.incorrectStreak = previous.lastResult === false ? previous.incorrectStreak + 1 : 1; next.correctStreak = 0;
+      }
+      next.lastResult = correct; next.lastAnsweredAt = Math.max(previous.lastAnsweredAt || 0, Number(answeredAt) || 0); target[id] = next; return next;
+    }
+    statsForQuestion(id) {
+      return this.state.questionStats[id] || { correctCount:0, incorrectCount:0, correctStreak:0, incorrectStreak:0, lastResult:null, lastAnsweredAt:0 };
+    }
+    aggregateAccuracy(filter = () => true) {
+      let correctCount = 0, incorrectCount = 0;
+      Object.entries(this.state.questionStats).forEach(([id, item]) => { if (!filter(this.questions[id], id)) return; correctCount += item.correctCount; incorrectCount += item.incorrectCount; });
+      const attempts = correctCount + incorrectCount;
+      return { correctCount, incorrectCount, attempts, accuracy:attempts ? correctCount / attempts : 0 };
+    }
+    overallAccuracy() { return this.aggregateAccuracy(); }
+    categoryAccuracy(category) { return this.aggregateAccuracy(question => question?.category === category); }
     validExamSession(session) {
       if (!(session && typeof session === 'object' && Array.isArray(session.ids) && session.ids.length === 15 &&
         session.ids.every(id => this.questions[id]) && new Set(session.ids).size === session.ids.length &&
@@ -151,9 +206,12 @@
       return recorded;
     }
     recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now(), reviewStage = null, confidence = 'unsure') {
-      if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0) return false;
+      if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0 || !Number.isFinite(now) || now < 0) return false;
       this.state.attempts.push({ questionId:id, id, concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now });
-      this.state.attempts = this.state.attempts.slice(-200); this.save(); return true;
+      this.state.attempts = this.state.attempts.slice(-200);
+      this.applyQuestionStat(this.state.questionStats, id, correct, now);
+      this.state.lastLearningAt = Math.max(this.state.lastLearningAt || 0, now);
+      this.save(); return true;
     }
     adaptiveDifficulty(concept, fallback = 2) {
       const recent = this.state.attempts.filter(item => item.concept === concept).slice(-6);
