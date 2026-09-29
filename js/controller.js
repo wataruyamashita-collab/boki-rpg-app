@@ -89,7 +89,7 @@
       const requestedMode = routeMode || (explicitQuestion ? 'story' : savedMode);
       const mode = this.hasActiveExamSession() ? 'exam' : requestedMode;
       if (this.showMode(mode) === false) return;
-      if (explicitQuestion && (mode !== 'exam' || this.modeIds().includes(route.questionId))) { this.start(route.questionId); return; }
+      if (explicitQuestion && this.questions[route.questionId] && (mode !== 'exam' || this.modeIds().includes(route.questionId))) { this.start(route.questionId); return; }
       if (!routeMode && !explicitQuestion) this.offerResume(mode);
     }
     bindEvents() {
