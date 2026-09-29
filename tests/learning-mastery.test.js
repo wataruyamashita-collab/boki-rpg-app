@@ -1,5 +1,6 @@
 const assert = require('assert');
 const fs = require('fs');
+const vm = require('vm');
 const ProgressModel = require('../js/model');
 const RPGModel = require('../js/rpg');
 
@@ -127,6 +128,31 @@ assert(controllerSource.includes("習熟度 ${mastery.state}（指標 ${mastery.
 const cssSource = fs.readFileSync('css/style.css', 'utf8');
 assert(cssSource.includes('grid-template-columns: repeat(auto-fit, minmax(170px, 1fr))'), '問題別分析は固定横幅テーブルではなく可変gridで表示する');
 assert(cssSource.includes('@media (max-width: 560px)') && cssSource.includes('.learning-problem-metrics { grid-template-columns: 1fr; }'), 'モバイルでは問題別指標を1列にして横スクロールを要求しない');
+
+class FakeNode {
+  constructor(tagName) { this.tagName=tagName; this.children=[]; this.hidden=true; this.className=''; this.textContent=''; }
+  append(...nodes) { this.children.push(...nodes); }
+  replaceChildren(...nodes) { this.children=[...nodes]; }
+}
+const sandbox = { window:{} };
+vm.runInNewContext(controllerSource, sandbox);
+const Controller = sandbox.window.AppController;
+const panel = new FakeNode('div');
+const documentStub = {
+  createElement(tagName) { return new FakeNode(tagName); },
+  getElementById(id) { return id === 'log-analysis' ? panel : null; }
+};
+const renderContext = { rpg:{ level:10 }, model:progress, questions, document:documentStub };
+assert.strictEqual(Controller.prototype.openLogAnalysis.call(renderContext), true, 'Lv.10以上では学習ログ分析を開ける');
+assert.strictEqual(panel.hidden, false, '分析パネルを表示状態にする');
+const flattenText = node => [node.textContent, ...node.children.flatMap(flattenText)].filter(Boolean).join(' ');
+const renderedText = flattenText(panel);
+for (const expected of ['学習ログ分析','全体正答率（累積）','直近5回の正答率','分野別正答率（累積）','問題別の習熟度','習熟度']) {
+  assert(renderedText.includes(expected), `分析UIに「${expected}」を表示する`);
+}
+const lockedPanel = new FakeNode('div');
+assert.strictEqual(Controller.prototype.openLogAnalysis.call({ rpg:{ level:9 }, model:progress, questions, document:{...documentStub,getElementById(){return lockedPanel;}} }), false, 'Lv.10未満では既存解放条件を維持する');
+assert.strictEqual(lockedPanel.hidden, true, '未解放時は分析パネルを開かない');
 
 const backup = JSON.parse(JSON.stringify(progress.state));
 assert.strictEqual(ProgressModel.validateBackupState(backup, questions), true, '派生分析追加後も既存backup schemaを変更しない');
