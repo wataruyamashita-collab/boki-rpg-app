@@ -8116,5 +8116,9 @@
       ],
       "reviewStatus": "reviewed-first-pass"
     }
-  ]
+  ],
+  "chapter4to6": {
+    "count": 75,
+    "proseWallRisk": 75
+  }
 }
