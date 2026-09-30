@@ -216,9 +216,15 @@
       if(c.creditAccount&&Number.isFinite(c.creditAmount))out.push({from:'帳簿と証ひょうの差',decision:'訂正仕訳',to:'貸方',debitCredit:'credit',value:c.creditAccount+' '+comma(c.creditAmount)+'円',evidenceRefs:['materials','answer.cells.creditAccount','answer.cells.creditAmount']});
       return out;
     }
-    // Comprehensive questions already expose the final destination in the answer rows.
-    // Repeating each calculated result as a second "transfer" card adds no new learning.
-    if(q.type==='comprehensive')return[];
+    // Comprehensive questions can contain many calculated outputs. Show one concise
+    // destination map instead of repeating every numeric answer as another card.
+    if(q.type==='comprehensive'){
+      const metadata=q.table?.inputMetadata||{},ids=Object.keys(q.answer?.cells||{});
+      const names=ids.map(id=>metadata[id]?.label).filter(shown);
+      const destination=names.length&&names.length<=4?names.join('・'):
+        names.length?'各解答欄（'+names.length+'項目）':'各解答欄';
+      return[{from:'上で求めた各処理の計算結果',decision:'項目名を対応させて記入',to:destination,debitCredit:null,value:'上で求めた金額を対応する欄へ記入',evidenceRefs:['answer.cells','table.inputMetadata']}];
+    }
     const locs=locations(q),metadata=q.table?.inputMetadata||{};
     return Object.entries(q.answer?.cells||{}).map(([id,value])=>{
       const p=locs.get(id),meta=metadata[id];
@@ -251,6 +257,12 @@
       }
       if(Object.prototype.hasOwnProperty.call(cells,'endingCash')&&Object.prototype.hasOwnProperty.call(cells,'profit')){
         return[{label:'現金残高と利益を別々の考え方で求めたか確認する',expected:'現金残高＝期首現金＋現金収入－現金支出／利益＝収益－費用',evidenceRefs:['materials'],checkKind:'concept-separation'}];
+      }
+      if(Number.isFinite(cells.cashAfter)&&Number.isFinite(cells.cashShortage)){
+        return[{label:'現金実査額と補正後帳簿残高の差が現金過不足になるか確認する',expected:'補正後帳簿残高 − 現金実査額 = 現金過不足',evidenceRefs:['materials','answer.cells.cashAfter','answer.cells.cashShortage'],checkKind:'cash-reconciliation'}];
+      }
+      if(Number.isFinite(cells.interestExpense)&&Number.isFinite(cells.interestPayable)&&cells.interestExpense===cells.interestPayable){
+        return[{label:'追加計上した支払利息と未払利息が対応しているか確認する',expected:num(cells.interestExpense)+' = '+num(cells.interestPayable),evidenceRefs:['answer.cells.interestExpense','answer.cells.interestPayable'],checkKind:'accrual-reconciliation'}];
       }
       return[];
     }
@@ -389,10 +401,10 @@
       out.transfer=arr(out.transfer).flatMap(item=>{
         const key=comparableValue(item?.value);
         if(!key||!calculatedValues.has(key))return[item];
-        if(q.type!=='ledger')return[];
+        if(!['ledger','trial_balance'].includes(q.type))return[];
         const base=String(item.decision||'').trim();
         const decision=/記入/u.test(base)?base:(base?base+'を該当欄へ記入':'計算結果を該当欄へ記入');
-        return[{...item,decision,value:'上で求めた金額'}];
+        return[{...item,decision,value:q.type==='trial_balance'?'上で求めた合計':'上で求めた金額'}];
       });
     }
     return out;
