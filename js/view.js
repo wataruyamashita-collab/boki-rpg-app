@@ -1114,6 +1114,13 @@
         ? '正解です。答えの根拠、実務での使い方、試験での見分け方を順に確認しましょう。'
         : 'もう一歩です。誤答の原因から正しい考え方へつなげ、実務と試験で使える判断手順まで一続きで確認しましょう。';
       container.append(lead);
+      if (root.ExplanationDesignSystem?.planFor && root.ExplanationDesignSystem?.render) {
+        const routeModel = question.explanationModel && root.ExplanationModel?.build
+          ? root.ExplanationModel.build(question, userAnswer || {}, score)
+          : null;
+        const route = root.ExplanationDesignSystem.planFor(question, { model:routeModel, correct:score.correct });
+        container.append(root.ExplanationDesignSystem.render(this.document, route));
+      }
       const structured = this.renderStructuredExplanation(question, userAnswer, score);
       if (structured) { container.append(structured); this.renderLearningTakeaway(question, container); return; }
       const solution = this.document.createElement('section'); solution.className = 'solution-steps';
