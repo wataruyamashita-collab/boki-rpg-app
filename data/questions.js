@@ -16035,6 +16035,15 @@ Object.values(QuestionData).forEach(item => {
   item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};
 });
 
+// Issue #161 PR-C: Chapter 1–3 journal lessons use the shared structured
+// explanation on both correct and incorrect paths. This removes the duplicated
+// prose walkthrough while keeping QuestionData answers and authored prose intact.
+Object.values(QuestionData).forEach(item => {
+  if (item.type === 'journal' && item.chapter >= 1 && item.chapter <= 3) {
+    item.teachingPresentation = 'structured-always';
+  }
+});
+
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {
