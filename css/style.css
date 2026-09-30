@@ -381,6 +381,28 @@ button.secondary-button:hover { color: #fff; }
 .operation-card p { min-height: 3em; margin: 4px 0 10px; font-size: .82rem; }
 .operation-card button { margin-top: auto; }
 .tax-tool, .log-analysis { margin-top: 12px; padding: 12px; border-radius: 10px; background: #fff; color: #17202a; }
+.log-analysis-title { margin: 0 0 4px; }
+.log-analysis-note { margin: 0 0 12px; color: #566573; font-size: .86rem; }
+.learning-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.learning-metric-card { display: grid; gap: 3px; min-width: 0; padding: 10px; border: 1px solid #d5dce0; border-radius: 8px; background: #f8fafb; }
+.learning-metric-card small { color: #566573; font-weight: 700; }
+.learning-metric-card strong { font-size: 1.25rem; }
+.learning-metric-card span { font-size: .8rem; }
+.log-analysis-section { margin-top: 16px; }
+.log-analysis-section h5 { margin: 0 0 8px; font-size: .95rem; }
+.learning-analysis-list, .learning-problem-list { display: grid; gap: 7px; }
+.learning-analysis-item { display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px; border: 1px solid #e5e8e8; border-radius: 8px; }
+.learning-analysis-item > * { min-width: 0; }
+.learning-problem-card { display: grid; gap: 8px; min-width: 0; padding: 10px; border: 1px solid #d5dce0; border-radius: 8px; }
+.learning-problem-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+.mastery-state { padding: 2px 7px; border-radius: 999px; background: #eef2f5; font-size: .78rem; font-weight: 800; }
+.learning-problem-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 5px 10px; font-size: .82rem; }
+.learning-problem-metrics span { min-width: 0; overflow-wrap: anywhere; }
+.analysis-empty { margin: 0; color: #566573; }
+@media (max-width: 560px) {
+  .learning-analysis-item { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .learning-problem-metrics { grid-template-columns: 1fr; }
+}
 .tax-tool label { display: grid; }
 .tax-tool output { display: block; font-weight: 800; }
 #view-story > details > summary { min-height: 44px; padding: 10px 4px; cursor: pointer; font-weight: 700; }
