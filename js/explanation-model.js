@@ -219,10 +219,12 @@
     // Comprehensive questions already expose the final destination in the answer rows.
     // Repeating each calculated result as a second "transfer" card adds no new learning.
     if(q.type==='comprehensive')return[];
-    const locs=locations(q);
+    const locs=locations(q),metadata=q.table?.inputMetadata||{};
     return Object.entries(q.answer?.cells||{}).map(([id,value])=>{
-      const p=locs.get(id);
-      return{from:p?rowName(q,p.r,p.ri):(q.category||'問題資料'),decision:cellLabel(q,id,p),to:labels[p?.c]||p?.c||id,debitCredit:null,value,evidenceRefs:[p?`table.rows[${p.ri}]`:'table',`answer.cells.${id}`]};
+      const p=locs.get(id),meta=metadata[id];
+      const destination=p?(labels[p.c]||p.c||cellLabel(q,id,p)):(meta?.label||labels[id]||id);
+      const decision=p?cellLabel(q,id,p):(meta?.label?meta.label+'を記入':'該当欄へ記入');
+      return{from:p?rowName(q,p.r,p.ri):(q.category||'問題資料'),decision,to:destination,debitCredit:null,value,evidenceRefs:[p?`table.rows[${p.ri}]`:'table',`answer.cells.${id}`]};
     });
   }
   function checks(q){
@@ -260,6 +262,37 @@
         return[{label:'資産合計と負債・純資産合計が一致しているか確認する',expected:num(cells.assetsTotal)+' = '+num(cells.liabilitiesEquityTotal),evidenceRefs:['answer.cells.assetsTotal','answer.cells.liabilitiesEquityTotal'],checkKind:'independent-balance'}];
       }
       return[];
+    }
+    if(format==='fixed-asset-ledger'||/固定資産台帳/u.test(category)){
+      const rows=arr(q.table?.rows),materials=arr(q.materials),out=[];
+      const first=rows[0]||{};
+      const materialCost=materials.map(item=>item?.['取得原価']).find(Number.isFinite);
+      const cost=[cells.acquisitionCost,first.acquisitionCost,materialCost].find(Number.isFinite);
+      const book=cells.closingBookValue;
+      let accumulated=Number.isFinite(cells.closingAccumulated)?cells.closingAccumulated:null;
+      if(!Number.isFinite(accumulated)&&Number.isFinite(first.openingAccumulated)&&Number.isFinite(cells.currentDepreciation))accumulated=first.openingAccumulated+cells.currentDepreciation;
+      if(!Number.isFinite(accumulated)&&Number.isFinite(cells.currentDepreciation))accumulated=cells.currentDepreciation;
+      if(Number.isFinite(cost)&&Number.isFinite(accumulated)&&Number.isFinite(book)&&cost-accumulated===book){
+        out.push({label:'取得原価から減価償却累計額を引くと帳簿価額になるか確認する',expected:num(cost)+' − '+num(accumulated)+' = '+num(book),evidenceRefs:['table.rows','answer.cells'],checkKind:'fixed-asset-reconciliation'});
+      }
+      const assetA=materials.find(item=>item?.['固定資産']==='備品A')||{};
+      if(Number.isFinite(cells.bookA)&&Number.isFinite(assetA['売却価額'])&&Number.isFinite(cells.lossA)&&cells.bookA-assetA['売却価額']===cells.lossA){
+        out.push({label:'売却時帳簿価額と売却価額の差が売却損になるか確認する',expected:num(cells.bookA)+' − '+num(assetA['売却価額'])+' = '+num(cells.lossA),evidenceRefs:['materials','answer.cells.bookA','answer.cells.lossA'],checkKind:'fixed-asset-disposal'});
+      }
+      const assetB=materials.find(item=>item?.['固定資産']==='備品B')||{};
+      if(Number.isFinite(assetB['取得原価'])&&Number.isFinite(cells.depreciationB)&&Number.isFinite(cells.bookB)&&assetB['取得原価']-cells.depreciationB===cells.bookB){
+        out.push({label:'備品Bの取得原価から当期減価償却費を引くと期末帳簿価額になるか確認する',expected:num(assetB['取得原価'])+' − '+num(cells.depreciationB)+' = '+num(cells.bookB),evidenceRefs:['materials','answer.cells.depreciationB','answer.cells.bookB'],checkKind:'fixed-asset-reconciliation'});
+      }
+      return out.length?out:[{label:'帳簿価額の関係を確認する',expected:'取得原価 − 減価償却累計額 = 帳簿価額',evidenceRefs:['table.rows','answer.cells'],checkKind:'fixed-asset-reconciliation'}];
+    }
+    if(format==='bookkeeping-petty-cash-book'&&Number.isFinite(cells.value1)&&Number.isFinite(cells.value2)&&Number.isFinite(cells.value3)){
+      return[{label:'支払合計と補給額が一致しているか確認する',expected:num(cells.value1)+' + '+num(cells.value2)+' = '+num(cells.value3),evidenceRefs:['materials','answer.cells'],checkKind:'reconciliation'}];
+    }
+    if(format==='bookkeeping-purchase-book'&&Number.isFinite(cells.value1)&&Number.isFinite(cells.value2)&&Number.isFinite(cells.value3)){
+      return[{label:'総仕入高から仕入返品を引くと純仕入高になるか確認する',expected:num(cells.value1)+' − '+num(cells.value2)+' = '+num(cells.value3),evidenceRefs:['answer.cells'],checkKind:'reconciliation'}];
+    }
+    if(format==='bookkeeping-sales-book'&&Number.isFinite(cells.value1)&&Number.isFinite(cells.value2)&&Number.isFinite(cells.value3)){
+      return[{label:'総売上高から売上返品を引くと純売上高になるか確認する',expected:num(cells.value1)+' − '+num(cells.value2)+' = '+num(cells.value3),evidenceRefs:['answer.cells'],checkKind:'reconciliation'}];
     }
     if(format==='bookkeeping-voucher-entry')return[{label:'現金の動きに合った伝票を選べているか確認する',expected:'増える → 入金伝票 / 減る → 出金伝票 / 動かない → 振替伝票',evidenceRefs:['table.rows'],checkKind:'classification'}];
     if(format==='bookkeeping-inventory-ledger'||/商品有高帳/u.test(category))return[{label:'数量・単価・金額の流れを確認する',expected:'払出後の残りを次の行へつなげる',evidenceRefs:['table.rows'],checkKind:'continuity'}];
@@ -353,9 +386,13 @@
     const placementCritical=['journal','correction','worksheet'].includes(q.type);
     const calculatedValues=new Set(arr(out.calculation).filter(item=>/[×÷＋+−\-＝=]/u.test(String(item?.expression||''))).map(item=>comparableValue(item?.result)).filter(Boolean));
     if(!placementCritical&&calculatedValues.size){
-      out.transfer=arr(out.transfer).filter(item=>{
+      out.transfer=arr(out.transfer).flatMap(item=>{
         const key=comparableValue(item?.value);
-        return !key||!calculatedValues.has(key);
+        if(!key||!calculatedValues.has(key))return[item];
+        if(q.type!=='ledger')return[];
+        const base=String(item.decision||'').trim();
+        const decision=/記入/u.test(base)?base:(base?base+'を該当欄へ記入':'計算結果を該当欄へ記入');
+        return[{...item,decision,value:'上で求めた金額'}];
       });
     }
     return out;
