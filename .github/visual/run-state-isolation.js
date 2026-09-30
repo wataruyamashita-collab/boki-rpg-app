@@ -46,16 +46,20 @@ async function all300(page,browserName){
     const failures=[];
     const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>resolve()));
     const digits=value=>String(value??'').replace(/\D/g,'');
-    const values=()=>[...document.querySelectorAll('#question-form input, #question-form select')]
-      .filter(el=>!el.disabled&&el.type!=='hidden'&&el.type!=='radio'&&el.type!=='button'&&el.type!=='submit'&&!el.closest('.calculator'))
+    const activeSelector=id=>controller.questions[id].type==='journal' ? '#journal-container' : '#table-container';
+    const inactiveSelector=id=>controller.questions[id].type==='journal' ? '#table-container' : '#journal-container';
+    const values=id=>[...document.querySelectorAll(activeSelector(id)+' input, '+activeSelector(id)+' select')]
+      .filter(el=>!el.disabled&&el.type!=='hidden'&&el.type!=='radio'&&el.type!=='button'&&el.type!=='submit'&&!el.closest('.calculator')&&!el.classList.contains('date-picker-native'))
       .map(el=>String(el.value??''));
+    const inactiveHasControls=id=>Boolean(document.querySelector(inactiveSelector(id)+' input, '+inactiveSelector(id)+' select'));
     for(let index=0;index<ids.length;index++){
       const id=ids[index],next=ids[(index+1)%ids.length],sentinel=String(92000000+index*1000+17);
       const row={id,violations:[]};
       try{
         controller.start(id,{fresh:true});
         await nextFrame();
-        const target=document.querySelector('#question-form .amount-input:not(:disabled), #question-form .table-text-input:not(:disabled), #question-form input.table-input:not(:disabled)');
+        if(inactiveHasControls(id)) row.violations.push('INACTIVE_RENDERER_INPUT_RESIDUE');
+        const target=document.querySelector(activeSelector(id)+' .amount-input:not(:disabled), '+activeSelector(id)+' .table-text-input:not(:disabled), '+activeSelector(id)+' input.table-input:not(:disabled)');
         if(!target){row.violations.push('NO_EDITABLE_SENTINEL_TARGET');}
         else{
           target.value=sentinel;
@@ -65,16 +69,17 @@ async function all300(page,browserName){
 
           controller.start(id);
           await nextFrame();
-          if(!values().some(value=>digits(value)===sentinel)) row.violations.push('SAME_QUESTION_RESUME_LOST');
+          if(!values(id).some(value=>digits(value)===sentinel)) row.violations.push('SAME_QUESTION_RESUME_LOST');
 
           controller.start(next,{fresh:true});
           await nextFrame();
-          if(values().some(value=>digits(value)===sentinel)) row.violations.push('CROSS_QUESTION_SENTINEL_LEAK');
+          if(inactiveHasControls(next)) row.violations.push('INACTIVE_RENDERER_INPUT_RESIDUE_AFTER_NAV');
+          if(values(next).some(value=>digits(value)===sentinel)) row.violations.push('CROSS_QUESTION_SENTINEL_LEAK');
 
           controller.start(id,{fresh:true});
           await nextFrame();
           if(controller.model.state.drafts[id]!==undefined) row.violations.push('FRESH_START_DRAFT_REMAINS');
-          if(values().some(value=>digits(value)===sentinel)) row.violations.push('FRESH_START_DOM_SENTINEL_REMAINS');
+          if(values(id).some(value=>digits(value)===sentinel)) row.violations.push('FRESH_START_DOM_SENTINEL_REMAINS');
         }
       }catch(error){row.violations.push('EXCEPTION:'+String(error?.message||error));}
       if(row.violations.length) failures.push(id+':'+row.violations.join(','));
@@ -97,16 +102,19 @@ async function mobileRepresentatives(browser,browserName,url){
         const c=window.App.controller;
         const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>resolve()));
         const digits=value=>String(value??'').replace(/\D/g,'');
+        const activeSelector=id=>c.questions[id].type==='journal' ? '#journal-container' : '#table-container';
+        const inactiveSelector=id=>c.questions[id].type==='journal' ? '#table-container' : '#journal-container';
         const failures=[];
         for(let i=0;i<reps.length;i++){
           const row=reps[i],sentinel=String(97000000+i*1000+31);
           c.start(row.id,{fresh:true});await nextFrame();
-          const target=document.querySelector('#question-form .amount-input:not(:disabled), #question-form .table-text-input:not(:disabled), #question-form input.table-input:not(:disabled)');
+          if(document.querySelector(inactiveSelector(row.id)+' input, '+inactiveSelector(row.id)+' select')) failures.push(row.id+':MOBILE_INACTIVE_RESIDUE');
+          const target=document.querySelector(activeSelector(row.id)+' .amount-input:not(:disabled), '+activeSelector(row.id)+' .table-text-input:not(:disabled), '+activeSelector(row.id)+' input.table-input:not(:disabled)');
           if(!target){failures.push(row.id+':NO_TARGET');continue;}
           target.value=sentinel;target.dispatchEvent(new Event('input',{bubbles:true}));
           const next=reps[(i+1)%reps.length].id;
           c.start(next,{fresh:true});await nextFrame();
-          const leaked=[...document.querySelectorAll('#question-form input, #question-form select')].some(el=>digits(el.value)===sentinel);
+          const leaked=[...document.querySelectorAll(activeSelector(next)+' input, '+activeSelector(next)+' select')].some(el=>digits(el.value)===sentinel);
           if(leaked)failures.push(row.id+':MOBILE_CROSS_QUESTION_LEAK');
         }
         return {rendererCount:reps.length,failures};
