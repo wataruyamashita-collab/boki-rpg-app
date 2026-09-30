@@ -1,10 +1,10 @@
 {
-  "release": "20260924-147",
-  "previousRelease": "20260924-146",
+  "release": "20260924-148",
+  "previousRelease": "20260924-147",
   "assets": {
     "css/style.css": "f4cec2859aad936a7bd042e99acff929e381bfb3731ea4e190b864feb817eee0",
     "data/accounting-domain.js": "0aebd64f81a74f51e5f99ced64dbe6bb430bbd2ba72178f45d3f6fa22e52283c",
-    "data/questions.js": "1cd7e87ce4a5696828b9bf854485f700ce5c739f8df46566c5f096be7e5db330",
+    "data/questions.js": "66efdffdf297d0965b44448bfbec44001873c2ee79fb1c040a5b95ef89910b0c",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
     "js/calculator.js": "ec312ad01da0dba736a6cad0c22ed91841da9eac532bd995e1d1ba0c67d39c70",
     "js/model.js": "43a24358a84f665f5a81992ec4996ad68826d8716f179c77edbd3def848cf1c4",
@@ -14,8 +14,8 @@
     "js/view.js": "0d78af7e4f56e9e0cae44c1405654fc00b9cf4ae00214719385c8a3c73c99726",
     "js/controller.js": "db238680e65161f02ca5640a688c7424c722ed81f94d26de96a910e7a4057eea",
     "js/app.js": "b2321aa87141a6d9b5ec2c9ae90abbbf11cacee852bcc73e715577a162071b8b",
-    "js/explanation-model.js": "740d7c526832cc3b80cadba964e0321d8c5c10b19c63434c22cb1cd614a00f49",
+    "js/explanation-model.js": "322e143043802c3cb30d04acfb5e0fd69d8b70155df73ca7f99139369d3c76f7",
     "js/explanation-formulas.js": "5983c2046c0d73e58e7dc0169be2e1230800475234890677257475d0d02fbab5",
-    "js/explanation-design-system.js": "6a8f36236c67a49270fe91c878c6a6baf241acbf83a088bbdfe780e9e3b1d8cc"
+    "js/explanation-design-system.js": "0889603798de07a7994bc3da0eaac6e195c195e1c6552e83d4d80722122fd2fc"
   }
 }
