@@ -84,5 +84,5 @@ const storage={getItem(){return null;},setItem(){return true;}};
 
 const controllerSource=fs.readFileSync('js/controller.js','utf8');
 assert(controllerSource.includes("dataset.startFresh = 'true'") || controllerSource.includes('dataset.startFresh="true"'),'question-list entries must explicitly request fresh start rather than silently resume stale input');
-assert(controllerSource.includes('clearDrafts(session.ids)'),'exam lifecycle must clear the full session draft set');
+assert(/clearDrafts\?\.\(session\.ids\)|clearDrafts\(session\.ids\)/.test(controllerSource),'exam lifecycle must clear the full session draft set');
 console.log('ISSUE161_INPUT_STATE_CONTRACT_PASS');
