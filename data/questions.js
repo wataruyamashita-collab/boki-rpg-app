@@ -16044,6 +16044,15 @@ Object.values(QuestionData).forEach(item => {
   }
 });
 
+// Issue #161 PR-D: Chapter 4–6 journal lessons continue the same shared
+// structured teaching flow. Answers, grading, Oracle, Exam Pool, IDs and
+// authored explanation text remain unchanged.
+Object.values(QuestionData).forEach(item => {
+  if (item.type === 'journal' && item.chapter >= 4 && item.chapter <= 6) {
+    item.teachingPresentation = 'structured-always';
+  }
+});
+
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {
