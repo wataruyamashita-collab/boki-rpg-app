@@ -40,6 +40,8 @@ jobs:
         run: node .github/visual/run-explanation-design-system.js
       - name: Run Issue 161 Chapter 1-3 explanation gate
         run: node .github/visual/run-ch1-3-explanations.js
+      - name: Run Issue 161 Chapter 4-6 explanation gate
+        run: node .github/visual/run-ch4-6-explanations.js
       - name: Upload screenshots and DOM metrics
         if: always()
         uses: actions/upload-artifact@v4
