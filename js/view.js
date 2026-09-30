@@ -141,8 +141,12 @@
       if (!story.hidden) { this.byId('q-scene').textContent = question.scene; this.byId('q-context').textContent = question.story; this.byId('q-task').textContent = `今回の仕事：${question.category}`; }
       this.byId('q-text').textContent = question.question;
       this.renderMaterials(question);
-      this.byId('journal-container').hidden = question.type !== 'journal';
-      this.byId('table-container').hidden = question.type === 'journal';
+      const journalContainer = this.byId('journal-container');
+      const tableContainer = this.byId('table-container');
+      journalContainer.hidden = question.type !== 'journal';
+      tableContainer.hidden = question.type === 'journal';
+      if (question.type === 'journal') tableContainer.replaceChildren();
+      else journalContainer.replaceChildren();
       if (question.type === 'journal') this.renderJournal(question, draft, mode);
       else if (question.type === 'correction') this.renderCorrection(question, draft);
       else if (question.format === 'journal-book' && question.table?.inputCells?.includes('d1Account')) this.renderJournalBook(question, draft, mode);
