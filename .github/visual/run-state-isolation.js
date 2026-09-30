@@ -52,6 +52,12 @@ async function all300(page,browserName){
       .filter(el=>!el.disabled&&el.type!=='hidden'&&el.type!=='radio'&&el.type!=='button'&&el.type!=='submit'&&!el.closest('.calculator')&&!el.classList.contains('date-picker-native'))
       .map(el=>String(el.value??''));
     const inactiveHasControls=id=>Boolean(document.querySelector(inactiveSelector(id)+' input, '+inactiveSelector(id)+' select'));
+    const scalarValues=value=>{
+      if(value==null)return [];
+      if(Array.isArray(value))return value.flatMap(scalarValues);
+      if(typeof value==='object')return Object.values(value).flatMap(scalarValues);
+      return [value];
+    };
     for(let index=0;index<ids.length;index++){
       const id=ids[index],next=ids[(index+1)%ids.length],sentinel=String(92000000+index*1000+17);
       const row={id,violations:[]};
@@ -64,8 +70,8 @@ async function all300(page,browserName){
         else{
           target.value=sentinel;
           target.dispatchEvent(new Event('input',{bubbles:true}));
-          const serialized=JSON.stringify(controller.model.state.drafts[id]||{});
-          if(!serialized.includes(sentinel)) row.violations.push('DRAFT_NOT_PERSISTED');
+          const persisted=scalarValues(controller.model.state.drafts[id]||{}).some(value=>digits(value)===sentinel);
+          if(!persisted) row.violations.push('DRAFT_NOT_PERSISTED');
 
           controller.start(id);
           await nextFrame();
