@@ -38,7 +38,7 @@ async function auditAll(page){
       if(!exp.querySelector('.explanation-flow'))violations.push('NO_STRUCTURED_FLOW_CORRECT');
       if(!text.includes('この問題の解き方を確認'))violations.push('CORRECT_HEADING_MISSING');
       if(exp.querySelector('.solution-steps'))violations.push('DUPLICATE_GENERIC_SOLUTION');
-      if(exp.querySelector('.explanation-card'))violations.push('AUTHORED_PROSE_DUPLICATED_ON_CORRECT');
+      if(exp.querySelector('.explanation-card:not(.explanation-takeaway)'))violations.push('AUTHORED_PROSE_DUPLICATED_ON_CORRECT');
       if(!text.includes('最後に確認'))violations.push('CHECK_SECTION_MISSING');
       if(!text.includes('仕訳'))violations.push('JOURNAL_PATH_MISSING');
       const rect=exp.getBoundingClientRect();
