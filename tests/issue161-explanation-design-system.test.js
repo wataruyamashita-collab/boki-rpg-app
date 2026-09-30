@@ -41,4 +41,31 @@ assert(incorrect.components.some(x=>x.id==='misconception'),'wrong result keeps 
 const correct=ds.planFor(q.L005,{model:evidenceModel,correct:true});
 assert(!correct.components.some(x=>x.id==='misconception'),'correct result does not force misconception component');
 assert.throws(()=>ds.planFor({type:'unknown'}),/EXPLANATION_FORMAT_NOT_CLASSIFIED/,'new formats fail closed instead of silently using a generic layout');
+
+const viewSource=fs.readFileSync('js/view.js','utf8');
+const css=fs.readFileSync('css/style.css','utf8');
+const html=fs.readFileSync('index.html','utf8');
+const worker=fs.readFileSync('service-worker.js','utf8');
+assert(viewSource.includes('ExplanationDesignSystem?.planFor'),'result view calls the shared design system');
+assert(viewSource.includes('ExplanationDesignSystem.render(this.document, route)'),'result view renders the shared route');
+assert(html.indexOf('js/explanation-model.js')<html.indexOf('js/explanation-design-system.js'),'design system loads after ExplanationModel');
+assert(html.indexOf('js/explanation-design-system.js')<html.indexOf('js/view.js'),'design system loads before AppView');
+assert(worker.includes("'./js/explanation-design-system.js'"),'PWA cache contains the design-system module');
+assert(/\.explanation-route-list\s*\{[^}]*display:\s*grid/s.test(css),'route is a structured visual grid');
+assert(/@media\s*\(max-width:\s*600px\)[\s\S]*?\.explanation-route-list\s*\{[^}]*grid-template-columns:\s*1fr/s.test(css),'mobile route becomes a vertical procedure without horizontal scroll');
+
+class FakeNode{
+  constructor(tag){this.tagName=tag;this.className='';this.children=[];this.dataset={};this.attributes={};this._text='';}
+  append(...nodes){this.children.push(...nodes);}
+  setAttribute(name,value){this.attributes[name]=String(value);}
+  set textContent(value){this._text=String(value??'');}
+  get textContent(){return this._text+this.children.map(child=>child.textContent||'').join('');}
+}
+const fakeDoc={createElement(tag){return new FakeNode(tag);}};
+const routeNode=ds.render(fakeDoc,incorrect);
+assert.strictEqual(routeNode.className,'explanation-route');
+assert.strictEqual(routeNode.attributes['aria-label'],'解答までの道筋');
+assert(routeNode.textContent.includes('固定資産台帳')&&routeNode.textContent.includes('取得日・取得原価'),'rendered route exposes the solving sequence as text, not an image');
+assert(!routeNode.textContent.includes('[object Object]'),'route renderer never exposes raw objects');
+
 console.log('ISSUE161_GATE4_DESIGN_SYSTEM_PASS');
