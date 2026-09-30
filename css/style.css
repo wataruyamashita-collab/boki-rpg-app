@@ -1332,3 +1332,87 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 @media (prefers-reduced-motion:reduce) {
   .explanation-flow * { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
 }
+
+
+/* Issue 161 Gate 4: reusable solution-route diagram. */
+.explanation-route {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid var(--line, #d7dee8);
+  border-radius: 12px;
+  background: var(--panel, #fff);
+}
+.explanation-route-title { margin: 0 0 4px; }
+.explanation-route-intro { margin: 0 0 12px; }
+.explanation-route-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.explanation-route-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 8px;
+  border: 1px solid var(--line, #d7dee8);
+  border-radius: 10px;
+}
+.explanation-route-step:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  right: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 700;
+}
+.explanation-route-number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 700;
+  background: var(--surface-muted, #eef3f8);
+}
+.explanation-route-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+.explanation-route-evidence { margin-top: 12px; }
+.explanation-route-evidence summary { cursor: pointer; font-weight: 700; }
+.explanation-route-facts {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+.explanation-route-fact {
+  display: grid;
+  grid-template-columns: minmax(110px, .35fr) minmax(0, 1fr);
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line, #d7dee8);
+}
+.explanation-route-fact dt { font-weight: 700; }
+.explanation-route-fact dd { margin: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 600px) {
+  .explanation-route { padding: 12px; }
+  .explanation-route-list { grid-template-columns: 1fr; gap: 16px; }
+  .explanation-route-step:not(:last-child)::after {
+    content: "↓";
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: -16px;
+    transform: translateX(-50%);
+  }
+  .explanation-route-fact { grid-template-columns: 1fr; gap: 3px; }
+}
