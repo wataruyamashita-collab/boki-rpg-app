@@ -23,7 +23,8 @@ assert(/@media\s*\(max-width:\s*600px\)[\s\S]*?\.journal-table,[\s\S]*?\.answer-
 assert(/@media\s*\(max-width:\s*600px\)[\s\S]*?\.journal-review-mobile\s*\{[^}]*display:\s*grid/s.test(css),'600px以下では仕訳の誤答・正解を4列仕訳票で表示する');
 assert(/@media\s*\(max-width:\s*600px\)[\s\S]*?\.answer-comparison-mobile-list\s*\{[^}]*display:\s*grid/s.test(css),'600px以下では表形式問題の比較専用カードを表示する');
 assert(/@media\s*\(max-width:\s*600px\)[\s\S]*?\.journal-table-wrap,[\s\S]*?\.answer-comparison-table-wrap\s*\{[^}]*overflow-x:\s*visible/s.test(css),'比較画面ではスマホ横スクロールを発生させない');
-assert(view.includes('score.correct || !question.explanationModel'),'構造化解説は誤答かつ対象問題だけに限定する');
+assert(view.includes("const structuredAlways = question.teachingPresentation === 'structured-always'"),'指定問題は正解・誤答の両方で構造化解説を表示できる');
+assert(view.includes('(score.correct && !structuredAlways) || !question.explanationModel'),'通常問題は従来どおり誤答時だけ構造化し、structured-always指定だけ正解時にも表示する');
 assert(view.includes('appendAuthoredExplanation(question, container, authoredOnly = false)'),'authored proseだけを分離表示できる');
 assert(view.includes("const markers = ['【この問題への当てはめ】','【使用する資料】']"),'旧生成長文をstructured PoCへ重複表示しない');
 assert(view.includes('renderLearningTakeaway(question, container)'),'構造化解説の最後は学習持ち帰りカードにする');

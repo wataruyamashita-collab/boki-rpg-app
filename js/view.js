@@ -1029,11 +1029,12 @@
       return profile('問題文の条件を整理する','答えに記入する',['問題文の条件を整理し、必要な会計処理を一つずつ決めます。','答えを書いたら、問題の条件に合っているか確認します。']);
     }
     renderStructuredExplanation(question, userAnswer, score) {
-      if (score.correct || !question.explanationModel || !root.ExplanationModel?.build) return null;
+      const structuredAlways = question.teachingPresentation === 'structured-always';
+      if ((score.correct && !structuredAlways) || !question.explanationModel || !root.ExplanationModel?.build) return null;
       const model = root.ExplanationModel.build(question, userAnswer || {}, score);
       const valueText = value => typeof value === 'number' ? `${yen(value)}円` : value === true ? '確認' : String(value ?? '');
       const flow = this.document.createElement('section'); flow.className = 'explanation-flow'; flow.setAttribute('aria-label', 'この問題をもう一度解く手順');
-      const intro = this.document.createElement('h4'); intro.className = 'explanation-flow-title'; intro.textContent = 'この問題をもう一度解く手順'; flow.append(intro);
+      const intro = this.document.createElement('h4'); intro.className = 'explanation-flow-title'; intro.textContent = score.correct ? 'この問題の解き方を確認' : 'この問題をもう一度解く手順'; flow.append(intro);
       const hasMeaningfulCalculation = (model.calculation || []).some(item => /[×÷＋+−\-＝=]/u.test(String(item.expression || '')));
       const teachingProfile = this.explanationTeachingProfile(question);
       const definitions = [
