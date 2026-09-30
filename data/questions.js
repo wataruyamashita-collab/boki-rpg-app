@@ -16053,6 +16053,15 @@ Object.values(QuestionData).forEach(item => {
   }
 });
 
+// Issue #161 PR-E: Chapter 7–8 ledger lessons use the format-specific shared
+// structured teaching flow on both correct and incorrect paths. Accounting
+// answers, grading, Oracle, Exam Pool, IDs and authored prose remain unchanged.
+Object.values(QuestionData).forEach(item => {
+  if (item.type === 'ledger' && item.chapter >= 7 && item.chapter <= 8) {
+    item.teachingPresentation = 'structured-always';
+  }
+});
+
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {

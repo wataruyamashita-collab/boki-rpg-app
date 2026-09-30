@@ -68,7 +68,11 @@
   });
   const keyFor=q=>String(q?.type||'')+'/'+String(q?.format||'default');
   function classify(q){
-    const key=keyFor(q),id=MATRIX[key];
+    const key=keyFor(q);
+    // Legacy Chapter 7/8 商品有高帳 uses ledger/default, but pedagogically it
+    // follows the same quantity → unit price → amount flow as inventory-ledger.
+    if(key==='ledger/default'&&/商品有高帳/u.test(String(q?.category||'')))return 'inventory';
+    const id=MATRIX[key];
     if(!id)throw new Error('EXPLANATION_FORMAT_NOT_CLASSIFIED:'+key);
     return id;
   }

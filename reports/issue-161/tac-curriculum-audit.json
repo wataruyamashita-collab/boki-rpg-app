@@ -8120,5 +8120,9 @@
   "chapter4to6": {
     "count": 75,
     "proseWallRisk": 75
+  },
+  "chapter7to8": {
+    "count": 50,
+    "proseWallRisk": 50
   }
 }
