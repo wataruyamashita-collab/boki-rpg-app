@@ -216,6 +216,8 @@
     }
     save() { try { return this.storage?.setItem?.(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
     setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; return this.save(); }
+    clearDraft(id) { if (!this.questions[id]) return false; delete this.state.drafts[id]; return this.save(); }
+    clearDrafts(ids) { if (!Array.isArray(ids)) return false; ids.filter(id => this.questions[id]).forEach(id => { delete this.state.drafts[id]; }); return this.save(); }
     record(id, correct, now = Date.now()) {
       if (!this.questions[id]) return false;
       if (!this.state.answeredIds.includes(id)) this.state.answeredIds.push(id);
@@ -250,11 +252,16 @@
       const assignment = { sourceQuestionId, reviewQuestionId, conceptId:this.questions[sourceQuestionId].category || '', stage:schedule.stage, dueAt:schedule.dueAt, assignedAt:now, status:'assigned' };
       this.state.reviewAssignments[sourceQuestionId] = assignment; this.save(); return assignment;
     }
-    completeReview(sourceQuestionId, correct, now = Date.now()) {
+    completeReview(sourceQuestionId, correct, now = Date.now(), reviewQuestionId = null) {
       const assignment = this.state.reviewAssignments[sourceQuestionId];
       if (!assignment || assignment.status !== 'assigned' || now < assignment.dueAt) return false;
       const recorded = this.record(sourceQuestionId, correct, now);
-      if (recorded) { delete this.state.reviewAssignments[sourceQuestionId]; this.save(); }
+      if (recorded) {
+        const actualReviewId = reviewQuestionId || assignment.reviewQuestionId;
+        if (actualReviewId && actualReviewId !== sourceQuestionId && this.questions[actualReviewId]) delete this.state.drafts[actualReviewId];
+        delete this.state.reviewAssignments[sourceQuestionId];
+        this.save();
+      }
       return recorded;
     }
     recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now(), reviewStage = null, confidence = 'unsure') {

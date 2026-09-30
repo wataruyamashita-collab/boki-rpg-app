@@ -34,6 +34,8 @@ jobs:
         run: node .github/visual/run-worksheet-mobile.js
       - name: Run learning analysis gate in real browsers
         run: node .github/visual/run-learning-analysis.js
+      - name: Run Issue 161 all-300 state-isolation gate
+        run: node .github/visual/run-state-isolation.js
       - name: Upload screenshots and DOM metrics
         if: always()
         uses: actions/upload-artifact@v4
