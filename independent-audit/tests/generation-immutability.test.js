@@ -20,7 +20,7 @@ const auditPath=path.join(
 );
 
 const authorityBytes=new Map(
-  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78]
+  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79]
     .filter(generation=>fs.existsSync(authorityPath(generation)))
     .map(
       generation=>[
@@ -77,14 +77,17 @@ try{
   const generation76Committed=committed(76);
   const generation77Committed=committed(77);
   const generation78Committed=committed(78);
+  const generation79Committed=committed(79);
 
   test(
-    'authority sequence tracks committed Generations through 78',
+    'authority sequence tracks committed Generations through 79',
     ()=>assert.deepStrictEqual(
       generations,
-      generation78Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78]
-        : generation77Committed
+      generation79Committed
+        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79]
+        : generation78Committed
+          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78]
+          : generation77Committed
           ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77]
         : generation76Committed
           ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76]
@@ -281,6 +284,8 @@ try{
     }
   );
 
+  const generation79Pending=
+    fs.existsSync(authorityPath(79))&&!generation79Committed;
   const generation78Pending=
     fs.existsSync(authorityPath(78))&&!generation78Committed;
   const generation77Pending=
@@ -304,7 +309,25 @@ try{
   const generation68Pending=
     fs.existsSync(authorityPath(68))&&!generation68Committed;
 
-  if(generation78Committed){
+  if(generation79Committed){
+    test(
+      'committed Generation 79 current integrity passes',
+      ()=>assert.strictEqual(
+        lifecycle.verifyCurrent().ok,
+        true
+      )
+    );
+  }else if(generation79Pending){
+    const generation79Candidate=
+      JSON.parse(fs.readFileSync(authorityPath(79),'utf8'));
+    test(
+      'pending Generation 79 candidate integrity passes',
+      ()=>assert.strictEqual(
+        lifecycle.verifyCandidate(generation79Candidate).ok,
+        true
+      )
+    );
+  }else if(generation78Committed){
     test(
       'committed Generation 78 current integrity passes',
       ()=>assert.strictEqual(
