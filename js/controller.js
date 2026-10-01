@@ -544,6 +544,78 @@
       });
     }
     resetFilters() { this.clearOrdinaryFilters(); this.renderModes(); }
+    renderStudyRecommendations(mode, now = Date.now()) {
+      const container = this.document.getElementById(`${mode}-recommendations`);
+      if (!container || !['story', 'training'].includes(mode) || !Number.isFinite(now) || now < 0) return false;
+      const make = (tag, className, text) => {
+        const node = this.document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+      container.replaceChildren();
+      const heading = make('div', 'study-recommendation-heading');
+      heading.append(
+        make('h3', '', '今日のおすすめ'),
+        make('p', '', '学習履歴から、いま取り組む理由が明確な問題を優先して表示します。')
+      );
+      container.append(heading);
+
+      const dueIds = this.model.dueReviewIds(now);
+      if (dueIds.length) {
+        const first = this.questions[dueIds[0]];
+        const card = make('article', 'study-recommendation-card due-review');
+        const copy = make('div', 'study-recommendation-copy');
+        copy.append(
+          make('span', 'study-recommendation-badge', '復習期限'),
+          make('strong', '', `${dueIds.length}問の復習期限が来ています`),
+          make('p', 'study-recommendation-reason', first ? `${first.category || '学習済み問題'}から復習を始めます。期限前の問題は前倒ししません。` : '期限が来た問題から復習します。')
+        );
+        const button = make('button', '', '復習モードへ');
+        button.type = 'button';
+        button.dataset.action = 'mode';
+        button.dataset.mode = 'review';
+        card.append(copy, button);
+        container.append(card);
+        return true;
+      }
+
+      const allowedIds = mode === 'training'
+        ? this.learningIds().filter(id => this.questions[id]?.type !== 'journal')
+        : this.storyIds();
+      const allowed = new Set(allowedIds);
+      const ids = this.model.priorityStudyIds({ now }).filter(id => allowed.has(id)).slice(0, 3);
+      const list = make('div', 'study-recommendation-list');
+      if (!ids.length) {
+        list.append(make('p', 'analysis-empty', '現在おすすめできる問題はありません。'));
+        container.append(list);
+        return true;
+      }
+
+      ids.forEach((id, index) => {
+        const question = this.questions[id];
+        const priority = this.model.studyPriority(id, now);
+        if (!question || !priority) return;
+        const card = make('article', 'study-recommendation-card');
+        const copy = make('div', 'study-recommendation-copy');
+        copy.append(
+          make('span', 'study-recommendation-badge', index === 0 ? 'いま優先' : '次におすすめ'),
+          make('strong', '', `${question.category || '未分類'}｜${id}`),
+          make('p', 'study-recommendation-question', question.question || ''),
+          make('p', 'study-recommendation-reason', priority.reasons.join('・')),
+          make('small', 'study-recommendation-mastery', `習熟度：${priority.mastery?.state || '未着手'}`)
+        );
+        const button = make('button', '', 'この問題を解く');
+        button.type = 'button';
+        button.dataset.action = 'start';
+        button.dataset.questionId = id;
+        button.dataset.startFresh = 'true';
+        card.append(copy, button);
+        list.append(card);
+      });
+      container.append(list);
+      return true;
+    }
     visibleIdsForMode(ids, mode) { return mode === 'exam' ? [...ids] : this.filteredIds(ids); }
     renderModes() {
       const render = (id, ids, mode) => { const filtered = this.visibleIdsForMode(ids, mode); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; if (mode !== 'exam') button.dataset.startFresh = 'true'; const mistakes = this.model.state.mistakeCounts[qid] || 0; const hasDraft = Boolean(this.model.state.drafts?.[qid]); button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}${mode !== 'exam' && hasDraft ? '｜保存入力あり・最初から' : ''}`; return button; })); return filtered.length; };
@@ -560,6 +632,8 @@
         render('review-list', reviewIds, 'review'),
         render('exam-list', examIds, 'exam')
       ];
+      this.renderStudyRecommendations('story');
+      this.renderStudyRecommendations('training');
       const count = modeIndex < 0 ? 0 : counts[modeIndex];
       const hasActiveFilter = Boolean(this.filters.query.trim() || this.filters.account || this.filters.mistakes !== 'all');
       this.document.getElementById('filter-status').textContent = count === 0 && hasActiveFilter
