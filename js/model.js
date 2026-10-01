@@ -284,13 +284,82 @@
       if (recent.length >= 3 && accuracy >= .8 && fast >= .6 && delayed) return Math.min(4, current + 1);
       return current;
     }
-    recommendedIds(concept) {
+    studyPriority(id, now = Date.now()) {
+      const question = this.questions[id];
+      if (!question || ['review', 'transfer', 'exam'].includes(question.learningRole) || !Number.isFinite(now) || now < 0) return null;
+      const lifetime = this.questionAccuracy(id);
+      const recent = this.recentAccuracy({ questionId:id, limit:5 });
+      const stats = this.statsForQuestion(id);
+      const schedule = this.state.reviewSchedule[id] || null;
+      const due = Boolean(schedule && Number.isFinite(schedule.dueAt) && schedule.dueAt <= now);
+      const attempts = lifetime?.attempts || 0;
+      const inactiveMs = attempts && stats.lastAnsweredAt > 0 ? Math.max(0, now - stats.lastAnsweredAt) : null;
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      let tier = 5;
+      const reasons = [];
+      if (due) {
+        tier = 0;
+        reasons.push('復習期限を過ぎています');
+      } else if (stats.lastResult === false || stats.incorrectStreak >= 2) {
+        tier = 1;
+        if (stats.lastResult === false) reasons.push('直近の回答が誤答です');
+        if (stats.incorrectStreak >= 2) reasons.push(`連続誤答${stats.incorrectStreak}回です`);
+      } else {
+        const recentWeak = recent.attempts > 0 && recent.accuracy < .6;
+        const lifetimeWeak = attempts >= 2 && lifetime.accuracy < .6;
+        if (recentWeak || lifetimeWeak) {
+          tier = 2;
+          if (recentWeak) reasons.push(`直近${recent.attempts}回の正答率が60%未満です`);
+          if (lifetimeWeak) reasons.push('累積正答率が60%未満です');
+        } else if (attempts > 0 && inactiveMs >= sevenDaysMs) {
+          tier = 3;
+          reasons.push('最終回答から7日以上経過しています');
+        } else if (attempts === 0) {
+          tier = 4;
+          reasons.push('まだ回答していない問題です');
+        } else {
+          reasons.push('現在の学習順で進められます');
+        }
+      }
+      return {
+        id,
+        tier,
+        reasons,
+        due,
+        dueAt:schedule?.dueAt ?? null,
+        overdueMs:due ? Math.max(0, now - schedule.dueAt) : 0,
+        inactiveMs,
+        lifetime,
+        recent,
+        mastery:this.learningMastery(id)
+      };
+    }
+    priorityStudyIds({ now = Date.now(), limit = Infinity, category = null } = {}) {
+      if (!Number.isFinite(now) || now < 0) return [];
+      const safeLimit = Number.isSafeInteger(limit) && limit >= 0 ? limit : Infinity;
+      const order = new Map(Object.keys(this.questions).map((id, index) => [id, index]));
+      return Object.values(this.questions)
+        .filter(question => !category || question.category === category)
+        .map(question => this.studyPriority(question.id, now))
+        .filter(Boolean)
+        // A future spaced-review assignment is authoritative: ordinary recommendations
+        // must not pull it forward before its due time.
+        .filter(item => item.due || !this.state.reviewSchedule[item.id])
+        .sort((a, b) => a.tier - b.tier ||
+          (a.tier === 0 ? (a.dueAt || 0) - (b.dueAt || 0) : 0) ||
+          (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER))
+        .slice(0, safeLimit)
+        .map(item => item.id);
+    }
+    recommendedIds(concept, now = Date.now()) {
       const attempted = new Set(this.state.attempts.map(item => item.questionId || item.id));
       // Review items are released only by dueReviewIds; transfer items are reserved for unseen assessment.
       const candidates = Object.values(this.questions).filter(item => item.category === concept && !['review', 'transfer', 'exam'].includes(item.learningRole));
       const target = this.adaptiveDifficulty(concept, candidates[0]?.difficulty || 2);
       const roleOrder = { core:0, drill:1, reinforcement:1, review:2, transfer:3, exam:4 };
-      return candidates.sort((a,b) => Number(attempted.has(a.id))-Number(attempted.has(b.id)) ||
+      const priority = id => this.studyPriority(id, now)?.tier ?? Number.MAX_SAFE_INTEGER;
+      return candidates.sort((a,b) => priority(a.id)-priority(b.id) ||
+        Number(attempted.has(a.id))-Number(attempted.has(b.id)) ||
         (roleOrder[a.learningRole] ?? 2)-(roleOrder[b.learningRole] ?? 2) || Math.abs(a.difficulty-target)-Math.abs(b.difficulty-target)).map(item => item.id);
     }
     placementStart(scores = {}) {
