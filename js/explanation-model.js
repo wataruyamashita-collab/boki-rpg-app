@@ -252,9 +252,6 @@
       if(Object.prototype.hasOwnProperty.call(cells,'endingCash')&&Object.prototype.hasOwnProperty.call(cells,'profit')){
         return[{label:'現金残高と利益を別々の考え方で求めたか確認する',expected:'現金残高＝期首現金＋現金収入－現金支出／利益＝収益－費用',evidenceRefs:['materials'],checkKind:'concept-separation'}];
       }
-      if(Number.isFinite(cells.cashAfter)&&Number.isFinite(cells.cashShortage)){
-        return[{label:'現金実査額と補正後帳簿残高の差が現金過不足になるか確認する',expected:'補正後帳簿残高 − 現金実査額 = 現金過不足',evidenceRefs:['materials','answer.cells.cashAfter','answer.cells.cashShortage'],checkKind:'cash-reconciliation'}];
-      }
       if(Number.isFinite(cells.interestExpense)&&Number.isFinite(cells.interestPayable)&&cells.interestExpense===cells.interestPayable){
         return[{label:'追加計上した支払利息と未払利息が対応しているか確認する',expected:num(cells.interestExpense)+' = '+num(cells.interestPayable),evidenceRefs:['answer.cells.interestExpense','answer.cells.interestPayable'],checkKind:'accrual-reconciliation'}];
       }
