@@ -216,15 +216,9 @@
       if(c.creditAccount&&Number.isFinite(c.creditAmount))out.push({from:'帳簿と証ひょうの差',decision:'訂正仕訳',to:'貸方',debitCredit:'credit',value:c.creditAccount+' '+comma(c.creditAmount)+'円',evidenceRefs:['materials','answer.cells.creditAccount','answer.cells.creditAmount']});
       return out;
     }
-    // Comprehensive questions can contain many calculated outputs. Show one concise
-    // destination map instead of repeating every numeric answer as another card.
-    if(q.type==='comprehensive'){
-      const metadata=q.table?.inputMetadata||{},ids=Object.keys(q.answer?.cells||{});
-      const names=ids.map(id=>metadata[id]?.label).filter(shown);
-      const destination=names.length&&names.length<=4?names.join('・'):
-        names.length?'各解答欄（'+names.length+'項目）':'各解答欄';
-      return[{from:'上で求めた各処理の計算結果',decision:'項目名を対応させて記入',to:destination,debitCredit:null,value:'上で求めた金額を対応する欄へ記入',evidenceRefs:['answer.cells','table.inputMetadata']}];
-    }
+    // Comprehensive questions already expose the final destination in the answer rows.
+    // Repeating calculated final answers as transfer cards adds no new learning.
+    if(q.type==='comprehensive')return[];
     const locs=locations(q),metadata=q.table?.inputMetadata||{};
     return Object.entries(q.answer?.cells||{}).map(([id,value])=>{
       const p=locs.get(id),meta=metadata[id];
