@@ -261,9 +261,6 @@
       return[{label:'整理後残高を重複なく振り分けたか確認する',expected:'各残高は損益計算書または貸借対照表の所定欄へ一度だけ',evidenceRefs:['answer.cells'],checkKind:'classification'}];
     }
     if(q.type==='financial_statement'){
-      if(Number.isFinite(cells.sales)&&Number.isFinite(cells.costOfSales)&&Number.isFinite(cells.expenses)&&Number.isFinite(cells.netIncome)&&cells.sales-cells.costOfSales-cells.expenses===cells.netIncome){
-        return[{label:'売上高から売上原価と費用を引くと当期純利益になるか確認する',expected:num(cells.sales)+' − '+num(cells.costOfSales)+' − '+num(cells.expenses)+' = '+num(cells.netIncome),evidenceRefs:['answer.cells.sales','answer.cells.costOfSales','answer.cells.expenses','answer.cells.netIncome'],checkKind:'profit-reconciliation'}];
-      }
       if(Number.isFinite(cells.assetsTotal)&&Number.isFinite(cells.liabilitiesEquityTotal)){
         return[{label:'資産合計と負債・純資産合計が一致しているか確認する',expected:num(cells.assetsTotal)+' = '+num(cells.liabilitiesEquityTotal),evidenceRefs:['answer.cells.assetsTotal','answer.cells.liabilitiesEquityTotal'],checkKind:'independent-balance'}];
       }
