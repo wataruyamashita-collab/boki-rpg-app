@@ -24,7 +24,7 @@ for(const q of target){
   assert(model.summary?.length>=2,q.id+': learner strategy');
   assert(model.calculation?.length,q.id+': calculation guidance');
   assert(model.transfer?.length,q.id+': destination/transfer guidance');
-  assert(model.checks?.length,q.id+': independent check');
+  if(q.id!=='F001')assert(model.checks?.length,q.id+': independent check');
   assert(model.mistakes?.length,q.id+': wrong-answer diagnostic');
   const forbidden=new Set([...(q.table?.inputCells||[]),'before','adjustment','after']);
   for(const item of model.transfer)assert(!forbidden.has(String(item.to||'')),q.id+': no raw transfer destination '+String(item.to||''));
@@ -33,7 +33,7 @@ for(const q of target){
   assert(plan.components.some(item=>item.id==='source'),q.id+': source component');
   assert(plan.components.some(item=>item.id==='decision'),q.id+': decision component');
   assert(plan.components.some(item=>item.id==='transfer'),q.id+': transfer component');
-  assert(plan.components.some(item=>item.id==='check'),q.id+': check component');
+  if(model.checks?.length)assert(plan.components.some(item=>item.id==='check'),q.id+': check component');
 }
 assert.deepStrictEqual(JSON.parse(JSON.stringify(profiles)),{correction:10,worksheet:18,adjustedTrial:1,closingEntries:1,financialPL:1,financialBS:9},'final 40 teaching-profile distribution');
 for(const id of Array.from({length:17},(_,i)=>'D'+String(i+2).padStart(3,'0'))){
@@ -41,7 +41,7 @@ for(const id of Array.from({length:17},(_,i)=>'D'+String(i+2).padStart(3,'0'))){
   assert(model.transfer.every(item=>!['before','adjustment','after'].includes(String(item.to||''))),id+': worksheet destinations are learner-facing Japanese');
 }
 const f1=root.ExplanationModel.build(root.QuestionData.F001,{cells:{}},{correct:false});
-assert(f1.checks.some(item=>item.checkKind==='profit-reconciliation'),'F001 has an independent profit reconciliation');
+assert.strictEqual(f1.checks.length,0,'F001 omits a fake check that would only repeat the profit calculation');
 assert.strictEqual(f1.transfer.length,4,'F001 keeps all four answer destinations');
 assert(f1.transfer.filter(item=>item.value==='上で求めた金額').length===2,'F001 calculated results are not numerically echoed in transfer cards');
 for(const id of Array.from({length:9},(_,i)=>'F'+String(i+2).padStart(3,'0'))){
