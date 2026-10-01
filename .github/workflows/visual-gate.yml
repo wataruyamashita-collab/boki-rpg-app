@@ -46,6 +46,8 @@ jobs:
         run: node .github/visual/run-ch7-8-explanations.js
       - name: Run Issue 161 Chapter 9-10 / comprehensive explanation gate
         run: node .github/visual/run-ch9-10-comprehensive-explanations.js
+      - name: Run Issue 161 Chapter 11-12 final explanation gate
+        run: node .github/visual/run-ch11-12-final-explanations.js
       - name: Upload screenshots and DOM metrics
         if: always()
         uses: actions/upload-artifact@v4
