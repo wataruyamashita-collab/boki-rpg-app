@@ -16062,6 +16062,15 @@ Object.values(QuestionData).forEach(item => {
   }
 });
 
+// Issue #161 PR-F: formal Batch D covers Chapter 9–10 plus all
+// comprehensive questions. The remaining Chapter 11–12 non-comprehensive
+// questions stay explicitly tracked for PR-G / all-300 closure.
+Object.values(QuestionData).forEach(item => {
+  if ((item.chapter >= 9 && item.chapter <= 10) || item.type === 'comprehensive') {
+    item.teachingPresentation = 'structured-always';
+  }
+});
+
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {

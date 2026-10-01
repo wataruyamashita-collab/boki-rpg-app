@@ -217,7 +217,7 @@
       return out;
     }
     // Comprehensive questions already expose the final destination in the answer rows.
-    // Repeating each calculated result as a second "transfer" card adds no new learning.
+    // Repeating calculated final answers as transfer cards adds no new learning.
     if(q.type==='comprehensive')return[];
     const locs=locations(q),metadata=q.table?.inputMetadata||{};
     return Object.entries(q.answer?.cells||{}).map(([id,value])=>{
@@ -251,6 +251,9 @@
       }
       if(Object.prototype.hasOwnProperty.call(cells,'endingCash')&&Object.prototype.hasOwnProperty.call(cells,'profit')){
         return[{label:'現金残高と利益を別々の考え方で求めたか確認する',expected:'現金残高＝期首現金＋現金収入－現金支出／利益＝収益－費用',evidenceRefs:['materials'],checkKind:'concept-separation'}];
+      }
+      if(Number.isFinite(cells.interestExpense)&&Number.isFinite(cells.interestPayable)&&cells.interestExpense===cells.interestPayable){
+        return[{label:'追加計上した支払利息と未払利息が対応しているか確認する',expected:num(cells.interestExpense)+' = '+num(cells.interestPayable),evidenceRefs:['answer.cells.interestExpense','answer.cells.interestPayable'],checkKind:'accrual-reconciliation'}];
       }
       return[];
     }
@@ -389,10 +392,10 @@
       out.transfer=arr(out.transfer).flatMap(item=>{
         const key=comparableValue(item?.value);
         if(!key||!calculatedValues.has(key))return[item];
-        if(q.type!=='ledger')return[];
+        if(!['ledger','trial_balance'].includes(q.type))return[];
         const base=String(item.decision||'').trim();
         const decision=/記入/u.test(base)?base:(base?base+'を該当欄へ記入':'計算結果を該当欄へ記入');
-        return[{...item,decision,value:'上で求めた金額'}];
+        return[{...item,decision,value:q.type==='trial_balance'?'上で求めた合計':'上で求めた金額'}];
       });
     }
     return out;
