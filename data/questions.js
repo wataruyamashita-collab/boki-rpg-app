@@ -16071,6 +16071,15 @@ Object.values(QuestionData).forEach(item => {
   }
 });
 
+// Issue #161 PR-G: close the remaining Chapter 11-12 non-comprehensive
+// explanation coverage. These 40 questions are correction / worksheet /
+// financial-statement cases and now use the same structured flow on both paths.
+Object.values(QuestionData).forEach(item => {
+  if (item.chapter >= 11 && item.chapter <= 12 && ['correction','worksheet','financial_statement'].includes(item.type)) {
+    item.teachingPresentation = 'structured-always';
+  }
+});
+
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {
