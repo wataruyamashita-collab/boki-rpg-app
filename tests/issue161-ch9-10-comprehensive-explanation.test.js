@@ -22,14 +22,14 @@ for(const q of target){
   assert(model.sources?.length,q.id+': source evidence');
   assert(model.summary?.length>=2,q.id+': learner strategy');
   if(q.type!=='comprehensive')assert(model.transfer?.length,q.id+': destination/transfer guidance');
-  assert(model.checks?.length,q.id+': independent check');
+  if(q.type!=='comprehensive')assert(model.checks?.length,q.id+': independent check');
   assert(model.mistakes?.length,q.id+': wrong-answer diagnostic');
   for(const id of q.table?.inputCells||[])assert(!model.transfer.some(item=>String(item.to||'')===id),q.id+': no raw transfer key');
   assert(plan.components.some(item=>item.id==='goal'),q.id+': goal component');
   assert(plan.components.some(item=>item.id==='source'),q.id+': source component');
   assert(plan.components.some(item=>item.id==='decision'),q.id+': decision component');
   if(q.type!=='comprehensive')assert(plan.components.some(item=>item.id==='transfer'),q.id+': transfer component');
-  assert(plan.components.some(item=>item.id==='check'),q.id+': check component');
+  if(model.checks?.length)assert(plan.components.some(item=>item.id==='check'),q.id+': check component');
 }
 assert.deepStrictEqual(JSON.parse(JSON.stringify(profiles)),{trialBalance:40,correction:10,comprehensiveClosing:3,comprehensive:7},'Batch D teaching-profile distribution');
 for(const q of target.filter(q=>q.type==='trial_balance')){
@@ -41,7 +41,7 @@ for(const q of target.filter(q=>q.type==='comprehensive')){
   const model=root.ExplanationModel.build(q,{cells:{}},{correct:false});
   assert.strictEqual(model.transfer.length,0,q.id+': comprehensive does not repeat final answers as transfer cards');
 }
-assert(root.ExplanationModel.build(root.QuestionData.C002,{cells:{}},{correct:false}).checks.some(item=>item.checkKind==='cash-reconciliation'),'C002 cash reconciliation');
+assert.strictEqual(root.ExplanationModel.build(root.QuestionData.C002,{cells:{}},{correct:false}).checks.length,0,'C002 omits answer-echo pseudo check');
 assert(root.ExplanationModel.build(root.QuestionData.C003,{cells:{}},{correct:false}).checks.some(item=>item.checkKind==='accrual-reconciliation'),'C003 accrual reconciliation');
 const audit=JSON.parse(fs.readFileSync('reports/issue-161/tac-curriculum-audit.json','utf8'));
 assert.strictEqual(audit.reviewedQuestions,300);
