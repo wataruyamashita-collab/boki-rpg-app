@@ -1,0 +1,138 @@
+# Generation 82 Issue 132 Phase 3A finalizer
+name: Issue 132 finalize Phase 3A
+on:
+  push:
+    branches:
+      - codex/issue-132-phase3a-study-priority
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: github.event.head_commit.message == 'Prepare Generation 82 Issue 132 Phase 3A'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/issue-132-phase3a-study-priority
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Pre-authority Generation 82 checks
+        run: |
+          node tests/learning-priority.test.js
+          node tests/learning-metrics.test.js
+          node tests/learning-mastery.test.js
+          node tests/resume-reset.test.js
+          node tests/issue161-input-state-contract.test.js
+          node tests/issue161-state-isolation.test.js
+          node tests/issue161-explanation-design-system.test.js
+          node tests/app.test.js
+          git diff --check
+      - name: Ensure PWA release 20260924-151
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const release='20260924-151',previous='20260924-150';
+          let manifest=JSON.parse(fs.readFileSync('pwa-release-manifest.json','utf8'));
+          let html=fs.readFileSync('index.html','utf8'),sw=fs.readFileSync('service-worker.js','utf8');
+          if(manifest.release===previous){
+            if(!html.includes(previous))throw new Error('index previous-release anchor missing');
+            html=html.split(previous).join(release);
+            const from=`const RELEASE = '${previous}';`,to=`const RELEASE = '${release}';`;
+            if((sw.split(from).length-1)!==1)throw new Error('service worker previous-release anchor mismatch');
+            sw=sw.replace(from,to);manifest.release=release;manifest.previousRelease=previous;
+            fs.writeFileSync('index.html',html);fs.writeFileSync('service-worker.js',sw);
+          }else if(manifest.release===release){
+            if(manifest.previousRelease!==previous)throw new Error('manifest previousRelease mismatch');
+            if(!html.includes(release)||!sw.includes(`const RELEASE = '${release}';`))throw new Error('release mismatch');
+          }else throw new Error('unexpected manifest release '+manifest.release);
+          for(const asset of Object.keys(manifest.assets))manifest.assets[asset]=crypto.createHash('sha256').update(fs.readFileSync(asset)).digest('hex');
+          fs.writeFileSync('pwa-release-manifest.json',JSON.stringify(manifest,null,2)+'\n');
+          NODE
+      - name: Ensure Generation 82 authority
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),path=require('path'),lifecycle=require('./scripts/qa/phase-b-lifecycle');
+          const file='reports/auto-gate/audit-locks/phase-b-generation-82.json';
+          if(fs.existsSync(file)){
+            const current=lifecycle.verifyCurrent();if(!current.ok||current.generation!==82)throw new Error('existing Generation 82 integrity failure: '+current.errors.join(', '));
+            const document=JSON.parse(fs.readFileSync(file,'utf8'));if(document.predecessor?.generation!==81)throw new Error('existing Generation 82 predecessor mismatch');
+          }else{
+            const authorities=lifecycle.generationAuthorities();if(authorities.at(-1)?.document?.generation!==81)throw new Error('Generation 81 is not latest authority');
+            const candidate=lifecycle.createCandidate();if(candidate.generation!==82||candidate.predecessor.generation!==81)throw new Error('Generation 82 chain mismatch');
+            const verification=lifecycle.verifyCandidate(candidate);if(!verification.ok)throw new Error(verification.errors.join(', '));
+            fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
+          }
+          NODE
+      - name: Mandatory Generation 82 tests
+        run: |
+          node tests/learning-priority.test.js
+          node tests/learning-metrics.test.js
+          node tests/learning-mastery.test.js
+          node tests/resume-reset.test.js
+          node tests/issue161-inventory.test.js
+          node tests/issue161-input-state-contract.test.js
+          node tests/issue161-state-isolation.test.js
+          node tests/issue161-ch1-3-explanation.test.js
+          node tests/issue161-ch4-6-explanation.test.js
+          node tests/issue161-ch7-8-explanation.test.js
+          node tests/issue161-ch9-10-comprehensive-explanation.test.js
+          node tests/issue161-ch11-12-final-explanation.test.js
+          node tests/issue161-explanation-design-system.test.js
+          node independent-audit/tests/generation-immutability.test.js
+          timeout 18m npm run verify
+          timeout 6m npm run qa:integrity
+          git diff --check
+      - name: Install pinned CI-only Playwright
+        run: npm install --no-save --package-lock=false playwright@1.55.0
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Browser Generation 82 regression gates
+        run: |
+          node .github/visual/run-learning-analysis.js
+          node .github/visual/run-state-isolation.js
+          node .github/visual/run-explanation-design-system.js
+          node .github/visual/run-ch1-3-explanations.js
+          node .github/visual/run-ch4-6-explanations.js
+          node .github/visual/run-ch7-8-explanations.js
+          node .github/visual/run-ch9-10-comprehensive-explanations.js
+          node .github/visual/run-ch11-12-final-explanations.js
+          node .github/visual/run-journal-mobile-input.js
+          node .github/visual/run-journal-explanation-ticket.js
+          node .github/visual/run-calculator-dock-all-questions.js
+          node .github/visual/run-calculator-dock-all-types.js
+          node .github/visual/run-explanation-integration.js
+          node .github/visual/run-worksheet-mobile.js
+          node .github/visual/run-visual.js strict
+      - name: Commit verified Generation 82
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html service-worker.js pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-82.json
+          git diff --cached --check
+          if ! git diff --cached --quiet; then git commit -m "Finalize Generation 82 Issue 132 Phase 3A"; fi
+      - name: Verify committed Generation 82
+        run: |
+          rm -rf artifacts node_modules
+          npm ci
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+      - name: Remove temporary workflow
+        run: |
+          git rm .github/workflows/issue132-finalize-phase3a.yml
+          git commit -m "Remove Generation 82 finalizer"
+      - name: Final exact-tree verification and publish
+        run: |
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+          rm -rf artifacts node_modules
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git push origin HEAD:codex/issue-132-phase3a-study-priority
