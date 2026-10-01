@@ -10,7 +10,7 @@
   'use strict';
   const SCHEMA_VERSION=1;
   const REQUIRED_SECTIONS=Object.freeze(['sources','summary','calculation','transfer','checks','mistakes']);
-  const labels={date:'日付',description:'摘要',transaction:'取引内容',account:'勘定科目',item:'項目',value:'内容',answer:'解答欄',recorded:'帳簿の記録',evidence:'証ひょう',section:'区分',quantity:'数量',unitPrice:'単価',amount:'金額',debit:'借方',credit:'貸方',balance:'残高',tbDebit:'試算表 借方',tbCredit:'試算表 貸方',adjDebit:'修正記入 借方',adjCredit:'修正記入 貸方',plDebit:'損益計算書 借方',plCredit:'損益計算書 貸方',bsDebit:'貸借対照表 借方',bsCredit:'貸借対照表 貸方',asset:'固定資産',acquisitionDate:'取得日',acquisitionCost:'取得原価',residualValue:'残存価額',life:'耐用年数',method:'償却方法',months:'使用月数',annualDepreciation:'1年分の減価償却費',openingAccumulated:'期首減価償却累計額',currentDepreciation:'当期減価償却費',closingAccumulated:'期末減価償却累計額',closingBookValue:'期末帳簿価額',disposalBookValue:'売却時帳簿価額',disposalLoss:'固定資産売却損'};
+  const labels={date:'日付',description:'摘要',transaction:'取引内容',account:'勘定科目',item:'項目',value:'内容',answer:'解答欄',recorded:'帳簿の記録',evidence:'証ひょう',section:'区分',quantity:'数量',unitPrice:'単価',amount:'金額',debit:'借方',credit:'貸方',balance:'残高',tbDebit:'試算表 借方',tbCredit:'試算表 貸方',adjDebit:'修正記入 借方',adjCredit:'修正記入 貸方',plDebit:'損益計算書 借方',plCredit:'損益計算書 貸方',bsDebit:'貸借対照表 借方',bsCredit:'貸借対照表 貸方',asset:'固定資産',acquisitionDate:'取得日',acquisitionCost:'取得原価',residualValue:'残存価額',life:'耐用年数',method:'償却方法',months:'使用月数',annualDepreciation:'1年分の減価償却費',openingAccumulated:'期首減価償却累計額',currentDepreciation:'当期減価償却費',closingAccumulated:'期末減価償却累計額',closingBookValue:'期末帳簿価額',disposalBookValue:'売却時帳簿価額',disposalLoss:'固定資産売却損',before:'整理前金額',adjustment:'決算整理額',after:'整理後金額'};
   const obj=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
   const arr=v=>Array.isArray(v)?v:(v==null?[]:[v]);
   const clone=v=>v==null?v:JSON.parse(JSON.stringify(v));
@@ -261,6 +261,9 @@
       return[{label:'整理後残高を重複なく振り分けたか確認する',expected:'各残高は損益計算書または貸借対照表の所定欄へ一度だけ',evidenceRefs:['answer.cells'],checkKind:'classification'}];
     }
     if(q.type==='financial_statement'){
+      if(Number.isFinite(cells.sales)&&Number.isFinite(cells.costOfSales)&&Number.isFinite(cells.expenses)&&Number.isFinite(cells.netIncome)&&cells.sales-cells.costOfSales-cells.expenses===cells.netIncome){
+        return[{label:'売上高から売上原価と費用を引くと当期純利益になるか確認する',expected:num(cells.sales)+' − '+num(cells.costOfSales)+' − '+num(cells.expenses)+' = '+num(cells.netIncome),evidenceRefs:['answer.cells.sales','answer.cells.costOfSales','answer.cells.expenses','answer.cells.netIncome'],checkKind:'profit-reconciliation'}];
+      }
       if(Number.isFinite(cells.assetsTotal)&&Number.isFinite(cells.liabilitiesEquityTotal)){
         return[{label:'資産合計と負債・純資産合計が一致しているか確認する',expected:num(cells.assetsTotal)+' = '+num(cells.liabilitiesEquityTotal),evidenceRefs:['answer.cells.assetsTotal','answer.cells.liabilitiesEquityTotal'],checkKind:'independent-balance'}];
       }
@@ -392,7 +395,7 @@
       out.transfer=arr(out.transfer).flatMap(item=>{
         const key=comparableValue(item?.value);
         if(!key||!calculatedValues.has(key))return[item];
-        if(!['ledger','trial_balance'].includes(q.type))return[];
+        if(!['ledger','trial_balance','financial_statement'].includes(q.type))return[];
         const base=String(item.decision||'').trim();
         const decision=/記入/u.test(base)?base:(base?base+'を該当欄へ記入':'計算結果を該当欄へ記入');
         return[{...item,decision,value:q.type==='trial_balance'?'上で求めた合計':'上で求めた金額'}];
