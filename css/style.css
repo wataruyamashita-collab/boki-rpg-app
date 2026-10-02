@@ -424,6 +424,26 @@ button.secondary-button:hover { color: #fff; }
   .study-recommendation-card button { width: 100%; white-space: normal; }
 }
 
+.rpg-mission { margin: 14px 0 18px; padding: 14px; border: 1px solid #d5dce0; border-radius: 12px; background: #f8fafb; }
+.rpg-mission-heading { display: grid; gap: 3px; margin-bottom: 10px; }
+.rpg-mission-heading .section-label { margin: 0; font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
+.rpg-mission-heading h3 { margin: 0; font-size: 1.05rem; }
+.rpg-mission-heading > p:last-child { margin: 0; color: #566573; font-size: .82rem; }
+.rpg-mission-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; min-width: 0; padding: 12px; border: 1px solid #d5dce0; border-radius: 10px; background: #fff; }
+.rpg-mission-card.due-review { border-width: 2px; }
+.rpg-mission-copy { display: grid; gap: 4px; min-width: 0; }
+.rpg-mission-copy > * { min-width: 0; overflow-wrap: anywhere; }
+.rpg-mission-badge { width: fit-content; padding: 2px 7px; border-radius: 999px; background: #eef2f5; font-size: .75rem; font-weight: 800; }
+.rpg-mission-question, .rpg-mission-reason { margin: 0; }
+.rpg-mission-question { font-size: .88rem; }
+.rpg-mission-reason { color: #34495e; font-size: .82rem; font-weight: 700; }
+.rpg-mission-mastery, .rpg-mission-skill, .rpg-mission-role { color: #566573; }
+.rpg-mission-card button { white-space: nowrap; }
+@media (max-width: 560px) {
+  .rpg-mission-card { grid-template-columns: 1fr; }
+  .rpg-mission-card button { width: 100%; white-space: normal; }
+}
+
 .tax-tool label { display: grid; }
 .tax-tool output { display: block; font-weight: 800; }
 #view-story > details > summary { min-height: 44px; padding: 10px 4px; cursor: pointer; font-weight: 700; }
