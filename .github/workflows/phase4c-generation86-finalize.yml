@@ -1,3 +1,4 @@
+# Generation 86 Issue #132 Phase 4C finalizer
 name: Phase 4C Generation 86 finalizer
 on:
   push:
@@ -5,13 +6,13 @@ on:
       - codex/issue-132-phase4c-reward-policy
     paths:
       - '.github/workflows/phase4c-generation86-finalize.yml'
-      - 'js/controller.js'
 permissions:
   contents: write
 jobs:
   finalize:
+    if: github.event.head_commit.message == 'Prepare Generation 86 Issue 132 Phase 4C'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,6 +23,20 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Pre-authority Generation 86 checks
+        run: |
+          node tests/rpg-reward-policy.test.js
+          node tests/rpg-area-progression.test.js
+          node tests/rpg-strategy-board.test.js
+          node tests/learning-recommendation-ux.test.js
+          node tests/learning-priority.test.js
+          node tests/learning-metrics.test.js
+          node tests/learning-mastery.test.js
+          node tests/resume-reset.test.js
+          node tests/issue161-input-state-contract.test.js
+          node tests/issue161-state-isolation.test.js
+          node tests/app.test.js
+          git diff --check
       - name: Prepare Release 20260924-155 and Generation 86 candidate
         run: |
           node <<'NODE'
@@ -87,35 +102,70 @@ jobs:
           const lifecycle=require('./scripts/qa/phase-b-lifecycle');
           const output=path.join(root,'reports/auto-gate/audit-locks/phase-b-generation-86.json');
           if(fs.existsSync(output))throw new Error('Generation 86 already exists');
+          const authorities=lifecycle.generationAuthorities();
+          if(authorities.at(-1)?.document?.generation!==85)throw new Error('Generation 85 is not latest authority');
           const candidate=lifecycle.createCandidate();
-          if(candidate.generation!==86)throw new Error(`expected Generation 86, got ${candidate.generation}`);
+          if(candidate.generation!==86||candidate.predecessor?.generation!==85)throw new Error('Generation 86 chain mismatch');
           const verification=lifecycle.verifyCandidate(candidate);
           if(!verification.ok)throw new Error(`candidate invalid: ${verification.errors.join(', ')}`);
           fs.writeFileSync(output,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
           console.log(`GENERATION_86_CANDIDATE_READY ${candidate.auditHash} ${candidate.baselineIdentity}`);
           NODE
-      - name: Phase 4C contract
-        run: node tests/rpg-reward-policy.test.js
-      - name: Mandatory verify
-        run: npm run verify
-      - name: QA tests
-        run: npm run qa:test
-      - name: Candidate integrity
-        run: node scripts/qa/verify-audit-candidate.js reports/auto-gate/audit-locks/phase-b-generation-86.json
-      - name: Candidate current-integrity view
-        run: npm run qa:integrity
-      - name: Commit finalized Generation 86 and remove temporary finalizer
+      - name: Mandatory Generation 86 tests
         run: |
-          git config user.name "wataruyamashita-collab"
-          git config user.email "wataru.yamashita@bl.tjk.co.jp"
-          git rm .github/workflows/phase4c-generation86-finalize.yml
+          node tests/rpg-reward-policy.test.js
+          node tests/rpg-area-progression.test.js
+          node tests/rpg-strategy-board.test.js
+          node tests/learning-recommendation-ux.test.js
+          node tests/learning-priority.test.js
+          node tests/learning-metrics.test.js
+          node tests/learning-mastery.test.js
+          node tests/resume-reset.test.js
+          node tests/issue161-inventory.test.js
+          node tests/issue161-input-state-contract.test.js
+          node tests/issue161-state-isolation.test.js
+          node independent-audit/tests/generation-immutability.test.js
+          timeout 18m npm run verify
+          timeout 6m npm run qa:integrity
+          node scripts/qa/verify-audit-candidate.js reports/auto-gate/audit-locks/phase-b-generation-86.json
+          git diff --check
+      - name: Install pinned CI-only Playwright
+        run: npm install --no-save --package-lock=false playwright@1.55.0
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Browser Generation 86 regression gates
+        run: |
+          node .github/visual/run-rpg-reward-policy.js
+          node .github/visual/run-rpg-area-progression.js
+          node .github/visual/run-rpg-strategy-board.js
+          node .github/visual/run-study-recommendation.js
+          node .github/visual/run-learning-analysis.js
+          node .github/visual/run-state-isolation.js
+          node .github/visual/run-explanation-design-system.js
+          node .github/visual/run-ch1-3-explanations.js
+          node .github/visual/run-ch4-6-explanations.js
+          node .github/visual/run-ch7-8-explanations.js
+          node .github/visual/run-ch9-10-comprehensive-explanations.js
+          node .github/visual/run-ch11-12-final-explanations.js
+          node .github/visual/run-journal-mobile-input.js
+          node .github/visual/run-journal-explanation-ticket.js
+          node .github/visual/run-calculator-dock-all-questions.js
+          node .github/visual/run-calculator-dock-all-types.js
+          node .github/visual/run-explanation-integration.js
+          node .github/visual/run-worksheet-mobile.js
+          node .github/visual/run-visual.js strict
+      - name: Commit verified Generation 86
+        run: |
+          rm -rf artifacts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           expected=$(printf "%s\n" \
             "independent-audit/tests/generation-immutability.test.js" \
             "index.html" \
             "pwa-release-manifest.json" \
             "reports/auto-gate/audit-locks/phase-b-generation-86.json" \
             "service-worker.js" | sort)
-          actual=$(git status --porcelain --untracked-files=all | sed 's/^...//' | sort)
+          actual=$(git status --porcelain --untracked-files=all | sed 's/^...//' | grep -v '^node_modules/' | sort)
           if [ "$actual" != "$expected" ]; then
             echo "GENERATION_86_FINALIZATION_REFUSED: dirty scope mismatch"
             echo "Expected:"
@@ -125,5 +175,28 @@ jobs:
             exit 1
           fi
           git add independent-audit/tests/generation-immutability.test.js index.html pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-86.json service-worker.js
-          git commit -m "Finalize Generation 86 for Issue #132 Phase 4C"
+          git diff --cached --check
+          git commit -m "Finalize Generation 86 Issue 132 Phase 4C"
+      - name: Verify committed Generation 86
+        run: |
+          rm -rf artifacts node_modules
+          npm ci
+          node tests/rpg-reward-policy.test.js
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+      - name: Remove temporary workflow
+        run: |
+          git rm .github/workflows/phase4c-generation86-finalize.yml
+          git commit -m "Remove Generation 86 finalizer"
+      - name: Final exact-tree verification and publish
+        run: |
+          node tests/rpg-reward-policy.test.js
+          npm run qa:test
+          npm run qa:integrity
+          npm run verify
+          git diff --check
+          rm -rf artifacts node_modules
+          test -z "$(git status --porcelain --untracked-files=all)"
           git push origin HEAD:codex/issue-132-phase4c-reward-policy
