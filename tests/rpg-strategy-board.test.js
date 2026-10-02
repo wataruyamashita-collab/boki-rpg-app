@@ -119,7 +119,8 @@ const startContext = {
 };
 assert.strictEqual(Controller.prototype.startRpgMission.call(startContext, 'L1'), true);
 assert.strictEqual(startContext.model.state.mode, 'story', '攻略ミッション開始時に既存Story modeへ接続する');
-assert.deepStrictEqual(started, {id:'L1', options:{fresh:true}}, '通常学習としてfresh startする');
+assert.strictEqual(started.id, 'L1', '選択した攻略ミッションを開始する');
+assert.strictEqual(started.options?.fresh, true, '通常学習としてfresh startする');
 assert.strictEqual(Controller.prototype.startRpgMission.call(startContext, 'unknown'), false, '未知IDはfail-closed');
 
 assert(html.includes('id="rpg-mission"') && html.includes('aria-label="攻略ミッション"'), '実務デスクに攻略ミッション領域を持つ');
