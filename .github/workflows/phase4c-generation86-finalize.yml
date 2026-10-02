@@ -5,6 +5,7 @@ on:
       - codex/issue-132-phase4c-reward-policy
     paths:
       - '.github/workflows/phase4c-generation86-finalize.yml'
+      - 'js/controller.js'
 permissions:
   contents: write
 jobs:
