@@ -59,6 +59,14 @@
     // Lv.30 requires 12,615 XP: less than the XP available from completing the
     // authored curriculum, while still requiring broad mastery for promotion.
     get level() { return Math.min(30, Math.floor(Math.sqrt(this.state.xp / 15)) + 1); }
+    static skillForQuestion(question) {
+      if (!question || typeof question.type !== 'string') return null;
+      if (question.type === 'journal') return '仕訳';
+      if (['ledger','trial_balance','correction'].includes(question.type)) return '帳簿';
+      if (question.type === 'worksheet') return '決算整理';
+      if (['financial_statement','comprehensive'].includes(question.type)) return '財務諸表';
+      return null;
+    }
     skillMastery(skill) {
       const aggregate = this.state.mastery[`@skill:${skill}`];
       return aggregate?.possible ? aggregate.earned / aggregate.possible : 0;
@@ -78,7 +86,7 @@
       const mastery = this.state.mastery[question.category] || { earned: 0, possible: 0 };
       mastery.earned += score.earned; mastery.possible += score.possible;
       this.state.mastery[question.category] = mastery;
-      const skill = question.type === 'journal' ? '仕訳' : ['ledger','trial_balance','correction'].includes(question.type) ? '帳簿' : question.type === 'worksheet' ? '決算整理' : ['financial_statement','comprehensive'].includes(question.type) ? '財務諸表' : null;
+      const skill = RPGModel.skillForQuestion(question);
       if (skill) {
         const key = `@skill:${skill}`; const aggregate = this.state.mastery[key] || { earned:0, possible:0 };
         aggregate.earned += score.earned; aggregate.possible += score.possible; this.state.mastery[key] = aggregate;
