@@ -641,6 +641,118 @@
       this.start(id, { fresh:true });
       return true;
     }
+    rpgAreas(now = Date.now()) {
+      if (!Number.isFinite(now) || now < 0) return [];
+      const allowed = Object.values(this.questions).filter(question => question &&
+        typeof question.id === 'string' &&
+        typeof question.category === 'string' &&
+        question.category &&
+        !['review','transfer','exam'].includes(question.learningRole));
+      const categories = [];
+      const byCategory = new Map();
+      allowed.forEach(question => {
+        if (!byCategory.has(question.category)) {
+          byCategory.set(question.category, []);
+          categories.push(question.category);
+        }
+        byCategory.get(question.category).push(question.id);
+      });
+      const due = new Set(this.model.dueReviewIds(now));
+      return categories.map(category => {
+        const ids = byCategory.get(category);
+        const rows = ids.map(id => ({
+          id,
+          mastery:this.model.learningMastery(id),
+          priority:this.model.studyPriority(id, now),
+          skill:root.RPGModel?.skillForQuestion?.(this.questions[id]) || null
+        }));
+        const settledCount = rows.filter(row => row.mastery?.state === '定着').length;
+        const evidenceCount = rows.filter(row => (row.mastery?.attempts || 0) > 0).length;
+        const dueIds = rows.filter(row => due.has(row.id)).map(row => row.id);
+        const weakRows = rows.filter(row => [1,2].includes(row.priority?.tier));
+        let state = '未着手';
+        if (dueIds.length || weakRows.length) state = '要再戦';
+        else if (rows.length && settledCount === rows.length) state = '定着';
+        else if (evidenceCount) state = '攻略中';
+        const priorityId = this.model.priorityStudyIds({ now, category }).find(id => ids.includes(id)) || null;
+        const skills = [...new Set(rows.map(row => row.skill).filter(Boolean))];
+        const skill = skills.length === 1 ? skills[0] : null;
+        const reasonRow = rows.find(row => due.has(row.id)) || weakRows[0] || rows.find(row => row.priority?.reasons?.length);
+        return {
+          category,
+          ids:[...ids],
+          state,
+          settledCount,
+          total:rows.length,
+          percent:rows.length ? Math.round((settledCount / rows.length) * 100) : 0,
+          dueCount:dueIds.length,
+          priorityId,
+          reason:reasonRow?.priority?.reasons?.[0] || '',
+          skill,
+          skillMastery:skill ? this.rpg.skillMastery(skill) : null
+        };
+      });
+    }
+    renderRpgAreas(now = Date.now()) {
+      const container = this.document.getElementById('rpg-areas');
+      if (!container || !Number.isFinite(now) || now < 0) return false;
+      const make = (tag, className, text) => {
+        const node = this.document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+      container.replaceChildren();
+      const areas = this.rpgAreas(now);
+      const settledAreas = areas.filter(area => area.state === '定着').length;
+      const heading = make('div', 'rpg-area-heading');
+      heading.append(
+        make('p', 'section-label', 'MASTERY MAP'),
+        make('h3', '', '攻略エリア'),
+        make('p', '', `論点ごとの現在地です。定着 ${settledAreas} / ${areas.length}エリア。`)
+      );
+      container.append(heading);
+      const grid = make('div', 'rpg-area-grid');
+      areas.forEach(area => {
+        const card = make('article', `rpg-area-card state-${area.state}`);
+        const header = make('div', 'rpg-area-card-header');
+        header.append(make('strong', '', area.category), make('span', 'rpg-area-state', area.state));
+        const progress = make('div', 'rpg-area-progress');
+        const meter = make('progress', '', '');
+        meter.max = area.total || 1;
+        meter.value = area.settledCount;
+        meter.setAttribute?.('aria-label', `${area.category}の定着進捗`);
+        progress.append(
+          meter,
+          make('span', '', `定着 ${area.settledCount} / ${area.total}（${area.percent}%）`)
+        );
+        card.append(header, progress);
+        if (area.skill) card.append(make('small', 'rpg-area-skill', `対応スキル：${area.skill} ${Math.round(Math.max(0, Math.min(1, area.skillMastery || 0)) * 100)}%`));
+        if (area.state === '要再戦' && area.reason) card.append(make('p', 'rpg-area-reason', area.reason));
+        if (area.state !== '定着') {
+          if (area.dueCount > 0) {
+            const button = make('button', '', `復習へ（${area.dueCount}問）`);
+            button.type = 'button';
+            button.dataset.action = 'mode';
+            button.dataset.mode = 'review';
+            card.append(button);
+          } else if (area.priorityId) {
+            const button = make('button', '', area.state === '未着手' ? 'このエリアを始める' : 'このエリアを進める');
+            button.type = 'button';
+            button.dataset.action = 'start-rpg-mission';
+            button.dataset.questionId = area.priorityId;
+            card.append(button);
+          } else {
+            card.append(make('small', 'rpg-area-waiting', '次の復習タイミングを待っています。'));
+          }
+        } else {
+          card.append(make('small', 'rpg-area-settled', '現在の学習証拠では定着しています。'));
+        }
+        grid.append(card);
+      });
+      container.append(grid);
+      return true;
+    }
     renderStudyRecommendations(mode, now = Date.now()) {
       const container = this.document.getElementById(`${mode}-recommendations`);
       if (!container || !['story', 'training'].includes(mode) || !Number.isFinite(now) || now < 0) return false;
@@ -732,6 +844,7 @@
       this.renderStudyRecommendations('story');
       this.renderStudyRecommendations('training');
       this.renderRpgMission();
+      this.renderRpgAreas();
       const count = modeIndex < 0 ? 0 : counts[modeIndex];
       const hasActiveFilter = Boolean(this.filters.query.trim() || this.filters.account || this.filters.mistakes !== 'all');
       this.document.getElementById('filter-status').textContent = count === 0 && hasActiveFilter

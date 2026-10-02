@@ -444,6 +444,28 @@ button.secondary-button:hover { color: #fff; }
   .rpg-mission-card button { width: 100%; white-space: normal; }
 }
 
+.rpg-areas { margin: 0 0 18px; padding: 14px; border: 1px solid #d5dce0; border-radius: 12px; background: #fff; }
+.rpg-area-heading { display: grid; gap: 3px; margin-bottom: 10px; }
+.rpg-area-heading .section-label { margin: 0; font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
+.rpg-area-heading h3 { margin: 0; font-size: 1.05rem; }
+.rpg-area-heading > p:last-child { margin: 0; color: #566573; font-size: .82rem; }
+.rpg-area-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; min-width: 0; }
+.rpg-area-card { display: grid; align-content: start; gap: 7px; min-width: 0; padding: 12px; border: 1px solid #d5dce0; border-radius: 10px; background: #f8fafb; }
+.rpg-area-card > * { min-width: 0; overflow-wrap: anywhere; }
+.rpg-area-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.rpg-area-state { flex: 0 0 auto; padding: 2px 7px; border-radius: 999px; background: #eef2f5; font-size: .72rem; font-weight: 800; }
+.rpg-area-card.state-要再戦 { border-width: 2px; }
+.rpg-area-card.state-定着 { background: #fbfcfc; }
+.rpg-area-progress { display: grid; gap: 4px; }
+.rpg-area-progress progress { width: 100%; max-width: 100%; }
+.rpg-area-progress span, .rpg-area-skill, .rpg-area-waiting, .rpg-area-settled { color: #566573; font-size: .78rem; }
+.rpg-area-reason { margin: 0; color: #34495e; font-size: .8rem; font-weight: 700; }
+.rpg-area-card button { width: 100%; margin-top: auto; white-space: normal; }
+@media (max-width: 560px) {
+  .rpg-area-grid { grid-template-columns: 1fr; }
+  .rpg-area-card-header { align-items: flex-start; }
+}
+
 .tax-tool label { display: grid; }
 .tax-tool output { display: block; font-weight: 800; }
 #view-story > details > summary { min-height: 44px; padding: 10px 4px; cursor: pointer; font-weight: 700; }
