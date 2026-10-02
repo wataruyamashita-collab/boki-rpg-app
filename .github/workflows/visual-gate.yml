@@ -34,6 +34,8 @@ jobs:
         run: node .github/visual/run-worksheet-mobile.js
       - name: Run learning analysis gate in real browsers
         run: node .github/visual/run-learning-analysis.js
+      - name: Run Phase 3B recommendation UX gate in real browsers
+        run: node .github/visual/run-study-recommendation.js
       - name: Run Issue 161 all-300 state-isolation gate
         run: node .github/visual/run-state-isolation.js
       - name: Run Issue 161 explanation design-system gate

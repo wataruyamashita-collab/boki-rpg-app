@@ -403,6 +403,27 @@ button.secondary-button:hover { color: #fff; }
   .learning-analysis-item { align-items: flex-start; flex-direction: column; gap: 2px; }
   .learning-problem-metrics { grid-template-columns: 1fr; }
 }
+.study-recommendations { margin: 14px 0 18px; padding: 14px; border: 1px solid #d5dce0; border-radius: 12px; background: #f8fafb; }
+.study-recommendation-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 14px; margin-bottom: 10px; }
+.study-recommendation-heading h3 { margin: 0; font-size: 1.05rem; }
+.study-recommendation-heading p { margin: 0; color: #566573; font-size: .82rem; }
+.study-recommendation-list { display: grid; gap: 8px; }
+.study-recommendation-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; min-width: 0; padding: 11px; border: 1px solid #e1e7eb; border-radius: 10px; background: #fff; }
+.study-recommendation-card.due-review { border-width: 2px; }
+.study-recommendation-copy { display: grid; gap: 4px; min-width: 0; }
+.study-recommendation-copy > * { min-width: 0; overflow-wrap: anywhere; }
+.study-recommendation-badge { width: fit-content; padding: 2px 7px; border-radius: 999px; background: #eef2f5; font-size: .75rem; font-weight: 800; }
+.study-recommendation-question, .study-recommendation-reason { margin: 0; }
+.study-recommendation-question { font-size: .88rem; }
+.study-recommendation-reason { color: #34495e; font-size: .82rem; font-weight: 700; }
+.study-recommendation-mastery { color: #566573; }
+.study-recommendation-card button { white-space: nowrap; }
+@media (max-width: 560px) {
+  .study-recommendation-heading { align-items: flex-start; flex-direction: column; }
+  .study-recommendation-card { grid-template-columns: 1fr; }
+  .study-recommendation-card button { width: 100%; white-space: normal; }
+}
+
 .tax-tool label { display: grid; }
 .tax-tool output { display: block; font-weight: 800; }
 #view-story > details > summary { min-height: 44px; padding: 10px 4px; cursor: pointer; font-weight: 700; }
