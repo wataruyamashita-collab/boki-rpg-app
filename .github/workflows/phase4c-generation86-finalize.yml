@@ -1,0 +1,128 @@
+name: Phase 4C Generation 86 finalizer
+on:
+  push:
+    branches:
+      - codex/issue-132-phase4c-reward-policy
+    paths:
+      - '.github/workflows/phase4c-generation86-finalize.yml'
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/issue-132-phase4c-reward-policy
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Prepare Release 20260924-155 and Generation 86 candidate
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs=require('fs'),crypto=require('crypto'),path=require('path');
+          const OLD='20260924-154', NEXT='20260924-155';
+          const root=process.cwd();
+          const read=file=>fs.readFileSync(path.join(root,file),'utf8');
+          const write=(file,value)=>fs.writeFileSync(path.join(root,file),value);
+          const sha=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
+          const replaceOne=(source,from,to,label)=>{
+            const count=source.split(from).length-1;
+            if(count!==1)throw new Error(`${label}: expected one match, found ${count}`);
+            return source.replace(from,to);
+          };
+
+          let sw=read('service-worker.js');
+          sw=replaceOne(sw,`const RELEASE = '${OLD}';`,`const RELEASE = '${NEXT}';`,'service worker release');
+          write('service-worker.js',sw);
+
+          let index=read('index.html');
+          const token=`?v=${OLD}`;
+          const tokenCount=index.split(token).length-1;
+          if(tokenCount!==13)throw new Error(`index release token count: ${tokenCount}`);
+          index=index.split(token).join(`?v=${NEXT}`);
+          write('index.html',index);
+
+          const manifestPath='pwa-release-manifest.json';
+          const manifest=JSON.parse(read(manifestPath));
+          if(manifest.release!==OLD)throw new Error(`unexpected current release: ${manifest.release}`);
+          manifest.previousRelease=OLD;
+          manifest.release=NEXT;
+          for(const file of Object.keys(manifest.assets||{})){
+            if(!fs.existsSync(path.join(root,file)))throw new Error(`release asset missing: ${file}`);
+            manifest.assets[file]=sha(file);
+          }
+          write(manifestPath,JSON.stringify(manifest,null,2)+'\n');
+
+          const immPath='independent-audit/tests/generation-immutability.test.js';
+          let imm=read(immPath);
+          const list85=Array.from({length:84},(_,i)=>i+2).join(',');
+          const list86=Array.from({length:85},(_,i)=>i+2).join(',');
+          imm=replaceOne(imm,`  [${list85}]\n    .filter`,`  [${list86}]\n    .filter`,'authority byte list');
+          imm=replaceOne(imm,`  const generation85Committed=committed(85);\n\n  test(`,`  const generation85Committed=committed(85);\n  const generation86Committed=committed(86);\n\n  test(`,'committed declaration');
+          imm=replaceOne(imm,"'authority sequence tracks committed Generations through 85'","'authority sequence tracks committed Generations through 86'",'sequence title');
+          imm=replaceOne(
+            imm,
+            `      generation85Committed\n        ? [${list85}]\n        : generation84Committed`,
+            `      generation86Committed\n        ? [${list86}]\n        : generation85Committed\n        ? [${list85}]\n        : generation84Committed`,
+            'sequence head'
+          );
+          imm=replaceOne(imm,`  for(const generation of [${list85}]){`,`  for(const generation of [${list86}]){`,'duplicate list');
+          imm=replaceOne(
+            imm,
+            `  const generation85Pending=\n    fs.existsSync(authorityPath(85))&&!generation85Committed;`,
+            `  const generation86Pending=\n    fs.existsSync(authorityPath(86))&&!generation86Committed;\n  const generation85Pending=\n    fs.existsSync(authorityPath(85))&&!generation85Committed;`,
+            'pending declaration'
+          );
+          const generation86Block=`  if(generation86Committed){\n    test(\n      'committed Generation 86 current integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCurrent().ok,\n        true\n      )\n    );\n  }else if(generation86Pending){\n    const generation86Candidate=\n      JSON.parse(fs.readFileSync(authorityPath(86),'utf8'));\n    test(\n      'pending Generation 86 candidate integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCandidate(generation86Candidate).ok,\n        true\n      )\n    );\n  }else if(generation85Committed){`;
+          imm=replaceOne(imm,'  if(generation85Committed){',generation86Block,'generation 86 integrity branch');
+          write(immPath,imm);
+
+          const lifecycle=require('./scripts/qa/phase-b-lifecycle');
+          const output=path.join(root,'reports/auto-gate/audit-locks/phase-b-generation-86.json');
+          if(fs.existsSync(output))throw new Error('Generation 86 already exists');
+          const candidate=lifecycle.createCandidate();
+          if(candidate.generation!==86)throw new Error(`expected Generation 86, got ${candidate.generation}`);
+          const verification=lifecycle.verifyCandidate(candidate);
+          if(!verification.ok)throw new Error(`candidate invalid: ${verification.errors.join(', ')}`);
+          fs.writeFileSync(output,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
+          console.log(`GENERATION_86_CANDIDATE_READY ${candidate.auditHash} ${candidate.baselineIdentity}`);
+          NODE
+      - name: Phase 4C contract
+        run: node tests/rpg-reward-policy.test.js
+      - name: Mandatory verify
+        run: npm run verify
+      - name: QA tests
+        run: npm run qa:test
+      - name: Candidate integrity
+        run: node scripts/qa/verify-audit-candidate.js reports/auto-gate/audit-locks/phase-b-generation-86.json
+      - name: Candidate current-integrity view
+        run: npm run qa:integrity
+      - name: Commit finalized Generation 86 and remove temporary finalizer
+        run: |
+          git config user.name "wataruyamashita-collab"
+          git config user.email "wataru.yamashita@bl.tjk.co.jp"
+          git rm .github/workflows/phase4c-generation86-finalize.yml
+          expected=$(printf "%s\n" \
+            "independent-audit/tests/generation-immutability.test.js" \
+            "index.html" \
+            "pwa-release-manifest.json" \
+            "reports/auto-gate/audit-locks/phase-b-generation-86.json" \
+            "service-worker.js" | sort)
+          actual=$(git status --porcelain --untracked-files=all | sed 's/^...//' | sort)
+          if [ "$actual" != "$expected" ]; then
+            echo "GENERATION_86_FINALIZATION_REFUSED: dirty scope mismatch"
+            echo "Expected:"
+            echo "$expected"
+            echo "Actual:"
+            echo "$actual"
+            exit 1
+          fi
+          git add independent-audit/tests/generation-immutability.test.js index.html pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-86.json service-worker.js
+          git commit -m "Finalize Generation 86 for Issue #132 Phase 4C"
+          git push origin HEAD:codex/issue-132-phase4c-reward-policy
