@@ -97,7 +97,7 @@
         const calculatorInput = event.target.closest?.('.amount-input[readonly]:not(:disabled)');
         if (calculatorInput) this.selectCalculatorTarget(calculatorInput);
         const action = event.target.closest('[data-action]'); if (!action) return;
-      const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0], { fresh:action.dataset.startFresh === 'true' }), next: () => this.next(), save: () => this.saveDraft(true), 'hint-1': () => this.showHint(1), 'hint-2': () => this.showHint(2), 'coaching-retry': () => this.beginCoachingRetry(), 'coaching-retry-result': () => this.beginCoachingRetry(), 'reveal-answer': () => this.revealAnswer(), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'reset-learning-data': () => this.requestFullReset(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
+      const handlers = { mode: () => this.showMode(action.dataset.mode), start: () => this.start(action.dataset.questionId || this.modeIds()[0], { fresh:action.dataset.startFresh === 'true' }), next: () => this.next(), save: () => this.saveDraft(true), 'hint-1': () => this.showHint(1), 'hint-2': () => this.showHint(2), 'coaching-retry': () => this.beginCoachingRetry(), 'coaching-retry-result': () => this.beginCoachingRetry(), 'reveal-answer': () => this.revealAnswer(), 'open-settings': () => this.openSettings(), 'backup-export': () => this.exportBackup(), 'reset-learning-data': () => this.requestFullReset(), 'tax-calculate': () => this.calculateTax(), 'open-log-analysis': () => this.openLogAnalysis(), 'start-rpg-mission': () => this.startRpgMission(action.dataset.questionId), 'start-boss': () => this.startBoss(action.dataset.boss), 'finish-exam': () => this.finishExam(false), 'exam-home': () => this.leaveExamResult('story'), 'exam-review': () => this.leaveExamResult('review'), 'exam-retry': () => this.retryExam(), 'placement-retake': () => { this.model.resetPlacement(); this.showPlacement(); }, 'placement-skip': () => this.skipPlacement(), calc: () => this.calcKey(action.dataset.calc), 'calc-insert': () => this.insertCalculatorResult(false), 'filter-reset': () => this.resetFilters(), 'retry-mode': () => this.restartAfterGameOver(false), 'review-game-over': () => this.restartAfterGameOver(true), 'open-related': () => this.openRelated(action.dataset.questionId) };
         if (handlers[action.dataset.action]) handlers[action.dataset.action]();
       });
       this.document.addEventListener('input', event => { if (event.target.matches('.amount-input')) this.formatAmount(event.target, event); if (event.target.matches('.amount-input, .table-text-input')) this.saveDraft(false); });
@@ -544,6 +544,103 @@
       });
     }
     resetFilters() { this.clearOrdinaryFilters(); this.renderModes(); }
+    rpgMission(now = Date.now()) {
+      if (!Number.isFinite(now) || now < 0) return null;
+      const dueIds = this.model.dueReviewIds(now);
+      const missionDetails = id => {
+        const question = this.questions[id];
+        if (!question) return null;
+        const priority = this.model.studyPriority(id, now);
+        const skill = root.RPGModel?.skillForQuestion?.(question) || null;
+        return {
+          id,
+          question,
+          priority,
+          skill,
+          skillMastery:skill ? this.rpg.skillMastery(skill) : null,
+          learningMastery:this.model.learningMastery(id)
+        };
+      };
+      if (dueIds.length) {
+        const detail = missionDetails(dueIds[0]);
+        return detail ? { ...detail, kind:'review', label:'再戦：復習期限', dueCount:dueIds.length } : null;
+      }
+
+      const story = new Set(this.storyIds());
+      const training = new Set(this.learningIds().filter(id => this.questions[id]?.type !== 'journal'));
+      const id = this.model.priorityStudyIds({ now }).find(candidate => story.has(candidate) || training.has(candidate));
+      const detail = id ? missionDetails(id) : null;
+      if (!detail?.priority) return null;
+      const weak = [1,2,3].includes(detail.priority.tier);
+      return { ...detail, kind:'question', label:weak ? '攻略対象' : '次の仕事' };
+    }
+    renderRpgMission(now = Date.now()) {
+      const container = this.document.getElementById('rpg-mission');
+      if (!container || !Number.isFinite(now) || now < 0) return false;
+      const make = (tag, className, text) => {
+        const node = this.document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+      container.replaceChildren();
+      const heading = make('div', 'rpg-mission-heading');
+      heading.append(
+        make('p', 'section-label', 'RPG STRATEGY'),
+        make('h3', '', '攻略ミッション'),
+        make('p', '', '学習履歴と現在の役職から、いま取り組む仕事を1件だけ示します。')
+      );
+      container.append(heading);
+
+      const mission = this.rpgMission(now);
+      if (!mission) {
+        container.append(make('p', 'analysis-empty', '現在表示できる攻略ミッションはありません。'));
+        return true;
+      }
+
+      const card = make('article', `rpg-mission-card ${mission.kind === 'review' ? 'due-review' : ''}`.trim());
+      const copy = make('div', 'rpg-mission-copy');
+      const reason = mission.kind === 'review'
+        ? `${mission.dueCount}問の復習期限が来ています。期限が来た問題から再戦します。`
+        : (mission.priority?.reasons || []).join('・');
+      const skillText = mission.skill
+        ? `対応スキル：${mission.skill} ${Math.round(Math.max(0, Math.min(1, mission.skillMastery || 0)) * 100)}%`
+        : '対応スキル：役職マスタリー対象外';
+      copy.append(
+        make('span', 'rpg-mission-badge', mission.label),
+        make('strong', '', `${mission.question.category || '未分類'}｜${mission.id}`),
+        make('p', 'rpg-mission-question', mission.question.question || ''),
+        make('p', 'rpg-mission-reason', reason),
+        make('small', 'rpg-mission-mastery', `習熟度：${mission.learningMastery?.state || '未着手'}`),
+        make('small', 'rpg-mission-skill', skillText),
+        make('small', 'rpg-mission-role', `現在：Lv.${this.rpg.level} ${this.rpg.role}`)
+      );
+
+      const button = make('button', '', mission.kind === 'review' ? '復習モードへ' : 'この仕事に挑む');
+      button.type = 'button';
+      if (mission.kind === 'review') {
+        button.dataset.action = 'mode';
+        button.dataset.mode = 'review';
+      } else {
+        button.dataset.action = 'start-rpg-mission';
+        button.dataset.questionId = mission.id;
+      }
+      card.append(copy, button);
+      container.append(card);
+      return true;
+    }
+    startRpgMission(id) {
+      const question = this.questions[id];
+      if (!question) return false;
+      const storyIds = this.storyIds();
+      const trainingIds = this.learningIds().filter(candidate => this.questions[candidate]?.type !== 'journal');
+      const mode = storyIds.includes(id) ? 'story' : trainingIds.includes(id) ? 'training' : null;
+      if (!mode) return false;
+      this.model.state.mode = mode;
+      this.model.save();
+      this.start(id, { fresh:true });
+      return true;
+    }
     renderStudyRecommendations(mode, now = Date.now()) {
       const container = this.document.getElementById(`${mode}-recommendations`);
       if (!container || !['story', 'training'].includes(mode) || !Number.isFinite(now) || now < 0) return false;
@@ -634,6 +731,7 @@
       ];
       this.renderStudyRecommendations('story');
       this.renderStudyRecommendations('training');
+      this.renderRpgMission();
       const count = modeIndex < 0 ? 0 : counts[modeIndex];
       const hasActiveFilter = Boolean(this.filters.query.trim() || this.filters.account || this.filters.mistakes !== 'all');
       this.document.getElementById('filter-status').textContent = count === 0 && hasActiveFilter
