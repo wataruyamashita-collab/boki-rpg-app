@@ -943,7 +943,7 @@
       this.rpg.recordMastery?.(question, score);
       this.rpg.progressCompleted = this.model.updateCompletion?.(this.rpg) === true;
       const afterPriority = !this.reviewSourceId ? this.model.studyPriority?.(question.id, answeredAt) : null;
-      const rewardOutcome = this.rewardLearningOutcome({
+      const rewardOutcome = Controller.prototype.rewardLearningOutcome.call(this, {
         question,
         score,
         beforePriority,
