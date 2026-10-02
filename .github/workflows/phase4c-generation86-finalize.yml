@@ -44,7 +44,7 @@ jobs:
           let index=read('index.html');
           const token=`?v=${OLD}`;
           const tokenCount=index.split(token).length-1;
-          if(tokenCount!==13)throw new Error(`index release token count: ${tokenCount}`);
+          if(tokenCount!==15)throw new Error(`index release token count: ${tokenCount}`);
           index=index.split(token).join(`?v=${NEXT}`);
           write('index.html',index);
 
