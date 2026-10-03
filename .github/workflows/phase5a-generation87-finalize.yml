@@ -1,5 +1,6 @@
 # Generation 87 Issue #132 Phase 5A finalizer
 # retry: isolated controller context compatibility verified
+# retry: missing DOM APIs fail closed
 name: Phase 5A Generation 87 finalizer
 on:
   push:
