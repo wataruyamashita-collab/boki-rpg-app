@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const CONTENT_REVISION = 3;
-  const LEARNING_SCHEMA_VERSION = 1;
+  const LEARNING_SCHEMA_VERSION = 2;
   const FIXED_ASSET_SCHEMA_REVISION_2_IDS = new Set(['L005','L010','L015','L020','L025','L030','L033','L040']);
   class ProgressModel {
     static validateBackupState(value, questions = {}) {
@@ -16,7 +16,12 @@
       const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
       if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
       if (value.contentRevision !== undefined && !(Number.isSafeInteger(value.contentRevision) && value.contentRevision >= 1 && value.contentRevision <= CONTENT_REVISION)) return false;
-      if (value.learningSchemaVersion !== undefined && value.learningSchemaVersion !== LEARNING_SCHEMA_VERSION) return false;
+      if (value.learningSchemaVersion !== undefined && ![1, LEARNING_SCHEMA_VERSION].includes(value.learningSchemaVersion)) return false;
+      if (value.learningSchemaVersion === LEARNING_SCHEMA_VERSION && !Object.prototype.hasOwnProperty.call(value, 'learningContinuityState')) return false;
+      if (value.learningContinuityState !== undefined) {
+        const continuityProbe = Object.create(ProgressModel.prototype); continuityProbe.questions = questions;
+        if (!continuityProbe.validLearningContinuityState(value.learningContinuityState)) return false;
+      }
       if (value.lastLearningAt !== undefined && !(finite(value.lastLearningAt) && value.lastLearningAt >= 0)) return false;
       if (value.questionStats !== undefined) {
         const validStats = item => plain(item) && ['correctCount','incorrectCount','correctStreak','incorrectStreak'].every(key => nonnegativeSafeInteger(item[key])) &&
@@ -53,7 +58,7 @@
     }
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { contentRevision:CONTENT_REVISION, learningSchemaVersion:LEARNING_SCHEMA_VERSION, lastLearningAt:0, questionStats:{}, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state = { contentRevision:CONTENT_REVISION, learningSchemaVersion:LEARNING_SCHEMA_VERSION, lastLearningAt:0, learningContinuityState:{ activeDayKeys:[], today:null }, questionStats:{}, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
@@ -65,23 +70,30 @@
           const needsRevision2Migration = savedContentRevision < 2;
           const needsRevision3Migration = savedContentRevision < 3;
           const needsContentMigration = savedContentRevision < CONTENT_REVISION;
+          const savedLearningSchemaVersion = Number.isSafeInteger(saved.learningSchemaVersion) ? saved.learningSchemaVersion : 0;
+          if (savedLearningSchemaVersion > LEARNING_SCHEMA_VERSION) return;
+          const hasLearningSchemaV1 = savedLearningSchemaVersion >= 1;
+          const needsLearningMigration = savedLearningSchemaVersion < LEARNING_SCHEMA_VERSION;
           const migratedDrafts = saved.drafts && typeof saved.drafts === 'object' && !Array.isArray(saved.drafts)
             ? Object.fromEntries(Object.entries(saved.drafts).filter(([id, draft]) => this.questions[id] && draft && typeof draft === 'object' &&
               !(needsRevision2Migration && FIXED_ASSET_SCHEMA_REVISION_2_IDS.has(id)) &&
               !(needsRevision3Migration && id === 'L030'))) : {};
           const incompatibleExam = needsRevision2Migration && saved.examSession?.ids?.some(id => id === 'L033' || id === 'L040');
           const migratedAttempts = Array.isArray(saved.attempts) ? saved.attempts.filter(item => item && this.questions[item.questionId || item.id] && typeof item.correct === 'boolean' && Number.isFinite(item.responseMs) && item.responseMs >= 0).slice(-200) : [];
-          const hasLearningSchema = saved.learningSchemaVersion === LEARNING_SCHEMA_VERSION;
-          const migratedQuestionStats = hasLearningSchema && saved.questionStats && typeof saved.questionStats === 'object' && !Array.isArray(saved.questionStats)
+          const migratedQuestionStats = hasLearningSchemaV1 && saved.questionStats && typeof saved.questionStats === 'object' && !Array.isArray(saved.questionStats)
             ? Object.fromEntries(Object.entries(saved.questionStats).filter(([id, item]) => this.questions[id] && this.validQuestionStats(item)))
             : this.aggregateQuestionStats(migratedAttempts);
-          const migratedLastLearningAt = hasLearningSchema && Number.isFinite(saved.lastLearningAt) && saved.lastLearningAt >= 0
+          const migratedLastLearningAt = hasLearningSchemaV1 && Number.isFinite(saved.lastLearningAt) && saved.lastLearningAt >= 0
             ? saved.lastLearningAt
             : migratedAttempts.reduce((latest, item) => Math.max(latest, Number(item.timestamp || item.at || 0) || 0), 0);
+          const migratedLearningContinuityState = savedLearningSchemaVersion === LEARNING_SCHEMA_VERSION && this.validLearningContinuityState(saved.learningContinuityState)
+            ? this.normalizeLearningContinuityState(saved.learningContinuityState)
+            : this.continuityStateFromAttempts(migratedAttempts);
           this.state = Object.assign(this.state, saved, {
           contentRevision:CONTENT_REVISION,
           learningSchemaVersion:LEARNING_SCHEMA_VERSION,
           lastLearningAt:migratedLastLearningAt,
+          learningContinuityState:migratedLearningContinuityState,
           questionStats:migratedQuestionStats,
           mode: ['story', 'training', 'review', 'exam', 'desk'].includes(saved.mode) ? saved.mode : 'story',
           currentQuestionId: this.questions[saved.currentQuestionId] ? saved.currentQuestionId : null,
@@ -113,7 +125,7 @@
           lastExamReview: saved.lastExamReview && typeof saved.lastExamReview === 'object' ? saved.lastExamReview : null
           });
           if (incompatibleExam && this.state.mode === 'exam') this.state.mode = 'story';
-          if (needsContentMigration) this.save();
+          if (needsContentMigration || needsLearningMigration) this.save();
         }
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
     }
@@ -130,6 +142,103 @@
         this.applyQuestionStat(stats, id, item.correct, Number(item.timestamp || item.at || 0) || 0);
       });
       return stats;
+    }
+    localDayKey(value) {
+      const date = new Date(Number(value));
+      if (!Number.isFinite(date.getTime())) return null;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    dayOrdinalFromKey(key) {
+      if (typeof key !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(key)) return null;
+      const [year, month, day] = key.split('-').map(Number);
+      if (!Number.isSafeInteger(year) || year < 1970 || !Number.isSafeInteger(month) || !Number.isSafeInteger(day)) return null;
+      const value = Date.UTC(year, month - 1, day);
+      const date = new Date(value);
+      if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+      return Math.floor(value / 86400000);
+    }
+    validLearningContinuityState(value) {
+      const plain = item => item && typeof item === 'object' && !Array.isArray(item);
+      if (!plain(value) || !Array.isArray(value.activeDayKeys)) return false;
+      const ordinals = value.activeDayKeys.map(key => this.dayOrdinalFromKey(key));
+      if (ordinals.some(item => !Number.isSafeInteger(item))) return false;
+      if (new Set(value.activeDayKeys).size !== value.activeDayKeys.length) return false;
+      for (let index = 1; index < ordinals.length; index += 1) if (ordinals[index] <= ordinals[index - 1]) return false;
+      if (value.today === null) return true;
+      const today = value.today;
+      if (!plain(today) || !Number.isSafeInteger(this.dayOrdinalFromKey(today.dayKey))) return false;
+      if (!Number.isSafeInteger(today.attempts) || today.attempts <= 0) return false;
+      if (!Number.isSafeInteger(today.correctCount) || today.correctCount < 0 || today.correctCount > today.attempts) return false;
+      if (!Number.isSafeInteger(today.reviewSuccessCount) || today.reviewSuccessCount < 0 || today.reviewSuccessCount > today.correctCount) return false;
+      if (!Array.isArray(today.questionIds) || today.questionIds.some(id => typeof id !== 'string' || !this.questions[id])) return false;
+      if (new Set(today.questionIds).size !== today.questionIds.length || today.questionIds.length > today.attempts) return false;
+      if (!value.activeDayKeys.includes(today.dayKey)) return false;
+      return true;
+    }
+    normalizeLearningContinuityState(value) {
+      return {
+        activeDayKeys:[...value.activeDayKeys],
+        today:value.today === null ? null : {
+          dayKey:value.today.dayKey,
+          attempts:value.today.attempts,
+          correctCount:value.today.correctCount,
+          questionIds:[...value.today.questionIds],
+          reviewSuccessCount:value.today.reviewSuccessCount
+        }
+      };
+    }
+    continuityStateFromAttempts(attempts = []) {
+      const daily = new Map();
+      (Array.isArray(attempts) ? attempts : []).forEach(item => {
+        const id = item?.questionId || item?.id;
+        const timestamp = Number(item?.timestamp ?? item?.at);
+        const key = this.localDayKey(timestamp);
+        const ordinal = this.dayOrdinalFromKey(key);
+        if (!this.questions[id] || typeof item?.correct !== 'boolean' || !Number.isFinite(timestamp) || timestamp < 0 || !Number.isSafeInteger(ordinal)) return;
+        const day = daily.get(key) || { dayKey:key, attempts:0, correctCount:0, questionIds:new Set(), reviewSuccessCount:0 };
+        day.attempts += 1;
+        if (item.correct === true) day.correctCount += 1;
+        day.questionIds.add(id);
+        if (item.correct === true && item.delayedSuccess === true) day.reviewSuccessCount += 1;
+        daily.set(key, day);
+      });
+      const activeDayKeys = [...daily.keys()].sort((a, b) => this.dayOrdinalFromKey(a) - this.dayOrdinalFromKey(b));
+      const latestKey = activeDayKeys.at(-1) || null;
+      const latest = latestKey ? daily.get(latestKey) : null;
+      return {
+        activeDayKeys,
+        today:latest ? {
+          dayKey:latest.dayKey,
+          attempts:latest.attempts,
+          correctCount:latest.correctCount,
+          questionIds:[...latest.questionIds],
+          reviewSuccessCount:latest.reviewSuccessCount
+        } : null
+      };
+    }
+    recordLearningContinuity(id, correct, delayedSuccess, now) {
+      const dayKey = this.localDayKey(now);
+      const ordinal = this.dayOrdinalFromKey(dayKey);
+      if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isSafeInteger(ordinal)) return false;
+      const current = this.validLearningContinuityState(this.state.learningContinuityState)
+        ? this.state.learningContinuityState
+        : { activeDayKeys:[], today:null };
+      if (!current.activeDayKeys.includes(dayKey)) {
+        current.activeDayKeys.push(dayKey);
+        current.activeDayKeys.sort((a, b) => this.dayOrdinalFromKey(a) - this.dayOrdinalFromKey(b));
+      }
+      if (!current.today || current.today.dayKey !== dayKey) {
+        current.today = { dayKey, attempts:0, correctCount:0, questionIds:[], reviewSuccessCount:0 };
+      }
+      current.today.attempts += 1;
+      if (correct) current.today.correctCount += 1;
+      if (!current.today.questionIds.includes(id)) current.today.questionIds.push(id);
+      if (correct && delayedSuccess === true) current.today.reviewSuccessCount += 1;
+      this.state.learningContinuityState = current;
+      return true;
     }
     applyQuestionStat(target, id, correct, answeredAt) {
       const previous = target[id] || { correctCount:0, incorrectCount:0, correctStreak:0, incorrectStreak:0, lastResult:null, lastAnsweredAt:0 };
@@ -186,51 +295,38 @@
       const emptyToday = { attempts:0, correctCount:0, incorrectCount:0, accuracy:null, questionCount:0, reviewSuccessCount:0 };
       const fallback = { currentStreak:0, activeDays:0, today:emptyToday, dueReviewCount:0, lastLearningAt:0 };
       if (!Number.isFinite(safeNow) || safeNow < 0) return fallback;
-      const dayOrdinal = value => {
-        const date = new Date(value);
-        if (!Number.isFinite(date.getTime())) return null;
-        return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
-      };
-      const todayOrdinal = dayOrdinal(safeNow);
-      const daily = new Map();
-      let lastLearningAt = 0;
-      (this.state.attempts || []).forEach(item => {
-        const timestamp = Number(item?.timestamp ?? item?.at);
-        if (!Number.isFinite(timestamp) || timestamp < 0 || timestamp > safeNow) return;
-        const ordinal = dayOrdinal(timestamp);
-        if (!Number.isSafeInteger(ordinal)) return;
-        const day = daily.get(ordinal) || { attempts:0, correctCount:0, questionIds:new Set(), reviewSuccessCount:0 };
-        day.attempts += 1;
-        if (item.correct === true) day.correctCount += 1;
-        const id = item.questionId || item.id;
-        if (this.questions[id]) day.questionIds.add(id);
-        if (item.delayedSuccess === true) day.reviewSuccessCount += 1;
-        daily.set(ordinal, day);
-        lastLearningAt = Math.max(lastLearningAt, timestamp);
-      });
-      const activeDays = [...daily.keys()].sort((a, b) => b - a);
+      const todayKey = this.localDayKey(safeNow);
+      const todayOrdinal = this.dayOrdinalFromKey(todayKey);
+      if (!Number.isSafeInteger(todayOrdinal)) return fallback;
+      const continuity = this.validLearningContinuityState(this.state.learningContinuityState)
+        ? this.state.learningContinuityState
+        : { activeDayKeys:[], today:null };
+      const activeOrdinals = continuity.activeDayKeys
+        .map(key => this.dayOrdinalFromKey(key))
+        .filter(ordinal => Number.isSafeInteger(ordinal) && ordinal <= todayOrdinal)
+        .sort((a, b) => b - a);
       let currentStreak = 0;
-      const latest = activeDays[0];
+      const latest = activeOrdinals[0];
       if (Number.isSafeInteger(latest) && (latest === todayOrdinal || latest === todayOrdinal - 1)) {
-        const days = new Set(activeDays);
+        const days = new Set(activeOrdinals);
         for (let cursor = latest; days.has(cursor); cursor -= 1) currentStreak += 1;
       }
-      const today = daily.get(todayOrdinal);
+      const today = continuity.today?.dayKey === todayKey ? continuity.today : null;
       const attempts = today?.attempts || 0;
       const correctCount = today?.correctCount || 0;
       return {
         currentStreak,
-        activeDays:activeDays.length,
+        activeDays:activeOrdinals.length,
         today:{
           attempts,
           correctCount,
           incorrectCount:attempts - correctCount,
           accuracy:attempts ? correctCount / attempts : null,
-          questionCount:today?.questionIds.size || 0,
+          questionCount:today?.questionIds.length || 0,
           reviewSuccessCount:today?.reviewSuccessCount || 0
         },
         dueReviewCount:this.dueReviewIds(safeNow).length,
-        lastLearningAt
+        lastLearningAt:Number.isFinite(this.state.lastLearningAt) && this.state.lastLearningAt >= 0 ? this.state.lastLearningAt : 0
       };
     }
     learningMastery(id) {
@@ -320,6 +416,7 @@
       if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0 || !Number.isFinite(now) || now < 0) return false;
       this.state.attempts.push({ questionId:id, id, concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now });
       this.state.attempts = this.state.attempts.slice(-200);
+      this.recordLearningContinuity(id, correct, delayedSuccess === true, now);
       this.applyQuestionStat(this.state.questionStats, id, correct, now);
       this.state.lastLearningAt = Math.max(this.state.lastLearningAt || 0, now);
       this.save(); return true;
