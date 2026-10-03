@@ -769,8 +769,9 @@
       return true;
     }
     renderLearningContinuity(targetId, now = Date.now(), title = '今日の学習サマリー') {
+      if (!this.document?.getElementById || !this.document?.createElement) return false;
       const container = this.document.getElementById(targetId);
-      if (!container || !Number.isFinite(now) || now < 0 || typeof this.model.learningContinuity !== 'function') return false;
+      if (!container || !Number.isFinite(now) || now < 0 || typeof this.model?.learningContinuity !== 'function') return false;
       const summary = this.model.learningContinuity(now);
       if (!summary) return false;
       const make = (tag, className, text) => {
