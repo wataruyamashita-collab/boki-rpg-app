@@ -746,6 +746,7 @@
       const first = this.document.querySelector('[data-action="hint-1"]'); if (first) { first.hidden = false; first.disabled = false; }
       const second = this.document.querySelector('[data-action="hint-2"]'); if (second) { second.hidden = true; second.disabled = false; }
       ['result-status','answer-comparison','correct-journal','explanation'].forEach(id => this.byId(id)?.replaceChildren());
+      const learningSummary = this.byId('result-learning-summary'); if (learningSummary) { learningSummary.hidden = true; learningSummary.replaceChildren(); }
       const top = this.byId('top-result-actions'); if (top) top.hidden = true;
     }
     hideProtectedResult() { const panel = this.byId('protected-learning'); if (panel) panel.hidden = true; const status = this.byId('protected-status'); if (status) { status.hidden = true; status.replaceChildren(); } }
