@@ -768,6 +768,46 @@
       container.append(grid);
       return true;
     }
+    renderLearningContinuity(targetId, now = Date.now(), title = '今日の学習サマリー') {
+      const container = this.document.getElementById(targetId);
+      if (!container || !Number.isFinite(now) || now < 0 || typeof this.model.learningContinuity !== 'function') return false;
+      const summary = this.model.learningContinuity(now);
+      if (!summary) return false;
+      const make = (tag, className, text) => {
+        const node = this.document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+      const percent = summary.today.accuracy === null ? '—' : `${Math.round(summary.today.accuracy * 100)}%`;
+      const last = summary.lastLearningAt > 0 ? new Date(summary.lastLearningAt).toLocaleString('ja-JP') : 'まだ学習記録がありません';
+      container.replaceChildren();
+      container.hidden = false;
+      const heading = make('div', 'learning-continuity-heading');
+      heading.append(
+        make('h3', '', title),
+        make('p', '', '回答履歴から自動集計。保存用の別カウンターは使いません。')
+      );
+      const grid = make('div', 'learning-continuity-grid');
+      [
+        ['連続学習', `${summary.currentStreak}日`, '同じ日は1日として集計'],
+        ['今日の回答', `${summary.today.attempts}回`, `正解 ${summary.today.correctCount}回`],
+        ['今日の正答率', percent, `${summary.today.correctCount}/${summary.today.attempts}`],
+        ['学習した問題', `${summary.today.questionCount}問`, '重複回答を除く']
+      ].forEach(([label, value, detail]) => {
+        const card = make('section', 'learning-continuity-card');
+        card.append(make('small', '', label), make('strong', '', value), make('span', '', detail));
+        grid.append(card);
+      });
+      const meta = make('p', 'learning-continuity-meta');
+      meta.append(
+        make('span', '', `復習成功 ${summary.today.reviewSuccessCount}回`),
+        make('span', '', `復習期限 ${summary.dueReviewCount}問`),
+        make('span', '', `最終学習 ${last}`)
+      );
+      container.append(heading, grid, meta);
+      return true;
+    }
     renderStudyRecommendations(mode, now = Date.now()) {
       const container = this.document.getElementById(`${mode}-recommendations`);
       if (!container || !['story', 'training'].includes(mode) || !Number.isFinite(now) || now < 0) return false;
@@ -856,6 +896,7 @@
         render('review-list', reviewIds, 'review'),
         render('exam-list', examIds, 'exam')
       ];
+      this.renderLearningContinuity('story-learning-summary');
       this.renderStudyRecommendations('story');
       this.renderStudyRecommendations('training');
       this.renderRpgMission();
@@ -961,6 +1002,7 @@
       this.learningFlow ||= { questionId:question.id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false };
       this.learningFlow.authoritativeAnswer = answer; this.learningFlow.authoritativeScore = score; this.learningFlow.confidence = confidence; this.learningFlow.achievement = achievement;
       this.view.updateRpg(this.rpg);
+      this.renderLearningContinuity('result-learning-summary', answeredAt, '今回までの今日の結果');
       if (!score.correct) {
         this.learningFlow.phase = 'W'; this.learningFlow.gameOverPending = this.rpg.state.companyHP === 0;
         this.view.result(question, score, answer, confidence, achievement, true); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
