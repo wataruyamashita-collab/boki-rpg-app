@@ -1,5 +1,6 @@
 # Generation 88 Issue #175 continuity durability finalizer
 # retry: schema-v2 regression alignment verified
+# retry: fixed-asset safe-default schema-v2 alignment verified
 name: Issue 175 Generation 88 finalizer
 on:
   push:
