@@ -13,7 +13,7 @@ const storage = {
 };
 
 const progress = new ProgressModel(questions, storage, 'metrics');
-assert.strictEqual(progress.state.learningSchemaVersion, 1, '学習指標スキーマversionを明示する');
+assert.strictEqual(progress.state.learningSchemaVersion, 2, '学習指標スキーマversionを明示する');
 assert.deepStrictEqual(progress.state.questionStats, {}, '新規状態では問題統計を空で開始する');
 assert.strictEqual(progress.state.lastLearningAt, 0, '新規状態では最終学習日時を未設定で開始する');
 
@@ -82,7 +82,7 @@ const legacyStorage = {
   setItem(key,value){ legacyValues[key]=value; return true; }
 };
 const migrated = new ProgressModel(questions, legacyStorage, 'legacy');
-assert.strictEqual(migrated.state.learningSchemaVersion, 1, '旧保存データを学習指標schema v1へ移行する');
+assert.strictEqual(migrated.state.learningSchemaVersion, 2, '旧保存データを最新の学習指標schema v2へ移行する');
 assert.deepStrictEqual(migrated.statsForQuestion('J1'), {
   correctCount:1, incorrectCount:1, correctStreak:1, incorrectStreak:0, lastResult:true, lastAnsweredAt:200
 }, '旧attemptsの実証済み履歴だけから問題統計を移行する');
