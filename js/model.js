@@ -181,6 +181,58 @@
         accuracy:recent.length ? correctCount / recent.length : null
       };
     }
+    learningContinuity(now = Date.now()) {
+      const safeNow = Number(now);
+      const emptyToday = { attempts:0, correctCount:0, incorrectCount:0, accuracy:null, questionCount:0, reviewSuccessCount:0 };
+      const fallback = { currentStreak:0, activeDays:0, today:emptyToday, dueReviewCount:0, lastLearningAt:0 };
+      if (!Number.isFinite(safeNow) || safeNow < 0) return fallback;
+      const dayOrdinal = value => {
+        const date = new Date(value);
+        if (!Number.isFinite(date.getTime())) return null;
+        return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
+      };
+      const todayOrdinal = dayOrdinal(safeNow);
+      const daily = new Map();
+      let lastLearningAt = 0;
+      (this.state.attempts || []).forEach(item => {
+        const timestamp = Number(item?.timestamp ?? item?.at);
+        if (!Number.isFinite(timestamp) || timestamp < 0 || timestamp > safeNow) return;
+        const ordinal = dayOrdinal(timestamp);
+        if (!Number.isSafeInteger(ordinal)) return;
+        const day = daily.get(ordinal) || { attempts:0, correctCount:0, questionIds:new Set(), reviewSuccessCount:0 };
+        day.attempts += 1;
+        if (item.correct === true) day.correctCount += 1;
+        const id = item.questionId || item.id;
+        if (this.questions[id]) day.questionIds.add(id);
+        if (item.delayedSuccess === true) day.reviewSuccessCount += 1;
+        daily.set(ordinal, day);
+        lastLearningAt = Math.max(lastLearningAt, timestamp);
+      });
+      const activeDays = [...daily.keys()].sort((a, b) => b - a);
+      let currentStreak = 0;
+      const latest = activeDays[0];
+      if (Number.isSafeInteger(latest) && (latest === todayOrdinal || latest === todayOrdinal - 1)) {
+        const days = new Set(activeDays);
+        for (let cursor = latest; days.has(cursor); cursor -= 1) currentStreak += 1;
+      }
+      const today = daily.get(todayOrdinal);
+      const attempts = today?.attempts || 0;
+      const correctCount = today?.correctCount || 0;
+      return {
+        currentStreak,
+        activeDays:activeDays.length,
+        today:{
+          attempts,
+          correctCount,
+          incorrectCount:attempts - correctCount,
+          accuracy:attempts ? correctCount / attempts : null,
+          questionCount:today?.questionIds.size || 0,
+          reviewSuccessCount:today?.reviewSuccessCount || 0
+        },
+        dueReviewCount:this.dueReviewIds(safeNow).length,
+        lastLearningAt
+      };
+    }
     learningMastery(id) {
       const accuracy = this.questionAccuracy(id);
       if (!accuracy) return null;
