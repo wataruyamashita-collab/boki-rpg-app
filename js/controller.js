@@ -641,6 +641,21 @@
       this.start(id, { fresh:true });
       return true;
     }
+    rewardLearningOutcome({ question, score, beforePriority = null, afterPriority = null, reviewSourceId = null, reviewStage = null, reviewCompleted = false } = {}) {
+      if (!question || score?.correct !== true) return { baseRewarded:false, bonusXp:0, bonusLabel:'' };
+      const baseRewarded = this.rpg.reward(question, score, 1) === true;
+      let bonusXp = 0;
+      let bonusLabel = '';
+      if (reviewCompleted && reviewSourceId && Number.isSafeInteger(reviewStage)) {
+        const sourceQuestion = this.questions[reviewSourceId];
+        bonusXp = this.rpg.reviewSuccessBonus?.(sourceQuestion, reviewStage) || 0;
+        if (bonusXp > 0) bonusLabel = `復習成功 +${bonusXp} XP`;
+      } else if ([1,2].includes(beforePriority?.tier) && ![0,1,2].includes(afterPriority?.tier)) {
+        bonusXp = this.rpg.weakRecoveryBonus?.(question) || 0;
+        if (bonusXp > 0) bonusLabel = `苦手克服 +${bonusXp} XP`;
+      }
+      return { baseRewarded, bonusXp, bonusLabel };
+    }
     rpgAreas(now = Date.now()) {
       if (!Number.isFinite(now) || now < 0) return [];
       const allowed = Object.values(this.questions).filter(question => question &&
@@ -908,6 +923,7 @@
       if (this.model.state.mode !== 'exam' && this.learningFlow?.phase === 'R') return this.finishCoachingRetry(question, answer, score);
       const answeredAt = Date.now(); const responseMs = Math.max(0, answeredAt - (Number.isFinite(this.questionStartedAt) ? this.questionStartedAt : answeredAt));
       const reviewStage = this.reviewSourceId ? this.model.state.reviewSchedule[this.reviewSourceId]?.stage ?? null : null;
+      const beforePriority = !this.reviewSourceId ? this.model.studyPriority?.(question.id, answeredAt) : null;
       const wrongType = score.correct ? '' : (score.details?.find(detail => !detail.correct)?.cellId || (question.type === 'journal' ? 'journal-entry' : 'table-cell'));
       const confidence = this.document.querySelector('input[name="confidence"]:checked')?.value || 'unsure';
       this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, Boolean(this.reviewSourceId && score.correct), answeredAt, reviewStage, confidence);
@@ -922,13 +938,23 @@
         this.renderModes(); this.showMode('exam'); return;
       }
       const previousProgress = { level:this.rpg.level, role:this.rpg.role };
-      if (this.reviewSourceId) this.model.completeReview(this.reviewSourceId, score.correct, answeredAt, question.id);
-      else this.model.record(question.id, score.correct, answeredAt);
+      const reviewCompleted = this.reviewSourceId ? this.model.completeReview(this.reviewSourceId, score.correct, answeredAt, question.id) : false;
+      if (!this.reviewSourceId) this.model.record(question.id, score.correct, answeredAt);
       this.rpg.recordMastery?.(question, score);
       this.rpg.progressCompleted = this.model.updateCompletion?.(this.rpg) === true;
-      if (score.correct) this.rpg.reward(question, score, 1);
+      const afterPriority = !this.reviewSourceId ? this.model.studyPriority?.(question.id, answeredAt) : null;
+      const rewardOutcome = Controller.prototype.rewardLearningOutcome.call(this, {
+        question,
+        score,
+        beforePriority,
+        afterPriority,
+        reviewSourceId:this.reviewSourceId,
+        reviewStage,
+        reviewCompleted
+      });
       this.rpg.applyAnswer(score.correct, confidence);
       const achievement = {
+        reward: rewardOutcome.bonusLabel || null,
         level: this.rpg.level > previousProgress.level ? this.rpg.level : null,
         role: this.rpg.role !== previousProgress.role ? this.rpg.role : null
       };

@@ -81,6 +81,23 @@
       this.state.totalTransactionAmount += this.questionAmount(question);
       this.save(); return true;
     }
+    rewardEvent(eventKey, xp) {
+      if (typeof eventKey !== 'string' || !eventKey.startsWith('@event:') || !Number.isSafeInteger(xp) || xp <= 0 || this.state.rewardedIds.includes(eventKey)) return 0;
+      this.state.rewardedIds.push(eventKey);
+      this.state.xp += xp;
+      this.save();
+      return xp;
+    }
+    reviewSuccessBonus(question, stage) {
+      if (!question || typeof question.id !== 'string' || !Number.isFinite(question.difficulty) || question.difficulty <= 0 || !Number.isSafeInteger(stage) || stage < 0 || stage > 3) return 0;
+      const xp = Math.max(1, Math.round(2 * question.difficulty));
+      return this.rewardEvent(`@event:review-success:${question.id}:stage:${stage}`, xp);
+    }
+    weakRecoveryBonus(question) {
+      if (!question || typeof question.id !== 'string' || !Number.isFinite(question.difficulty) || question.difficulty <= 0) return 0;
+      const xp = Math.max(1, Math.round(4 * question.difficulty));
+      return this.rewardEvent(`@event:weak-recovery:${question.id}`, xp);
+    }
     recordMastery(question, score) {
       if (!question || typeof question.category !== 'string' || !score || !Number.isFinite(score.earned) || !Number.isFinite(score.possible) || score.earned < 0 || score.possible <= 0 || score.possible < score.earned) return false;
       const mastery = this.state.mastery[question.category] || { earned: 0, possible: 0 };

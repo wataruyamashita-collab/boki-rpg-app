@@ -40,6 +40,8 @@ jobs:
         run: node .github/visual/run-rpg-strategy-board.js
       - name: Run Phase 4B RPG area progression gate in real browsers
         run: node .github/visual/run-rpg-area-progression.js
+      - name: Run Phase 4C reward policy gate in real browsers
+        run: node .github/visual/run-rpg-reward-policy.js
       - name: Run Issue 161 all-300 state-isolation gate
         run: node .github/visual/run-state-isolation.js
       - name: Run Issue 161 explanation design-system gate

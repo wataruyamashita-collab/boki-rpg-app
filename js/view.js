@@ -760,7 +760,7 @@
     renderAchievement(anchor, achievement = {}) {
       let banner = this.byId('achievement-banner');
       if (!banner) { banner = this.document.createElement('aside'); banner.id = 'achievement-banner'; banner.className = 'achievement-banner'; banner.setAttribute('role', 'status'); banner.setAttribute('aria-live', 'polite'); anchor.after(banner); }
-      const unlocks = [achievement.level ? `LEVEL UP！ Lv.${achievement.level}` : '', achievement.role ? `NEW ROLE！「${achievement.role}」解放 — 新ツールと専用Boss Caseを確認できます` : ''].filter(Boolean);
+      const unlocks = [achievement.reward || '', achievement.level ? `LEVEL UP！ Lv.${achievement.level}` : '', achievement.role ? `NEW ROLE！「${achievement.role}」解放 — 新ツールと専用Boss Caseを確認できます` : ''].filter(Boolean);
       banner.hidden = unlocks.length === 0; banner.textContent = unlocks.join(' ／ ');
       if (!banner.isConnected) anchor.after(banner);
     }
