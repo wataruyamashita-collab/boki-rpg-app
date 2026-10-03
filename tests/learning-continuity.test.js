@@ -135,8 +135,8 @@ assert(text.includes('今回までの今日の結果') && text.includes('75%'), 
 assert.strictEqual(result.hidden, false);
 
 assert(html.includes('id="story-learning-summary"') && html.includes('id="result-learning-summary"'), 'Story/resultにsummary surfaceを持つ');
-assert(controllerSource.includes("this.renderLearningContinuity('story-learning-summary')"), 'Story再描画時にcontinuity summaryを同期する');
-assert(controllerSource.includes("this.renderLearningContinuity('result-learning-summary', answeredAt, '今回までの今日の結果')"), 'authoritative回答後にresult summaryを更新する');
+assert(controllerSource.includes("Controller.prototype.renderLearningContinuity.call(this, 'story-learning-summary')"), 'Story再描画時にcontinuity summaryを同期する');
+assert(controllerSource.includes("Controller.prototype.renderLearningContinuity.call(this, 'result-learning-summary', answeredAt, '今回までの今日の結果')"), 'authoritative回答後にresult summaryを更新する');
 const retryStart = controllerSource.indexOf('    finishCoachingRetry(');
 const retryEnd = controllerSource.indexOf('\n    revealAnswer(', retryStart);
 const retrySegment = controllerSource.slice(retryStart, retryEnd);
