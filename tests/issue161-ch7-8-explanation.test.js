@@ -6,11 +6,11 @@ for(const file of ['data/questions.js','js/explanation-formulas.js','js/feedback
   vm.runInContext(fs.readFileSync(file,'utf8'),sandbox,{filename:file});
 }
 const root=sandbox.window;
-const target=Object.values(root.QuestionData).filter(q=>q.chapter>=7&&q.chapter<=8);
-assert.strictEqual(target.length,50,'Chapter 7-8 contains 50 questions');
-assert(target.every(q=>q.type==='ledger'),'Chapter 7-8 stays ledger-only');
-assert(target.every(q=>q.teachingPresentation==='structured-always'),'all Chapter 7-8 questions opt into structured teaching flow');
-assert(target.every(q=>q.explanationModel),'all Chapter 7-8 questions expose explanationModel');
+const target=Object.values(root.QuestionData).filter(q=>/^L\d{3}$/u.test(q.id));
+assert.strictEqual(target.length,50,'Issue 161 PR-E retains all 50 ledger questions');
+assert(target.every(q=>q.type==='ledger'),'Issue 161 PR-E stays ledger-only');
+assert(target.every(q=>q.teachingPresentation==='structured-always'),'all Issue 161 PR-E questions opt into structured teaching flow');
+assert(target.every(q=>q.explanationModel),'all Issue 161 PR-E questions expose explanationModel');
 
 const profiles={};
 for(const q of target){
