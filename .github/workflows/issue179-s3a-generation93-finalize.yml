@@ -1,6 +1,6 @@
 # Generation 93 Issue #179 S3A finalizer
 # Candidate authority is validated before commit.
-# retrigger: reveal continuity correction
+# retrigger: clean-history Generation 93 authority
 # Full npm/qa/browser validation runs on the exact final PR HEAD after publish.
 name: Issue 179 S3A Generation 93 finalizer
 on:
