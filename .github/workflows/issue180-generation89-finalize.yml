@@ -2,7 +2,7 @@
 # trigger: validated pre-authority boundary
 # trigger: semantic chapter validator aligned
 # trigger: story e2e moved behind candidate authority
-# validated browser visual run: 37183186325 SUCCESS
+# validated browser visual run: 37187126989 SUCCESS
 name: Issue 180 Generation 89 finalizer
 on:
   push:
@@ -39,6 +39,9 @@ jobs:
           node tests/issue161-ch7-8-explanation.test.js
           node tests/issue161-ch9-10-comprehensive-explanation.test.js
           node tests/issue161-ch11-12-final-explanation.test.js
+          node tests/chapter8-explanation.test.js
+          node tests/explanation-formula-coverage.test.js
+          node tests/fixed-asset-ledger.test.js
           node tests/resume-reset.test.js
           node tests/app.test.js
           node tests/exam-answer-firewall.test.js
