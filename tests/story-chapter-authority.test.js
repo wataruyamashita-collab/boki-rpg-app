@@ -44,6 +44,17 @@ assert(
   'Story chapter grouping must not be derived from raw 25-item insertion buckets'
 );
 
+const explanationFormulaSource=fs.readFileSync('js/explanation-formulas.js','utf8');
+const explanationModelSource=fs.readFileSync('js/explanation-model.js','utf8');
+assert(
+  !/type===['"]ledger['"][^\n;]{0,120}chapter\s*===\s*8/u.test(explanationFormulaSource),
+  'ledger formula routing must not depend on semantic Chapter 8'
+);
+assert(
+  !/type===['"]ledger['"][^\n;]{0,120}chapter\s*===\s*8/u.test(explanationModelSource),
+  'ledger explanation routing must not depend on semantic Chapter 8'
+);
+
 const production=core.loadProduction();
 const Controller=production.Controller.prototype;
 const fake={
