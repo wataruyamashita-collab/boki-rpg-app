@@ -76,7 +76,7 @@ const mutationCases=[
  ['STORY_ITEM_TO_EXAM_POOL','data/questions.js','UNREACHABLE_STORY_QUESTION',s=>appendProductionMutation(s,"QuestionData.C004.learningRole = 'transfer';").replace("'C001','C002','C003','C006'","'C001','C002','C003','C004','C006'")],
  ['NEXT_SELF_LOOP','js/controller.js','UNEXPECTED_LOOP',s=>s.replace('ids[ids.indexOf(this.currentId) + 1]','ids[ids.indexOf(this.currentId)]')],
  ['NEXT_NULL_AT_20','js/controller.js','UNREACHABLE_STORY_QUESTION',s=>s.replace('return this.learningIds().map((id, index)','return this.learningIds().slice(0, 20).map((id, index)')],
- ['DISPLAY_25_REACH_20','data/questions.js','PROGRESS_COUNT_MISMATCH',s=>appendProductionMutation(s,"QuestionData.C004.story = QuestionData.C004.story.replace('/6〕', '/25〕');")],
+ ['DISPLAY_25_REACH_20','data/questions.js','PROGRESS_COUNT_MISMATCH',s=>appendProductionMutation(s,"QuestionData.C004.story = QuestionData.C004.story.replace('/8〕', '/25〕');")],
  ['C004_C010_IDENTICAL','data/questions.js','EXCESSIVE_REPETITION',s=>appendProductionMutation(s,"Object.assign(QuestionData.C010, { category:QuestionData.C004.category, question:QuestionData.C004.question, materials:QuestionData.C004.materials, table:QuestionData.C004.table, answer:QuestionData.C004.answer, explanation:QuestionData.C004.explanation });")]
 ];
 function mutateQuestionBlock(source,id,change){const start=source.indexOf(`  "${id}": {`);if(start<0)throw new Error(`question block not found: ${id}`);const tail=source.slice(start+1),next=/\n  "[A-Z]\d{3}": \{/u.exec(tail),end=next?start+1+next.index:source.lastIndexOf('\n};');if(end<start)throw new Error(`question block end not found: ${id}`);return source.slice(0,start)+change(source.slice(start,end))+source.slice(end);}
