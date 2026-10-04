@@ -48,6 +48,20 @@
       // 問題データは起動中不変なので、300問の監査は初期化時に一度だけ行う。
       this.semanticAudit = root.validateSemanticQuestionData(this.questions);
     }
+    static anchorBeforeScene(scenes, questionId, mode = 'story') {
+      if (mode !== 'story' || !Array.isArray(scenes) || !questionId) return null;
+      const candidates = scenes.filter(scene => scene?.referenceQuestionId === questionId);
+      return candidates.find(scene => scene.beat === 'OPEN')
+        || candidates.find(scene => scene.beat === 'BOSS')
+        || candidates.find(scene => scene.beat === 'REVERSAL')
+        || null;
+    }
+    static anchorResultScene(scenes, questionId, mode = 'story') {
+      if (mode !== 'story' || !Array.isArray(scenes) || !questionId) return null;
+      return scenes.find(scene => scene?.trigger?.type === 'afterQuestion' && scene.trigger.questionId === questionId)
+        || scenes.find(scene => scene?.beat === 'OPEN' && scene.referenceQuestionId === questionId)
+        || null;
+    }
     static accountChoices(question, correct, mode = 'story') {
       const all = [...new Set(Object.values(root.QuestionData).filter(q => q.type === 'journal').flatMap(q => [...q.answer.debit, ...q.answer.credit].map(item => item.account)))];
       if (mode === 'exam') {
@@ -944,7 +958,7 @@
         onConfirm:() => this.start(id)
       });
     }
-    start(id, options = {}) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; if (options.fresh === true) this.model.clearDraft?.(id); this.resetCalculator(); this.submitting = false; this.learningFlow = this.model.state.mode === 'exam' ? null : { questionId:id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false }; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.resetLearningSurfaces?.(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.setAnswerMode?.('initial'); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; this.document.getElementById?.('q-text')?.focus(); }
+    start(id, options = {}) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; if (options.fresh === true) this.model.clearDraft?.(id); this.resetCalculator(); this.submitting = false; this.learningFlow = this.model.state.mode === 'exam' ? null : { questionId:id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false }; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.resetLearningSurfaces?.(); const anchorBefore = Controller.anchorBeforeScene(root.AnchorScenes || [], id, this.model.state.mode); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode, anchorBefore); this.view.setAnswerMode?.('initial'); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; this.document.getElementById?.('q-text')?.focus(); }
     saveDraft(message) {
       if (!this.currentId) return false;
       if (this.model.state.mode !== 'exam' && ['W','R'].includes(this.learningFlow?.phase)) {
@@ -1004,12 +1018,13 @@
       this.learningFlow.authoritativeAnswer = answer; this.learningFlow.authoritativeScore = score; this.learningFlow.confidence = confidence; this.learningFlow.achievement = achievement;
       this.view.updateRpg(this.rpg);
       Controller.prototype.renderLearningContinuity.call(this, 'result-learning-summary', answeredAt, '今回までの今日の結果');
+      const narrativeScene = Controller.anchorResultScene(root.AnchorScenes || [], question.id, this.model.state.mode);
       if (!score.correct) {
         this.learningFlow.phase = 'W'; this.learningFlow.gameOverPending = this.rpg.state.companyHP === 0;
-        this.view.result(question, score, answer, confidence, achievement, true); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
+        this.view.result(question, score, answer, confidence, achievement, true, null); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
         return;
       }
-      this.learningFlow.phase = 'C'; this.view.result(question, score, answer, confidence, achievement, false); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
+      this.learningFlow.phase = 'C'; this.view.result(question, score, answer, confidence, achievement, false, narrativeScene); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();
     }
     static journalRetryDraft(answer, expected) {
       const matchSide = side => { const remaining = [...(expected?.[side] || [])]; return (answer?.[side] || []).map(item => { const amount = Number(item?.amount); const index = remaining.findIndex(row => row.account === item?.account && Number.isFinite(amount) && row.amount === amount); if (index < 0) return { account:'', amount:'' }; remaining.splice(index, 1); return { account:item.account, amount:item.amount }; }); };
@@ -1050,18 +1065,18 @@
       const flow = this.learningFlow; flow.retryCount += 1; this.submitting = false;
       if (!score.correct) {
         flow.coachingAnswer = question.type === 'journal' ? Controller.journalRetryDraft(answer, question.answer) : Controller.tableRetryDraft(answer, score.details);
-        flow.phase = 'W'; this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, true); this.view.show('view-result'); this.document?.getElementById?.('result-status')?.focus(); return false;
+        flow.phase = 'W'; this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, true, null); this.view.show('view-result'); this.document?.getElementById?.('result-status')?.focus(); return false;
       }
       flow.phase = 'D';
       this.view.hideProtectedResult?.();
-      this.view.result(question, score, answer, flow.confidence, flow.achievement, false);
+      this.view.result(question, score, answer, flow.confidence, flow.achievement, false, Controller.anchorResultScene(root.AnchorScenes || [], question.id, this.model?.state?.mode || 'story'));
       this.view.renderAnswerComparison?.(question, flow.authoritativeScore, flow.authoritativeAnswer);
       const status = this.document.getElementById('result-status');
       const note = this.document.createElement('span'); note.className = 'coaching-success'; note.textContent = '練習で修正できました。最初の回答は誤答として記録されています。'; status?.append(note); this.view.show('view-result'); status?.focus?.(); this.dispatchPendingGameOver(); return true;
     }
     revealAnswer() {
       const flow = this.learningFlow; if (!flow || !['W','R'].includes(flow.phase)) return false;
-      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(this.questions[this.currentId], flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, false); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); this.dispatchPendingGameOver(); return true;
+      flow.phase = 'D'; this.view.hideProtectedResult?.(); this.view.result(this.questions[this.currentId], flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, false, Controller.anchorResultScene(root.AnchorScenes || [], this.currentId, this.model?.state?.mode || 'story')); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); this.dispatchPendingGameOver(); return true;
     }
     dispatchPendingGameOver() { const flow = this.learningFlow; if (flow?.gameOverPending && !flow.gameOverDispatched) { flow.gameOverDispatched = true; this.showGameOver(); } }
     next() {
