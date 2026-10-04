@@ -986,6 +986,7 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 @media (prefers-reduced-motion: reduce) { .achievement-banner { animation: none; } }
 
 .narrative-result {
+  box-sizing: border-box;
   width: 100%;
   max-width: 100%;
   min-width: 0;
