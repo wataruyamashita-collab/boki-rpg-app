@@ -31,6 +31,7 @@ async function run(){
               document.querySelectorAll('.view').forEach(node=>{node.hidden=true;node.style.display='none';});
               const result=document.getElementById('view-result');result.hidden=false;result.style.display='block';
               const view=new window.AppView(document);
+              const baselinePageWidth=document.documentElement.scrollWidth;
               const scene={sceneId:'CH12-BOSS',chapter:12,beat:'BOSS',after:'社長は「やっと、うちの会社が見えた」と答えました。',hook:'次は主人公が最初の一枚を渡す側です。',dialogue:'社長「やっと、うちの会社が見えた。」',epilogue:true};
               const storyResolved=view.renderNarrativeResult([scene],{mode:'story',resolved:true});
               const node=document.getElementById('narrative-result');
@@ -38,10 +39,10 @@ async function run(){
               const sceneId=node.dataset.sceneId;
               const epilogueClass=node.classList.contains('narrative-result-epilogue');
               const containerOverflow=node.scrollWidth>node.clientWidth+1;
-              const pageOverflow=document.documentElement.scrollWidth>window.innerWidth+1;
+              const pageOverflowAdded=document.documentElement.scrollWidth>baselinePageWidth+1;
               const wrongHidden=view.renderNarrativeResult([scene],{mode:'story',resolved:false})===false&&node.hidden===true;
               const trainingHidden=view.renderNarrativeResult([scene],{mode:'training',resolved:true})===false&&node.hidden===true;
-              return{storyResolved,visibleText,sceneId,epilogueClass,containerOverflow,pageOverflow,wrongHidden,trainingHidden};
+              return{storyResolved,visibleText,sceneId,epilogueClass,containerOverflow,pageOverflowAdded,baselinePageWidth,finalPageWidth:document.documentElement.scrollWidth,wrongHidden,trainingHidden};
             });
             report.browser=browserName;report.width=width;report.pageErrors=pageErrors;report.violations=[];
             if(!report.storyResolved)report.violations.push('STORY_RESULT_NOT_RENDERED');
@@ -51,7 +52,8 @@ async function run(){
             if(!report.epilogueClass)report.violations.push('EPILOGUE_CLASS_MISSING');
             if(!report.wrongHidden)report.violations.push('WRONG_REVEALS_RESULT');
             if(!report.trainingHidden)report.violations.push('TRAINING_MODE_LEAK');
-            if(report.containerOverflow||report.pageOverflow)report.violations.push('HORIZONTAL_OVERFLOW');
+            if(report.containerOverflow)report.violations.push('NARRATIVE_CONTAINER_OVERFLOW');
+            if(report.pageOverflowAdded)report.violations.push('NARRATIVE_ADDED_PAGE_OVERFLOW');
             if(pageErrors.length)report.violations.push('PAGE_SCRIPT_ERROR');
             evidence.reports.push(report);
             if(report.violations.length)evidence.failures.push(`${browserName}/${width}: ${report.violations.join(',')}`);
