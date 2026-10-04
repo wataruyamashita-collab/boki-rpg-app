@@ -108,7 +108,7 @@ jobs:
                 for(const key of keys)walk(a[key],b[key],prefix?`${prefix}.${key}`:key);
               };
               walk(beforeAudited,afterAudited);
-              throw new Error(`audit matrix refresh refused: audited source changed beyond chapter for ${id}: ${differences.join(',')}`);
+              throw new Error(`audit matrix refresh refused: audited source changed beyond chapter for ${id}: ${differences.join(',')} beforeScene=${JSON.stringify(before.scene)} afterScene=${JSON.stringify(after.scene)} beforeStory=${JSON.stringify(before.story)} afterStory=${JSON.stringify(after.story)}`);
             }
             const beforeStamp=evidenceStamp(before);
             const afterStamp=evidenceStamp(after);
