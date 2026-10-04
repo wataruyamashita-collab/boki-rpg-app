@@ -1,6 +1,7 @@
 # Generation 89 Issue #180 Story chapter authority finalizer
 # trigger: validated pre-authority boundary
 # trigger: semantic chapter validator aligned
+# trigger: story e2e moved behind candidate authority
 name: Issue 180 Generation 89 finalizer
 on:
   push:
@@ -40,7 +41,6 @@ jobs:
           node tests/resume-reset.test.js
           node tests/app.test.js
           node tests/exam-answer-firewall.test.js
-          node scripts/qa/run-story-e2e.js
           git diff --check
       - name: Prepare Release 20260924-158 and Generation 89 candidate
         run: |
