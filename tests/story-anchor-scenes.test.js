@@ -36,14 +36,14 @@ for(let chapter=1;chapter<=12;chapter+=1){
   const chapterScenes=scenes.filter(scene=>scene.chapter===chapter);
   assert.strictEqual(chapterScenes.length,3,`Chapter ${chapter} must have exactly 3 anchors`);
   assert.deepStrictEqual(
-    chapterScenes.map(scene=>scene.beat).sort(),
+    Array.from(chapterScenes,scene=>scene.beat).sort(),
     ['BOSS','OPEN','REVERSAL'],
     `Chapter ${chapter} must contain OPEN / REVERSAL / BOSS`
   );
 
   const expectedIds=['OPEN','REVERSAL','BOSS'].map(beat=>`CH${String(chapter).padStart(2,'0')}-${beat}`);
   assert.deepStrictEqual(
-    chapterScenes.map(scene=>scene.sceneId).sort(),
+    Array.from(chapterScenes,scene=>scene.sceneId).sort(),
     expectedIds.sort(),
     `Chapter ${chapter} scene IDs must follow the locked authority`
   );
