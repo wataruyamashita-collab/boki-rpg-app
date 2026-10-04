@@ -151,6 +151,6 @@ function financial(q){
   }
   return null;
 }
-function build(q){const special=exam3(q)||simpleComprehensive(q)||worksheet(q)||financial(q);if(special&&special.length)return special;if(q?.type==='ledger')return null;const x=authored(q);return x.length?x:null;}
+function build(q){const special=exam3(q)||simpleComprehensive(q)||worksheet(q)||financial(q);if(special&&special.length)return special;const ledgerMatch=/^L(\d{3})$/u.exec(String(q?.id||''));if(q?.type==='ledger'&&ledgerMatch&&Number(ledgerMatch[1])>=26&&Number(ledgerMatch[1])<=50)return null;const x=authored(q);return x.length?x:null;}
 return Object.freeze({build});
 });
