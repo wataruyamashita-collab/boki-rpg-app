@@ -1,1 +1,27 @@
-{"schemaVersion":2,"chapter":12,"requiredStoryIds":["C004","C005"],"examOnly":["C006","C007","C008","C009","C010"],"errors":{"premature":"PREMATURE_STORY_TERMINATION","unreachable":"UNREACHABLE_STORY_QUESTION","loop":"UNEXPECTED_LOOP","count":"PROGRESS_COUNT_MISMATCH"}}
+{
+  "schemaVersion": 2,
+  "chapter": 12,
+  "requiredStoryIds": [
+    "J050",
+    "J150",
+    "F004",
+    "F005",
+    "F006",
+    "F007",
+    "C004",
+    "C005"
+  ],
+  "examOnly": [
+    "C006",
+    "C007",
+    "C008",
+    "C009",
+    "C010"
+  ],
+  "errors": {
+    "premature": "PREMATURE_STORY_TERMINATION",
+    "unreachable": "UNREACHABLE_STORY_QUESTION",
+    "loop": "UNEXPECTED_LOOP",
+    "count": "PROGRESS_COUNT_MISMATCH"
+  }
+}
