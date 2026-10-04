@@ -79,7 +79,8 @@ assert(css.includes('overflow-wrap: anywhere'),'narrative prose must wrap rather
 assert(controllerSource.includes('S3_PILOT_CHAPTERS'),'S3A rollout must remain explicit to representative chapters');
 assert(controllerSource.includes('narrativeScenesForQuestion(question)'),'Controller needs Story-only anchor lookup');
 assert(controllerSource.includes('renderNarrativeResult'),'Controller must connect grading flow to narrative result');
-assert(controllerSource.includes('resolved:false'),'wrong/reveal path must explicitly keep resolved narrative hidden');
-assert(controllerSource.includes('resolved:true'),'correct/retry-success path must explicitly resolve narrative');
+assert(controllerSource.includes('renderNarrativeResolution(question, resolved = false)'),'Controller must centralize safe Story-mode resolution');
+assert(controllerSource.includes('Controller.prototype.renderNarrativeResolution.call(this, question, false)'),'wrong path must keep narrative unresolved');
+assert(controllerSource.includes('Controller.prototype.renderNarrativeResolution.call(this, question, true)'),'correct path must resolve narrative');
 
 console.log('ISSUE179_S3_NARRATIVE_RESULT_PASS');
