@@ -1,4 +1,5 @@
 # Generation 90 Issue #179 S1 Narrative Bible semantic alignment finalizer
+# retrigger: reading-length contract v2
 name: Issue 179 S1 Generation 90 finalizer
 on:
   push:
