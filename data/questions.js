@@ -15448,15 +15448,25 @@ function validateQuestionData(questionData = QuestionData) {
     }
   }
 
-  // Story timeline: the master arc intentionally promotes every case into the
-  // April-to-March chronology. Guard the balanced twelve-chapter contract
-  // instead of treating later journal exercises as timeless review material.
+  // Story chapter is authored semantic metadata. Chapter volume may be uneven,
+  // but every question must belong to a valid April-to-March chapter and all
+  // twelve chapters must remain represented. Story-only reachability is guarded
+  // separately by the Issue #180 Story authority regression.
+  const invalidChapterIds = Object.values(questionData)
+    .filter(item => !Number.isInteger(item.chapter) || item.chapter < 1 || item.chapter > 12)
+    .map(item => item.id);
+  if (invalidChapterIds.length) {
+    errors.push(`章番号が1〜12の範囲外です: ${invalidChapterIds.join(',')}`);
+  }
   const chapterCounts = Object.values(questionData).reduce((counts, item) => {
-    counts[item.chapter] = (counts[item.chapter] || 0) + 1; return counts;
+    if (Number.isInteger(item.chapter) && item.chapter >= 1 && item.chapter <= 12) {
+      counts[item.chapter] = (counts[item.chapter] || 0) + 1;
+    }
+    return counts;
   }, {});
   const chapterSizes = Array.from({ length:12 }, (_, index) => chapterCounts[index + 1] || 0);
-  if (Math.max(...chapterSizes) - Math.min(...chapterSizes) > 1 || chapterSizes.some(size => size === 0)) {
-    errors.push(`12章の配分が不均衡です: ${chapterSizes.join(',')}`);
+  if (chapterSizes.some(size => size === 0)) {
+    errors.push(`12章のいずれかが空です: ${chapterSizes.join(',')}`);
   }
 
   // 決算整理表: 間接法なのに「備品（取得原価）」を直接調整するように見せない。
