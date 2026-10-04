@@ -15617,6 +15617,756 @@ const ChapterDrama = Object.freeze({
   12:{theme:'最後の決算',place:'取締役会当日の経理室',requester:'水野先輩',problem:'最終報告書に、利益と財務諸表をつなぐ確認が残っています',goal:'財務諸表から成果と財政状態を説明する',result:'会社の成果と財政状態',stakes:'この報告が、一年間の経理を会社の判断へつなぐ'}
 });
 
+const AnchorScenes = Object.freeze([
+  {
+    "sceneId": "CH01-OPEN",
+    "chapter": 1,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J001",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "入社初日の経理室",
+    "stakeholder": "水野先輩",
+    "before": "古い創業資料の先頭で、入金票と元帳のつながりが途切れています。水野先輩は「まず、会社が最初に何を持っていたか見よう」と資料を渡します。",
+    "after": "証憑から会社の出発点を説明する準備が整いました。",
+    "hook": "次の資料では、銀行口座の動きまで確かめます。",
+    "dialogue": "水野「金額より先に、証憑が何を示すか見よう。」",
+    "protagonistResponsibility": "証憑から事実を読み、根拠を水野先輩へ報告する",
+    "mizunoRelationshipStage": "Teacher",
+    "learningObjective": "会社の開始時点の資金記録を根拠から確認する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH01-REVERSAL",
+    "chapter": 1,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "J003",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J003"
+    },
+    "place": "入社初日の経理室",
+    "stakeholder": "水野先輩",
+    "before": "入金や振替の記録を追うほど、「お金が動いた」という見た目だけでは取引の意味を説明できないことが見えてきます。",
+    "after": "主人公は、金額の増減だけでなく取引の意味を区別して報告しました。",
+    "hook": "創業資料の最後の空欄を埋め、会社の出発点を確定します。",
+    "dialogue": "水野「お金が動いた理由まで言える？」",
+    "protagonistResponsibility": "取引の意味を証憑と勘定の関係から説明する",
+    "mizunoRelationshipStage": "Teacher",
+    "learningObjective": "資金移動と取引原因を区別する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH01-BOSS",
+    "chapter": 1,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "J103",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J103"
+    },
+    "place": "入社初日の経理室",
+    "stakeholder": "水野先輩",
+    "before": "創業時の資料はあと一つ。ここまでの記録をつなぎ、最初の残高を自分の説明で確定します。",
+    "after": "空白だった元帳の最初の行が埋まり、水野先輩は主人公の説明をそのまま採用しました。",
+    "hook": "営業部から、受注・仕入・返品が混ざった新しい資料束が届きます。",
+    "dialogue": "水野「最後は君の言葉で会社の出発点をまとめて。」",
+    "protagonistResponsibility": "会社の出発点を数字で説明する",
+    "mizunoRelationshipStage": "Teacher",
+    "learningObjective": "創業時の取引を一つの残高へ結びつける",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH02-OPEN",
+    "chapter": 2,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J004",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "営業会議後の経理室",
+    "stakeholder": "営業担当・高橋",
+    "before": "受注が増える一方、注文書・納品書・返品票・配送伝票が同じ束に混ざっています。高橋は「売れているように見えます」と言います。",
+    "after": "主人公は、まず取引ごとに資料を分けて確認し始めました。",
+    "hook": "返品や付随費用まで追うと、営業の見え方が変わりそうです。",
+    "dialogue": "高橋「売れているのに、何をそんなに分けるんです？」",
+    "protagonistResponsibility": "取引単位で資料を分け、何が起きたか整理する",
+    "mizunoRelationshipStage": "Teacher",
+    "learningObjective": "商品売買を取引単位で整理する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH02-REVERSAL",
+    "chapter": 2,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "J009",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J009"
+    },
+    "place": "営業会議後の経理室",
+    "stakeholder": "営業担当・高橋",
+    "before": "取引量が増えていても、返品や取引に付随する支出を落とせば実態は変わります。主人公は数字の裏側を高橋へ示します。",
+    "after": "高橋は、表面の数字だけで実績を語れないことに気づきました。",
+    "hook": "残る資料を整理し、営業実績の数字を確定します。",
+    "dialogue": "水野「見えている数字だけで実態を決めないで。」",
+    "protagonistResponsibility": "営業担当へ数字の意味を説明する",
+    "mizunoRelationshipStage": "Teacher",
+    "learningObjective": "売上・仕入・返品を区別して実績を捉える",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH02-BOSS",
+    "chapter": 2,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "J109",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J109"
+    },
+    "place": "営業会議後の経理室",
+    "stakeholder": "営業担当・高橋",
+    "before": "最後の返品資料まで確認し、売買の流れを一本につなげます。",
+    "after": "営業資料と経理記録の対応がそろい、高橋は主人公へ次回の確認も頼むようになりました。",
+    "hook": "売れたのに、まだ銀行へ入っていない金額が残っています。",
+    "dialogue": "高橋「次からは返品票も一緒に持ってきます。」",
+    "protagonistResponsibility": "営業実績を根拠付きで確定する",
+    "mizunoRelationshipStage": "Teacher",
+    "learningObjective": "商品売買の結果を一連の記録として説明する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH03-OPEN",
+    "chapter": 3,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J010",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "資金予定表を広げた経理室",
+    "stakeholder": "社長",
+    "before": "取引は記録されているのに、銀行残高と入金予定がつながりません。社長は「動いたはずの金は今どこにある？」と尋ねます。",
+    "after": "主人公は、現金の有無ではなく受け取る権利と支払う義務を追い始めます。",
+    "hook": "入金前の取引と支払前の取引を時点別に並べます。",
+    "dialogue": "社長「動いたはずの金は、今どこにある？」",
+    "protagonistResponsibility": "将来の受取と支払を時点別に整理する",
+    "mizunoRelationshipStage": "Teacher",
+    "learningObjective": "債権・債務と現金の違いを理解する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH03-REVERSAL",
+    "chapter": 3,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "J016",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J016"
+    },
+    "place": "資金予定表を広げた経理室",
+    "stakeholder": "社長",
+    "before": "お金を先に受け取っていても、まだ取引が完了していないケースがあります。利益と入出金を同じものとして扱えません。",
+    "after": "主人公は、入出金の時点と取引が成立する時点を分けて説明しました。",
+    "hook": "回収予定と支払予定をまとめ、直近の資金見通しへつなげます。",
+    "dialogue": "水野「入ったお金と、成立した取引は同じかな。」",
+    "protagonistResponsibility": "時点の違いを社長へ説明する",
+    "mizunoRelationshipStage": "Teacher",
+    "learningObjective": "入出金時点と収益・債権債務の関係を区別する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH03-BOSS",
+    "chapter": 3,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "J116",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J116"
+    },
+    "place": "資金予定表を広げた経理室",
+    "stakeholder": "社長",
+    "before": "最後の予定取引を確認し、受け取る権利と支払う義務を一覧へ戻します。",
+    "after": "社長へ渡す資金予定表に根拠が付き、主人公が説明資料の一部を担当しました。",
+    "hook": "現金そのものの残高にも、説明できない差が見つかります。",
+    "dialogue": "社長「これなら支払日までの見通しが分かる。」",
+    "protagonistResponsibility": "資金見通しを根拠から説明する",
+    "mizunoRelationshipStage": "Teacher",
+    "learningObjective": "債権・債務を資金予定へ結びつける",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH04-OPEN",
+    "chapter": 4,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J017",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "現金実査後の経理室",
+    "stakeholder": "総務担当・森",
+    "before": "金庫の実査額と帳簿の数字が合いません。森は心当たりを口にしますが、まだ裏付ける証拠がありません。",
+    "after": "主人公は、人の記憶と証拠を分けて差額を調べ始めます。",
+    "hook": "小口現金箱と未提出の領収書も確認対象に加わります。",
+    "dialogue": "森「たぶん昨日の支払いだと思うんですが……。」",
+    "protagonistResponsibility": "事実と推測を分けて差額を調査する",
+    "mizunoRelationshipStage": "Questioner",
+    "learningObjective": "現金差異を証拠に基づいて処理する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH04-REVERSAL",
+    "chapter": 4,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "J020",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J020"
+    },
+    "place": "現金実査後の経理室",
+    "stakeholder": "総務担当・森",
+    "before": "最初の説明とは別の資料が差額の原因を示しています。水野先輩は「何が事実で、何が推測？」とだけ聞きます。",
+    "after": "主人公は、証拠のある部分だけを処理し、未確定部分を残しました。",
+    "hook": "最後の精算資料で、差額の扱いを確定します。",
+    "dialogue": "水野「何が事実で、何が推測？」",
+    "protagonistResponsibility": "証拠に基づく判断を自分で組み立てる",
+    "mizunoRelationshipStage": "Questioner",
+    "learningObjective": "現金過不足と小口現金の証拠を区別する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH04-BOSS",
+    "chapter": 4,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "J120",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J120"
+    },
+    "place": "現金実査後の経理室",
+    "stakeholder": "総務担当・森",
+    "before": "小口現金の報告と補給記録を最後まで照合し、実査の差額を説明できる状態にします。",
+    "after": "森は推測ではなく証憑をそろえて報告するようになり、現金管理の手順が整いました。",
+    "hook": "会社の拡大で、設備購入や出張精算など大きな支出が増えます。",
+    "dialogue": "森「次からは証憑をそろえてから報告します。」",
+    "protagonistResponsibility": "現金管理の根拠を関係者へ説明する",
+    "mizunoRelationshipStage": "Questioner",
+    "learningObjective": "現金差異を調査から確定処理までつなぐ",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH05-OPEN",
+    "chapter": 5,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J021",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "設備資料を広げた経理室",
+    "stakeholder": "水野先輩",
+    "before": "新しい設備、出張精算、立替、借入の資料が同時に届きました。同じ支出に見えても会社に残る意味は同じではありません。",
+    "after": "主人公は、支出の目的と将来に残る権利・義務を分けて確認し始めます。",
+    "hook": "次は、返済を伴う取引まで含めて会社の状態を整理します。",
+    "dialogue": "水野「同じ支出に見えても、残るものは同じじゃない。」",
+    "protagonistResponsibility": "支出の目的と将来への影響を区別する",
+    "mizunoRelationshipStage": "Questioner",
+    "learningObjective": "資産・仮払・立替・借入を区別する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH05-REVERSAL",
+    "chapter": 5,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "J027",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J027"
+    },
+    "place": "設備資料を広げた経理室",
+    "stakeholder": "水野先輩",
+    "before": "大きな支出がそのまま大きな費用になるとは限りません。返した金額の中にも性質の違う部分があります。",
+    "after": "主人公は、支出額だけでなく何が残り何が減ったかを説明しました。",
+    "hook": "会社が何に投資し、何を返すのかを最後まで整理します。",
+    "dialogue": "水野「出ていった金額ではなく、何が残ったか見て。」",
+    "protagonistResponsibility": "取引の性質を自分で説明する",
+    "mizunoRelationshipStage": "Questioner",
+    "learningObjective": "支出と資産・債務の変化を結びつける",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH05-BOSS",
+    "chapter": 5,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "J127",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J127"
+    },
+    "place": "設備資料を広げた経理室",
+    "stakeholder": "水野先輩",
+    "before": "借入の返済資料まで確認し、業務拡大で増えた資産と義務を一つの説明へまとめます。",
+    "after": "主人公は設備投資と返済を別の意味として説明し、水野先輩は確認だけに回りました。",
+    "hook": "人員増加で給与振込日が迫り、次は社員へ直接影響する数字を扱います。",
+    "dialogue": "水野「投資と返済を分けて説明できたね。」",
+    "protagonistResponsibility": "会社の投資と返済を整理して説明する",
+    "mizunoRelationshipStage": "Questioner",
+    "learningObjective": "固定資産と資金調達を会社の状態として捉える",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH06-OPEN",
+    "chapter": 6,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J028",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "給与振込前日の経理室",
+    "stakeholder": "人事担当者",
+    "before": "給与一覧、控除一覧、会社負担分、納付書が同じ机に並び、誰のお金か分かりにくくなっています。",
+    "after": "主人公は、従業員へ支払う分と会社が負担する分を分けて確認します。",
+    "hook": "振込だけでなく、その後の納付まで数字をつなげます。",
+    "dialogue": "人事担当「振込額だけ合わせればいいと思っていました。」",
+    "protagonistResponsibility": "負担主体と支払先を区別して整理する",
+    "mizunoRelationshipStage": "Questioner",
+    "learningObjective": "給与・預り金・会社負担・税を区別する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH06-REVERSAL",
+    "chapter": 6,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "J030",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J030"
+    },
+    "place": "給与振込前日の経理室",
+    "stakeholder": "人事担当者",
+    "before": "会社から出る総額と従業員の手取りは一致しません。預かった金額と会社負担分を混ぜると納付額も崩れます。",
+    "after": "主人公は、人事担当者へ誰の負担かを分けて説明しました。",
+    "hook": "残る税・納付関連資料まで確認し、給与日の処理を閉じます。",
+    "dialogue": "水野「誰の負担かを一つずつ分けてみよう。」",
+    "protagonistResponsibility": "人事担当者へ負担区分を説明する",
+    "mizunoRelationshipStage": "Questioner",
+    "learningObjective": "給与支払と法定負担の関係を理解する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH06-BOSS",
+    "chapter": 6,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "J032",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J032"
+    },
+    "place": "給与振込前日の経理室",
+    "stakeholder": "人事担当者",
+    "before": "給与日周辺の最後の支出資料を確認し、支払と納付の根拠をそろえます。",
+    "after": "人事担当者は主人公の確認結果を基に処理を完了し、水野先輩はレビューだけを行いました。",
+    "hook": "処理件数が増え、次は帳簿への転記と月次締めが追いつかなくなります。",
+    "dialogue": "人事担当「これなら振込と納付を別々に確認できます。」",
+    "protagonistResponsibility": "給与関連処理を一連の流れとして確認する",
+    "mizunoRelationshipStage": "Questioner",
+    "learningObjective": "給与・納付・税務関連の記録を整理する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH07-OPEN",
+    "chapter": 7,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J033",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "月末の経理室",
+    "stakeholder": "水野先輩",
+    "before": "証憑の処理は進みましたが、帳簿への転記と残高確認が終わらず月次報告を出せません。",
+    "after": "主人公は、単発の仕訳ではなく各記録がどの帳簿へ積み上がるかを追います。",
+    "hook": "補助簿と総勘定元帳の数字が同じ結論へ向かうか確認します。",
+    "dialogue": "水野「今月は君が照合順を決めてみて。」",
+    "protagonistResponsibility": "帳簿間のつながりを自分で追跡する",
+    "mizunoRelationshipStage": "Reviewer",
+    "learningObjective": "取引から元帳・補助簿・残高への流れを理解する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH07-REVERSAL",
+    "chapter": 7,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "L009",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "L009"
+    },
+    "place": "月末の経理室",
+    "stakeholder": "水野先輩",
+    "before": "帳簿を照合する途中、主人公が水野先輩より先に残高の違和感を見つけます。",
+    "after": "水野先輩は答えを示さず、主人公の調査順序を確認する側へ回りました。",
+    "hook": "残る帳簿を照合し、月次残高を自分の判断で確定します。",
+    "dialogue": "水野「その違和感、どこから確かめる？」",
+    "protagonistResponsibility": "異常を発見し調査順序を決める",
+    "mizunoRelationshipStage": "Reviewer",
+    "learningObjective": "補助簿と残高の不一致を発見・追跡する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH07-BOSS",
+    "chapter": 7,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "L030",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "L030"
+    },
+    "place": "月末の経理室",
+    "stakeholder": "水野先輩",
+    "before": "最後の台帳まで照合し、月次報告へ使う残高を確定します。",
+    "after": "主人公が作った照合結果を水野先輩がレビューし、修正なしで月次締めへ進みました。",
+    "hook": "残高を集めた試算表には、それでも説明できないずれが残っています。",
+    "dialogue": "水野「今回は修正なし。君の締め方で進めよう。」",
+    "protagonistResponsibility": "月次締めの残高を自分の責任で確定する",
+    "mizunoRelationshipStage": "Reviewer",
+    "learningObjective": "帳簿残高を月次報告へつなぐ",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH08-OPEN",
+    "chapter": 8,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J038",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "試算表を広げた会議室",
+    "stakeholder": "水野先輩",
+    "before": "試算表と元帳の数字に違和感があります。誰かのミスと決めつけず、どこからずれたかを追う必要があります。",
+    "after": "主人公は、訂正前の帳簿と元証憑を並べて調査順序を決めます。",
+    "hook": "最初に怪しく見える記録が本当に原因か、数字で確かめます。",
+    "dialogue": "水野「誰が間違えたかより、どこからずれたかを追おう。」",
+    "protagonistResponsibility": "差異の調査方針を自分で決める",
+    "mizunoRelationshipStage": "Reviewer",
+    "learningObjective": "訂正・未記帳・試算表差異を根拠から追跡する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH08-REVERSAL",
+    "chapter": 8,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "T022",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "T022"
+    },
+    "place": "試算表を広げた会議室",
+    "stakeholder": "水野先輩",
+    "before": "一見怪しかった記録だけを直しても、試算表の違和感は消えません。別の未確認資料へ調査範囲を広げます。",
+    "after": "主人公は最初の仮説を数字で修正し、原因候補を絞りました。",
+    "hook": "訂正が必要な箇所だけを残し、試算表を一致させます。",
+    "dialogue": "水野「最初の仮説を捨てる根拠はある？」",
+    "protagonistResponsibility": "仮説を数字で検証し修正する",
+    "mizunoRelationshipStage": "Reviewer",
+    "learningObjective": "試算表差異の原因を段階的に特定する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH08-BOSS",
+    "chapter": 8,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "E014",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "E014"
+    },
+    "place": "試算表を広げた会議室",
+    "stakeholder": "水野先輩",
+    "before": "証憑と帳簿を最後まで照合し、正しい記録は残したまま必要な訂正だけを行います。",
+    "after": "試算表のずれが解消し、水野先輩は主人公の調査手順を次回の標準に採用しました。",
+    "hook": "数字は合いました。次は、その数字が本当に今期のものかを確かめます。",
+    "dialogue": "水野「調査順まで含めて、君の判断で合っている。」",
+    "protagonistResponsibility": "原因調査から訂正まで主導する",
+    "mizunoRelationshipStage": "Reviewer",
+    "learningObjective": "差異を特定し必要な訂正だけを行う",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH09-OPEN",
+    "chapter": 9,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J041",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "決算前夜の経理室",
+    "stakeholder": "水野先輩",
+    "before": "現金の出入りだけでは、今年の成績を正しく表せない取引が残っています。支払日と利用期間を分けて見る必要があります。",
+    "after": "主人公は契約書と日付資料を並べ、どの期に属するかを自分で判断します。",
+    "hook": "支払い済み・未払いという見た目を超えて期間を確認します。",
+    "dialogue": "水野「支払日ではなく、どの期間の話か考えて。」",
+    "protagonistResponsibility": "期間帰属を自分で判断する",
+    "mizunoRelationshipStage": "Reviewer",
+    "learningObjective": "前払・未払・前受・未収の期間帰属を理解する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH09-REVERSAL",
+    "chapter": 9,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "J042",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J042"
+    },
+    "place": "決算前夜の経理室",
+    "stakeholder": "水野先輩",
+    "before": "まだ支払っていなくても今期の負担になる取引があります。現金の動きだけでは決算を説明できません。",
+    "after": "主人公は、支払時点と費用が発生する時点を分けて説明しました。",
+    "hook": "未収の資料も確認し、当期に属する収益と費用をそろえます。",
+    "dialogue": "水野「まだ払っていなくても、今期の数字になることはある。」",
+    "protagonistResponsibility": "期間帰属の根拠を説明する",
+    "mizunoRelationshipStage": "Reviewer",
+    "learningObjective": "現金主義と発生主義の違いを実務判断へつなぐ",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH09-BOSS",
+    "chapter": 9,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "J044",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J044"
+    },
+    "place": "決算前夜の経理室",
+    "stakeholder": "水野先輩",
+    "before": "最後の期間調整を確認し、今期に属する収益と費用を確定します。",
+    "after": "主人公の判断で期間のずれが整理され、水野先輩は最終確認だけを行いました。",
+    "hook": "期間が決まっても、資産価値や貸倒れなど決算整理はまだ残っています。",
+    "dialogue": "水野「期間の判断は任せられるね。」",
+    "protagonistResponsibility": "当期の成果を期間の観点から確定する",
+    "mizunoRelationshipStage": "Reviewer",
+    "learningObjective": "期間帰属を決算数値へ反映する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH10-OPEN",
+    "chapter": 10,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J045",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "年度決算の作業室",
+    "stakeholder": "経理責任者",
+    "before": "一年の取引は記録済みですが、見積りや償却などの決算整理が残り、利益を確定できません。",
+    "after": "主人公は複数の決算整理を作業順に並べ、最終数値へつなぐ役割を任されます。",
+    "hook": "個別処理だけでなく、精算表全体への反映まで確認します。",
+    "dialogue": "経理責任者「決算整理の順番から説明してくれ。」",
+    "protagonistResponsibility": "決算整理の順序を決め、責任者へ説明する",
+    "mizunoRelationshipStage": "Supporter",
+    "learningObjective": "複数の決算整理を精算表へ統合する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH10-REVERSAL",
+    "chapter": 10,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "D004",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "D004"
+    },
+    "place": "年度決算の作業室",
+    "stakeholder": "経理責任者",
+    "before": "個別の計算が合っていても、精算表の振り分けを誤れば決算全体は完成しません。",
+    "after": "主人公は計算結果だけでなく、どの欄へつながるかまで責任者へ説明しました。",
+    "hook": "残る整理事項を反映し、利益と期末残高を確定します。",
+    "dialogue": "水野「計算だけでなく、どこへつながるかまで見て。」",
+    "protagonistResponsibility": "決算全体のつながりを説明する",
+    "mizunoRelationshipStage": "Supporter",
+    "learningObjective": "決算整理から財務諸表への流れを理解する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH10-BOSS",
+    "chapter": 10,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "D012",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "D012"
+    },
+    "place": "年度決算の作業室",
+    "stakeholder": "経理責任者",
+    "before": "最後の決算整理を精算表へ反映し、一年間の成果をまとめます。",
+    "after": "経理責任者は主人公の作業順序と説明を承認し、水野先輩は補足役に回りました。",
+    "hook": "完成した数字を作れるだけでは足りません。次は他者へ根拠を説明します。",
+    "dialogue": "経理責任者「この手順で年度決算を締めよう。」",
+    "protagonistResponsibility": "年度決算の作業を主導して説明する",
+    "mizunoRelationshipStage": "Supporter",
+    "learningObjective": "精算表から決算成果を確定する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH11-OPEN",
+    "chapter": 11,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J049",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "取締役会前の会議室",
+    "stakeholder": "社長",
+    "before": "取締役会資料を閉じる直前、税に関する仮勘定の差が未確定です。社長は数字の根拠まで説明できる状態を求めます。",
+    "after": "主人公は元の資料まで戻り、最終報告に残る税の論点を確認します。",
+    "hook": "一つ目のケースで整理した考え方を、応用ケースでも説明できるか確かめます。",
+    "dialogue": "社長「役員に聞かれても、根拠まで答えられるようにしてほしい。」",
+    "protagonistResponsibility": "社長へ最終数値の根拠を説明する",
+    "mizunoRelationshipStage": "Supporter",
+    "learningObjective": "消費税の仮勘定を相殺し納付義務を説明する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH11-REVERSAL",
+    "chapter": 11,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "J049",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J049"
+    },
+    "place": "取締役会前の会議室",
+    "stakeholder": "社長",
+    "before": "一つ目の処理が合っていても、条件が変わった応用ケースで同じ根拠を説明できなければ役員報告には足りません。",
+    "after": "主人公は処理手順ではなく、なぜその差が残るかを社長へ説明しました。",
+    "hook": "最後の応用ケースを自分の説明で確定します。",
+    "dialogue": "水野「同じ手順ではなく、同じ根拠で説明できる？」",
+    "protagonistResponsibility": "処理者から説明者へ役割を移す",
+    "mizunoRelationshipStage": "Supporter",
+    "learningObjective": "税額計算の根拠を別条件でも説明する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH11-BOSS",
+    "chapter": 11,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "J149",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "J149"
+    },
+    "place": "取締役会前の会議室",
+    "stakeholder": "社長",
+    "before": "最後の税資料を確認し、取締役会資料へ載せる数値と根拠を確定します。",
+    "after": "社長は主人公の説明をそのまま報告資料へ採用し、水野先輩は必要な補足だけを行いました。",
+    "hook": "取締役会当日、最終報告書には最後の確認項目が一つ残っています。",
+    "dialogue": "社長「この説明なら、そのまま取締役会へ持っていける。」",
+    "protagonistResponsibility": "役員報告に耐える根拠を示す",
+    "mizunoRelationshipStage": "Supporter",
+    "learningObjective": "決算時の消費税処理を説明責任まで含めて理解する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH12-OPEN",
+    "chapter": 12,
+    "beat": "OPEN",
+    "mode": "story",
+    "referenceQuestionId": "J050",
+    "trigger": {
+      "type": "chapterStart"
+    },
+    "place": "取締役会当日の経理室",
+    "stakeholder": "社長",
+    "before": "最終報告書の最後の空欄が主人公へ向けられます。水野先輩は隣にいますが、答えを言いません。",
+    "after": "主人公は一年分の記録を自分の責任で説明する準備を整えます。",
+    "hook": "利益の確定から財務諸表、そして会社全体の説明へ進みます。",
+    "dialogue": "水野「今日は、僕から答えは言わない。」",
+    "protagonistResponsibility": "会社の数字を自分の責任で説明する",
+    "mizunoRelationshipStage": "Silent witness",
+    "learningObjective": "当期純利益と財務諸表を最終報告へつなぐ",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH12-REVERSAL",
+    "chapter": 12,
+    "beat": "REVERSAL",
+    "mode": "story",
+    "referenceQuestionId": "F005",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "F005"
+    },
+    "place": "取締役会当日の経理室",
+    "stakeholder": "社長",
+    "before": "一年前は現金の多さだけで会社を見ようとしていました。今は財務諸表から成果と財政状態を分けて説明できます。",
+    "after": "主人公は、数字の意味を自分の言葉で社長へ説明しました。水野先輩は口を挟みません。",
+    "hook": "最後の総合資料で、現金の動きと利益を切り分けて年度を締めます。",
+    "dialogue": "社長「数字が合うだけじゃなく、会社の状態まで分かるんだな。」",
+    "protagonistResponsibility": "財務諸表を使って会社の状態を説明する",
+    "mizunoRelationshipStage": "Silent witness",
+    "learningObjective": "成果と財政状態を区別して説明する",
+    "spoilerGuard": "no-answer-before-action"
+  },
+  {
+    "sceneId": "CH12-BOSS",
+    "chapter": 12,
+    "beat": "BOSS",
+    "mode": "story",
+    "referenceQuestionId": "C005",
+    "trigger": {
+      "type": "afterQuestion",
+      "questionId": "C005"
+    },
+    "place": "取締役会当日の経理室",
+    "stakeholder": "社長",
+    "before": "最後の資料を読み、現金の動きと会社の成果を分けて説明します。これが一年間の最終報告です。",
+    "after": "社長は「やっと、うちの会社が見えた」と答えます。水野先輩は最後まで主人公の説明に口を挟みませんでした。",
+    "hook": "席へ戻ると、創業時の資料がファイルの先頭にあります。次に新人が来るなら、今度は主人公が最初の一枚を渡す側です。",
+    "dialogue": "社長「やっと、うちの会社が見えた。」",
+    "protagonistResponsibility": "一年の会計成果を自分の言葉で最終報告する",
+    "mizunoRelationshipStage": "Silent witness",
+    "learningObjective": "一年の取引・決算・財務諸表を統合して説明する",
+    "spoilerGuard": "no-answer-before-action",
+    "epilogue": true
+  }
+].map(scene =>
+  Object.freeze({ ...scene, trigger:Object.freeze({ ...scene.trigger }) })
+));
+
 const WorkInstructions = Object.freeze({
   journal:'取引の増減を整理し、借方・貸方の科目と金額を決めてください',
   ledger:'日付・相手先・金額を確かめ、指定された帳簿へ記入してください',
@@ -16099,6 +16849,7 @@ Object.values(QuestionData).forEach(item => {
 if (typeof window !== 'undefined') {
   // The exam pool is an explicit assessment contract. It is intentionally independent
   // of object insertion order and is consumed by both Controller and the audits.
+  window.AnchorScenes = AnchorScenes;
   window.ExamPoolDefinition = ExamPoolDefinition;
   window.QuestionData = QuestionData;
   window.validateQuestionData = validateQuestionData;
