@@ -27,7 +27,7 @@ assert.deepStrictEqual(
 );
 
 const expectedThemes={
-  1:'消えた創業伝票',
+  1:'拡大資金の記録',
   2:'営業部の未精算',
   3:'回収予定表の空白',
   4:'現金の違和感',
@@ -36,8 +36,8 @@ const expectedThemes={
   7:'月次締めの壁',
   8:'試算表のずれ',
   9:'決算前夜',
-  10:'年度決算',
-  11:'取締役会報告',
+  10:'年度決算の予行演習',
+  11:'取締役会前の最終照合',
   12:'最後の決算'
 };
 for(const [chapter,theme] of Object.entries(expectedThemes)){
