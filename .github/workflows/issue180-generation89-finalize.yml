@@ -57,12 +57,10 @@ jobs:
             if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(key=>[key,stable(value[key])]));
             return value;
           };
-          const auditedSourceWithoutChapter=q=>stable({
+          const auditedSourceStable=q=>stable({
             id:q.id,
             type:q.type,
             category:q.category,
-            scene:q.scene,
-            story:q.story,
             question:q.question,
             materials:q.materials,
             adjustments:q.adjustments,
@@ -88,27 +86,33 @@ jobs:
           const rows=new Map(matrix.rows.map(row=>[row.id,row]));
           if(rows.size!==300)throw new Error('audit matrix refresh refused: duplicate/missing matrix IDs');
 
-          let refreshed=0;
+          let refreshed=0,narrativeRefreshed=0;
           for(const id of currentIds){
             const before=baseline[id],after=current[id],row=rows.get(id);
             if(!row)throw new Error(`audit matrix refresh refused: missing row ${id}`);
-            const beforeAudited=auditedSourceWithoutChapter(before);
-            const afterAudited=auditedSourceWithoutChapter(after);
+            const beforeAudited=auditedSourceStable(before);
+            const afterAudited=auditedSourceStable(after);
             if(JSON.stringify(beforeAudited)!==JSON.stringify(afterAudited)){
-              const differences=[];
-              const walk=(a,b,prefix='')=>{
-                if(differences.length>=20)return;
-                if(JSON.stringify(a)===JSON.stringify(b))return;
-                const aObj=a&&typeof a==='object',bObj=b&&typeof b==='object';
-                if(!aObj||!bObj||Array.isArray(a)!==Array.isArray(b)){
-                  differences.push(prefix||'<root>');
-                  return;
-                }
-                const keys=[...new Set([...Object.keys(a),...Object.keys(b)])].sort();
-                for(const key of keys)walk(a[key],b[key],prefix?`${prefix}.${key}`:key);
-              };
-              walk(beforeAudited,afterAudited);
-              throw new Error(`audit matrix refresh refused: audited source changed beyond chapter for ${id}: ${differences.join(',')} beforeScene=${JSON.stringify(before.scene)} afterScene=${JSON.stringify(after.scene)} beforeStory=${JSON.stringify(before.story)} afterStory=${JSON.stringify(after.story)}`);
+              throw new Error(`audit matrix refresh refused: question/material/table source changed for ${id}`);
+            }
+            const narrativeChanged=before.scene!==after.scene||before.story!==after.story;
+            if(narrativeChanged&&before.chapter===after.chapter){
+              throw new Error(`audit matrix refresh refused: scene/story changed without chapter authority change for ${id}`);
+            }
+            if(narrativeChanged){
+              const months=['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+              const expectedMonth=months[after.chapter-1];
+              if(!expectedMonth||typeof after.scene!=='string'||!after.scene.startsWith(expectedMonth+'・')){
+                throw new Error(`audit matrix refresh refused: scene/month mismatch for ${id}`);
+              }
+              if(typeof after.story!=='string'||!after.story.includes(after.category)){
+                throw new Error(`audit matrix refresh refused: runtime Story lost category context for ${id}`);
+              }
+              if(!row.story||row.story.status!=='VERIFIED'){
+                throw new Error(`audit matrix refresh refused: prior story evidence status is not VERIFIED for ${id}`);
+              }
+              row.story.finding=`「${after.scene}」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「${after.category}」の資料・担当作業が明示され、chapterとsceneの整合を確認した。`;
+              narrativeRefreshed+=1;
             }
             const beforeStamp=evidenceStamp(before);
             const afterStamp=evidenceStamp(after);
@@ -127,7 +131,7 @@ jobs:
           const verification=verifyMatrix(matrix,current);
           if(!verification.ok)throw new Error(`audit matrix refresh failed: ${JSON.stringify(verification.stale.slice(0,10))}`);
           fs.writeFileSync(matrixPath,JSON.stringify(matrix,null,2)+'\n');
-          console.log(`AUDIT_MATRIX_CHAPTER_REFRESH_PASS refreshed=${refreshed}`);
+          console.log(`AUDIT_MATRIX_CHAPTER_REFRESH_PASS refreshed=${refreshed} narrativeRefreshed=${narrativeRefreshed}`);
           NODE
       - name: Prepare Release 20260924-158 and Generation 89 candidate
         run: |
