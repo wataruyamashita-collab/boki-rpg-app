@@ -15,7 +15,7 @@
       "category": "資本金・追加出資",
       "story": {
         "status": "VERIFIED",
-        "finding": "「4月・消えた創業伝票」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「資本金・追加出資」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「資本金・追加出資」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -82,7 +82,7 @@
         "finding": "scene「4月・帳簿の出発点」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:61da9cd5104ece203ef64b8fa1a5592cd1551b377bb8fef360c000c66640a476",
+      "sourceHash": "sha256:a9e04d2ac6c3a2f4ee00a7f34d195f5a4fe300a79fb0030b1c403b14de9ada31",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -93,7 +93,7 @@
       "category": "現金・預金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「4月・消えた創業伝票」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「現金・預金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「現金・預金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -160,7 +160,7 @@
         "finding": "scene「4月・帳簿の出発点」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:02bdbc484368c083f59e0263c38bbdf6a0e37b5d1ae0c3737043a1998b9a6470",
+      "sourceHash": "sha256:a75b108f40096ad739bb2e9b3b65bceee03ec14655df4bfced1bd049673a97fb",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -249,7 +249,7 @@
       "category": "掛仕入",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「掛仕入」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「掛仕入」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -316,7 +316,7 @@
         "finding": "scene「5月・仕入と販売」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:4739cf8f2b73c457215cd92d0d261afdf07594a01e98b5fd738261da0ca02c1b",
+      "sourceHash": "sha256:f926fee6b124acbdafd01d57362575daad81b4330e072ff7e30ba419a7043f88",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -327,7 +327,7 @@
       "category": "掛売上",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「掛売上」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「掛売上」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -394,7 +394,7 @@
         "finding": "scene「5月・仕入と販売」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:759f6eebdeadc1da08a7f7611de2d379790bfe39c78d743dedfe135847db6018",
+      "sourceHash": "sha256:c4d64ecd8330c4076ffca7ac7c717a3dbb1176144e9274d3b3dba6c60315f99c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -405,7 +405,7 @@
       "category": "仕入諸掛",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仕入諸掛」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仕入諸掛」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -472,7 +472,7 @@
         "finding": "scene「5月・仕入と販売」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2adb047a2ee83f147126d0c101f3e17091088bd6ce1fbb9d9a9ba387975f6b25",
+      "sourceHash": "sha256:7fcce1cdc9e30c42cb9c39403b2e869969a02d09c81b9e879b081bf1c4f83649",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -483,7 +483,7 @@
       "category": "売上諸掛",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売上諸掛」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売上諸掛」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -550,7 +550,7 @@
         "finding": "scene「5月・仕入と販売」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:baf850aa93708c49bdd6500ccd90a979b93853a75f73f192000b78e8f3c63c51",
+      "sourceHash": "sha256:e76108ff473bee2048a78c6af27974cc87429da51be5a4549cb418fa3d57667f",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -561,7 +561,7 @@
       "category": "仕入返品",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仕入返品」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仕入返品」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -628,7 +628,7 @@
         "finding": "scene「5月・仕入と販売」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e2a183635dc2083abde36f7733ee7e664e14f9a25d0b9d4bd7f1b87f460b0416",
+      "sourceHash": "sha256:2344771fcb400de55ffccea53e3e4cc6bec2cfb3afdfb55ac30551c02786d190",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -717,7 +717,7 @@
       "category": "売掛金回収",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売掛金回収」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売掛金回収」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -784,7 +784,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:0e20d3171e1390bfbc52848332d7523f24654858c505a7aa42255981ed95d34e",
+      "sourceHash": "sha256:5840804d46de65f6ff1297199653ffee6156ffe36f5cc7f4a367ce9bc9377232",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -795,7 +795,7 @@
       "category": "買掛金支払",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「買掛金支払」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「買掛金支払」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -862,7 +862,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:65ac8bfb81269a361bd52b709a85d20ee75df420b6d051021e26a57584fcde4b",
+      "sourceHash": "sha256:b878ee7cbeacd661d172eb6fafb827c914f71148cfdd310f4fae0b5ca3ad4964",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -873,7 +873,7 @@
       "category": "電子記録債務",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「電子記録債務」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債務」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -940,7 +940,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:fbb38704d12f9a9a7ba7f5c73b68322ac92178e49c009a51c79c1c6b03d5acfc",
+      "sourceHash": "sha256:e27e6a27c0a5954baa2dea1a045f48ecd7b4ed05036dea957a7e076370c59f3f",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -951,7 +951,7 @@
       "category": "電子記録債権",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「電子記録債権」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債権」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1018,7 +1018,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:192f23a3854a5658365a579765ca5b6ebaeb08c742a9d114b3880395c2812537",
+      "sourceHash": "sha256:282fbaa4386f5fcc237313ef11adefd81716e9864ebd48995cdb2b8f8ba5e30d",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1029,7 +1029,7 @@
       "category": "クレジット売掛金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「クレジット売掛金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「クレジット売掛金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1096,7 +1096,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:450136f3386e75331c0b12dc1b3fc4582b1224d284b8755676c763de21a8b380",
+      "sourceHash": "sha256:b4bc57e9f939fda5b4037a11c43af83ff1f98ea8ebbaa12101d14d3603038eef",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1107,7 +1107,7 @@
       "category": "前払金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「前払金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前払金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1174,7 +1174,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:92c0446c317924f5967acffdcef2c1b7be03cd7a3b8525911d2dc4160b8e21ec",
+      "sourceHash": "sha256:f17f2e945f367fd02ef510b47359cae57628106213ea753af929673098bd2917",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1185,7 +1185,7 @@
       "category": "前受金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「前受金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前受金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1252,7 +1252,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e60920a487b0935d0d7539b53288718b2aaef850f4dced8e2a6115d5b45d217a",
+      "sourceHash": "sha256:8180ea4da739330d386b83889e914a108c2e0adf261c0fe5b5136d3b8439553a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1263,7 +1263,7 @@
       "category": "現金過不足",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「現金過不足」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「現金過不足」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1330,7 +1330,7 @@
         "finding": "scene「7月・現金の違和感」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:704ba2c19863cab2ba7df8090045272222f866dca1ddec5a7d722b592503ba2e",
+      "sourceHash": "sha256:6d72ec2da8a6f472880d5796f4d0daf057127ef860eb3714ba773d108dbe3d3a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1341,7 +1341,7 @@
       "category": "現金過不足判明",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「現金過不足判明」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「現金過不足判明」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1408,7 +1408,7 @@
         "finding": "scene「7月・現金の違和感」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:92c6381bc551a95242b2dcd01b5d30334b6ae652833e37f973c0eef3fee6becd",
+      "sourceHash": "sha256:e720a880221e82e2604d9c47bd6b68b91135b5a293351547edfc9fd95fe07711",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1419,7 +1419,7 @@
       "category": "小口現金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「小口現金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「小口現金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1486,7 +1486,7 @@
         "finding": "scene「7月・現金の違和感」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b07c42c1b45613617813750d8c7319446c85c9874ab107411dbb9aae6f745b09",
+      "sourceHash": "sha256:e6badd5a99137bb9dd19c6fd9d3029b7ede1a4365f401a8b945d7d47c3de8de3",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1497,7 +1497,7 @@
       "category": "小口現金精算",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「小口現金精算」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「小口現金精算」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1564,7 +1564,7 @@
         "finding": "scene「7月・現金の違和感」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3cff6867f628108dea9aa62eaa718c9cb0ba1068812431ef055d794238407488",
+      "sourceHash": "sha256:c9927b67d50ed5095afd4ab6875cb1cf427e55cbcb482e026ecf22ffa18874fd",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1575,7 +1575,7 @@
       "category": "固定資産購入",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産購入」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産購入」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1642,7 +1642,7 @@
         "finding": "scene「8月・業務拡大」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:65c7e9531754bf3b6c01c5571d18af0354380c1fbffe85c7b0f838fac24f07e9",
+      "sourceHash": "sha256:ee77e1cf89ee3dd0763a7258ff09ac42cbe008dfd7b798a765aee80cd60adf4f",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1653,7 +1653,7 @@
       "category": "固定資産売却",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産売却」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産売却」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1720,7 +1720,7 @@
         "finding": "scene「8月・業務拡大」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:cfa06350c08295e7ba2ce6d7c0d82e67df1d798b8e5c5a358e65a934d3475653",
+      "sourceHash": "sha256:0b06254eb7f68bbd78b75d8fd56c34dbd77b96666a52a35c4361b79619122f8b",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1731,7 +1731,7 @@
       "category": "仮払金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仮払金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仮払金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1798,7 +1798,7 @@
         "finding": "scene「8月・業務拡大」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d480fdaaa4acbd692dca9c233a780a3b7b10bbd351901756a90916d82ab0c490",
+      "sourceHash": "sha256:498d6c8c99a67c7ac3480382a8aeda7a64cbdfd5c6da935228e403f3a6e4b641",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1809,7 +1809,7 @@
       "category": "仮払金精算",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仮払金精算」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仮払金精算」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1876,7 +1876,7 @@
         "finding": "scene「8月・業務拡大」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2de478065f1808388bf03cd4721aed659bfe7926c32c756f46c33ae2d6a10a1e",
+      "sourceHash": "sha256:0521c1586b1340f8e4e0fb60e68f8e77c393b6de89b80273f0be0fe0dec41ba5",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1887,7 +1887,7 @@
       "category": "立替金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「立替金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「立替金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1954,7 +1954,7 @@
         "finding": "scene「8月・業務拡大」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:61a18f5668a7528d2c9765ab30def021ec53b2dcc62bbdd0398241b6c28c0c26",
+      "sourceHash": "sha256:e927c3289809728109b9fab0d41126bf1fe35964ea7d132bd6713ff22d83f025",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1965,7 +1965,7 @@
       "category": "借入金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「借入金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「借入金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2032,7 +2032,7 @@
         "finding": "scene「8月・業務拡大」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3e6c0c285e01e2349f4de729022e2e9d36a089d452b0a2375cf8c421661b6db9",
+      "sourceHash": "sha256:9ba656d0aa1e1f1506d84d7510ded868ef68e891d8ace3909551f4f6d097b5b1",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2043,7 +2043,7 @@
       "category": "借入金返済",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「借入金返済」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「借入金返済」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2110,7 +2110,7 @@
         "finding": "scene「8月・業務拡大」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:6ac5ae8f314828dcac1c046191f3d1c0df5b03416a29c07fe1ef1f5216aed387",
+      "sourceHash": "sha256:6a528b00423319ed64b961c0d776711db39b166fc4d04c19b0f6dd9c5538bd92",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2121,7 +2121,7 @@
       "category": "給与",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「給与」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「給与」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2188,7 +2188,7 @@
         "finding": "scene「9月・給与と税金」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2e35e6352716df663d06e6dd6ecef3bcad854b215243fe9e9618847a644df4bc",
+      "sourceHash": "sha256:f6140d1d6945fbd569a583dcac0cdcaf5c22f33da5ea0d47e707d995dfef59cc",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2199,7 +2199,7 @@
       "category": "預り金納付",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「預り金納付」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「預り金納付」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2266,7 +2266,7 @@
         "finding": "scene「9月・給与と税金」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:133423cbff686bfd1045c50d75ca3dd7a43f3d81ee16915e93d2cc594c476fac",
+      "sourceHash": "sha256:feb77d8613c27d6ca79645d5108e40dbf4c042da2e7a78b36c077fa71af9869e",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2277,7 +2277,7 @@
       "category": "法定福利費",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「法定福利費」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「法定福利費」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2344,7 +2344,7 @@
         "finding": "scene「9月・給与と税金」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e9b98911d40db8d6f3468bf2c4d61952b87bcf2fe9d475ab9f5b50446afd43cc",
+      "sourceHash": "sha256:89ecc302721e383664045528737854706e799f541e29c05ea0784caa070c414d",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2355,7 +2355,7 @@
       "category": "租税公課",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「租税公課」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「租税公課」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2422,7 +2422,7 @@
         "finding": "scene「9月・給与と税金」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2a36e073de8374c9154f469aa2e7cc4b4542ccec461215d0747b8def22f100d7",
+      "sourceHash": "sha256:dbb26fd3e2b5f1cdc07d2ac090259127a36bd758bd090079b02a6c0ab6f01cd8",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2433,7 +2433,7 @@
       "category": "収入印紙",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「収入印紙」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「収入印紙」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2500,7 +2500,7 @@
         "finding": "scene「9月・給与と税金」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:00144e0a0e572c5925e9c8986188361373e8acc109086c584d43ca3e199b86c0",
+      "sourceHash": "sha256:9a5bdf914a07553a0d54cd0c70ee297e1a8c696fbe84475672f05c0ac79ec27a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2511,7 +2511,7 @@
       "category": "貸付金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸付金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸付金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2578,7 +2578,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e2b97328b803281d5bfce80b460a0f7cc901849f1e9446a2d1d55b678eff3501",
+      "sourceHash": "sha256:d629759d15776d9988dd033687935239c2a31ff20ea5bccc8f40f9f55f4a0515",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2589,7 +2589,7 @@
       "category": "利息受取",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「利息受取」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「利息受取」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2656,7 +2656,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3d855f23f0ed781d76a82bf467216379ba4fc65dee5a88928c5dfcfd1c2947ee",
+      "sourceHash": "sha256:d22a543de1c28d87d6e0abed5d88906b5d21c1094a69b33577b0640cf0cf1738",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2667,7 +2667,7 @@
       "category": "貯蔵品",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貯蔵品」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貯蔵品」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2734,7 +2734,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2232640fd72534d2fd1004b090005aa8d1e9370989890b6a8af32576b1045e63",
+      "sourceHash": "sha256:5beb2305794e0aac47f5078dfd960450b0b2e96ac463d5e27979514a85d3d097",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2745,7 +2745,7 @@
       "category": "受取商品券",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「受取商品券」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「受取商品券」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2812,7 +2812,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:720498c73622aca39b8e92c1212c0b3b99575d158c161322cf807d6843b333e9",
+      "sourceHash": "sha256:ee59c57e770f6efe578f45a1df660bcbaa3fac40c36564337a01faf077c75e41",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2823,7 +2823,7 @@
       "category": "差入保証金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「差入保証金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「差入保証金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2890,7 +2890,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f4e4bf47cb5bfd1a23357bfc010f63684938a2baa3b096ed99499e7ca2de0dc1",
+      "sourceHash": "sha256:c6feaf630e652233510624c2c3a4b57343e45e55f6419c4e23cbcf4043993023",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2901,7 +2901,7 @@
       "category": "訂正仕訳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「訂正仕訳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「訂正仕訳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2968,7 +2968,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:69b5effbd6f409c0564a1f8d05e330c764054b4f1ad0d95adc3e30699f530e6d",
+      "sourceHash": "sha256:57fdefa2818486fd6600593f87fc41bd871d3d4bc2c3107f35f0167f8b47fdef",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2979,7 +2979,7 @@
       "category": "訂正仕訳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「訂正仕訳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「訂正仕訳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3046,7 +3046,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:570c2dbd13f8f795727ad82d8b9e3b2fb248253b75442f2b638ea43171bf97e5",
+      "sourceHash": "sha256:d1d4921f8e1dd749f3a44f1956ac9ac714424e7039a5556d2e590a7235efaf18",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3057,7 +3057,7 @@
       "category": "未記帳取引",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「未記帳取引」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「未記帳取引」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3124,7 +3124,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:8b0e262b075c111216fe82d15765a174f3b1551dd4896e0fa977fd1f3dac4b5b",
+      "sourceHash": "sha256:7657b68e40d429836bff57eeaa3eb1db266ad07f0cccc4a96c3dd09abfae1b09",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3135,7 +3135,7 @@
       "category": "前払費用",
       "story": {
         "status": "VERIFIED",
-        "finding": "「12月・決算前夜」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「前払費用」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前払費用」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3202,7 +3202,7 @@
         "finding": "scene「12月・決算への準備」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:0794b73823f00c8a072bba5167b55ae4e693054b39c929dbe3ca9b1ab1f7a535",
+      "sourceHash": "sha256:0a9ccbc2c3556df47cf627c3ff35d10ce90b6885dec8a8f026b2c414ea06e0cc",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3213,7 +3213,7 @@
       "category": "未払費用",
       "story": {
         "status": "VERIFIED",
-        "finding": "「12月・決算前夜」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「未払費用」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「未払費用」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3280,7 +3280,7 @@
         "finding": "scene「12月・決算への準備」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:29f085f096b1455c7bcd8da94cfc745380b31e94b5b6effcc5e36cf761e7dc8f",
+      "sourceHash": "sha256:8fe772e57f1bc3b3e96db21242b2bc74a1300bcaf17983dc309b4224f5cf0619",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3369,7 +3369,7 @@
       "category": "未収収益",
       "story": {
         "status": "VERIFIED",
-        "finding": "「12月・決算前夜」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「未収収益」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「未収収益」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3436,7 +3436,7 @@
         "finding": "scene「12月・決算への準備」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:dce1b193295ca0ba12ced103a1ab607409f5369fc99dcd9d5cd41a7fdc3d22cb",
+      "sourceHash": "sha256:cc4711b4ca82cc66e3f080453ced0de2bd7c453496b0c57ed70ed471b396b0d0",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3447,7 +3447,7 @@
       "category": "貸倒引当金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸倒引当金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸倒引当金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3514,7 +3514,7 @@
         "finding": "scene「1月・決算整理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:8e470f77e0481d70e802d9e652f2faeb2e4a6227f20bcfbc9845bfc908dcdc19",
+      "sourceHash": "sha256:24b4b89d2fd5f8d9ce8db8146101be85e53b42f6e72f528bc2558ac5eb0e2f63",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3525,7 +3525,7 @@
       "category": "貸倒れ",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸倒れ」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸倒れ」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3592,7 +3592,7 @@
         "finding": "scene「1月・決算整理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:dcefaeca34c228419c15939366c7a91680119b3f806f45535a36fd789fb8be32",
+      "sourceHash": "sha256:808705fc4acf80bd09a4848b17eb7771614945a1c2c386484b21d16542093446",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3603,7 +3603,7 @@
       "category": "減価償却",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「減価償却」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「減価償却」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3670,7 +3670,7 @@
         "finding": "scene「1月・決算整理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:dc639a8cf6a3d0527516edbdcbca6e6c9cd78a171b4a314ba3b87a0756ffe026",
+      "sourceHash": "sha256:8a66a31337509a0ef129abdd19cd950e56751f88c48a05275cd678bf519971f5",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3681,7 +3681,7 @@
       "category": "売上原価",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売上原価」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売上原価」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3748,7 +3748,7 @@
         "finding": "scene「1月・決算整理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f3b48ab9ada3753e74c32c6f47594626f8576c88ad1fd8d3ac6094b7d893918b",
+      "sourceHash": "sha256:92c9b8913e17ba810c9f554022fc4e96fb0db582faff37c45cf2bed334401c6e",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3759,7 +3759,7 @@
       "category": "消費税",
       "story": {
         "status": "VERIFIED",
-        "finding": "「2月・取締役会報告」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「消費税」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「消費税」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3826,7 +3826,7 @@
         "finding": "scene「2月・精算表」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:9ea4b23a33a1a29fbf3a288de60564385c5e9c52ed172900fb2f8ad7edee2d7c",
+      "sourceHash": "sha256:63a0133e4252e32cb54ad961a7d0af4c5dd2fa390f72850c58bd2642c6840f7c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3837,7 +3837,7 @@
       "category": "当期純利益",
       "story": {
         "status": "VERIFIED",
-        "finding": "「3月・最後の決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「当期純利益」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「当期純利益」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3904,7 +3904,7 @@
         "finding": "scene「3月・数字で会社を語る」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:c41994a4fdfcf87d6085204cb7967732fc493454c5676e933ae8ba6863ee1990",
+      "sourceHash": "sha256:9ef2258acb34b95bae4bb35efb8aeefef78fa5dfd9576f42a917dbe84dcd2cae",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -4149,7 +4149,7 @@
       "category": "掛仕入",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「掛仕入」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「掛仕入」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -4216,7 +4216,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:45113fe0e843bdefa408daf89bbc2eb05592a6ddb01948d5e36c0b85a6c116ca",
+      "sourceHash": "sha256:e6d30d953926d1aff86d50b9afc0a866c6c26fad1c03a08437dac24190e29053",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -4617,7 +4617,7 @@
       "category": "売掛金回収",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売掛金回収」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売掛金回収」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -4684,7 +4684,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ead85b2db49f2f6cf8817b026d41fc5b7aa29687f205ae77fdbe498579f495f3",
+      "sourceHash": "sha256:548430646a4ccf97b267c181e5c6134900f1ca63be2f94d78562dea44aa9e0e9",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -4695,7 +4695,7 @@
       "category": "買掛金支払",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「買掛金支払」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「買掛金支払」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -4762,7 +4762,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:7e9e0e6e2f74f6f9c28d84df1f668f9b6a85d3a2d96bb7961956e2891a34189b",
+      "sourceHash": "sha256:3dc5c98b0b26cc8b629db285d60e5425285a9ca10ec2536c8156a162b9785ffa",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -4773,7 +4773,7 @@
       "category": "電子記録債務",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「電子記録債務」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債務」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -4840,7 +4840,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ce4a4a59c1273eb7dcb689284533368fd3c5b5eb03edec5720fdc17bbd8b5603",
+      "sourceHash": "sha256:f6485049c8c7bfc05a698aa3368cf8192d8eea505b9e4048e17c7870d712df5a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -4851,7 +4851,7 @@
       "category": "電子記録債権",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「電子記録債権」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債権」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -4918,7 +4918,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:88ebb3b2b9031dc58637e4f738aeacfadce48e0b751010ba75b69fe1d3927ce2",
+      "sourceHash": "sha256:4082edcc4f3f08b040bfa46ae494261802b6bf9598d2d5173eb38ffb4ff53c34",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -4929,7 +4929,7 @@
       "category": "クレジット売掛金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「クレジット売掛金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「クレジット売掛金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -4996,7 +4996,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:79a6e05010a194d3b05751302eee0893a3ee0aa6229b31f75a66ea61482e35cc",
+      "sourceHash": "sha256:fb1d24257b3d2a7ccb884c90fbdf754767b24fef09cecd9ffd6f4aef1a37caf3",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5007,7 +5007,7 @@
       "category": "前払金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「前払金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前払金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5074,7 +5074,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:90ef945de8112f85556ab350a2b7ed08c94aba46f0f965287d2aa82bbbb1afaa",
+      "sourceHash": "sha256:448dd264afe9d732d438ef5c04dc97a671a0fb59d526499ff3d8ca573b83918f",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5085,7 +5085,7 @@
       "category": "前受金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「前受金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前受金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5152,7 +5152,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:7c309ee056feb5748e29736bb387cc3e24c8b6b0e4c77fe8f163b2bb6b354346",
+      "sourceHash": "sha256:3de6f99e8152163074af0b8aea3451df454a76bb8d60508546bc924b4b09b2ba",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5163,7 +5163,7 @@
       "category": "現金過不足",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「現金過不足」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「現金過不足」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5230,7 +5230,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a20164179734dae717f25788630bf98b042aef5d89bb2a14cca2e36e82c6e464",
+      "sourceHash": "sha256:f8d0faafa53431b2120c7d7a358fe48c7d369463b44a664b26399a311d1a907b",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5241,7 +5241,7 @@
       "category": "現金過不足判明",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「現金過不足判明」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「現金過不足判明」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5308,7 +5308,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:612fafebb0deee91c194be2e520f08612ef7e948f1edf71c3cc7c35e153da30b",
+      "sourceHash": "sha256:f0d16cd1a8945b4502369f24b4c1436a9c00a7d54dc4ba9c0ebee299cba76b46",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5319,7 +5319,7 @@
       "category": "小口現金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「小口現金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「小口現金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5386,7 +5386,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5fea770c85ce27bcd12133fc655312b96494e496d078f919e2fc2e76833235e8",
+      "sourceHash": "sha256:fa088575c85a6fb158ac6188993b750fd1ba7efd245820b38bbb7fce0062f54a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5397,7 +5397,7 @@
       "category": "小口現金精算",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「小口現金精算」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「小口現金精算」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5464,7 +5464,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ce6f89dbd5da542b492207cc5236c4d137f9c3faeb79ee8b7aa3d5ca772715c5",
+      "sourceHash": "sha256:f55d526f62ebbef1e529bb3210d652f503ea2486b775279e0aa931e663a3c89a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5475,7 +5475,7 @@
       "category": "固定資産購入",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産購入」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産購入」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5542,7 +5542,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1d6fdf4d4a2a65d100cc69ab608f1bea914a50bfbc3c2df7620dc678ef800bd0",
+      "sourceHash": "sha256:7838e0de24314bc5e8f65d22c93ddf547fd8a6f99922fd1ab3e017fcec3ade5d",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5553,7 +5553,7 @@
       "category": "固定資産売却",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産売却」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産売却」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5620,7 +5620,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:23fb41781bdd137d1b6e1f1de9eeabe9093a4f262db32dcd467670384e83818f",
+      "sourceHash": "sha256:7d31e43a7f90fa4a71146b6eba17477fc776d929129a2ef0e9e69d059d661ef7",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5631,7 +5631,7 @@
       "category": "仮払金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仮払金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仮払金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5698,7 +5698,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:927704ed89a9b9bffe044c4395c7e7a7a07b8152309f5d69067ec17e2f756a15",
+      "sourceHash": "sha256:a434e441cff0cd33b8fca37066dbacb65692c664c62a39a5e1e9fd4e6fd8480e",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5709,7 +5709,7 @@
       "category": "仮払金精算",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仮払金精算」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仮払金精算」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5776,7 +5776,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1e0a3d5132cc3365373e0a9b17f4f71804f028d425da9718ad8aa92c67cfcf97",
+      "sourceHash": "sha256:db361d56c3aaf99c7fcc58c48b15ca4fefdaa7905917c66789f4fd24e67773ee",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5787,7 +5787,7 @@
       "category": "立替金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「立替金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「立替金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5854,7 +5854,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:cd71c242ce3035076e303203cf0c8d6df75772951eff21f61967b726ed930c91",
+      "sourceHash": "sha256:c0092b33e81f2554f5d0f8bc34261060ef5ee734a94d6d47a0e8a91d812bfcba",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5865,7 +5865,7 @@
       "category": "借入金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「借入金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「借入金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -5932,7 +5932,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:00656594a4a74edff17a0c09da35027310a3465a413ae6f2070711b1fc18f5fd",
+      "sourceHash": "sha256:37bc75a543195464b48c131f5fd379cda357cbc8b0336afbce7ebbdad6705ccb",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -5943,7 +5943,7 @@
       "category": "借入金返済",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「借入金返済」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「借入金返済」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6010,7 +6010,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e819dedf023e121f925413b2d47b8c430b3bdfa7a485d480740d8728ae966496",
+      "sourceHash": "sha256:a838ca5545490924a057d012f9c9794fab1cad585f8ce7e7c0df26464d94534f",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6021,7 +6021,7 @@
       "category": "給与",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「給与」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「給与」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6088,7 +6088,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:db4638e00b1117fe911849cb29de38d3bd249245c2d0358e1a6bed2aef632a5f",
+      "sourceHash": "sha256:20ab2a62d1b3e957e56575984eba690cf7369a2b61b24af9535a0176c080c6f5",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6099,7 +6099,7 @@
       "category": "預り金納付",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「預り金納付」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「預り金納付」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6166,7 +6166,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ce1fe253e30ba10cf8e3100927a99e13daaff81bbf8a0ee79399882d16ba299e",
+      "sourceHash": "sha256:7a6b69499af4d3bf0d81dbbd594734363450875be6e58c539406277eaf69f97c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6177,7 +6177,7 @@
       "category": "法定福利費",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「法定福利費」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「法定福利費」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6244,7 +6244,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5f08e8aeb19b189bcf930e4ff1b407e2e2569dad44e1f9bf4edb7ac512f9fecc",
+      "sourceHash": "sha256:d56fead18132ea4dbc43af34dd5b1161fdcef15ea6a6e4d147b375423d7f8800",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6255,7 +6255,7 @@
       "category": "租税公課",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「租税公課」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「租税公課」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6322,7 +6322,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3f32c1342c7909269854083a41d7047ccf433434d9b57122cb51e019dca92ee0",
+      "sourceHash": "sha256:e5c707729bc23be45c535df63d9a2f01b55e8d55da66c3a034524a9a531cdf48",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6333,7 +6333,7 @@
       "category": "収入印紙",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「収入印紙」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「収入印紙」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6400,7 +6400,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:042c48e04d3d94bef396ee6da1f2635b947c58bf35a8a7ed72698ff2679ecda7",
+      "sourceHash": "sha256:960432aa89d326d5595a8982df44b4028e4cd9e90054c0661169cc8ee9dfbed0",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6411,7 +6411,7 @@
       "category": "貸付金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸付金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸付金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6478,7 +6478,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:253cade64f3cbcdec3eba39bced930d6f52c24266a86dd2c2e5b6598ee4fc744",
+      "sourceHash": "sha256:4ceb02324c5ee832bdfcef788c7ed029a2bdd056df1ed76891fdfb81f3f90e93",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6489,7 +6489,7 @@
       "category": "利息受取",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「利息受取」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「利息受取」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6556,7 +6556,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1bc15a2d28419c0d4c0bd3b6e573dd2c9e26c1f8f721358de37986204768f939",
+      "sourceHash": "sha256:ca66d6f44aa4dd29890915861440e51f8742d77335f9f44344d86510435b034c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6567,7 +6567,7 @@
       "category": "仮受金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仮受金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仮受金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6634,7 +6634,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:abdfe439f0f41a60f1d16b5dc5fcb24dd661539988a8a301a267249cf6141374",
+      "sourceHash": "sha256:6bd7e54ed96bbbaac6232873dcb8c6ba5c49c7e774eb8758edd8a379efd7c833",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6645,7 +6645,7 @@
       "category": "受取商品券",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「受取商品券」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「受取商品券」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6712,7 +6712,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:640668d2029282f2d46478222ac5c471dfba0be107124d9f4d5db98426a45627",
+      "sourceHash": "sha256:08d04fab6d1970926e90f08dffac4367317b48f34e86f44138370aba5cc27a8b",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6723,7 +6723,7 @@
       "category": "差入保証金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「差入保証金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「差入保証金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6790,7 +6790,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:644b59777c06901b9c6ee1b88d627f0609cdb0647a81fd095a556a46808e3eac",
+      "sourceHash": "sha256:57c298f8a12103d1e23992eded0433d2d3f5c8be363bb5cf0375d9d6a86fa911",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6801,7 +6801,7 @@
       "category": "訂正仕訳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「訂正仕訳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「訂正仕訳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6868,7 +6868,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d922cac5b690ac628d50dad5c18caa2e15bd07dee3c0e88c6370c5d40f6bee3c",
+      "sourceHash": "sha256:aefeb5d2a73ab27fe40810581fd727377b2682aa816643d5c8b4ab7aecfef8ee",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6879,7 +6879,7 @@
       "category": "訂正仕訳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「訂正仕訳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「訂正仕訳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -6946,7 +6946,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5e874e3ac65f79eed3d050c736be07a627a070cfec2de90229b6196821fabd78",
+      "sourceHash": "sha256:df7d5c293189e86ba32f81643986ce67033d9a39c4c7eaac3d63f8e47098aa8c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -6957,7 +6957,7 @@
       "category": "未記帳取引",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「未記帳取引」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「未記帳取引」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7024,7 +7024,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d788e08a129eb63afb9be0fb0319b2375d7a87397ca862aeb91d6dabbbab8e58",
+      "sourceHash": "sha256:0ef3f065871e1ad5a149c0743a38e1f5a341296d1adbb23141023f4f4044eb8a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7035,7 +7035,7 @@
       "category": "前払費用",
       "story": {
         "status": "VERIFIED",
-        "finding": "「12月・決算前夜」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「前払費用」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前払費用」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7102,7 +7102,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:4abafa30bd1bab085d194a1afdfd740806c71960f08f6154892f13aef8a1bd20",
+      "sourceHash": "sha256:fb860e68914e7d8c2a4265c6484919dd9fa1781bed0d6e44b575301e11e8d0f6",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7113,7 +7113,7 @@
       "category": "未払費用",
       "story": {
         "status": "VERIFIED",
-        "finding": "「12月・決算前夜」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「未払費用」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「未払費用」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7180,7 +7180,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:147d2a0412ef58660ba3b770f330953b825a042b94f187f212e282fafbbf65be",
+      "sourceHash": "sha256:cdd42083af284a3b3b86ab1d5d01f2a2557d664655f43e3c3e815763024ed955",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7347,7 +7347,7 @@
       "category": "貸倒引当金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸倒引当金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸倒引当金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7414,7 +7414,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f1effca1fd9509da1224f81821314f2351e1cdf4ac4c3e1f1185e8d57508788e",
+      "sourceHash": "sha256:7887b59165774020f5de1045f483ab3096ae6414b82d0074fec149d4aa76b6d5",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7425,7 +7425,7 @@
       "category": "貸倒れ",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸倒れ」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸倒れ」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7492,7 +7492,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:8f9e11da233263525c94effe930ea35cc3cad0f0a953eb320ab6a846d45d5595",
+      "sourceHash": "sha256:ee3096f0b581adc9bb5a0a3128b2fae2cec9d80eb40f003e0e074863dae95f63",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7503,7 +7503,7 @@
       "category": "減価償却",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「減価償却」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「減価償却」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7570,7 +7570,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:23bfbaf1575ce8941701f5cbccc9741ea2c0ee351b0772d9d49b40e77f327bd7",
+      "sourceHash": "sha256:f747c2c8b860b5694d610e095429a83b8fd4e1be0216e3ebcf712ca5d4cd1544",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7581,7 +7581,7 @@
       "category": "売上原価",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売上原価」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売上原価」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7648,7 +7648,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:6c418e0142fc21dd29311da08ada735a809d5dad0f08a6a281e95c2f3dafe35e",
+      "sourceHash": "sha256:ceade8ea8294252a5842e760c428c7a427f30800bd181fc6d18ffee7954b97c0",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7737,7 +7737,7 @@
       "category": "当期純利益",
       "story": {
         "status": "VERIFIED",
-        "finding": "「3月・最後の決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「当期純利益」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「当期純利益」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7804,7 +7804,7 @@
         "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:c4b28a9e67f4f16f86d0c9b709f21ef7f09f68f2aa9adb6de37e8f55e787b66a",
+      "sourceHash": "sha256:d55eafc71e03d057f471c53423c5d03f76b9db040919706bc27322e85a772c3c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7971,7 +7971,7 @@
       "category": "当座預金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「4月・消えた創業伝票」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「当座預金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「当座預金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8038,7 +8038,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ecace1402a2e8cb2de35d7a7acd97b186b5813eb4f5f9c88dfd5cf6796e855b1",
+      "sourceHash": "sha256:0845c30acaeaf4860bdec3de38cdc47f50253a55f60e9a4548f87078c34d3a42",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8361,7 +8361,7 @@
       "category": "仕入返品",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仕入返品」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仕入返品」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8428,7 +8428,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:6387e061e9307a5d2332e174395c6d725841971ac0e2abdbf834b9f04907c82c",
+      "sourceHash": "sha256:ec324408420cf2b29f849e69349ea07e699d4117de16fe7d915a6a5230e59524",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8439,7 +8439,7 @@
       "category": "売上返品",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売上返品」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売上返品」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8506,7 +8506,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:dd4b0ccb37a0f5474293032d4e442d80c325252412c402c17725d4cfefcb4b7f",
+      "sourceHash": "sha256:6d504425750a610224f62c44836ca2d788b3eaa955c85048701fdbf6a07f30bd",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8517,7 +8517,7 @@
       "category": "売掛金回収",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売掛金回収」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売掛金回収」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8584,7 +8584,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:4d25e10077afb0d5e5857fba92d50ec6d09f9920388814be3863ffd09b56f289",
+      "sourceHash": "sha256:6edbedd930e018723da57e48e01f03b2207c31e4f35dbe7d252b2ea34bbc29ba",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8595,7 +8595,7 @@
       "category": "買掛金支払",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「買掛金支払」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「買掛金支払」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8662,7 +8662,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a3450ee3ca5822bb332978adf5304aa7afb1ae68d081a58e6fe0d2f30e19e61c",
+      "sourceHash": "sha256:63eac865559dcb56876d21f65c8ac7e21776928c474b3cff22967335ed74a900",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8673,7 +8673,7 @@
       "category": "電子記録債務",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「電子記録債務」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債務」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8740,7 +8740,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:97216b339a59f66b2b5ebc0c6577dad62c1e9d4fb83ec7803f055cf9e169bd0e",
+      "sourceHash": "sha256:5323184654f3a72fd42858815cb2265e8421048f936e7635e625cf7b257ed0e9",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8751,7 +8751,7 @@
       "category": "電子記録債権",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「電子記録債権」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債権」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8818,7 +8818,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:6face59f481c7f845c6879ea9b3c4d15965ff23d9442eb4bd35433d9b3e3678e",
+      "sourceHash": "sha256:3f38bf3178f92b23568f17b3fdd83a2c36b35fe860204c70a7024729e07cbe22",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8829,7 +8829,7 @@
       "category": "クレジット売掛金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「クレジット売掛金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「クレジット売掛金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8896,7 +8896,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2dabf76ef9b5d3b35430f693a78c9d859a30584f7bbbc219ee40847bc084b56f",
+      "sourceHash": "sha256:39311c7070db18bb7e2381cd4834d52d97b9668a701cfd280175d01620e328e8",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8907,7 +8907,7 @@
       "category": "前払金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「前払金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前払金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8974,7 +8974,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2886e12eee93f107bb1ef32083a841965bceca12366d8334b6861030af0fc20a",
+      "sourceHash": "sha256:e7bbddace25d0fb0e45deeafe46ef6a7e8ffbc765c4ad6671dcb74537108a175",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8985,7 +8985,7 @@
       "category": "前受金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「6月・総務倉庫の食い違い」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「前受金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前受金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9052,7 +9052,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b06242cd52b310217bc4e08607c8f6f661ff4799ea48d3a582cf98dc73f4f24e",
+      "sourceHash": "sha256:b30434c10148a1522c3031eb741e99a728ba7d7465783f536d2b8e2339ec81c3",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9063,7 +9063,7 @@
       "category": "現金過不足",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「現金過不足」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「現金過不足」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9130,7 +9130,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:980090e072f91bb104f2462b008c12d4bbe4e0f714f75901bb2b4a5fe6f83b2d",
+      "sourceHash": "sha256:e73a1de0756a28beba947f91968356beda997dc5dc34a6d1145270b18ac810d1",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9141,7 +9141,7 @@
       "category": "現金過不足判明",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「現金過不足判明」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「現金過不足判明」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9208,7 +9208,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:933bfcb68ac2f1b0eb9434a99a1c4eb86769c56af82ce148d0e2e8a82415e22e",
+      "sourceHash": "sha256:96a227723ea2bf66836ed90b7e1aa0df234da04dbd9a59f05ff8e231bbc09e6b",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9219,7 +9219,7 @@
       "category": "小口現金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「小口現金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「小口現金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9286,7 +9286,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f049180e2f79ef8664cb266ba546da670297ab2051a99a6437f4b6b38eb0880c",
+      "sourceHash": "sha256:335e7e4f848fc1fc898d01cdda94d55b7a5e23c7b931ded7e9d074183d1a96e8",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9297,7 +9297,7 @@
       "category": "小口現金精算",
       "story": {
         "status": "VERIFIED",
-        "finding": "「7月・資金繰り警報」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「小口現金精算」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「小口現金精算」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9364,7 +9364,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:11ae969ef559def383cc1d9ff0b098e25035b9268ebcadd75453ac1f087b6402",
+      "sourceHash": "sha256:12f37bb011b5012a060d7ea5473b65c38f5536df5fe2abedeba060f4f009ffec",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9375,7 +9375,7 @@
       "category": "固定資産購入",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産購入」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産購入」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9442,7 +9442,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a0dabafbb67d6168304ed5c318e136d67d9467712bf668211d22cce778369844",
+      "sourceHash": "sha256:8aae046b200feb58ec1e8609451b461d4bdfce6b935e9e1773ae874f9877c8af",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9453,7 +9453,7 @@
       "category": "固定資産売却",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産売却」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産売却」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9520,7 +9520,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:091c1e19b6c824d7253eafdcdf98f814acebeb069495a8268960f86326182905",
+      "sourceHash": "sha256:d3a3f6874c18b2499f2e670d9d7a3468fdf4e583c1364d02982a2e7430a82259",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9531,7 +9531,7 @@
       "category": "仮払金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仮払金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仮払金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9598,7 +9598,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:946549b46f35ca7992504e521cf8fdc3f3662378eb6bd0a2eba8602bdf3431be",
+      "sourceHash": "sha256:a87cbadce1baa3c25bbc9682b6d7ddb29ae8d4ec895698b467d2b7f67adae566",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9609,7 +9609,7 @@
       "category": "仮払金精算",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仮払金精算」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仮払金精算」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9676,7 +9676,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:32324cec3c2ae8d1ecde7759d6bf4e20cad56d863dc6a4b97f0b27bec96a4bb6",
+      "sourceHash": "sha256:7041314a65165799502e7386f66384078a5d86ebf4bf020ddec05977da8bc8be",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9687,7 +9687,7 @@
       "category": "立替金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「立替金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「立替金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9754,7 +9754,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:67e0066c2459a8236ab52a15068f3bcf2751a2effa2e276d0e58a97e352c772c",
+      "sourceHash": "sha256:143d9491ec1ecfd0714499dd97b8f056e0810510b499696cf884cd7c5db08ebb",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9765,7 +9765,7 @@
       "category": "借入金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「借入金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「借入金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9832,7 +9832,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d82cd2c7265fc16475a6122309578647e040b6807a155da7fa66c0f252ab84eb",
+      "sourceHash": "sha256:2ccd439c229b0d2f5648ad933904820acaf59acdcd107e2407b21d87b8276dce",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9843,7 +9843,7 @@
       "category": "借入金返済",
       "story": {
         "status": "VERIFIED",
-        "finding": "「8月・給与日の混乱」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「借入金返済」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「借入金返済」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9910,7 +9910,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:4148b60782eb6e3f25d3ce723718ce05d036c99737ef63038f8429d51222ece9",
+      "sourceHash": "sha256:dbd499b55d4766e47809da2121ead6bb53e1ced656b573b7557cf15665f23ad9",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9921,7 +9921,7 @@
       "category": "給与",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「給与」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「給与」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -9988,7 +9988,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a8f4e140a37c621fc580e9f8950ca0ce50c93f35caa372b41496f24761c8c1da",
+      "sourceHash": "sha256:3cc314d9e8646167d41bb7187a0c3093d6255ea5d09b022d8b8edd3827782770",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -9999,7 +9999,7 @@
       "category": "預り金納付",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「預り金納付」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「預り金納付」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10066,7 +10066,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:93d344eb5d83c973ae02ab065de7b569e171f2748ffdde4878866148f1dde3fd",
+      "sourceHash": "sha256:bac8b7841fc328738b04c445b94df95536572da143674878e917973f40696a9f",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10077,7 +10077,7 @@
       "category": "法定福利費",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「法定福利費」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「法定福利費」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10144,7 +10144,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b2616fd8dc7f1b57904384cd4258cb9341d318dc6dc6699c749ecded3a4264c6",
+      "sourceHash": "sha256:d7193cad1f804af1835e4a1c0730549072dcb8dfa4d0ad7d79e1128a57f21c1c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10155,7 +10155,7 @@
       "category": "水道光熱費",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「水道光熱費」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「水道光熱費」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10222,7 +10222,7 @@
         "finding": "scene「応用・店舗経費」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3b69a4907229f34fe8f2daf4e3f5e1f09189d14deed094d686e7b8735d9c4fa6",
+      "sourceHash": "sha256:a6222d1e714ccccc95e9bd684a8d4cfd2c65adcd45f87e1429563279c274027f",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10233,7 +10233,7 @@
       "category": "収入印紙",
       "story": {
         "status": "VERIFIED",
-        "finding": "「9月・証憑監査」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「収入印紙」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「収入印紙」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10300,7 +10300,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:c4d7e44d64447e1296d7c9a774596c2c3a31e51588de943d07d9ec975b6bfcdd",
+      "sourceHash": "sha256:8ba25736324f34a9ffdc9f24a778adf96bddd35c45ae2bb40e985ec7e5e6c488",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10311,7 +10311,7 @@
       "category": "貸付金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸付金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸付金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10378,7 +10378,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:fea616f5d5898d7bfcd951542de5f65fb4da51e261a3c19ad57d9663db1774b4",
+      "sourceHash": "sha256:a758dcf83c8868d2a22c884de791037ac40bf12e6d7c7e3f971778e1d847fa71",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10389,7 +10389,7 @@
       "category": "償却債権取立益",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「償却債権取立益」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「償却債権取立益」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10456,7 +10456,7 @@
         "finding": "scene「応用・貸倒債権の回収」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:affb03a01a0989bc8b8411adb5222afc3b58ba03284266732bfc838e251f5e45",
+      "sourceHash": "sha256:45b39d2d4d9574e7f1b9921b5a295b385c85f80bdd739066264f359bc242c295",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10467,7 +10467,7 @@
       "category": "法人税等",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「法人税等」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「法人税等」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10534,7 +10534,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ad471466c5d1a485aac15ca5e2d848ddc116ff648a509cb7cb837ac33f5b0503",
+      "sourceHash": "sha256:307e6aff96e0be69e08df7808d61c4d854aa40eff40ef79060296fe64e3e25f6",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10545,7 +10545,7 @@
       "category": "受取商品券",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「受取商品券」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「受取商品券」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10612,7 +10612,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:90c4ee7a2e713cf419c1a3718889b45e5ee752928d813de78688ceab2e28305b",
+      "sourceHash": "sha256:9ffe00263914f79621f0628290827a084783e0e9bf46f3d33d3f9aea4e9e5bb0",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10623,7 +10623,7 @@
       "category": "未収入金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「未収入金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「未収入金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10690,7 +10690,7 @@
         "finding": "scene「応用・固定資産の後日決済」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:814fa60dc55a7139ae73f4f154fba774fac50460045428b196c5f25c43692e68",
+      "sourceHash": "sha256:4087714c8919cfb111357aa31cbf044a5bc633f387045ff1b2459bdd8d5fde0c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10701,7 +10701,7 @@
       "category": "訂正仕訳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「訂正仕訳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「訂正仕訳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10768,7 +10768,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5c8deeff0ceb318821d15a3f887be63b4cfd65685ca83868be6cf6fde16f0dcd",
+      "sourceHash": "sha256:13f28205d0a86020dde386445724843cc8641fe8c1fc05ab697e973f75f7c756",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10779,7 +10779,7 @@
       "category": "訂正仕訳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「訂正仕訳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「訂正仕訳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10846,7 +10846,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:618bf8cedbdcdd88abd9a8b7974eaf90fcd7eccc51e08bba12c0e03318196d0f",
+      "sourceHash": "sha256:7202cb0d19b6f0e056159a99d37fb9bd5bf8d6071445bef740f2e0654ab32571",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -10857,7 +10857,7 @@
       "category": "未記帳取引",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「未記帳取引」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「未記帳取引」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -10924,7 +10924,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ee11856c7516d09cf7393eab3522f619bbaf28d2965a72e76f3b32404371dec8",
+      "sourceHash": "sha256:6f8bd5eeedf28a5cbfce3e36f8a31b667a95edaff76e189eb4042518e4ec8547",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -11247,7 +11247,7 @@
       "category": "貸倒引当金",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸倒引当金」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸倒引当金」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11314,7 +11314,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:82942864398a021e1871f5df2550e5bf1753510b251bafb1c931e0866e6e1a44",
+      "sourceHash": "sha256:894c1f9b41325fe4f229d1b151862545f3b65822ad15a50635e680e37f0640c4",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -11325,7 +11325,7 @@
       "category": "貸倒れ",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸倒れ」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸倒れ」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11392,7 +11392,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1ca7438b9100a96b93f41810be02f20db1997005abb7f9ae9bfd2093fce55bfb",
+      "sourceHash": "sha256:33e3c396ec201747f0865c72fafc6482b26e3f707f06c2d98832642cda520b55",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -11403,7 +11403,7 @@
       "category": "当座借越",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「当座借越」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「当座借越」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11470,7 +11470,7 @@
         "finding": "scene「応用・当座預金の残高不足」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:44dd1089d5b18cc0dffa89c937755d227c389c75bf94cc223a34f59b21a6243c",
+      "sourceHash": "sha256:915640eba7f572af413bd463317fbc533f054bd0f4aef91fdf69434f8b1d1e7b",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -11481,7 +11481,7 @@
       "category": "受取手形",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「受取手形」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「受取手形」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11548,7 +11548,7 @@
         "finding": "scene「応用・手形の受入」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ca3f22e9799487613159b85bb74c985508656cd056e744ab9e0f1b3e1f545913",
+      "sourceHash": "sha256:7cbee8280fd28e65da64e8196a6fe06405567599e7982139e6c40148eb0c2545",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -11559,7 +11559,7 @@
       "category": "支払手形",
       "story": {
         "status": "VERIFIED",
-        "finding": "「2月・取締役会報告」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「支払手形」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「支払手形」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11626,7 +11626,7 @@
         "finding": "scene「応用・手形の振出」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:805762ee641f757fcffe6b5f96da773852d436652044774c455f3078d4efb632",
+      "sourceHash": "sha256:3d05e67a0768f9c85937b7a41610acf7aebfa9cf8be98fd6591a261e3cd74f14",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -11637,7 +11637,7 @@
       "category": "手形の取立と支払",
       "story": {
         "status": "VERIFIED",
-        "finding": "「3月・最後の決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「手形の取立と支払」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「手形の取立と支払」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11704,7 +11704,7 @@
         "finding": "scene「応用・手形の決済」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:33fdde3a520a998c0db44a50c91db2d385111ac823e35d6e551e6f6a01b46315",
+      "sourceHash": "sha256:95299e845dca475e718a980c08f3a61d5e71ad31a26744acf34f9eb2e82c873a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -11715,7 +11715,7 @@
       "category": "総勘定元帳（現金）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「総勘定元帳（現金）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「総勘定元帳（現金）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11782,7 +11782,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3d860052b875e23e9fd65f2634906f78680d165800ff8fce27e40100f662b233",
+      "sourceHash": "sha256:7387dd66284faca92daceab4679d95aa1ec55e70c5358ace328487ada7feefdd",
       "answerSchemaHash": "sha256:267e4afe10a3bfb029a94384504bcab420bd0afc38bf13cb587806da2d7fe62a"
     },
     {
@@ -11793,7 +11793,7 @@
       "category": "売掛金元帳（みなと商店）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売掛金元帳（みなと商店）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売掛金元帳（みなと商店）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11860,7 +11860,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:dc824d2ddd4bb9b5c1d21a8eb07c038105d2701ecd6a8cee4a7f215dd01a389c",
+      "sourceHash": "sha256:505d0f7c474bf64ade9505000df6b1b0e3447839af2dc3738af5c5e5f288d231",
       "answerSchemaHash": "sha256:ffccb2e683e7fa791b4c965303add0840a0156ca253f3b0fd05198606fc6dd87"
     },
     {
@@ -11871,7 +11871,7 @@
       "category": "買掛金元帳（若葉物産）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「買掛金元帳（若葉物産）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「買掛金元帳（若葉物産）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11938,7 +11938,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f9dd0d1a3956bed5b038ed00f70c277a11e12d209698146ccc7f9f9116189282",
+      "sourceHash": "sha256:d095451b17c8157d29d689f721a3215bdc86e4731432777bf6abc1fed9b98a29",
       "answerSchemaHash": "sha256:e7891717e57b09a240d577d06e8c841166ead4207156236e038ab4655d6d4716"
     },
     {
@@ -11949,7 +11949,7 @@
       "category": "商品有高帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「商品有高帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「商品有高帳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12016,7 +12016,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:109ae04d13450a0669fd5fa79ea9824df09b9e9835d0f4908199848b596f4823",
+      "sourceHash": "sha256:f4f870260db6c076e0adb408a5b7d74156aa985d0d52834b861b602e61afbce2",
       "answerSchemaHash": "sha256:446f4e6265cd4a87c62d71841f0b0c158191907908c77a6f5e924df6f31eadc7"
     },
     {
@@ -12027,7 +12027,7 @@
       "category": "固定資産台帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産台帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産台帳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12094,7 +12094,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1084788328877b44085dcdc365ec3853b13b7b2cb125311471872de82227734e",
+      "sourceHash": "sha256:68cf3114cb59195f46f059a6460063d84414dffda3fecd3b616a842b246e4ce2",
       "answerSchemaHash": "sha256:6c974c8d23c9b808112cf73d5d39ffccc44a6d69ee2e908cf9b06e55de4b4aca"
     },
     {
@@ -13665,7 +13665,7 @@
       "category": "総勘定元帳（現金）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「総勘定元帳（現金）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「総勘定元帳（現金）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -13732,7 +13732,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d595bf12585eb9be050718b641e29ddbf5aad42dc01eb47c53ade692d862f7f7",
+      "sourceHash": "sha256:cc33c6cb2ae712389896f5809a1ede79a84eead9e74c2d4efa488c6fead1ae6d",
       "answerSchemaHash": "sha256:267e4afe10a3bfb029a94384504bcab420bd0afc38bf13cb587806da2d7fe62a"
     },
     {
@@ -13743,7 +13743,7 @@
       "category": "売掛金元帳（みなと商店）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売掛金元帳（みなと商店）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売掛金元帳（みなと商店）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -13810,7 +13810,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:6e5892be05432cde17f81564faf97760a90f03e646f21175a8b833728e3124cc",
+      "sourceHash": "sha256:6491c0b636972630defba18ce8e79c7164b0a0c59594cb4c5274dd161038df51",
       "answerSchemaHash": "sha256:ffccb2e683e7fa791b4c965303add0840a0156ca253f3b0fd05198606fc6dd87"
     },
     {
@@ -13821,7 +13821,7 @@
       "category": "買掛金元帳（若葉物産）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「買掛金元帳（若葉物産）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「買掛金元帳（若葉物産）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -13888,7 +13888,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:bdaa4411aa676d3ea29e146e4092bf5edc980b08481f8d1c64a66463c881f0c1",
+      "sourceHash": "sha256:9c599bfefaec7e35d5566c1b0d40879f53d43550fae5342b8e6e6817946ad80c",
       "answerSchemaHash": "sha256:e7891717e57b09a240d577d06e8c841166ead4207156236e038ab4655d6d4716"
     },
     {
@@ -13899,7 +13899,7 @@
       "category": "商品有高帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「商品有高帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「商品有高帳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -13966,7 +13966,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a02f87569cc78665fcb9574d26dcbd947a254b67a78f12c8e3e7c4f8ac1650ed",
+      "sourceHash": "sha256:36af5e50f903b97efb513558669d14491a74ef0d4b68aa894cc44de53b66b81f",
       "answerSchemaHash": "sha256:446f4e6265cd4a87c62d71841f0b0c158191907908c77a6f5e924df6f31eadc7"
     },
     {
@@ -14055,7 +14055,7 @@
       "category": "総勘定元帳（現金）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「総勘定元帳（現金）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「総勘定元帳（現金）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -14122,7 +14122,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1505aca8b6150cbe70ed4054da916c616d279f8bd393b275b3c5ee8d6c0c5013",
+      "sourceHash": "sha256:a43490b9338bbea1ff9e23790b975f8639867f1be0aa8e502170c02e85b517f3",
       "answerSchemaHash": "sha256:267e4afe10a3bfb029a94384504bcab420bd0afc38bf13cb587806da2d7fe62a"
     },
     {
@@ -14133,7 +14133,7 @@
       "category": "売掛金元帳（みなと商店）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売掛金元帳（みなと商店）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売掛金元帳（みなと商店）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -14200,7 +14200,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ff16f2884a0a59e248312fd88a4c32992062fcd972cbc33b0bf80f2a2f048669",
+      "sourceHash": "sha256:252f441ad7e46834eb8d458992d989c7f2f0f06995c5642010a62af9d82cecfa",
       "answerSchemaHash": "sha256:ffccb2e683e7fa791b4c965303add0840a0156ca253f3b0fd05198606fc6dd87"
     },
     {
@@ -14211,7 +14211,7 @@
       "category": "固定資産台帳（取得・月割）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産台帳（取得・月割）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産台帳（取得・月割）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -14278,7 +14278,7 @@
         "finding": "scene「本試験第2問・構造転移」とstoryを照合し、証憑から帳簿を完成する業務上の役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5fc88ee540c095cb94e8c7cbe297181393421204ce172b1756014d2eac503905",
+      "sourceHash": "sha256:8d64ba721b7343559fe832fe2ae4f93d04c6e880f3c97e3f1bd4cdf760faf2a0",
       "answerSchemaHash": "sha256:0f891f5c567cfe94e7e7982655b935864bed577fc16642f94231c26f6ee9ff8b"
     },
     {
@@ -14289,7 +14289,7 @@
       "category": "仕訳帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仕訳帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仕訳帳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -14356,7 +14356,7 @@
         "finding": "scene「本試験第2問・構造転移」とstoryを照合し、証憑から帳簿を完成する業務上の役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b2a432965f13032aacbe91323f3612b0142eb0912d206260a38d8cc34c014570",
+      "sourceHash": "sha256:888da5850e7d4eda73fa5d62f894d77a3ebaf95d5361c0fad1d1bff79228d137",
       "answerSchemaHash": "sha256:30d6004673c21246114c2e53150dd626f2fae3653d8feeea5f83ee395c9ef3cd"
     },
     {
@@ -14367,7 +14367,7 @@
       "category": "受取手形記入帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「受取手形記入帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「受取手形記入帳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -14434,7 +14434,7 @@
         "finding": "scene「本試験第2問・構造転移」とstoryを照合し、証憑から帳簿を完成する業務上の役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:614e636c26d2e4a24d74b5e81d64609a7247def76803805f058465a7da1a35ce",
+      "sourceHash": "sha256:f5ffcde1108eef0efd706581bcebe51dd0b6179d78920c63c05f815161acb904",
       "answerSchemaHash": "sha256:4df4f8bd718058a96aa0ec76e6f3467635e154b1abcc8036021ec06abcacc8e6"
     },
     {
@@ -14445,7 +14445,7 @@
       "category": "支払手形記入帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「支払手形記入帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「支払手形記入帳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -14512,7 +14512,7 @@
         "finding": "scene「本試験第2問・構造転移」とstoryを照合し、証憑から帳簿を完成する業務上の役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:92ef449517e127c3bb9c10f29a3d744bb6b6cb8f0003bf59495e4892f6373e80",
+      "sourceHash": "sha256:943acecb904be140bbed1afc6f1f58ea332c045199ab07bc6940eeb3b3f35772",
       "answerSchemaHash": "sha256:5aba887af6e82d60fb774ccf5a2915cb46bce066b96a4b983dabde5d30f83a19"
     },
     {
@@ -14523,7 +14523,7 @@
       "category": "総勘定元帳（売掛金）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「総勘定元帳（売掛金）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「総勘定元帳（売掛金）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -14590,7 +14590,7 @@
         "finding": "scene「本試験第2問・構造転移」とstoryを照合し、証憑から帳簿を完成する業務上の役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:30d09c69f9e30e387f57b9f9277c5c74f8b420bbf81119edecfca6ae86c3c028",
+      "sourceHash": "sha256:da5cd7fbfe9d44f8a6e9def266cff7d567e9ed78226dc61ce60480c81d26a6a3",
       "answerSchemaHash": "sha256:2f1fa5c8003cfb2e9da6e3e16184c2c9644c531325c0a2ee722b0921adb27a42"
     },
     {
@@ -14757,7 +14757,7 @@
       "category": "固定資産台帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産台帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産台帳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -14824,7 +14824,7 @@
         "finding": "scene「本試験第2問・実地記帳」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:bd15d97dcef70bca779293bb1bdd220da0eb802ae95cfae767be5b78acde2334",
+      "sourceHash": "sha256:9004d3ff35e8e3bda9d9ec43dca868b049f894e1eede9ddb3df5ab23d3afafda",
       "answerSchemaHash": "sha256:7f03eb5616a335b8adc6fee551211ea7cdfce22978872d430aeac463e03006b9"
     },
     {
@@ -14913,7 +14913,7 @@
       "category": "受取手形記入帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「12月・決算前夜」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「受取手形記入帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「受取手形記入帳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -14980,7 +14980,7 @@
         "finding": "scene「本試験第2問・実地記帳」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:8b77072106ba57ceea23a8016853145e2566d2ce0b4fa20be7934c84c0d13326",
+      "sourceHash": "sha256:9a26e7453b9b660e95f44b5fbae8ec90fa64e30731e2a30d57427182b9917306",
       "answerSchemaHash": "sha256:b499e6ca1dcd16b5ef911ff4c8f9cd2e696213e0ad4a2cb453666bd0cdda05d0"
     },
     {
@@ -14991,7 +14991,7 @@
       "category": "支払手形記入帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「12月・決算前夜」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「支払手形記入帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「支払手形記入帳」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -15058,7 +15058,7 @@
         "finding": "scene「本試験第2問・実地記帳」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:9f0f1c63b4dbe3aeeeae7e0d371607b80bf033a296bc97dbc406ff04620e41fe",
+      "sourceHash": "sha256:ef9764f75d2753980f6a0e775b29afdd7b7accb495b348b4bc59cffce6ff3eb7",
       "answerSchemaHash": "sha256:b1621aea75405681117a8c4ef1652441047345cda3ad433eaff19af426302c3c"
     },
     {
@@ -15615,7 +15615,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -15682,7 +15682,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:16a281cf82e82c5fce2f6ad6ddf6ac42be1190eeb8d0e43b8dd9554ea52e1f81",
+      "sourceHash": "sha256:360b2fd96190aabfee4fb745f994e63256abfea073066e9c66e56f50ee1f9c7e",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -15693,7 +15693,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -15760,7 +15760,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:99c2665abd0347d39b33968f37e8c45c7dadc3b7882046e5d06da2c80bcdaaf6",
+      "sourceHash": "sha256:fe6fea141c9fb764973e3f6ba3cd04ab5f8ef361fdccbf81b3fd3ecefe1cd52f",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -15771,7 +15771,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -15838,7 +15838,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:c3ee7acd4eeb1b26798e55097c00fa0694db651765ea85b526def1b41ea240d2",
+      "sourceHash": "sha256:9584559c216a5f2810d6f74af6ddb1f177a7d2ea1dfa67266acf43002c84a4e0",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -15849,7 +15849,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -15916,7 +15916,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f66acd3b7ce1ed138ff899017c2bca784466709300614f92b17892db6cc76f79",
+      "sourceHash": "sha256:81c43204cd0de9e49bf290d50bd526f95467417f812b7db74430aa25adc33a64",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -15927,7 +15927,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -15994,7 +15994,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:8d3a763dfa7ed273880bc1092db6edf3d9cb7309cd7d2757018749543eab020d",
+      "sourceHash": "sha256:61e8632d89393ddfd6fc4086e3d4abf3c3c3a21746b2485a11ab26138c31d484",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16005,7 +16005,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16072,7 +16072,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2a64afbb72493ea4f19dbe3ef77c790e54f5294ddd98340af8db2fc74f904b1c",
+      "sourceHash": "sha256:3dd18d9fab0a4e95306115176b70bbe9d97b59883a843523723aaae4687ae36e",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16083,7 +16083,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16150,7 +16150,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:15db81a3871de93c6a7bcea746bd7e02be79434f8f5b705d4c1d2a403b9a7ebe",
+      "sourceHash": "sha256:322d64efc8e44563d8eecf60e8c438cb3c7a514835eb8a2fcb8fc032d4861575",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16161,7 +16161,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16228,7 +16228,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:fb637cb43cdb0f4a058b955943377b120bda0b4f251af4d47cd87d5675f3dc48",
+      "sourceHash": "sha256:4e5f21c8962c86f8ec499b208db579afed569aea5e3c41ca2619778049569c25",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16239,7 +16239,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16306,7 +16306,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d5bea47d1314eb7cfd3574095507bb168545714bc42663b0d7ebd6ff76604320",
+      "sourceHash": "sha256:89edf327604ec5d9adc8fd2e8cc63e9549155f1d4110112a38df49b4e13b9d5f",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16317,7 +16317,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16384,7 +16384,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2a8e59d75ab52eae05d9262f96b00984f9f70d3aa9f4d14cdec7989b4047ef32",
+      "sourceHash": "sha256:a09ae8a964e7a7e6534b2b4ea0007a6f021de9809410ff0e3cfc841f5c6dfc63",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16395,7 +16395,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16462,7 +16462,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b7f090fccf0f4d66bde1be91c60ff1547e0af68b887f142c978846e1388fdce3",
+      "sourceHash": "sha256:f85ffcd0b4978d76e5c02855b480162840d12ba31cfb75502003c45348b0f6e9",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16473,7 +16473,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16540,7 +16540,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:aa2ab3eff81d0e3db65fbeac015c40fd60c23565e7a4a6640bbd4e6fb7ba3349",
+      "sourceHash": "sha256:2da07935e071872b389eea9266b29817bbc12e07d5e237b97afb4004fbe65509",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16551,7 +16551,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16618,7 +16618,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e0abf7851c31126eb63502f26336b10a145e2110b37619785f319f1c0f2e421e",
+      "sourceHash": "sha256:246b20c6f565e489c74f96be4357f5188890fa101e2f40b9370435cd1ed2d729",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16629,7 +16629,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16696,7 +16696,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:60a3f469424e240de5158b44a532bd4bb43507de0ed199549be8c91e77d419a8",
+      "sourceHash": "sha256:c767980255605b8d869e342ce4d92d90a80617a2a34650b61213eef817931620",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16707,7 +16707,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16774,7 +16774,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:23b016ca85551c0ab33baa2d8051eba59c0020a5084b06bbc46a8d2a3bc1ebaa",
+      "sourceHash": "sha256:af9f9d7eb93e975ef1612e1127bea05497ac92a14ebbbf37792ad97b288bf5f6",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16785,7 +16785,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16852,7 +16852,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2bd22fb1deef5c504c87c660b7a8c1405fec86c0b747a5a0d89f15adfc3d236c",
+      "sourceHash": "sha256:eee272d495481cfb083cc53a82cc2ad69443c3ec52fb984d7c55bb5a74b9ae7e",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16863,7 +16863,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -16930,7 +16930,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:459ec76a0964cd785cf90d369b24c7a43eb66649af8e518f12358512512aaae3",
+      "sourceHash": "sha256:9a56faf52c460d20c5b0c9200d81bf7c4901489066172aa7ccfe675693ba0f1e",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -16941,7 +16941,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17008,7 +17008,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:0eb9194ddbbe8f98d4f1ee43977463697abd301c40de8ea2ac6deb662585e8ae",
+      "sourceHash": "sha256:7b7757e4c18db943f096faea270f9f8fac2fc1f0ba82c470471984b990567f6b",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17019,7 +17019,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17086,7 +17086,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:515d8becc06e977f6b6f68b1f44988c3790735014458c8cfbfdf00d71d23ab1a",
+      "sourceHash": "sha256:5d3452110fa1b27d89957df11100b94338250deb9c09fbcd6a6fddfe63d5ffb3",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17097,7 +17097,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17164,7 +17164,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:10e35eb23149b62864512e1f28b395563a82fc5f498ef7712eb73cf8dab758f8",
+      "sourceHash": "sha256:6adf2c2454939ec12a357dece126a3153b8a5d2ab341883b05d67ac9143e09bc",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17175,7 +17175,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17242,7 +17242,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:cf168c876e77cf14f975df05bf2d4ceec91fbbd3243a4016ffcb57cd0024f5bd",
+      "sourceHash": "sha256:6e1075bf64562454777f2d20756d83e1c7e56f990ec97cb52bc89a5193819fbe",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17253,7 +17253,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17320,7 +17320,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1fdc5b9c5be8d4fc25d7415ba0ebcdd996d2fa8a3b6f3b452123f08a622e5781",
+      "sourceHash": "sha256:a20e391b8a9c9f1a9dfaa6863ed21be74fade4369f538ed3a5d645e4d25591a1",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17331,7 +17331,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17398,7 +17398,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:0d48bd829d35ac83b4b41c64dde10139dbe7eb9c1213ed9fc8b0827c7bdcfc6a",
+      "sourceHash": "sha256:bebf309132edc27ae1676118f8b1619f7ee9d3509c0e073b6c5771a19ba085f9",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17409,7 +17409,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17476,7 +17476,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ab5685ad6e6bde4bc86a2cbf52e90dc36daa413de3a8ee7fe1f9da85707540fc",
+      "sourceHash": "sha256:9d7b52a0dcc25bdc9aa7d925e8400234331c155bc6d1300641078cf646a81f49",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17487,7 +17487,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17554,7 +17554,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:94551db3af884e46a2c04efe1a93c92519371534c98d31a8aa263a75e7ebb1f8",
+      "sourceHash": "sha256:22ebf118a92bbf38f6d20a23e6f15380a6bb35026f64519651d5751b89c453b7",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17565,7 +17565,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17632,7 +17632,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:07f74f1e634352940adbb5c0fb190dda1b08331d26672477fcf11837b2c4ffb1",
+      "sourceHash": "sha256:e9c54ee7cca0f577b6f257d7f54b0343ada9890434cd3c78b96930bf8385881d",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17643,7 +17643,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17710,7 +17710,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:0b016604de576ff7c12e81ae0054979d9e412597bba867afb3bdfe11cc47a7e6",
+      "sourceHash": "sha256:89e3b2c8dfb93f0296c88e78f12c3482ea63dda302459b84befe6cd18fc92e98",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17721,7 +17721,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17788,7 +17788,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:72b635d67c78bfd560079e54dfb0a0205c67d999c5d5c459bc896891c7505a15",
+      "sourceHash": "sha256:7cda0a183bd6846185d201780e50099e34569c11447197c8207a3237a74f1ae1",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17799,7 +17799,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17866,7 +17866,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1c80cab04abc9e8904c4803f148e7435990b2f80c362af729816c9f7a850c60a",
+      "sourceHash": "sha256:ac3e2112dc6404817a358f8817e52d825d98572d5394e39720abf595c7a6ee9c",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17877,7 +17877,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -17944,7 +17944,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b243e736310f64282ea0ddca15901000acaf7b441e61072c0b7c72f606bd42e4",
+      "sourceHash": "sha256:e578d9a1502004f0c3a2bcf1bfb899fb0781cf79ff424d286a1e8bce0c48bc90",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -17955,7 +17955,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18022,7 +18022,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:03cd19256df9946216682ac5f425962a3f7604c49c10fcd9883bb6bece46fa27",
+      "sourceHash": "sha256:bea4b92f0d438dd9615305c7b2364f733801d554f85886e00fb4128a7487c0b4",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18033,7 +18033,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18100,7 +18100,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:7a97bceb612d225d22fe439519db20acc96131d5ed4f4b42223144ebf4432871",
+      "sourceHash": "sha256:b971d860f0d7c6e2ea414d91e4a45113cef45784fa08a494352339cf09cc0bf5",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18111,7 +18111,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18178,7 +18178,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:df4a413b068274aef122a52b0bea0cc5bb574f241f06ef83ccd6e101606a10d8",
+      "sourceHash": "sha256:b3b33458f78ea013ca661cc939cf45f51a70e16b1fceefdcd18aecef071d4478",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18189,7 +18189,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18256,7 +18256,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:8a203ef8a0fa3e6406e59f6be64daddba91195bd271d3f89708da2ea2a8e3e81",
+      "sourceHash": "sha256:da30db2a72c697a865954b9c1b08ab249c8794ddca81a6e5081203cc5058d083",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18267,7 +18267,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18334,7 +18334,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ccc6b0fb129555fcec112cf3f142b0e2603e5f2f42d08f8cb9411790596da493",
+      "sourceHash": "sha256:e59faf79079442cc7452f2fb8fd1bab9b5568e3d13d0aba2115e2dd02adb9085",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18345,7 +18345,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18412,7 +18412,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:649733803c60c290386b7c38eaf01e81d90dacefad5a65328fe2aa946578729e",
+      "sourceHash": "sha256:47218f00a24d2a1ff36156a45fc05c16e6c2c803fa041c4b7cb0ea4807369090",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18423,7 +18423,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18490,7 +18490,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:8227d94e82a16783713aa111e4fe307a563ba2b48745b1b30ce0026c25203187",
+      "sourceHash": "sha256:d14b8d129c2cc7bf8a6594cb882f4a2c3d36c643a9f4a9e2bbed965989545a63",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18501,7 +18501,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18568,7 +18568,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b27f517457f2455e5df6201e5f6d618cf5fd02d6f666b7e5f2390ec9b2e65201",
+      "sourceHash": "sha256:4f2772d63c48d22dcca4ce4307a6360b45d490825f0daab0647a415130d518b5",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18579,7 +18579,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18646,7 +18646,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ca3080a9ac043c7dd0424a1682fa875f0f6d7f0790a3908c2507eeab890aba8f",
+      "sourceHash": "sha256:e58b88df5ee0bcc8b742c2c00ffe2d3740d0ada412739cc9a22889f540c4c7ae",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18657,7 +18657,7 @@
       "category": "残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18724,7 +18724,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:828ba588d6ab42c884c3ae7f999063974122612e7ba2de87dc40a7c26bc19697",
+      "sourceHash": "sha256:1ca01b673881025dfb4c66fa312d8233d8759c4fbbb4b6b9556375b7a26d24ad",
       "answerSchemaHash": "sha256:e10a4715b557b8e4922434820785d39edd793b78cf24bacef7c8fd28cc7751c5"
     },
     {
@@ -18735,7 +18735,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18802,7 +18802,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:4632c2886101571da4ea39b21acf03920aeb1b273b2d2b17829e3f49c5dd56f5",
+      "sourceHash": "sha256:6ce21ed21b217c6e0fccf4483b0b8fb5cb515a34bf13ce77174f6de9b6ac6635",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -18813,7 +18813,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18880,7 +18880,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:bb13573742890a0ef9b381c66ba450db850832cc337cc70c106dbb20ac4267f5",
+      "sourceHash": "sha256:da4e165f9c9e4e0876ca23f34b2dcaf23b9cc75cd75beec2b6d7f70a617ed302",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -18891,7 +18891,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18958,7 +18958,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5050196f76fb203899c654ebf25faa7166527baf435c08a34037d7dea55d1521",
+      "sourceHash": "sha256:690899907cb11b1ed5b25d36ce1f806aea221a883b67673349779933cfad426d",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -18969,7 +18969,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19036,7 +19036,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b0e069968680f6028df076e53f44994b8ccce6436db107d930cbd6543461794b",
+      "sourceHash": "sha256:0acaad92a96931d6e8ea0dbac940a104226e349ffb265d4bf67842fe1867ce69",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19047,7 +19047,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19114,7 +19114,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a26801c5eed0b1025f8b2bddd1b795b3c22ab0473247eda2927ca9023d13c91f",
+      "sourceHash": "sha256:41421e588828a0d6b8a4754861221d7ed1e88273c97514651280b934db712ac7",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19125,7 +19125,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19192,7 +19192,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d082f36596c129b4a606e1d4dc25ebfd2fdffed9ddf4debfdfe934242ca057f3",
+      "sourceHash": "sha256:5043d525bce3de205b96a33c17d56d871679ad0739f738b4b0bf0a2b2a23e47e",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19203,7 +19203,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19270,7 +19270,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b3c34f47b2ba3f9cb3ca377ce45d0afcaf688a7c3906dddaa6ba855dc3e91f6e",
+      "sourceHash": "sha256:3a3ee2575de03954475f2d9894cc57ccf7d387a7d9a9bc6a30983c1e2d6b00c6",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19281,7 +19281,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19348,7 +19348,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:4d8f9db4a3696c6394db41a0c2746cf88d4d1560deb0a53c19a18ae226ebea67",
+      "sourceHash": "sha256:536fb862caaa3b4fceea3679881a2a6c144d90b694c16d44fe33170f9692fd5e",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19359,7 +19359,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19426,7 +19426,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:18d8b88cf4893ebd4e29636824f69db1f8ce1fca936dc01df13a6766201c7769",
+      "sourceHash": "sha256:fc30483fd81f5947355cadabcaf4d531080e38ebc0bb68e156de6c3460545987",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19437,7 +19437,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19504,7 +19504,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3650013fcd400e6c7b8d9a1682761f80a9dd7bb2d3181f7fd364267bcc2af45d",
+      "sourceHash": "sha256:a300d51b251af70b1f3a6fe29e2d4c9a93e552c183232f8d9bca377cbdd1ca20",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19515,7 +19515,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19582,7 +19582,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:88fe1a57507a908c88d8cdbf37a66cf20b50a9c06ca82ecda786088eff7deac7",
+      "sourceHash": "sha256:9e3d02eb5c8ce97d774d51474037a0547aced4e5e037288afc34360b2f431a6c",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19593,7 +19593,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19660,7 +19660,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d950443666253f9a5db26f925eb67121b53545c74d288415bade1339c023d53f",
+      "sourceHash": "sha256:522bb19f3a2b186c827d8f60bc784559712e7e24876ffe0f194f51ffc8521b08",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19671,7 +19671,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19738,7 +19738,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:edcccafe75ef39c71734e1c1d2f011fe880900df836b9689d53223515fdbadce",
+      "sourceHash": "sha256:384352172e70a667d468a9cd65aaaa77472d347a6d45f3d5ce24fcd842958eac",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19749,7 +19749,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19816,7 +19816,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a420c04d4bbdfd041a8274a1d31834350ec3282e339c66666d89c3dc0c6097c5",
+      "sourceHash": "sha256:cd601ff20b725cc8730e646282715f924b93e514e22fc7b0c3fe165c8d3e6751",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19827,7 +19827,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19894,7 +19894,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:094c39cb3ed84b28e9918389422b6debeae20fca77e7b4cdcfd967454dbe0632",
+      "sourceHash": "sha256:e036d1707bca47366bfd1f72b33c7232ae78b0e154aca641e02808ecdbaff4ce",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19905,7 +19905,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19972,7 +19972,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:6e94619700fa744745d8c40cd86ca2eaff1be18dcff90a6a99a351699a80b968",
+      "sourceHash": "sha256:623f91e54bd37a95c26f61a62a4a24519c0828fb335937babed45064d1f13d5d",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19983,7 +19983,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -20050,7 +20050,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:7d4308375d71a21aeb254f6adb5db4b8d6cac91b92ab99473a642b2cb913eb68",
+      "sourceHash": "sha256:3af1f25f8b03770fac11a0e6931a51a528e5d0a884d7a59fe8a3aa7f3fb4174f",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -20061,7 +20061,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -20128,7 +20128,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:00f68c0c3c1847acdafcb82bc9b81e7722d37d8579ce7ae779979b784c43ece2",
+      "sourceHash": "sha256:49bee43024585471367aa73f0bd58517f7e2e4b26541903f4a3a6699e474f69f",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -20139,7 +20139,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -20206,7 +20206,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:1d2671d48ee4f29f09e5aee0124d8b35c374108e1f1d21bf7f7e0361b8b740be",
+      "sourceHash": "sha256:04dfbe00c54fd71a6adf4b540edd32c4977f192a43fcc0c0806cdd232ec2564d",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -20217,7 +20217,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "「11月・社長の緊急質問」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「記帳訂正」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -20284,7 +20284,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:81779abbb3b99cf3ebe91e33e91d58e5aba0c7a1b8ed95b7108dd2c983e42323",
+      "sourceHash": "sha256:5043c126410c40109f6aca2a5e524b5cd0d9a38392fea3752b3a3239a22ee3eb",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -20295,7 +20295,7 @@
       "category": "8欄精算表（8桁精算表）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「8欄精算表（8桁精算表）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「8欄精算表（8桁精算表）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -20362,7 +20362,7 @@
         "finding": "scene「決算・財務諸表へつなぐ」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b82ab2527b184830766fbd74196cd17fc7673a20561e0031e2479098f2892bb8",
+      "sourceHash": "sha256:c655909a5cc9e8d1f4779da3d21125305867a1177bf04b814a9f2675f35716b3",
       "answerSchemaHash": "sha256:7e4a452c1b70f6372cac4888485232cdd51eccc92389ca6b37050907d543c68b"
     },
     {
@@ -20997,7 +20997,7 @@
       "category": "決算整理・計算問題",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「決算整理・計算問題」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「決算整理・計算問題」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -21064,7 +21064,7 @@
         "finding": "scene「1月・決算整理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:6c2484f981a675eb3014c2dfe8791a6dbb5abdd632f27797acc158496258d742",
+      "sourceHash": "sha256:2040d074d0f7b3782cb3bcb1633f4229414ab75b048f7e6d520d798df89ab96b",
       "answerSchemaHash": "sha256:40592498e55e3f3d85c46506a45241b90b8f8bbcef079f77f66af8de9f32321f"
     },
     {
@@ -21075,7 +21075,7 @@
       "category": "決算整理・計算問題",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「決算整理・計算問題」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「決算整理・計算問題」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -21142,7 +21142,7 @@
         "finding": "scene「1月・決算整理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:59ce259ccbdbcfc80fd959c350d3710cce939e891b3068e4c3249c160a2da098",
+      "sourceHash": "sha256:da34c3cd5280792a0525d72d4b6285e05cc00adbf029881de4ba616bfbe9f106",
       "answerSchemaHash": "sha256:40592498e55e3f3d85c46506a45241b90b8f8bbcef079f77f66af8de9f32321f"
     },
     {
@@ -21153,7 +21153,7 @@
       "category": "決算整理・計算問題",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「決算整理・計算問題」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「決算整理・計算問題」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -21220,7 +21220,7 @@
         "finding": "scene「1月・決算整理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:fa1ab36f288fb16fb13359f8f412954feff2a218592920e5cf4ba890fa4113d1",
+      "sourceHash": "sha256:994d4d808f1a7329fa73943bbc1847f43348b65b68a49cfba6fbad6babfde1f1",
       "answerSchemaHash": "sha256:40592498e55e3f3d85c46506a45241b90b8f8bbcef079f77f66af8de9f32321f"
     },
     {
@@ -21699,7 +21699,7 @@
       "category": "決算整理後残高試算表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「決算整理後残高試算表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「決算整理後残高試算表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -21766,7 +21766,7 @@
         "finding": "scene「決算・整理後残高の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:68758b944cfba5d0ba60aa3a3528e517d886a484a77917b1677ff64807f5a49b",
+      "sourceHash": "sha256:6ff8beb7f842c37f5e7ff63f2709f1e3251a2b4897a39e6d68a09c6fdd3268d9",
       "answerSchemaHash": "sha256:e484114cf09d5b8fc1de5509e5dc1d13571a03f09a2d9248ed85bdf90f0743ca"
     },
     {
@@ -21777,7 +21777,7 @@
       "category": "帳簿締切",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「帳簿締切」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「帳簿締切」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -21844,7 +21844,7 @@
         "finding": "scene「決算・収益費用勘定の締切」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:fe0e1d5f025580dab3d9480baeed552be3f667affc64a5c4134bdc5f442cba78",
+      "sourceHash": "sha256:ceab9f7a040878a3c8eb328e6f6b4eb21bf2b70b02604aa78730d98dd85179f3",
       "answerSchemaHash": "sha256:5dd76b0d9c8fea7820f89d5c3d408923e4f24cce79e578cc6b8cf6d8852ada5d"
     },
     {
@@ -21855,7 +21855,7 @@
       "category": "損益計算書",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「損益計算書」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「損益計算書」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -21922,7 +21922,7 @@
         "finding": "scene「決算・損益計算書」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:c619bfcef8953fa44314134d346ea819c551fca0ca9a65464d4c5afbe0153472",
+      "sourceHash": "sha256:bf14cc6d7d84841271436a4e71979f1da2d4c26f230b3a89099013d10687c70c",
       "answerSchemaHash": "sha256:2c07bfe75d4dd27f1842810773c85958d08c50e9d67bea9f6f13b017f86dcf13"
     },
     {
@@ -21933,7 +21933,7 @@
       "category": "貸借対照表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「3月・最後の決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸借対照表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸借対照表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -22000,7 +22000,7 @@
         "finding": "scene「3月・数字で会社を語る」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ebbbd03226c00f1252a7a18cd1595ab96aebb5df52f0973d305d796a5f66845d",
+      "sourceHash": "sha256:1b851d1e8df44decab81da38f27cd1bdc75cef65585daaa38f11df29b911718d",
       "answerSchemaHash": "sha256:8a9785ce31712038ec42a3adc03e0eeb4677c572d4c3d35c3c6702cb265b0c60"
     },
     {
@@ -22011,7 +22011,7 @@
       "category": "貸借対照表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「3月・最後の決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸借対照表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸借対照表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -22078,7 +22078,7 @@
         "finding": "scene「3月・数字で会社を語る」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ddc8cab2bfbe7bff322e7d35a039cbf9dbacd0d7213cfce031f91054aa931958",
+      "sourceHash": "sha256:256d084d919f8617d1b1829b6436dc7e1bf6d6ebafcc122056c9d1eb189f4d5f",
       "answerSchemaHash": "sha256:8a9785ce31712038ec42a3adc03e0eeb4677c572d4c3d35c3c6702cb265b0c60"
     },
     {
@@ -22089,7 +22089,7 @@
       "category": "貸借対照表",
       "story": {
         "status": "VERIFIED",
-        "finding": "「3月・最後の決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「貸借対照表」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貸借対照表」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -22156,7 +22156,7 @@
         "finding": "scene「3月・数字で会社を語る」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:93821d62987b0f31d453ba9cb18b20a380b0d59730e78a9c0ea42313bb7b72de",
+      "sourceHash": "sha256:51c8128e506511885c696434e95bd660758c40f050f83d0963ef8f55747cbf94",
       "answerSchemaHash": "sha256:8a9785ce31712038ec42a3adc03e0eeb4677c572d4c3d35c3c6702cb265b0c60"
     },
     {
@@ -22635,7 +22635,7 @@
       "category": "統合決算A（棚卸・貸倒・月割）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「統合決算A（棚卸・貸倒・月割）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「統合決算A（棚卸・貸倒・月割）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -22702,7 +22702,7 @@
         "finding": "scene「本試験第3問・統合決算」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:23d46eefdb123d6e4911d5b063c4640c76551069d1601ec5199a7552e0d7180e",
+      "sourceHash": "sha256:a1a448c4543a482f532d1542a8c93d29aa3895d4a9791b7b2e83e510dd9b09b5",
       "answerSchemaHash": "sha256:975015af984cd80f8b2286821d076a70d48d34ff92fe711099498cce746bc1da"
     },
     {
@@ -22713,7 +22713,7 @@
       "category": "統合決算B（訂正・消費税・現金過不足）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「統合決算B（訂正・消費税・現金過不足）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「統合決算B（訂正・消費税・現金過不足）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -22780,7 +22780,7 @@
         "finding": "scene「本試験第3問・統合決算」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3b4a0e2915b7105efe9f9d423a20adac9de02a34f618123d9a81d7fd35d4c869",
+      "sourceHash": "sha256:e162fad1a386654901f40012222d0c9bc950a2d838d7f240f868726bd39d5329",
       "answerSchemaHash": "sha256:88c078f9a4c5c796118a1b2b6867b2fc639115a2801646d737d0b2e93877a777"
     },
     {
@@ -22791,7 +22791,7 @@
       "category": "統合決算C（経過勘定・固定資産・貸倒）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「1月・年度決算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「統合決算C（経過勘定・固定資産・貸倒）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「統合決算C（経過勘定・固定資産・貸倒）」の業務文脈とchapter整合を確認した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -22858,7 +22858,7 @@
         "finding": "scene「本試験第3問・統合決算」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:4bd4fa73e45d62d49de709d3001c88a6437c31d50fdab84f1233e530e7f728ed",
+      "sourceHash": "sha256:ca7b65a4476a90e4e177aa42623037abbfdcdfe7faa39d1d0d933f29fcc6ee7a",
       "answerSchemaHash": "sha256:9c62b8c5e48c1c9c7b8800e545c5b26b1e68f90fc99b465486ce65e5fa400c48"
     },
     {
