@@ -26,7 +26,7 @@ async function seeded(browser,width){
 async function auditAll(page){
   return page.evaluate(async()=>{
     const c=window.App?.controller;if(!c)throw new Error('APP_CONTROLLER_MISSING');
-    const questions=Object.values(window.QuestionData).filter(q=>q.chapter>=7&&q.chapter<=8);
+    const questions=Object.values(window.QuestionData).filter(q=>/^L\d{3}$/u.test(q.id));
     const reports=[],failures=[];
     for(const q of questions){
       const violations=[];

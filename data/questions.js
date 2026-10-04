@@ -15448,15 +15448,25 @@ function validateQuestionData(questionData = QuestionData) {
     }
   }
 
-  // Story timeline: the master arc intentionally promotes every case into the
-  // April-to-March chronology. Guard the balanced twelve-chapter contract
-  // instead of treating later journal exercises as timeless review material.
+  // Story chapter is authored semantic metadata. Chapter volume may be uneven,
+  // but every question must belong to a valid April-to-March chapter and all
+  // twelve chapters must remain represented. Story-only reachability is guarded
+  // separately by the Issue #180 Story authority regression.
+  const invalidChapterIds = Object.values(questionData)
+    .filter(item => !Number.isInteger(item.chapter) || item.chapter < 1 || item.chapter > 12)
+    .map(item => item.id);
+  if (invalidChapterIds.length) {
+    errors.push(`章番号が1〜12の範囲外です: ${invalidChapterIds.join(',')}`);
+  }
   const chapterCounts = Object.values(questionData).reduce((counts, item) => {
-    counts[item.chapter] = (counts[item.chapter] || 0) + 1; return counts;
+    if (Number.isInteger(item.chapter) && item.chapter >= 1 && item.chapter <= 12) {
+      counts[item.chapter] = (counts[item.chapter] || 0) + 1;
+    }
+    return counts;
   }, {});
   const chapterSizes = Array.from({ length:12 }, (_, index) => chapterCounts[index + 1] || 0);
-  if (Math.max(...chapterSizes) - Math.min(...chapterSizes) > 1 || chapterSizes.some(size => size === 0)) {
-    errors.push(`12章の配分が不均衡です: ${chapterSizes.join(',')}`);
+  if (chapterSizes.some(size => size === 0)) {
+    errors.push(`12章のいずれかが空です: ${chapterSizes.join(',')}`);
   }
 
   // 決算整理表: 間接法なのに「備品（取得原価）」を直接調整するように見せない。
@@ -15847,19 +15857,27 @@ const ExamPoolDefinition = Object.freeze([
   'C001','C002','C003','C006','C007','C008','C009','C010'
 ]);
 const ExamPoolIds = new Set(ExamPoolDefinition);
-const StoryChapterIds = Object.values(QuestionData).reduce((chapters, item, index) => {
-  const chapter = Math.floor(index / 25) + 1;
+const AllChapterIds = Object.values(QuestionData).reduce((chapters, item) => {
+  (chapters[item.chapter] ||= []).push(item.id);
+  return chapters;
+}, {});
+const StoryChapterIds = Object.values(QuestionData).reduce((chapters, item) => {
+  const chapter = item.chapter;
   if (item.learningRole !== 'review' && !ExamPoolIds.has(item.id)) (chapters[chapter] ||= []).push(item.id);
   return chapters;
 }, {});
-Object.values(QuestionData).forEach((item, index) => {
-  // Keep every month playable: 300 cases are divided into twelve equal
-  // 25-case chapters instead of allowing the large trial-balance sets to
-  // accumulate in a single chapter.
-  item.chapter = Math.floor(index / 25) + 1;
+const narrativePhase = (position, count) => {
+  if (position < 0 || count <= 1) return 0;
+  return Math.min(4, Math.round((position * 4) / (count - 1)));
+};
+Object.values(QuestionData).forEach(item => {
+  // Authored chapter is the educational/story authority. Object insertion order
+  // must never reassign semantic chapters; unequal chapter volume is handled by
+  // chapter-local progress and later Mission-level presentation.
   const arc = ChapterDrama[item.chapter] || ChapterDrama[12];
   const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
-  const authoredChapterPosition = index % 25;
+  const authoredChapterIds = AllChapterIds[item.chapter] || [];
+  const authoredChapterPosition = authoredChapterIds.indexOf(item.id);
   const storyChapterIds = StoryChapterIds[item.chapter] || [];
   const chapterPosition = storyChapterIds.indexOf(item.id);
   const storyCount = storyChapterIds.length;
@@ -15883,7 +15901,10 @@ Object.values(QuestionData).forEach((item, index) => {
       item.table.inputTypes[key] = typeof value === 'number' ? 'amount' : 'text';
     }
   }
-  const phase = Math.min(4, Math.floor((isStoryEligible ? chapterPosition : authoredChapterPosition) / 5));
+  const phase = narrativePhase(
+    isStoryEligible ? chapterPosition : authoredChapterPosition,
+    isStoryEligible ? storyCount : authoredChapterIds.length
+  );
   const instruction = WorkInstructions[item.type] || WorkInstructions.comprehensive;
   const beats = [
     `水野先輩が資料を一枚だけ抜き出した。「まず事実を固定しよう」`,
@@ -16016,7 +16037,7 @@ const chapter8ExplanationSummary = item => {
   return '資料を順に確認し、必要な金額を帳簿のどこに記入するか決めます。';
 };
 Object.values(QuestionData).forEach(item => {
-  if (item.chapter !== 8 || item.explanationModel) return;
+  if (item.type !== 'ledger' || item.explanationModel) return;
   item.explanationModel = {summary:[{text:chapter8ExplanationSummary(item)}]};
 });
 
@@ -16035,47 +16056,40 @@ Object.values(QuestionData).forEach(item => {
   item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};
 });
 
-// Issue #161 PR-C: Chapter 1–3 journal lessons use the shared structured
-// explanation on both correct and incorrect paths. This removes the duplicated
-// prose walkthrough while keeping QuestionData answers and authored prose intact.
+// Issue #161 explanation rollout cohorts are historical implementation batches,
+// not semantic Story chapters. Keep them independent from authored chapter routing.
+const inQuestionRange = (item, prefix, start, end) =>
+  item.id.startsWith(prefix) && Number(item.id.slice(1)) >= start && Number(item.id.slice(1)) <= end;
+
+// PR-C: J001-J075.
 Object.values(QuestionData).forEach(item => {
-  if (item.type === 'journal' && item.chapter >= 1 && item.chapter <= 3) {
+  if (inQuestionRange(item, 'J', 1, 75)) item.teachingPresentation = 'structured-always';
+});
+
+// PR-D: J076-J150.
+Object.values(QuestionData).forEach(item => {
+  if (inQuestionRange(item, 'J', 76, 150)) item.teachingPresentation = 'structured-always';
+});
+
+// PR-E: all ledger questions L001-L050.
+Object.values(QuestionData).forEach(item => {
+  if (inQuestionRange(item, 'L', 1, 50)) item.teachingPresentation = 'structured-always';
+});
+
+// PR-F: T001-T040, E001-E010 and C001-C010.
+Object.values(QuestionData).forEach(item => {
+  if (inQuestionRange(item, 'T', 1, 40) ||
+      inQuestionRange(item, 'E', 1, 10) ||
+      inQuestionRange(item, 'C', 1, 10)) {
     item.teachingPresentation = 'structured-always';
   }
 });
 
-// Issue #161 PR-D: Chapter 4–6 journal lessons continue the same shared
-// structured teaching flow. Answers, grading, Oracle, Exam Pool, IDs and
-// authored explanation text remain unchanged.
+// PR-G: E011-E020, D001-D020 and F001-F010.
 Object.values(QuestionData).forEach(item => {
-  if (item.type === 'journal' && item.chapter >= 4 && item.chapter <= 6) {
-    item.teachingPresentation = 'structured-always';
-  }
-});
-
-// Issue #161 PR-E: Chapter 7–8 ledger lessons use the format-specific shared
-// structured teaching flow on both correct and incorrect paths. Accounting
-// answers, grading, Oracle, Exam Pool, IDs and authored prose remain unchanged.
-Object.values(QuestionData).forEach(item => {
-  if (item.type === 'ledger' && item.chapter >= 7 && item.chapter <= 8) {
-    item.teachingPresentation = 'structured-always';
-  }
-});
-
-// Issue #161 PR-F: formal Batch D covers Chapter 9–10 plus all
-// comprehensive questions. The remaining Chapter 11–12 non-comprehensive
-// questions stay explicitly tracked for PR-G / all-300 closure.
-Object.values(QuestionData).forEach(item => {
-  if ((item.chapter >= 9 && item.chapter <= 10) || item.type === 'comprehensive') {
-    item.teachingPresentation = 'structured-always';
-  }
-});
-
-// Issue #161 PR-G: close the remaining Chapter 11-12 non-comprehensive
-// explanation coverage. These 40 questions are correction / worksheet /
-// financial-statement cases and now use the same structured flow on both paths.
-Object.values(QuestionData).forEach(item => {
-  if (item.chapter >= 11 && item.chapter <= 12 && ['correction','worksheet','financial_statement'].includes(item.type)) {
+  if (inQuestionRange(item, 'E', 11, 20) ||
+      inQuestionRange(item, 'D', 1, 20) ||
+      inQuestionRange(item, 'F', 1, 10)) {
     item.teachingPresentation = 'structured-always';
   }
 });

@@ -6,11 +6,11 @@ for(const file of ['data/questions.js','js/explanation-formulas.js','js/feedback
   vm.runInContext(fs.readFileSync(file,'utf8'),sandbox,{filename:file});
 }
 const root=sandbox.window;
-const target=Object.values(root.QuestionData).filter(q=>q.chapter>=1&&q.chapter<=3);
-assert.strictEqual(target.length,75,'Chapter 1-3 contains 75 questions');
-assert(target.every(q=>q.type==='journal'),'Chapter 1-3 PR-C scope stays journal-only');
-assert(target.every(q=>q.teachingPresentation==='structured-always'),'all Chapter 1-3 questions opt into structured teaching flow');
-assert(target.every(q=>q.explanationModel),'all Chapter 1-3 questions expose explanationModel');
+const target=Object.values(root.QuestionData).filter(q=>/^J\d{3}$/u.test(q.id)&&Number(q.id.slice(1))<=75);
+assert.strictEqual(target.length,75,'Issue 161 PR-C retains its 75-question journal batch');
+assert(target.every(q=>q.type==='journal'),'Issue 161 PR-C scope stays journal-only');
+assert(target.every(q=>q.teachingPresentation==='structured-always'),'all Issue 161 PR-C questions opt into structured teaching flow');
+assert(target.every(q=>q.explanationModel),'all Issue 161 PR-C questions expose explanationModel');
 
 for(const q of target){
   const correctModel=root.ExplanationModel.build(q,q.answer,{correct:true});

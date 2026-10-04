@@ -3,10 +3,11 @@ const assert=require('assert'),fs=require('fs'),vm=require('vm');
 const ExplanationModel=require('../js/explanation-model');
 const sandbox={window:{}};
 vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),sandbox,{filename:'data/questions.js'});
-const questions=Object.values(sandbox.window.QuestionData).filter(q=>q.chapter===8);
-assert.strictEqual(questions.length,25,'Chapter 8は25問');
-assert(questions.every(q=>q.type==='ledger'),'Chapter 8は全問ledger');
-assert(questions.every(q=>q.explanationModel),'Chapter 8全25問にstructured explanationを持たせる');
+const questions=Array.from({length:25},(_,index)=>sandbox.window.QuestionData[`L${String(index+26).padStart(3,'0')}`]);
+assert.strictEqual(questions.length,25,'旧Chapter 8相当のL026-L050を25問保持');
+assert(questions.every(Boolean),'L026-L050の全IDが存在する');
+assert(questions.every(q=>q.type==='ledger'),'L026-L050は全問ledger');
+assert(questions.every(q=>q.explanationModel),'L026-L050全25問にstructured explanationを持たせる');
 const noArithmetic=new Set(['L034','L041','L050']);
 for(const q of questions){
   const wrong={cells:Object.fromEntries((q.table?.inputCells||[]).map(id=>[id,'']))};
