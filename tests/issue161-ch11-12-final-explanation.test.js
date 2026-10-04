@@ -6,7 +6,7 @@ for(const file of ['data/questions.js','js/explanation-formulas.js','js/feedback
   vm.runInContext(fs.readFileSync(file,'utf8'),sandbox,{filename:file});
 }
 const root=sandbox.window;
-const target=Object.values(root.QuestionData).filter(q=>q.chapter>=11&&q.chapter<=12&&['correction','worksheet','financial_statement'].includes(q.type));
+const target=Object.values(root.QuestionData).filter(q=>(/^E\d{3}$/u.test(q.id)&&Number(q.id.slice(1))>=11)||/^D\d{3}$/u.test(q.id)||/^F\d{3}$/u.test(q.id));
 assert.strictEqual(target.length,40,'PR-G final explanation scope contains 40 questions');
 assert.strictEqual(target.filter(q=>q.type==='correction').length,10,'final correction count');
 assert.strictEqual(target.filter(q=>q.type==='worksheet').length,20,'final worksheet count');
