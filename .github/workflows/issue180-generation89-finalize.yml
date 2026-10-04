@@ -1,4 +1,5 @@
 # Generation 89 Issue #180 Story chapter authority finalizer
+# trigger: validated pre-authority boundary
 name: Issue 180 Generation 89 finalizer
 on:
   push:
