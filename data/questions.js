@@ -15847,19 +15847,27 @@ const ExamPoolDefinition = Object.freeze([
   'C001','C002','C003','C006','C007','C008','C009','C010'
 ]);
 const ExamPoolIds = new Set(ExamPoolDefinition);
-const StoryChapterIds = Object.values(QuestionData).reduce((chapters, item, index) => {
-  const chapter = Math.floor(index / 25) + 1;
+const AllChapterIds = Object.values(QuestionData).reduce((chapters, item) => {
+  (chapters[item.chapter] ||= []).push(item.id);
+  return chapters;
+}, {});
+const StoryChapterIds = Object.values(QuestionData).reduce((chapters, item) => {
+  const chapter = item.chapter;
   if (item.learningRole !== 'review' && !ExamPoolIds.has(item.id)) (chapters[chapter] ||= []).push(item.id);
   return chapters;
 }, {});
-Object.values(QuestionData).forEach((item, index) => {
-  // Keep every month playable: 300 cases are divided into twelve equal
-  // 25-case chapters instead of allowing the large trial-balance sets to
-  // accumulate in a single chapter.
-  item.chapter = Math.floor(index / 25) + 1;
+const narrativePhase = (position, count) => {
+  if (position < 0 || count <= 1) return 0;
+  return Math.min(4, Math.round((position * 4) / (count - 1)));
+};
+Object.values(QuestionData).forEach(item => {
+  // Authored chapter is the educational/story authority. Object insertion order
+  // must never reassign semantic chapters; unequal chapter volume is handled by
+  // chapter-local progress and later Mission-level presentation.
   const arc = ChapterDrama[item.chapter] || ChapterDrama[12];
   const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
-  const authoredChapterPosition = index % 25;
+  const authoredChapterIds = AllChapterIds[item.chapter] || [];
+  const authoredChapterPosition = authoredChapterIds.indexOf(item.id);
   const storyChapterIds = StoryChapterIds[item.chapter] || [];
   const chapterPosition = storyChapterIds.indexOf(item.id);
   const storyCount = storyChapterIds.length;
@@ -15883,7 +15891,10 @@ Object.values(QuestionData).forEach((item, index) => {
       item.table.inputTypes[key] = typeof value === 'number' ? 'amount' : 'text';
     }
   }
-  const phase = Math.min(4, Math.floor((isStoryEligible ? chapterPosition : authoredChapterPosition) / 5));
+  const phase = narrativePhase(
+    isStoryEligible ? chapterPosition : authoredChapterPosition,
+    isStoryEligible ? storyCount : authoredChapterIds.length
+  );
   const instruction = WorkInstructions[item.type] || WorkInstructions.comprehensive;
   const beats = [
     `水野先輩が資料を一枚だけ抜き出した。「まず事実を固定しよう」`,
