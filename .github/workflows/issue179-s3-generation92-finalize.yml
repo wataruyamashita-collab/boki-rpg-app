@@ -1,4 +1,5 @@
 # Generation 92 Issue #179 S3A Narrative Result pilot finalizer
+# retrigger: controller-call compatibility
 # Candidate authority is validated before commit.
 # Full npm/qa/browser validation runs on the exact final PR HEAD after publish.
 name: Issue 179 S3A Generation 92 finalizer
