@@ -92,8 +92,23 @@ jobs:
           for(const id of currentIds){
             const before=baseline[id],after=current[id],row=rows.get(id);
             if(!row)throw new Error(`audit matrix refresh refused: missing row ${id}`);
-            if(JSON.stringify(auditedSourceWithoutChapter(before))!==JSON.stringify(auditedSourceWithoutChapter(after))){
-              throw new Error(`audit matrix refresh refused: audited source changed beyond chapter for ${id}`);
+            const beforeAudited=auditedSourceWithoutChapter(before);
+            const afterAudited=auditedSourceWithoutChapter(after);
+            if(JSON.stringify(beforeAudited)!==JSON.stringify(afterAudited)){
+              const differences=[];
+              const walk=(a,b,prefix='')=>{
+                if(differences.length>=20)return;
+                if(JSON.stringify(a)===JSON.stringify(b))return;
+                const aObj=a&&typeof a==='object',bObj=b&&typeof b==='object';
+                if(!aObj||!bObj||Array.isArray(a)!==Array.isArray(b)){
+                  differences.push(prefix||'<root>');
+                  return;
+                }
+                const keys=[...new Set([...Object.keys(a),...Object.keys(b)])].sort();
+                for(const key of keys)walk(a[key],b[key],prefix?`${prefix}.${key}`:key);
+              };
+              walk(beforeAudited,afterAudited);
+              throw new Error(`audit matrix refresh refused: audited source changed beyond chapter for ${id}: ${differences.join(',')}`);
             }
             const beforeStamp=evidenceStamp(before);
             const afterStamp=evidenceStamp(after);
