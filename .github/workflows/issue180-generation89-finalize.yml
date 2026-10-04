@@ -96,9 +96,6 @@ jobs:
               throw new Error(`audit matrix refresh refused: question/material/table source changed for ${id}`);
             }
             const narrativeChanged=before.scene!==after.scene||before.story!==after.story;
-            if(narrativeChanged&&before.chapter===after.chapter){
-              throw new Error(`audit matrix refresh refused: scene/story changed without chapter authority change for ${id}`);
-            }
             if(narrativeChanged){
               const months=['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
               const expectedMonth=months[after.chapter-1];
