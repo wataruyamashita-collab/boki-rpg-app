@@ -16027,7 +16027,7 @@ const chapter8ExplanationSummary = item => {
   return '資料を順に確認し、必要な金額を帳簿のどこに記入するか決めます。';
 };
 Object.values(QuestionData).forEach(item => {
-  if (item.chapter !== 8 || item.explanationModel) return;
+  if (item.type !== 'ledger' || item.explanationModel) return;
   item.explanationModel = {summary:[{text:chapter8ExplanationSummary(item)}]};
 });
 
@@ -16046,47 +16046,40 @@ Object.values(QuestionData).forEach(item => {
   item.explanationModel = {summary:[{text:gate5ExplanationSummary(item)}]};
 });
 
-// Issue #161 PR-C: Chapter 1–3 journal lessons use the shared structured
-// explanation on both correct and incorrect paths. This removes the duplicated
-// prose walkthrough while keeping QuestionData answers and authored prose intact.
+// Issue #161 explanation rollout cohorts are historical implementation batches,
+// not semantic Story chapters. Keep them independent from authored chapter routing.
+const inQuestionRange = (item, prefix, start, end) =>
+  item.id.startsWith(prefix) && Number(item.id.slice(1)) >= start && Number(item.id.slice(1)) <= end;
+
+// PR-C: J001-J075.
 Object.values(QuestionData).forEach(item => {
-  if (item.type === 'journal' && item.chapter >= 1 && item.chapter <= 3) {
+  if (inQuestionRange(item, 'J', 1, 75)) item.teachingPresentation = 'structured-always';
+});
+
+// PR-D: J076-J150.
+Object.values(QuestionData).forEach(item => {
+  if (inQuestionRange(item, 'J', 76, 150)) item.teachingPresentation = 'structured-always';
+});
+
+// PR-E: all ledger questions L001-L050.
+Object.values(QuestionData).forEach(item => {
+  if (inQuestionRange(item, 'L', 1, 50)) item.teachingPresentation = 'structured-always';
+});
+
+// PR-F: T001-T040, E001-E010 and C001-C010.
+Object.values(QuestionData).forEach(item => {
+  if (inQuestionRange(item, 'T', 1, 40) ||
+      inQuestionRange(item, 'E', 1, 10) ||
+      inQuestionRange(item, 'C', 1, 10)) {
     item.teachingPresentation = 'structured-always';
   }
 });
 
-// Issue #161 PR-D: Chapter 4–6 journal lessons continue the same shared
-// structured teaching flow. Answers, grading, Oracle, Exam Pool, IDs and
-// authored explanation text remain unchanged.
+// PR-G: E011-E020, D001-D020 and F001-F010.
 Object.values(QuestionData).forEach(item => {
-  if (item.type === 'journal' && item.chapter >= 4 && item.chapter <= 6) {
-    item.teachingPresentation = 'structured-always';
-  }
-});
-
-// Issue #161 PR-E: Chapter 7–8 ledger lessons use the format-specific shared
-// structured teaching flow on both correct and incorrect paths. Accounting
-// answers, grading, Oracle, Exam Pool, IDs and authored prose remain unchanged.
-Object.values(QuestionData).forEach(item => {
-  if (item.type === 'ledger' && item.chapter >= 7 && item.chapter <= 8) {
-    item.teachingPresentation = 'structured-always';
-  }
-});
-
-// Issue #161 PR-F: formal Batch D covers Chapter 9–10 plus all
-// comprehensive questions. The remaining Chapter 11–12 non-comprehensive
-// questions stay explicitly tracked for PR-G / all-300 closure.
-Object.values(QuestionData).forEach(item => {
-  if ((item.chapter >= 9 && item.chapter <= 10) || item.type === 'comprehensive') {
-    item.teachingPresentation = 'structured-always';
-  }
-});
-
-// Issue #161 PR-G: close the remaining Chapter 11-12 non-comprehensive
-// explanation coverage. These 40 questions are correction / worksheet /
-// financial-statement cases and now use the same structured flow on both paths.
-Object.values(QuestionData).forEach(item => {
-  if (item.chapter >= 11 && item.chapter <= 12 && ['correction','worksheet','financial_statement'].includes(item.type)) {
+  if (inQuestionRange(item, 'E', 11, 20) ||
+      inQuestionRange(item, 'D', 1, 20) ||
+      inQuestionRange(item, 'F', 1, 10)) {
     item.teachingPresentation = 'structured-always';
   }
 });
