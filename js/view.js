@@ -704,6 +704,35 @@
       this.renderCorrectJournal(question);
       this.renderExplanation(question, score, userAnswer);
     }
+    renderNarrativeResult(scenes = [], { mode = 'story', resolved = false } = {}) {
+      const container = this.byId('narrative-result');
+      if (!container) return false;
+      container.replaceChildren();
+      container.hidden = true;
+      container.className = 'narrative-result';
+      if (container.dataset) delete container.dataset.sceneId;
+      if (mode !== 'story' || resolved !== true || !Array.isArray(scenes) || !scenes.length) return false;
+      const order = { OPEN:0, REVERSAL:1, BOSS:2 };
+      const scene = [...scenes].sort((a, b) => (order[a.beat] ?? 99) - (order[b.beat] ?? 99)).at(-1);
+      if (!scene) return false;
+      const heading = this.document.createElement('h2');
+      heading.id = 'narrative-result-heading';
+      heading.textContent = scene.epilogue === true ? '一年の結末' : '仕事の結果';
+      const after = this.document.createElement('p');
+      after.className = 'narrative-result-after';
+      after.textContent = scene.after;
+      const hookLabel = this.document.createElement('strong');
+      hookLabel.className = 'narrative-result-hook-label';
+      hookLabel.textContent = '次の展開';
+      const hook = this.document.createElement('p');
+      hook.className = 'narrative-result-hook';
+      hook.textContent = scene.hook;
+      container.append(heading, after, hookLabel, hook);
+      container.className = `narrative-result${scene.epilogue === true ? ' narrative-result-epilogue' : ''}`;
+      if (container.dataset) container.dataset.sceneId = scene.sceneId;
+      container.hidden = false;
+      return true;
+    }
     protectedResult(confidence = 'unsure', retry = false) {
       const panel = this.byId('protected-learning'); const status = this.byId('protected-status');
       panel.hidden = false;
@@ -746,6 +775,7 @@
       const first = this.document.querySelector('[data-action="hint-1"]'); if (first) { first.hidden = false; first.disabled = false; }
       const second = this.document.querySelector('[data-action="hint-2"]'); if (second) { second.hidden = true; second.disabled = false; }
       ['result-status','answer-comparison','correct-journal','explanation'].forEach(id => this.byId(id)?.replaceChildren());
+      const narrativeResult = this.byId('narrative-result'); if (narrativeResult) { narrativeResult.hidden = true; narrativeResult.replaceChildren(); narrativeResult.className = 'narrative-result'; if (narrativeResult.dataset) delete narrativeResult.dataset.sceneId; }
       const learningSummary = this.byId('result-learning-summary'); if (learningSummary) { learningSummary.hidden = true; learningSummary.replaceChildren(); }
       const top = this.byId('top-result-actions'); if (top) top.hidden = true;
     }
