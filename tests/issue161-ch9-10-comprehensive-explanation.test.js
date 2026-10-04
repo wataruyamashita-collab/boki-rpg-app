@@ -6,7 +6,7 @@ for(const file of ['data/questions.js','js/explanation-formulas.js','js/feedback
   vm.runInContext(fs.readFileSync(file,'utf8'),sandbox,{filename:file});
 }
 const root=sandbox.window;
-const target=Object.values(root.QuestionData).filter(q=>q.chapter===9||q.chapter===10||q.type==='comprehensive');
+const target=Object.values(root.QuestionData).filter(q=>/^T\d{3}$/u.test(q.id)||(/^E\d{3}$/u.test(q.id)&&Number(q.id.slice(1))<=10)||/^C\d{3}$/u.test(q.id));
 assert.strictEqual(target.length,60,'formal Batch D contains 60 questions');
 assert.strictEqual(target.filter(q=>q.type==='trial_balance').length,40,'Batch D trial-balance count');
 assert.strictEqual(target.filter(q=>q.type==='correction').length,10,'Batch D correction count');
