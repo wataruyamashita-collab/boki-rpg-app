@@ -14,6 +14,7 @@ const examIds=new Set(sandbox.window.ExamPoolDefinition||[]);
 const anchors=sandbox.window.AnchorScenes||[];
 const authority=sandbox.window.WorkCaseNarratives;
 const acceptedS5B=require('./fixtures/story-work-case-s5b-accepted.json');
+const acceptedS5C=require('./fixtures/story-work-case-s5c-accepted.json');
 
 const journalIds=['J034','J035','J036','J037'];
 const cashIds=['L001','L006','L011','L016'];
@@ -34,10 +35,18 @@ assert.strictEqual(s5cIds.length,24,'S5C locked population must remain 24');
 assert.strictEqual(allExpected.length,65,'S5C total authority must be exactly 65 entries');
 
 assert.deepStrictEqual(
-  Object.keys(authority).sort(),
+  Object.keys(acceptedS5C).sort(),
   allExpected,
-  'S5C must extend WorkCaseNarratives from exactly 41 accepted S5A/S5B entries to exactly 65 entries'
+  'S5C accepted snapshot must cover exactly the 65 locked S5A/S5B/S5C entries'
 );
+for(const [id,before] of Object.entries(acceptedS5C)){
+  assert(authority[id], `${id}: accepted S5C authority entry must remain present during later S5 batches`);
+  assert.strictEqual(
+    authority[id].before,
+    before,
+    `${id}: later S5 batches must preserve accepted S5C Before text byte-for-byte`
+  );
+}
 
 const anchorRefs=new Set(anchors.map(scene=>scene.referenceQuestionId));
 assert(anchorRefs.has('L009'),'S5C must recognize L009 as an Anchor reference');
