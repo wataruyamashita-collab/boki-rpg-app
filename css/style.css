@@ -985,6 +985,26 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .achievement-banner:not([hidden]) { animation: achievement-arrive .45s ease-out both, achievement-glow 1.2s .45s ease-in-out 2; }
 @media (prefers-reduced-motion: reduce) { .achievement-banner { animation: none; } }
 
+.narrative-result {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 12px 0 18px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid #cfd8dc;
+  border-radius: 12px;
+  background: #f8fafb;
+}
+.narrative-result[hidden] { display: none; }
+.narrative-result > * { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+.narrative-result h2 { margin: 0 0 8px; font-size: 1.05rem; }
+.narrative-result p { margin: 0; line-height: 1.7; }
+.narrative-result-hook-label { display: block; margin-top: 10px; font-size: .85rem; }
+.narrative-result-hook { margin-top: 3px; color: #44515a; }
+.narrative-result-epilogue { border-width: 2px; }
+
 .explanation-box {
   margin-top: 20px;
   padding: 16px;
