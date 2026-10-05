@@ -28,10 +28,15 @@ assert.strictEqual(correctionIds.length,13,'S5D1 correction population must rema
 assert.strictEqual(s5d1Ids.length,15,'S5D1 locked population must remain 15');
 assert.strictEqual(allExpected.length,80,'S5D1 total authority must be exactly 80 entries');
 
-assert.deepStrictEqual(
-  Object.keys(authority).sort(),
-  allExpected,
-  'S5D1 must extend WorkCaseNarratives from exactly 65 accepted S5A/S5B/S5C entries to exactly 80 entries'
+for(const id of allExpected){
+  assert(
+    authority[id],
+    `${id}: accepted S5D1 authority entry must remain present during later S5 batches`
+  );
+}
+assert(
+  Object.keys(authority).length>=allExpected.length,
+  'S5D1 must preserve at least the accepted 80 WorkCaseNarratives entries during later S5 batches'
 );
 
 const anchorRefs=new Set(anchors.map(scene=>scene.referenceQuestionId));
