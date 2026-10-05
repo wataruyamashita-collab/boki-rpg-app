@@ -40,9 +40,34 @@ async function run(){
               const epilogueClass=node.classList.contains('narrative-result-epilogue');
               const containerOverflow=node.scrollWidth>node.clientWidth+1;
               const pageOverflowAdded=document.documentElement.scrollWidth>baselinePageWidth+1;
+              const runtimeController=Object.create(window.AppController.prototype);
+              runtimeController.model={state:{mode:'story'}};
+              const authorityScenes=window.AnchorScenes||[];
+              const questions=window.QuestionData||{};
+              const missingAuthorityScenes=authorityScenes.filter(authorityScene=>{
+                const question=questions[authorityScene.referenceQuestionId];
+                const matched=window.AppController.prototype.narrativeScenesForQuestion.call(runtimeController,question);
+                return !matched.some(candidate=>candidate.sceneId===authorityScene.sceneId);
+              }).map(authorityScene=>authorityScene.sceneId);
+              const coveredChapters=[...new Set(authorityScenes.map(authorityScene=>authorityScene.chapter))].sort((a,b)=>a-b);
+              const j049SceneIds=window.AppController.prototype.narrativeScenesForQuestion
+                .call(runtimeController,questions.J049)
+                .map(authorityScene=>authorityScene.sceneId);
+              const isolatedModes=['training','review','exam'].every(mode=>{
+                runtimeController.model.state.mode=mode;
+                return window.AppController.prototype.narrativeScenesForQuestion
+                  .call(runtimeController,questions.J001).length===0;
+              });
+              runtimeController.model.state.mode='story';
+              const overflowingAuthorityScenes=[];
+              for(const authorityScene of authorityScenes){
+                view.renderNarrativeResult([authorityScene],{mode:'story',resolved:true});
+                if(node.scrollWidth>node.clientWidth+1)overflowingAuthorityScenes.push(authorityScene.sceneId);
+              }
+              view.renderNarrativeResult([scene],{mode:'story',resolved:true});
               const wrongHidden=view.renderNarrativeResult([scene],{mode:'story',resolved:false})===false&&node.hidden===true;
               const trainingHidden=view.renderNarrativeResult([scene],{mode:'training',resolved:true})===false&&node.hidden===true;
-              return{storyResolved,visibleText,sceneId,epilogueClass,containerOverflow,pageOverflowAdded,baselinePageWidth,finalPageWidth:document.documentElement.scrollWidth,wrongHidden,trainingHidden};
+              return{storyResolved,visibleText,sceneId,epilogueClass,containerOverflow,pageOverflowAdded,baselinePageWidth,finalPageWidth:document.documentElement.scrollWidth,wrongHidden,trainingHidden,authorityCount:authorityScenes.length,missingAuthorityScenes,coveredChapters,j049SceneIds,isolatedModes,overflowingAuthorityScenes};
             });
             report.browser=browserName;report.width=width;report.pageErrors=pageErrors;report.violations=[];
             if(!report.storyResolved)report.violations.push('STORY_RESULT_NOT_RENDERED');
@@ -52,6 +77,12 @@ async function run(){
             if(!report.epilogueClass)report.violations.push('EPILOGUE_CLASS_MISSING');
             if(!report.wrongHidden)report.violations.push('WRONG_REVEALS_RESULT');
             if(!report.trainingHidden)report.violations.push('TRAINING_MODE_LEAK');
+            if(report.authorityCount!==36)report.violations.push('ANCHOR_AUTHORITY_COUNT');
+            if(report.missingAuthorityScenes.length)report.violations.push('ANCHOR_RUNTIME_LOOKUP_MISSING:'+report.missingAuthorityScenes.join(','));
+            if(report.coveredChapters.join(',')!=='1,2,3,4,5,6,7,8,9,10,11,12')report.violations.push('ANCHOR_CHAPTER_COVERAGE');
+            if(report.j049SceneIds.join(',')!=='CH11-OPEN,CH11-REVERSAL')report.violations.push('CH11_DUPLICATE_REFERENCE');
+            if(!report.isolatedModes)report.violations.push('NON_STORY_LOOKUP_LEAK');
+            if(report.overflowingAuthorityScenes.length)report.violations.push('ANCHOR_OVERFLOW:'+report.overflowingAuthorityScenes.join(','));
             if(report.containerOverflow)report.violations.push('NARRATIVE_CONTAINER_OVERFLOW');
             if(report.pageOverflowAdded)report.violations.push('NARRATIVE_ADDED_PAGE_OVERFLOW');
             if(pageErrors.length)report.violations.push('PAGE_SCRIPT_ERROR');

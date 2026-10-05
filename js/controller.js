@@ -1,6 +1,5 @@
 (function (root) {
   'use strict';
-  const S3_PILOT_CHAPTERS = Object.freeze([1,4,8,12]);
   const normalizeNumber = value => String(value ?? '')
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
@@ -50,7 +49,7 @@
       this.semanticAudit = root.validateSemanticQuestionData(this.questions);
     }
     narrativeScenesForQuestion(question) {
-      if (this.model?.state?.mode !== 'story' || !question || !S3_PILOT_CHAPTERS.includes(question.chapter)) return [];
+      if (this.model?.state?.mode !== 'story' || !question) return [];
       return (root.AnchorScenes || []).filter(scene =>
         scene?.chapter === question.chapter && scene?.referenceQuestionId === question.id
       );
