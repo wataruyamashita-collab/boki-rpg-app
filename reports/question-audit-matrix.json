@@ -2589,7 +2589,7 @@
       "category": "利息受取",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「利息受取」の業務文脈とchapter整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2656,7 +2656,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d22a543de1c28d87d6e0abed5d88906b5d21c1094a69b33577b0640cf0cf1738",
+      "sourceHash": "sha256:686b6edfebc13f5b3e6868360d40e160c6e7420e916ebac1073d9504a82210e2",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2667,7 +2667,7 @@
       "category": "貯蔵品",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「貯蔵品」の業務文脈とchapter整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2734,7 +2734,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5beb2305794e0aac47f5078dfd960450b0b2e96ac463d5e27979514a85d3d097",
+      "sourceHash": "sha256:870154df52e7f4a9d241b00dea4e90e04054a8255b3396925d334545c75d3f12",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2745,7 +2745,7 @@
       "category": "受取商品券",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「受取商品券」の業務文脈とchapter整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2812,7 +2812,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ee59c57e770f6efe578f45a1df660bcbaa3fac40c36564337a01faf077c75e41",
+      "sourceHash": "sha256:7cc39804919cf540b36078963e1bb0e140feec68a7835c08c4682b66701e54c0",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -2823,7 +2823,7 @@
       "category": "差入保証金",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「差入保証金」の業務文脈とchapter整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -2890,7 +2890,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:c6feaf630e652233510624c2c3a4b57343e45e55f6419c4e23cbcf4043993023",
+      "sourceHash": "sha256:48c25cc941717a46d32004bb42027d3f671cc1d3828c22e6e1f45dbbacdceac8",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -11715,7 +11715,7 @@
       "category": "総勘定元帳（現金）",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「総勘定元帳（現金）」の業務文脈とchapter整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11782,7 +11782,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:7387dd66284faca92daceab4679d95aa1ec55e70c5358ace328487ada7feefdd",
+      "sourceHash": "sha256:707d757b222b3f038664c3e5485d5032fc0252deaf74a281745c3ecd0339f3bd",
       "answerSchemaHash": "sha256:267e4afe10a3bfb029a94384504bcab420bd0afc38bf13cb587806da2d7fe62a"
     },
     {
@@ -11793,7 +11793,7 @@
       "category": "売掛金元帳（みなと商店）",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売掛金元帳（みなと商店）」の業務文脈とchapter整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11860,7 +11860,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:505d0f7c474bf64ade9505000df6b1b0e3447839af2dc3738af5c5e5f288d231",
+      "sourceHash": "sha256:ec87115f4cc8a1258b1d83ecb1f3a658328466ea4346be2115d603072c63c4c3",
       "answerSchemaHash": "sha256:ffccb2e683e7fa791b4c965303add0840a0156ca253f3b0fd05198606fc6dd87"
     },
     {
@@ -11871,7 +11871,7 @@
       "category": "買掛金元帳（若葉物産）",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「買掛金元帳（若葉物産）」の業務文脈とchapter整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -11938,7 +11938,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d095451b17c8157d29d689f721a3215bdc86e4731432777bf6abc1fed9b98a29",
+      "sourceHash": "sha256:26c8c35c6a1cd92cc3433021b0ab7bbfd0dee604fff3d11207e2071220d9f29a",
       "answerSchemaHash": "sha256:e7891717e57b09a240d577d06e8c841166ead4207156236e038ab4655d6d4716"
     },
     {
@@ -11949,7 +11949,7 @@
       "category": "商品有高帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「商品有高帳」の業務文脈とchapter整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12016,7 +12016,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f4f870260db6c076e0adb408a5b7d74156aa985d0d52834b861b602e61afbce2",
+      "sourceHash": "sha256:79fee47fa6dda82d8825efff4cc2f1c32333622abc5372cc80ad28a618b58734",
       "answerSchemaHash": "sha256:446f4e6265cd4a87c62d71841f0b0c158191907908c77a6f5e924df6f31eadc7"
     },
     {
@@ -12027,7 +12027,7 @@
       "category": "固定資産台帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「固定資産台帳」の業務文脈とchapter整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12094,7 +12094,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:68cf3114cb59195f46f059a6460063d84414dffda3fecd3b616a842b246e4ce2",
+      "sourceHash": "sha256:76f9cf183de6d4d9a2dbda8f5fbcaeeebf96fffe39322afa91841354224dcf67",
       "answerSchemaHash": "sha256:6c974c8d23c9b808112cf73d5d39ffccc44a6d69ee2e908cf9b06e55de4b4aca"
     },
     {
@@ -12105,7 +12105,7 @@
       "category": "総勘定元帳（現金）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「総勘定元帳（現金）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12172,7 +12172,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:c6cceda20e6da9190ad76042b8f4228fd8f678bc4ff989bd0c686e67356735df",
+      "sourceHash": "sha256:87dadc4e1df67c3e8269d505dd8a6f65e7c451873e8560ec8654899e4cddef40",
       "answerSchemaHash": "sha256:267e4afe10a3bfb029a94384504bcab420bd0afc38bf13cb587806da2d7fe62a"
     },
     {
@@ -12183,7 +12183,7 @@
       "category": "売掛金元帳（みなと商店）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売掛金元帳（みなと商店）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12250,7 +12250,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f3f7c1d91090908ae85c4a7ef6a9a3edb357fc03132b5c455e0e45ff027f1575",
+      "sourceHash": "sha256:d0cd91bbb193841bb3f7adbad577ce79299d9fa2e3a537e119a26eae7520a509",
       "answerSchemaHash": "sha256:ffccb2e683e7fa791b4c965303add0840a0156ca253f3b0fd05198606fc6dd87"
     },
     {
@@ -12261,7 +12261,7 @@
       "category": "買掛金元帳（若葉物産）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「買掛金元帳（若葉物産）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12328,7 +12328,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:85a824e79d6ab0b976ab5990377967a70e1122d76ed0f56674b7522963d067c8",
+      "sourceHash": "sha256:646bd24e69173e9c8ed423c1c47622e9a18d493ffa95b54e5f3faea534cb7b12",
       "answerSchemaHash": "sha256:e7891717e57b09a240d577d06e8c841166ead4207156236e038ab4655d6d4716"
     },
     {
@@ -12417,7 +12417,7 @@
       "category": "固定資産台帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産台帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12484,7 +12484,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d41f108e64f2baddebc5e2efdfff48d1a418bd66ce0fc406d62006c34b494a87",
+      "sourceHash": "sha256:67a271b63570471ff30eb9f0d8768caf60a26438054cdf8ecffd833e45446f18",
       "answerSchemaHash": "sha256:fc0c4d45a5b609b160ee3e08598dce2ce60af82f0620a08b4971e7363045bbd5"
     },
     {
@@ -12495,7 +12495,7 @@
       "category": "総勘定元帳（現金）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「総勘定元帳（現金）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12562,7 +12562,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:20509f7bfc69e568edf384e90fdcf13e1af6459c26f6c1ea9ad62400d1df2009",
+      "sourceHash": "sha256:0b180b08b13bb74c42b0a283e162620febbcb4253003ee8a0e72a64ea939e461",
       "answerSchemaHash": "sha256:267e4afe10a3bfb029a94384504bcab420bd0afc38bf13cb587806da2d7fe62a"
     },
     {
@@ -12573,7 +12573,7 @@
       "category": "売掛金元帳（みなと商店）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売掛金元帳（みなと商店）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12640,7 +12640,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:8f95a25a9d3f26418eb50bfee3411e7c74352cbe0db1ee7386c61b1fbb837458",
+      "sourceHash": "sha256:b7a3b29ae11989591e838156bd69aeff498c5f41967bf720afa90e746253e8bf",
       "answerSchemaHash": "sha256:ffccb2e683e7fa791b4c965303add0840a0156ca253f3b0fd05198606fc6dd87"
     },
     {
@@ -12651,7 +12651,7 @@
       "category": "買掛金元帳（若葉物産）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「買掛金元帳（若葉物産）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12718,7 +12718,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:7f5c0fd94b9db1189b7b674848f01cbd9c0bfa6902c462a90527130f33bb1324",
+      "sourceHash": "sha256:463f68e412654053cee949ee8646860e358d730216ec53065154e4851df735ac",
       "answerSchemaHash": "sha256:e7891717e57b09a240d577d06e8c841166ead4207156236e038ab4655d6d4716"
     },
     {
@@ -12729,7 +12729,7 @@
       "category": "商品有高帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「商品有高帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12796,7 +12796,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a03538b68ccfad5ba2f20df48a0593273c6d7339d3fd1c947f9d9927be185834",
+      "sourceHash": "sha256:9623dccc3dc1363abdb32949098e13acbfbb79be0c6fe0ddb8f60e6c3a6d7a19",
       "answerSchemaHash": "sha256:446f4e6265cd4a87c62d71841f0b0c158191907908c77a6f5e924df6f31eadc7"
     },
     {
@@ -12807,7 +12807,7 @@
       "category": "固定資産台帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産台帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12874,7 +12874,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5bc3c96ffc913acff549b34fe9f37d7150f92d1391ff45cbd232be2835b02775",
+      "sourceHash": "sha256:7dcf707f9227796f94bed47bc899e8db228613ade5b7ee429406a0f15b1faadf",
       "answerSchemaHash": "sha256:67b8d6bbc71513f4771b9deb6feaf94b494769f07f2f9de105c81845dc3b7780"
     },
     {
@@ -12885,7 +12885,7 @@
       "category": "総勘定元帳（現金）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「総勘定元帳（現金）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -12952,7 +12952,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2f578ca338ee14b1932e76249b45f696f3eece8589f7e2c19231138642d14224",
+      "sourceHash": "sha256:693f760837f3254f8040adbb1197adc449e40ef8b437e18f17c047007bf4fe78",
       "answerSchemaHash": "sha256:267e4afe10a3bfb029a94384504bcab420bd0afc38bf13cb587806da2d7fe62a"
     },
     {
@@ -12963,7 +12963,7 @@
       "category": "売掛金元帳（みなと商店）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売掛金元帳（みなと商店）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -13030,7 +13030,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:31f34d92b8bb4be34bc2361cb616f6acf37b259d9cd3e53fad325e9cba403e05",
+      "sourceHash": "sha256:22eb0edf381f48576c054b6f56315695c4e40fe09e63dc51d9a5a13ec9365859",
       "answerSchemaHash": "sha256:ffccb2e683e7fa791b4c965303add0840a0156ca253f3b0fd05198606fc6dd87"
     },
     {
@@ -13041,7 +13041,7 @@
       "category": "買掛金元帳（若葉物産）",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「買掛金元帳（若葉物産）」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -13108,7 +13108,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d6ce627425127c9f53ca7ed9da019409cc3d5428dfe0b3d59a7e425d54646c08",
+      "sourceHash": "sha256:0400fb674b3d3755eb5bda6d460eabfbbbdaed3eb5461bc900385f47a984dfba",
       "answerSchemaHash": "sha256:e7891717e57b09a240d577d06e8c841166ead4207156236e038ab4655d6d4716"
     },
     {
@@ -13119,7 +13119,7 @@
       "category": "商品有高帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「商品有高帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -13186,7 +13186,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:39069e546b9b88ec8cee1670fb0b6bcab428d742ac25bbd3853ca6bb282196ce",
+      "sourceHash": "sha256:7e1a98c5661dca3d6cca5f6fd9578c18f916807297dab1e01ccd4b27bc3d132e",
       "answerSchemaHash": "sha256:446f4e6265cd4a87c62d71841f0b0c158191907908c77a6f5e924df6f31eadc7"
     },
     {
@@ -13197,7 +13197,7 @@
       "category": "固定資産台帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産台帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -13264,7 +13264,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:25e537e9144869e248de2ef652fca6b0f0e7f52daade3230968f7485c6b3d8e3",
+      "sourceHash": "sha256:8e98f9f1473a5a292823c543ddd9a108101361ba0cc5c4a8e54fce8c0f548a57",
       "answerSchemaHash": "sha256:fc0c4d45a5b609b160ee3e08598dce2ce60af82f0620a08b4971e7363045bbd5"
     },
     {
@@ -13587,7 +13587,7 @@
       "category": "固定資産台帳",
       "story": {
         "status": "VERIFIED",
-        "finding": "「10月・月次締めの壁」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「固定資産台帳」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5C authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -13654,7 +13654,7 @@
         "finding": "scene「10月・帳簿の照合」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e2933c8ce03f0aa68f8d61504977655f57f51ca4b3559bf7b7c4c9c8c0e884e8",
+      "sourceHash": "sha256:d01492c2aed1d342ff8709acf95d2f630c371949de90145b025cf81c4bd26422",
       "answerSchemaHash": "sha256:bb0ee3637c39478a853a0e5f35d5aed1c077b35bb602f8b6e71105877bae645b"
     },
     {
