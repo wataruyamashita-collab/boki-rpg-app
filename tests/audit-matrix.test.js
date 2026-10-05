@@ -6,9 +6,7 @@ const { evidenceStamp, loadQuestions, verifyMatrix } = require('../scripts/audit
 
 const matrix = JSON.parse(fs.readFileSync('reports/question-audit-matrix.json', 'utf8'));
 const questions = loadQuestions();
-const verification = verifyMatrix(matrix, questions);
-if (!verification.ok) console.log('AUDIT_MATRIX_STALE_ROWS', JSON.stringify(verification.stale));
-assert.strictEqual(verification.ok, true, 'committed audit evidence must match production questions');
+assert.strictEqual(verifyMatrix(matrix, questions).ok, true, 'committed audit evidence must match production questions');
 
 const sourceMutation = structuredClone(questions);
 sourceMutation.L033.question += ' 改ざん';
