@@ -1,0 +1,217 @@
+# Generation 94 Issue #179 S3B finalizer
+# Candidate authority is validated before commit.
+# Full npm/qa/browser validation runs on the exact final PR HEAD after publish.
+name: Issue 179 S3B Generation 94 finalizer
+on:
+  push:
+    branches:
+      - codex/issue-179-s3b-full-anchor-ui-main93
+    paths:
+      - '.github/workflows/issue179-s3b-generation94-finalize.yml'
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: github.event.head_commit.message == 'Prepare Generation 94 Issue 179 S3B'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/issue-179-s3b-full-anchor-ui-main93
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Pre-authority S3B checks
+        run: |
+          node tests/story-narrative-result.test.js
+          node tests/story-anchor-context-regression.test.js
+          node tests/story-anchor-scenes.test.js
+          node tests/story-narrative-bible.test.js
+          node tests/story-chapter-authority.test.js
+          node independent-audit/tests/story-authority-b.test.js
+          node tests/issue161-state-isolation.test.js
+          node tests/app.test.js
+          node tests/exam-answer-firewall.test.js
+          node tests/audit-matrix.test.js
+          node scripts/audit-data.js
+          node scripts/audit-editorial.js
+          git diff --check
+      - name: Prepare Release 20260924-163 and Generation 94 candidate
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs=require('fs'),crypto=require('crypto'),path=require('path');
+          const OLD='20260924-162', NEXT='20260924-163';
+          const root=process.cwd();
+          const read=file=>fs.readFileSync(path.join(root,file),'utf8');
+          const write=(file,value)=>fs.writeFileSync(path.join(root,file),value);
+          const sha=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
+          const replaceOne=(source,from,to,label)=>{
+            const count=source.split(from).length-1;
+            if(count!==1)throw new Error(`${label}: expected one match, found ${count}`);
+            return source.replace(from,to);
+          };
+
+          let sw=read('service-worker.js');
+          sw=replaceOne(sw,`const RELEASE = '${OLD}';`,`const RELEASE = '${NEXT}';`,'service worker release');
+          write('service-worker.js',sw);
+
+          let index=read('index.html');
+          const token=`?v=${OLD}`;
+          const tokenCount=index.split(token).length-1;
+          if(tokenCount!==15)throw new Error(`index release token count: ${tokenCount}`);
+          index=index.split(token).join(`?v=${NEXT}`);
+          write('index.html',index);
+
+          const manifestPath='pwa-release-manifest.json';
+          const manifest=JSON.parse(read(manifestPath));
+          if(manifest.release!==OLD)throw new Error(`unexpected current release: ${manifest.release}`);
+          manifest.previousRelease=OLD;
+          manifest.release=NEXT;
+          for(const file of Object.keys(manifest.assets||{})){
+            if(!fs.existsSync(path.join(root,file)))throw new Error(`release asset missing: ${file}`);
+            manifest.assets[file]=sha(file);
+          }
+          write(manifestPath,JSON.stringify(manifest,null,2)+'\n');
+
+          const immPath='independent-audit/tests/generation-immutability.test.js';
+          let imm=read(immPath);
+          const list93=Array.from({length:92},(_,i)=>i+2).join(',');
+          const list94=Array.from({length:93},(_,i)=>i+2).join(',');
+
+          imm=replaceOne(
+            imm,
+            `  [${list93}]\n    .filter`,
+            `  [${list94}]\n    .filter`,
+            'authority byte list'
+          );
+          imm=replaceOne(
+            imm,
+            `  const generation93Committed=committed(93);\n`,
+            `  const generation93Committed=committed(93);\n  const generation94Committed=committed(94);\n`,
+            'generation 94 committed declaration'
+          );
+          imm=replaceOne(
+            imm,
+            "'authority sequence tracks committed Generations through 93'",
+            "'authority sequence tracks committed Generations through 94'",
+            'sequence title'
+          );
+          imm=replaceOne(
+            imm,
+            `      generation93Committed\n        ? [${list93}]\n        : generation92Committed`,
+            `      generation94Committed\n        ? [${list94}]\n        : generation93Committed\n        ? [${list93}]\n        : generation92Committed`,
+            'sequence head'
+          );
+          imm=replaceOne(
+            imm,
+            `  for(const generation of [${list93}]){`,
+            `  for(const generation of [${list94}]){`,
+            'duplicate generation list'
+          );
+          imm=replaceOne(
+            imm,
+            `  const generation93Pending=\n    fs.existsSync(authorityPath(93))&&!generation93Committed;`,
+            `  const generation94Pending=\n    fs.existsSync(authorityPath(94))&&!generation94Committed;\n  const generation93Pending=\n    fs.existsSync(authorityPath(93))&&!generation93Committed;`,
+            'generation 94 pending declaration'
+          );
+          const generation94Block=`  if(generation94Committed){\n    test(\n      'committed Generation 94 current integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCurrent().ok,\n        true\n      )\n    );\n  }else if(generation94Pending){\n    const generation94Candidate=\n      JSON.parse(fs.readFileSync(authorityPath(94),'utf8'));\n    test(\n      'pending Generation 94 candidate integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCandidate(generation94Candidate).ok,\n        true\n      )\n    );\n  }else if(generation93Committed){`;
+          imm=replaceOne(
+            imm,
+            '  if(generation93Committed){',
+            generation94Block,
+            'generation 94 integrity branch'
+          );
+          write(immPath,imm);
+
+          const lifecycle=require('./scripts/qa/phase-b-lifecycle');
+          const output=path.join(root,'reports/auto-gate/audit-locks/phase-b-generation-94.json');
+          if(fs.existsSync(output))throw new Error('Generation 94 already exists');
+          const authorities=lifecycle.generationAuthorities();
+          if(authorities.at(-1)?.document?.generation!==93)throw new Error('Generation 93 is not latest authority');
+          const candidate=lifecycle.createCandidate();
+          if(candidate.generation!==94||candidate.predecessor?.generation!==93)throw new Error('Generation 94 chain mismatch');
+          const verification=lifecycle.verifyCandidate(candidate);
+          if(!verification.ok)throw new Error(`candidate invalid: ${verification.errors.join(', ')}`);
+          fs.writeFileSync(output,JSON.stringify(candidate,null,2)+'\n',{flag:'wx'});
+          console.log(`GENERATION_94_CANDIDATE_READY ${candidate.auditHash} ${candidate.baselineIdentity}`);
+          NODE
+      - name: Pending Generation 94 validation
+        run: |
+          node tests/story-narrative-result.test.js
+          node tests/story-anchor-context-regression.test.js
+          node tests/story-anchor-scenes.test.js
+          node tests/story-narrative-bible.test.js
+          node tests/story-chapter-authority.test.js
+          node independent-audit/tests/story-authority-b.test.js
+          node independent-audit/tests/generation-immutability.test.js
+          node tests/issue161-state-isolation.test.js
+          node tests/app.test.js
+          node tests/exam-answer-firewall.test.js
+          node tests/audit-matrix.test.js
+          node scripts/qa/verify-audit-candidate.js reports/auto-gate/audit-locks/phase-b-generation-94.json
+          git diff --check
+      - name: Commit verified Generation 94
+        run: |
+          rm -rf artifacts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          expected=$(printf "%s\n" \
+            "independent-audit/tests/generation-immutability.test.js" \
+            "index.html" \
+            "pwa-release-manifest.json" \
+            "reports/auto-gate/audit-locks/phase-b-generation-94.json" \
+            "service-worker.js" | sort)
+          actual=$(git status --porcelain --untracked-files=all | sed 's/^...//' | grep -v '^node_modules/' | sort)
+          if [ "$actual" != "$expected" ]; then
+            echo "GENERATION_94_FINALIZATION_REFUSED: dirty scope mismatch"
+            echo "Expected:"
+            echo "$expected"
+            echo "Actual:"
+            echo "$actual"
+            exit 1
+          fi
+          git add independent-audit/tests/generation-immutability.test.js index.html pwa-release-manifest.json reports/auto-gate/audit-locks/phase-b-generation-94.json service-worker.js
+          git diff --cached --check
+          git commit -m "Finalize Generation 94 Issue 179 S3B"
+      - name: Verify committed Generation 94 authority
+        run: |
+          node tests/story-narrative-result.test.js
+          node tests/story-anchor-context-regression.test.js
+          node tests/story-anchor-scenes.test.js
+          node tests/story-narrative-bible.test.js
+          node tests/story-chapter-authority.test.js
+          node independent-audit/tests/story-authority-b.test.js
+          node independent-audit/tests/generation-immutability.test.js
+          node tests/issue161-state-isolation.test.js
+          node tests/app.test.js
+          node tests/exam-answer-firewall.test.js
+          node tests/audit-matrix.test.js
+          npm run qa:integrity
+          git diff --check
+      - name: Remove temporary workflow
+        run: |
+          git rm .github/workflows/issue179-s3b-generation94-finalize.yml
+          git commit -m "Remove Generation 94 Issue 179 S3B finalizer"
+      - name: Final exact-tree verification and publish
+        run: |
+          node tests/story-narrative-result.test.js
+          node tests/story-anchor-context-regression.test.js
+          node tests/story-anchor-scenes.test.js
+          node tests/story-narrative-bible.test.js
+          node tests/story-chapter-authority.test.js
+          node independent-audit/tests/story-authority-b.test.js
+          node independent-audit/tests/generation-immutability.test.js
+          node tests/issue161-state-isolation.test.js
+          node tests/app.test.js
+          node tests/exam-answer-firewall.test.js
+          node tests/audit-matrix.test.js
+          npm run qa:integrity
+          git diff --check
+          rm -rf artifacts node_modules
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git push origin HEAD:codex/issue-179-s3b-full-anchor-ui-main93
