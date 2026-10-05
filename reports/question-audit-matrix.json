@@ -93,7 +93,7 @@
       "category": "現金・預金",
       "story": {
         "status": "VERIFIED",
-        "finding": "runtimeの章文脈を実問題の時系列・論点へ再整合し、「現金・預金」の会計事実との非矛盾を再検証した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -160,7 +160,7 @@
         "finding": "scene「4月・帳簿の出発点」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:0e246dba2362c6967c47e9845422f87641b95e195d4e7de68092b4296c8d98ae",
+      "sourceHash": "sha256:cd9fc03e6280d0dca64d99b2a77ce7d06b5f6b04c08567b07b5be13e5ca63766",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -327,7 +327,7 @@
       "category": "掛売上",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「掛売上」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -394,7 +394,7 @@
         "finding": "scene「5月・仕入と販売」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:c4d64ecd8330c4076ffca7ac7c717a3dbb1176144e9274d3b3dba6c60315f99c",
+      "sourceHash": "sha256:7ae718b7c47e5cc47ed4c392b374037664bb08d11126c1618c1440f6990bb49c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -405,7 +405,7 @@
       "category": "仕入諸掛",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仕入諸掛」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -472,7 +472,7 @@
         "finding": "scene「5月・仕入と販売」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:7fcce1cdc9e30c42cb9c39403b2e869969a02d09c81b9e879b081bf1c4f83649",
+      "sourceHash": "sha256:25fa0639885c05a8657f121356d192cfbc8e39c54a33a88c84f5a5b999a4d544",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -483,7 +483,7 @@
       "category": "売上諸掛",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売上諸掛」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -550,7 +550,7 @@
         "finding": "scene「5月・仕入と販売」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e76108ff473bee2048a78c6af27974cc87429da51be5a4549cb418fa3d57667f",
+      "sourceHash": "sha256:21b8337b234352d10fa42330ca2f59df4f5fe002ee93ef9cbd0c9c613f7b626a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -561,7 +561,7 @@
       "category": "仕入返品",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仕入返品」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -628,7 +628,7 @@
         "finding": "scene「5月・仕入と販売」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2344771fcb400de55ffccea53e3e4cc6bec2cfb3afdfb55ac30551c02786d190",
+      "sourceHash": "sha256:01b5df0b89379424bdd4db0b6cac26e53d4d4fcc7a945ecdec97ebdcd3e9c637",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -795,7 +795,7 @@
       "category": "買掛金支払",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「買掛金支払」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -862,7 +862,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b878ee7cbeacd661d172eb6fafb827c914f71148cfdd310f4fae0b5ca3ad4964",
+      "sourceHash": "sha256:d33ce26f5b2a61372a0b3b64e2bec6139aca7b1cb84d0d108bb7e6a0ce1b69da",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -873,7 +873,7 @@
       "category": "電子記録債務",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債務」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -940,7 +940,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e27e6a27c0a5954baa2dea1a045f48ecd7b4ed05036dea957a7e076370c59f3f",
+      "sourceHash": "sha256:6285f7ca337c7eaad11450b9fc230b32a2691e0913984261c69008bd57421072",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -951,7 +951,7 @@
       "category": "電子記録債権",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債権」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1018,7 +1018,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:282fbaa4386f5fcc237313ef11adefd81716e9864ebd48995cdb2b8f8ba5e30d",
+      "sourceHash": "sha256:b418ba895cf77602c61847b0fe3c75648341a04d896bd263c245f959abb659d7",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1029,7 +1029,7 @@
       "category": "クレジット売掛金",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「クレジット売掛金」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1096,7 +1096,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b4bc57e9f939fda5b4037a11c43af83ff1f98ea8ebbaa12101d14d3603038eef",
+      "sourceHash": "sha256:887b2a25cc81cb59daaeb9b1d2c2f153676053ef7f6d745387d40abb5cdb2c6a",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -1107,7 +1107,7 @@
       "category": "前払金",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前払金」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -1174,7 +1174,7 @@
         "finding": "scene「6月・掛取引の管理」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:f17f2e945f367fd02ef510b47359cae57628106213ea753af929673098bd2917",
+      "sourceHash": "sha256:809dfd2c8c00dc7ad59ce2dafb4b4c3ddd941683a1415c86bea6151bdeb1131c",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7815,7 +7815,7 @@
       "category": "資本金・追加出資",
       "story": {
         "status": "VERIFIED",
-        "finding": "runtimeの章文脈を実問題の時系列・論点へ再整合し、「資本金・追加出資」の会計事実との非矛盾を再検証した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7882,7 +7882,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:fd1f586a9a9e5c041db8dd59390ade13b3d4e4c30780d8d18320dca7d3551a3d",
+      "sourceHash": "sha256:8bc14570cfaa7e72b102d0f796e6a1a4ba6611ecc8f74a64f3c5f17450361e97",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -7893,7 +7893,7 @@
       "category": "現金・預金",
       "story": {
         "status": "VERIFIED",
-        "finding": "runtimeの章文脈を実問題の時系列・論点へ再整合し、「現金・預金」の会計事実との非矛盾を再検証した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -7960,7 +7960,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2e039b637f24b1ee25c9bf89f2ca4277fd48d43e8787765a90c7edeb80fe92b7",
+      "sourceHash": "sha256:cc5f7ba9100e1e580856e04ee0aec3d09f62f578d09cf3b72da5e3b9b46055c6",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8049,7 +8049,7 @@
       "category": "掛仕入",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「掛仕入」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8116,7 +8116,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:4b3bb5c4b7e74973a9ece0329c4bbbc5c594a822105eebfc45435878461f7e85",
+      "sourceHash": "sha256:ae8d4506f7e85400131496914d02c2eccfb858297fa9dd1a45725df341dfe7a6",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8127,7 +8127,7 @@
       "category": "掛売上",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「掛売上」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8194,7 +8194,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2e47879166f8aa39dd5ad4882cd83d8ffabbf39da49fa0b8c79936defaf27bcf",
+      "sourceHash": "sha256:93e749e299c03bfb3236b75fc1587f2ed934753a3c9040bf2cb975962970e106",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8205,7 +8205,7 @@
       "category": "仕入諸掛",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「仕入諸掛」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8272,7 +8272,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:12e6e3522df6a33516db60531f5a191dabc459d38de516f367eb528eddd51ba6",
+      "sourceHash": "sha256:4deb1fa7ebdae3fca7071ea518ebe2d073c0991781ab9ff7691e6dbe21727b18",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8283,7 +8283,7 @@
       "category": "売上諸掛",
       "story": {
         "status": "VERIFIED",
-        "finding": "「5月・営業部の未精算」へsemantic chapter authorityに沿って再配置されたruntime Storyを再検証し、「売上諸掛」の資料・担当作業が明示され、chapterとsceneの整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8350,7 +8350,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:2092219dca389946f788d356e1c302ba6efbb4c58fedc6ad16f0b81b13a140f2",
+      "sourceHash": "sha256:02addf04170f5ece05898c0974e7602b9120434acf7ed095a6bdf0dc8bfeb9be",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8361,7 +8361,7 @@
       "category": "仕入返品",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「仕入返品」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8428,7 +8428,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:ec324408420cf2b29f849e69349ea07e699d4117de16fe7d915a6a5230e59524",
+      "sourceHash": "sha256:1c64c05952753b2c5f2bc6bcbb4715eaddcf2c30b46a38949911fefb0e0ad094",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8517,7 +8517,7 @@
       "category": "売掛金回収",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「売掛金回収」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8584,7 +8584,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:6edbedd930e018723da57e48e01f03b2207c31e4f35dbe7d252b2ea34bbc29ba",
+      "sourceHash": "sha256:d7c807a9f4b6049e5189c5d6d196ff7c7ece983c42cc13b873be035382b86db9",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8595,7 +8595,7 @@
       "category": "買掛金支払",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「買掛金支払」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8662,7 +8662,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:63eac865559dcb56876d21f65c8ac7e21776928c474b3cff22967335ed74a900",
+      "sourceHash": "sha256:53e821fc4354851371a6a9c799db35a63077b1851be57eec7999016281404d80",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8673,7 +8673,7 @@
       "category": "電子記録債務",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債務」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8740,7 +8740,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5323184654f3a72fd42858815cb2265e8421048f936e7635e625cf7b257ed0e9",
+      "sourceHash": "sha256:2b100d584a893ddf2346ea76b95bf574363c148cee3b0c3fd623192ad39a59e0",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8751,7 +8751,7 @@
       "category": "電子記録債権",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「電子記録債権」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8818,7 +8818,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3f38bf3178f92b23568f17b3fdd83a2c36b35fe860204c70a7024729e07cbe22",
+      "sourceHash": "sha256:39bd468cabac2046fd8fb672a725a0a0c66bf383ceae2028871fde15c38ee843",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8829,7 +8829,7 @@
       "category": "クレジット売掛金",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「クレジット売掛金」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8896,7 +8896,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:39311c7070db18bb7e2381cd4834d52d97b9668a701cfd280175d01620e328e8",
+      "sourceHash": "sha256:39fe75dd1e06f1c5fa76a9887abf7fa36b3e5cda8150d6060c49ce8193c2b1eb",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -8907,7 +8907,7 @@
       "category": "前払金",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「前払金」の業務文脈とchapter整合を確認した。"
+        "finding": "S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -8974,7 +8974,7 @@
         "finding": "scene「応用編・実務判断」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:e7bbddace25d0fb0e45deeafe46ef6a7e8ffbc765c4ad6671dcb74537108a175",
+      "sourceHash": "sha256:197b7a29f5da892461f2c089d0a624f7e7239442a261d452679c89f47ef244dc",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
