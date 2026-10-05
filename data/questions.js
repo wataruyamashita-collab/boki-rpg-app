@@ -16733,7 +16733,7 @@ Object.values(QuestionData).forEach(item => {
   item.workResult = `${item.category}の処理結果`;
   const authoredWorkCase = isStoryEligible ? WorkCaseNarratives[item.id] : null;
   item.story = authoredWorkCase
-    ? `${authoredWorkCase.before}${instruction}〔調査 ${chapterPosition + 1}/${storyCount}〕`
+    ? `${authoredWorkCase.before}〔調査 ${chapterPosition + 1}/${storyCount}〕`
     : `${ReaderFacingBeats[phase](arc, item, instruction, item.bossCase)}${isStoryEligible ? `〔調査 ${chapterPosition + 1}/${storyCount}〕` : `〔評価資料 ${item.caseNumber}〕`}`;
   // The prose stored with each question is reviewed teaching content.  Never
   // replace it with the generic fallback merely because runtime metadata was
