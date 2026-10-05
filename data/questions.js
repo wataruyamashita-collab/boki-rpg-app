@@ -16367,6 +16367,32 @@ const AnchorScenes = Object.freeze([
   Object.freeze({ ...scene, trigger:Object.freeze({ ...scene.trigger }) })
 ));
 
+const WorkCaseNarratives = Object.freeze({
+  J002:Object.freeze({before:"入社初日の経理室。追加出資の資料に続き、手許資金を口座へ移した記録が届きました。資金が増えた取引と、置き場所を変えただけの取引を混同せず確認します。"}),
+  J101:Object.freeze({before:"入社初日の経理室。新しい物流拠点への投資に向け、株主から追加の払込みがありました。会社に入った資金の意味を、事業拡大の流れの中で整理します。"}),
+  J102:Object.freeze({before:"入社初日の経理室。レジに置く資金を減らすため、手許資金を口座へ移した記録を確認します。追加出資とは別の資金移動として整理します。"}),
+  J005:Object.freeze({before:"営業会議後の経理室。みなと商店への納品記録が届きました。商品は渡っていますが代金の受取りは後です。営業実績と未回収の関係を資料から確認します。"}),
+  J006:Object.freeze({before:"営業会議後の経理室。若葉物産からの商品と、その引取りに伴う運送記録が同じ束に入っています。商品代と付随する支出を一つの取引としてどう捉えるか確認します。"}),
+  J007:Object.freeze({before:"営業会議後の経理室。みなと商店への納品と、当店負担の発送記録が同時に届きました。商品を渡した取引と配送の支出を分けて読み、営業実績を崩さず整理します。"}),
+  J008:Object.freeze({before:"営業会議後の経理室。先週の若葉物産からの取引に、品違いによる返品記録が追加されました。元の取引をなかったことにせず、戻した部分だけを資料から追います。"}),
+  J104:Object.freeze({before:"営業会議後の経理室。繁忙期に備えた販売用商品が東雲物産から届きました。支払いは後になる条件です。商品の受入れと未払いの関係を取引単位で整理します。"}),
+  J105:Object.freeze({before:"営業会議後の経理室。法人顧客の桜井商店へ商品を納品しました。回収は後になる条件です。納品が済んだ時点で何が成立したかを営業資料から確認します。"}),
+  J106:Object.freeze({before:"営業会議後の経理室。東雲物産からの商品受入れに、当店負担の引取運賃が伴っています。商品そのものと受入れに必要な支出を切り離さず、資料の関係を確認します。"}),
+  J107:Object.freeze({before:"営業会議後の経理室。桜井商店への納品に、当店負担の発送記録が付いています。販売の記録と配送の支出を混同せず、一つの取引として整理します。"}),
+  J108:Object.freeze({before:"営業会議後の経理室。東雲物産から届いた商品の検品で仕様違いが見つかり、返品記録が作られました。元の受入れのうち、戻した部分だけを正確に追います。"}),
+  J011:Object.freeze({before:"資金繰り表を広げた経理室。若葉物産への既存の支払予定が実行されました。新しい費用ではなく、すでにある支払義務がどう動いたかを確認します。"}),
+  J012:Object.freeze({before:"資金繰り表を広げた経理室。若葉物産への既存の支払義務について、双方の合意で電子的な記録へ切り替える手続が行われました。取引の実体が増えたのか、形が変わったのかを見極めます。"}),
+  J013:Object.freeze({before:"資金繰り表を広げた経理室。みなと商店への既存の回収権利について、双方の合意で電子的な記録へ切り替える手続が行われました。回収前の権利がどう置き換わったかを確認します。"}),
+  J014:Object.freeze({before:"資金繰り表を広げた経理室。店頭のカード決済記録が届きました。販売と同時に信販会社へ差し引かれる負担があります。受取予定額とその負担を分けて読みます。"}),
+  J015:Object.freeze({before:"資金繰り表を広げた経理室。若葉物産へ商品を注文し、受取り前に内金だけを支払っています。まだ商品は届いていません。支払い済みという事実と、取引の完了を分けて整理します。"}),
+  J110:Object.freeze({before:"資金繰り表を広げた経理室。桜井商店から既存の未回収分が入金されました。新しい販売ではありません。回収によって資金予定表のどこが解消するかを確認します。"}),
+  J111:Object.freeze({before:"資金繰り表を広げた経理室。東雲物産への既存の支払予定が実行されました。新しい取引を作るのではなく、すでに記録された義務が消える流れを確認します。"}),
+  J112:Object.freeze({before:"資金繰り表を広げた経理室。東雲物産への既存の支払義務を、双方の合意で電子的な記録へ切り替えました。元の義務と新しい記録を二重に残さないよう整理します。"}),
+  J113:Object.freeze({before:"資金繰り表を広げた経理室。桜井商店への既存の回収権利を、双方の合意で電子的な記録へ切り替えました。回収前の権利がどの形へ移ったかを確認します。"}),
+  J114:Object.freeze({before:"資金繰り表を広げた経理室。店頭のカード決済記録を確認します。販売時点で信販会社への負担が差し引かれる条件です。販売額と実際の受取予定を分けて整理します。"}),
+  J115:Object.freeze({before:"資金繰り表を広げた経理室。東雲物産へ新商品を注文し、受取り前に内金を支払いました。商品はまだ届いていません。支払いと商品の受入れを同じ時点として扱わないよう確認します。"})
+});
+
 const WorkInstructions = Object.freeze({
   journal:'取引の増減を整理し、借方・貸方の科目と金額を決めてください',
   ledger:'日付・相手先・金額を確かめ、指定された帳簿へ記入してください',
@@ -16705,7 +16731,10 @@ Object.values(QuestionData).forEach(item => {
   item.jobUnlock = isStoryEligible && chapterPosition === storyCount - 1 ? `第${item.chapter}章 Boss Case 完了` : '経理実務の調査権限';
   item.bossCase = isStoryEligible && chapterPosition === storyCount - 1;
   item.workResult = `${item.category}の処理結果`;
-  item.story = `${ReaderFacingBeats[phase](arc, item, instruction, item.bossCase)}${isStoryEligible ? `〔調査 ${chapterPosition + 1}/${storyCount}〕` : `〔評価資料 ${item.caseNumber}〕`}`;
+  const authoredWorkCase = isStoryEligible ? WorkCaseNarratives[item.id] : null;
+  item.story = authoredWorkCase
+    ? `${authoredWorkCase.before}${instruction}〔調査 ${chapterPosition + 1}/${storyCount}〕`
+    : `${ReaderFacingBeats[phase](arc, item, instruction, item.bossCase)}${isStoryEligible ? `〔調査 ${chapterPosition + 1}/${storyCount}〕` : `〔評価資料 ${item.caseNumber}〕`}`;
   // The prose stored with each question is reviewed teaching content.  Never
   // replace it with the generic fallback merely because runtime metadata was
   // added above; the fallback exists only for genuinely unauthored questions.
@@ -16877,6 +16906,7 @@ Object.values(QuestionData).forEach(item => {
 if (typeof window !== 'undefined') {
   // The exam pool is an explicit assessment contract. It is intentionally independent
   // of object insertion order and is consumed by both Controller and the audits.
+  window.WorkCaseNarratives = WorkCaseNarratives;
   window.AnchorScenes = AnchorScenes;
   window.ExamPoolDefinition = ExamPoolDefinition;
   window.QuestionData = QuestionData;
