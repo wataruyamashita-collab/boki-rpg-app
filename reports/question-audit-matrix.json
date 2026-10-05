@@ -2979,7 +2979,7 @@
       "category": "訂正仕訳",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「訂正仕訳」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3046,7 +3046,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:d1d4921f8e1dd749f3a44f1956ac9ac714424e7039a5556d2e590a7235efaf18",
+      "sourceHash": "sha256:78a7714c436ffaa5fb66995a50f28db9bb4132bc50c60f542e8a7773ec7b7bde",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -3057,7 +3057,7 @@
       "category": "未記帳取引",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「未記帳取引」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -3124,7 +3124,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:7657b68e40d429836bff57eeaa3eb1db266ad07f0cccc4a96c3dd09abfae1b09",
+      "sourceHash": "sha256:289d4fa7a38eeeffb6bd0c6ab4c5e73af00d9e1f40375f282e717ed875e01429",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -18735,7 +18735,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18802,7 +18802,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:6ce21ed21b217c6e0fccf4483b0b8fb5cb515a34bf13ce77174f6de9b6ac6635",
+      "sourceHash": "sha256:281b25285c155dddae5c2befb68c23a16d999c23a01d34e42a9f22cd0ec7788f",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -18813,7 +18813,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18880,7 +18880,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:da4e165f9c9e4e0876ca23f34b2dcaf23b9cc75cd75beec2b6d7f70a617ed302",
+      "sourceHash": "sha256:ca9beaa992f5e18122de164943ff17adcee9fb6da38b4a9c65ea209a8ef951a4",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -18891,7 +18891,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -18958,7 +18958,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:690899907cb11b1ed5b25d36ce1f806aea221a883b67673349779933cfad426d",
+      "sourceHash": "sha256:4fd8fcbdf33f17da727bd72f560b22e4db786bc007ecf4f279525715cd347f9a",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -18969,7 +18969,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19036,7 +19036,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:0acaad92a96931d6e8ea0dbac940a104226e349ffb265d4bf67842fe1867ce69",
+      "sourceHash": "sha256:7a0c056308073b68bb5eed525fe494111162f637d7bcf31105296316908c4c42",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19047,7 +19047,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19114,7 +19114,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:41421e588828a0d6b8a4754861221d7ed1e88273c97514651280b934db712ac7",
+      "sourceHash": "sha256:b3c9449058d189f9a7b39bffaf60efa30dda5cbce8d738f864a2da5524dbda28",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19125,7 +19125,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19192,7 +19192,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:5043d525bce3de205b96a33c17d56d871679ad0739f738b4b0bf0a2b2a23e47e",
+      "sourceHash": "sha256:f7078a8b718e44523f7c0ddba3f68bff2c5ac10142904c99a2c828869b4cfe6d",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19203,7 +19203,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19270,7 +19270,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:3a3ee2575de03954475f2d9894cc57ccf7d387a7d9a9bc6a30983c1e2d6b00c6",
+      "sourceHash": "sha256:d74e0955a00f3a82ca14a3f973e6cbe1223c3df3be8dc927f7294d147f0301e8",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19281,7 +19281,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19348,7 +19348,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:536fb862caaa3b4fceea3679881a2a6c144d90b694c16d44fe33170f9692fd5e",
+      "sourceHash": "sha256:ffb4ee7b80979ec30c44f7242a01d8b08a753d6882e4d4e66a82e1a247c85642",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19359,7 +19359,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19426,7 +19426,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:fc30483fd81f5947355cadabcaf4d531080e38ebc0bb68e156de6c3460545987",
+      "sourceHash": "sha256:e1df9ae7fa2d248c3645724a2212dce69ae1d5aff9862ccfa43a37f863d18718",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19437,7 +19437,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19504,7 +19504,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a300d51b251af70b1f3a6fe29e2d4c9a93e552c183232f8d9bca377cbdd1ca20",
+      "sourceHash": "sha256:67dd16f0d9d6d170d7cd585ad8a89d3ad4912959d9390f291b34a0b3dc9599d4",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19515,7 +19515,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19582,7 +19582,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:9e3d02eb5c8ce97d774d51474037a0547aced4e5e037288afc34360b2f431a6c",
+      "sourceHash": "sha256:d29b295554895ea425695548d64099ee1e4ae341f7b8bcb380e244a115d977a7",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19593,7 +19593,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19660,7 +19660,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:522bb19f3a2b186c827d8f60bc784559712e7e24876ffe0f194f51ffc8521b08",
+      "sourceHash": "sha256:23a21ebc636890e9bbd6d0abcf0451a9dcb1b99c47e4980759fa8cf428237d0e",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19671,7 +19671,7 @@
       "category": "記帳訂正",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「記帳訂正」の業務文脈とchapter整合を確認した。"
+        "finding": "S5D1 authored Work Case Beforeを問題文・証憑の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
@@ -19738,7 +19738,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:384352172e70a667d468a9cd65aaaa77472d347a6d45f3d5ce24fcd842958eac",
+      "sourceHash": "sha256:356d9454d6847b48c72fa342dd0ae9f3c2695359d344bc5419d621e7f034f160",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
