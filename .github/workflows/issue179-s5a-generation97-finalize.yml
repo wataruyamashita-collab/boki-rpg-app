@@ -147,7 +147,7 @@ jobs:
 
           const immPath='independent-audit/tests/generation-immutability.test.js';
           let imm=read(immPath);
-          const list97=Array.from({length:95},(_,i)=>i+2).join(',');
+          const list96=Array.from({length:95},(_,i)=>i+2).join(',');
           const list97=Array.from({length:96},(_,i)=>i+2).join(',');
 
           imm=replaceOne(
@@ -158,20 +158,20 @@ jobs:
           );
           imm=replaceOne(
             imm,
+            `  const generation96Committed=committed(96);\n`,
             `  const generation96Committed=committed(96);\n  const generation97Committed=committed(97);\n`,
-            `  const generation95Committed=committed(95);\n  const generation97Committed=committed(96);\n`,
             'generation 95 committed declaration'
           );
           imm=replaceOne(
             imm,
-            "'authority sequence tracks committed Generations through 95'",
+            "'authority sequence tracks committed Generations through 96'",
             "'authority sequence tracks committed Generations through 97'",
             'sequence title'
           );
           imm=replaceOne(
             imm,
-            `      generation95Committed\n        ? [${list96}]\n        : generation94Committed`,
-            `      generation97Committed\n        ? [${list97}]\n        : generation95Committed\n        ? [${list96}]\n        : generation94Committed`,
+            `      generation96Committed\n        ? [${list96}]\n        : generation95Committed`,
+            `      generation97Committed\n        ? [${list97}]\n        : generation96Committed\n        ? [${list96}]\n        : generation95Committed`,
             'sequence head'
           );
           imm=replaceOne(
@@ -182,16 +182,16 @@ jobs:
           );
           imm=replaceOne(
             imm,
-            `  const generation95Pending=\n    fs.existsSync(authorityPath(95))&&!generation95Committed;`,
-            `  const generation97Pending=\n    fs.existsSync(authorityPath(97))&&!generation97Committed;\n  const generation95Pending=\n    fs.existsSync(authorityPath(95))&&!generation95Committed;`,
+            `  const generation96Pending=\n    fs.existsSync(authorityPath(96))&&!generation96Committed;`,
+            `  const generation97Pending=\n    fs.existsSync(authorityPath(97))&&!generation97Committed;\n  const generation96Pending=\n    fs.existsSync(authorityPath(96))&&!generation96Committed;`,
             'generation 95 pending declaration'
           );
           const generation97Block=`  if(generation97Committed){\n    test(\n      'committed Generation 97 current integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCurrent().ok,\n        true\n      )\n    );\n  }else if(generation97Pending){\n    const generation97Candidate=\n      JSON.parse(fs.readFileSync(authorityPath(97),'utf8'));\n    test(\n      'pending Generation 97 candidate integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCandidate(generation97Candidate).ok,\n        true\n      )\n    );\n  }else if(generation96Committed){`;
           imm=replaceOne(
             imm,
-            '  if(generation95Committed){',
+            '  if(generation96Committed){',
             generation97Block,
-            'generation 95 integrity branch'
+            'generation 96 integrity branch'
           );
           write(immPath,imm);
 
