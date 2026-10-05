@@ -13,6 +13,7 @@ const questions=sandbox.window.QuestionData;
 const examIds=new Set(sandbox.window.ExamPoolDefinition||[]);
 const anchors=sandbox.window.AnchorScenes||[];
 const authority=sandbox.window.WorkCaseNarratives;
+const acceptedS5A=require('./fixtures/story-work-case-s5a-accepted.json');
 
 assert(authority,'S5A WorkCaseNarratives authority must be exported');
 assert(Object.isFrozen(authority),'S5A WorkCaseNarratives authority must be immutable');
@@ -24,10 +25,18 @@ const expectedIds=[
 ].sort();
 
 assert.deepStrictEqual(
-  Object.keys(authority).sort(),
+  Object.keys(acceptedS5A).sort(),
   expectedIds,
-  'S5A authority must target exactly the 23 locked Chapters 1-3 non-anchor Story cases'
+  'S5A accepted snapshot must cover exactly the 23 locked Chapters 1-3 non-anchor Story cases'
 );
+for(const id of expectedIds){
+  assert(authority[id], `${id}: accepted S5A authority entry must remain present`);
+  assert.strictEqual(
+    authority[id].before,
+    acceptedS5A[id],
+    `${id}: accepted S5A Before text must remain byte-for-byte stable during later S5 batches`
+  );
+}
 
 const anchorRefs=new Set(anchors.map(scene=>scene.referenceQuestionId));
 const story=Object.values(questions).filter(question=>
@@ -50,7 +59,7 @@ for(const id of expectedIds){
   assert.deepStrictEqual(
     Object.keys(entry),
     ['before'],
-    `${id}: S5A authority must stay Before-only and must not extend non-anchor After/Hook behavior`
+    `${id}: Accepted S5A authority must stay Before-only and must not extend non-anchor After/Hook behavior`
   );
 
   const before=String(entry.before||'').trim();
