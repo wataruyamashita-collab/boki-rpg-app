@@ -27,6 +27,66 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Refresh S5A audit evidence
+        run: |
+          node <<'NODE'
+          'use strict';
+          const assert=require('assert');
+          const fs=require('fs');
+          const {evidenceStamp,loadQuestions,verifyMatrix}=require('./scripts/audit-matrix');
+
+          const targetIds=[
+            'J002','J101','J102',
+            'J005','J006','J007','J008','J104','J105','J106','J107','J108',
+            'J011','J012','J013','J014','J015','J110','J111','J112','J113','J114','J115'
+          ].sort();
+          const targetSet=new Set(targetIds);
+          const matrixPath='reports/question-audit-matrix.json';
+          const matrix=JSON.parse(fs.readFileSync(matrixPath,'utf8'));
+          const questions=loadQuestions();
+
+          const before=verifyMatrix(matrix,questions);
+          const stale=before.stale.map(item=>item.id).sort();
+          assert.deepStrictEqual(
+            stale,
+            targetIds,
+            'S5A evidence refresh must affect exactly the locked 23 Work Cases'
+          );
+          for(const item of before.stale){
+            assert.deepStrictEqual(
+              item.reasons,
+              ['SOURCE_CHANGED'],
+              item.id+': S5A evidence refresh may only resolve Story source freshness'
+            );
+          }
+
+          for(const row of matrix.rows){
+            if(!targetSet.has(row.id))continue;
+            row.sourceHash=evidenceStamp(questions[row.id]).sourceHash;
+            row.story ||= {};
+            row.story.status='VERIFIED';
+            row.story.finding='S5A authored Work Case Beforeを問題文の取引事実と照合し、正答勘定・金額を先出しせずchapter文脈と非矛盾であることを再検証した。';
+          }
+
+          const after=verifyMatrix(matrix,questions);
+          assert.strictEqual(after.ok,true,'refreshed S5A audit evidence must match production questions');
+          fs.writeFileSync(matrixPath,JSON.stringify(matrix,null,2)+'\n');
+          console.log('S5A_AUDIT_EVIDENCE_REFRESHED',targetIds.length);
+          NODE
+          git diff --check
+          expected="reports/question-audit-matrix.json"
+          actual=$(git status --porcelain --untracked-files=all | sed 's/^...//' | grep -v '^node_modules/' | sort)
+          if [ "$actual" != "$expected" ]; then
+            echo "S5A_EVIDENCE_REFRESH_REFUSED: dirty scope mismatch"
+            echo "Expected: $expected"
+            echo "Actual:"
+            echo "$actual"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/question-audit-matrix.json
+          git commit -m "Refresh S5A work-case audit evidence"
       - name: Pre-authority S5A checks
         run: |
           node tests/story-work-case-narrative.test.js
