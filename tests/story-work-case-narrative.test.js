@@ -59,6 +59,8 @@ for(const id of expectedIds){
   assert(!/[0-9０-９]/u.test(before), `${id}: authored Before must not reveal numeric answer values`);
   assert(!/[円￥¥]/u.test(before), `${id}: authored Before must not reveal answer amounts`);
   assert(!/借方|貸方/u.test(before), `${id}: authored Before must not coach the journal direction`);
+  assert(/(?:あなた|自分で)/u.test(before), `${id}: authored Before must keep the reader in the protagonist viewpoint`);
+  assert(/(?:確認|確かめ|分け|決め|記入|集計|比べ|作っ|埋め|確定)/u.test(before), `${id}: authored Before must contain an explicit reader action`);
 
   const answer=question.answer||{};
   const answerLines=[...(answer.debit||[]),...(answer.credit||[])];
