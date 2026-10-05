@@ -163,18 +163,18 @@ jobs:
             imm,
             `  const generation98Committed=committed(98);\n`,
             `  const generation98Committed=committed(98);\n  const generation99Committed=committed(99);\n`,
-            'generation 97 committed declaration'
+            'generation 98 committed declaration'
           );
           imm=replaceOne(
             imm,
-            "'authority sequence tracks committed Generations through 97'",
+            "'authority sequence tracks committed Generations through 98'",
             "'authority sequence tracks committed Generations through 99'",
             'sequence title'
           );
           imm=replaceOne(
             imm,
-            `      generation98Committed\n        ? [${list98}]\n        : generation96Committed`,
-            `      generation99Committed\n        ? [${list99}]\n        : generation98Committed\n        ? [${list98}]\n        : generation96Committed`,
+            `      generation98Committed\n        ? [${list98}]\n        : generation97Committed`,
+            `      generation99Committed\n        ? [${list99}]\n        : generation98Committed\n        ? [${list98}]\n        : generation97Committed`,
             'sequence head'
           );
           imm=replaceOne(
@@ -187,14 +187,14 @@ jobs:
             imm,
             `  const generation98Pending=\n    fs.existsSync(authorityPath(98))&&!generation98Committed;`,
             `  const generation99Pending=\n    fs.existsSync(authorityPath(99))&&!generation99Committed;\n  const generation98Pending=\n    fs.existsSync(authorityPath(98))&&!generation98Committed;`,
-            'generation 97 pending declaration'
+            'generation 98 pending declaration'
           );
           const generation99Block=`  if(generation99Committed){\n    test(\n      'committed Generation 99 current integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCurrent().ok,\n        true\n      )\n    );\n  }else if(generation99Pending){\n    const generation99Candidate=\n      JSON.parse(fs.readFileSync(authorityPath(99),'utf8'));\n    test(\n      'pending Generation 99 candidate integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCandidate(generation99Candidate).ok,\n        true\n      )\n    );\n  }else if(generation98Committed){`;
           imm=replaceOne(
             imm,
             '  if(generation98Committed){',
             generation99Block,
-            'generation 97 integrity branch'
+            'generation 98 integrity branch'
           );
           write(immPath,imm);
 
