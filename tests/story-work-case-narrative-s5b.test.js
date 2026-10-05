@@ -14,6 +14,7 @@ const examIds=new Set(sandbox.window.ExamPoolDefinition||[]);
 const anchors=sandbox.window.AnchorScenes||[];
 const authority=sandbox.window.WorkCaseNarratives;
 const acceptedS5A=require('./fixtures/story-work-case-s5a-accepted.json');
+const acceptedS5B=require('./fixtures/story-work-case-s5b-accepted.json');
 
 const s5bIds=[
   'J018','J019','J117','J118','J119',
@@ -26,10 +27,18 @@ assert(authority,'S5B WorkCaseNarratives authority must be exported');
 assert(Object.isFrozen(authority),'S5B WorkCaseNarratives authority must remain immutable');
 assert.strictEqual(s5bIds.length,18,'S5B locked population must remain 18');
 assert.deepStrictEqual(
-  Object.keys(authority).sort(),
+  Object.keys(acceptedS5B).sort(),
   allExpected,
-  'S5B must extend WorkCaseNarratives to exactly 41 accepted S5A + S5B entries'
+  'S5B accepted snapshot must cover exactly the 41 locked S5A + S5B entries'
 );
+for(const [id,before] of Object.entries(acceptedS5B)){
+  assert(authority[id], `${id}: accepted S5B authority entry must remain present during later S5 batches`);
+  assert.strictEqual(
+    authority[id].before,
+    before,
+    `${id}: later S5 batches must preserve accepted S5B Before text byte-for-byte`
+  );
+}
 
 const anchorRefs=new Set(anchors.map(scene=>scene.referenceQuestionId));
 const story=Object.values(questions).filter(question=>
