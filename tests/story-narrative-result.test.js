@@ -6,13 +6,17 @@ const vm=require('vm');
 
 const viewSource=fs.readFileSync('js/view.js','utf8');
 const controllerSource=fs.readFileSync('js/controller.js','utf8');
+const dataSource=fs.readFileSync('data/questions.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 const css=fs.readFileSync('css/style.css','utf8');
 
-const sandbox={window:{matchMedia(){return{matches:false};}}};
+const sandbox={window:{matchMedia(){return{matches:false};}},console};
 vm.createContext(sandbox);
 vm.runInContext(viewSource,sandbox,{filename:'js/view.js'});
+vm.runInContext(dataSource,sandbox,{filename:'data/questions.js'});
+vm.runInContext(controllerSource,sandbox,{filename:'js/controller.js'});
 const AppView=sandbox.window.AppView;
+const AppController=sandbox.window.AppController;
 
 class FakeNode{
   constructor(tagName='div'){
@@ -87,7 +91,64 @@ assert(html.includes('aria-labelledby="narrative-result-heading"'),'narrative re
 assert(css.includes('.narrative-result'),'narrative result requires dedicated responsive styling');
 assert(css.includes('overflow-wrap: anywhere'),'narrative prose must wrap rather than force horizontal scrolling');
 
-assert(controllerSource.includes('S3_PILOT_CHAPTERS'),'S3A rollout must remain explicit to representative chapters');
+assert(!controllerSource.includes('S3_PILOT_CHAPTERS'),'S3B must remove the representative-chapter rollout limit');
+
+const runtimeController=Object.create(AppController.prototype);
+runtimeController.model={state:{mode:'story'}};
+const authorityScenes=sandbox.window.AnchorScenes;
+const questions=sandbox.window.QuestionData;
+assert.strictEqual(authorityScenes.length,36,'S3B runtime rollout consumes all 36 accepted Anchor Scenes');
+
+const coveredChapters=new Set();
+for(const authorityScene of authorityScenes){
+  const question=questions[authorityScene.referenceQuestionId];
+  const matched=AppController.prototype.narrativeScenesForQuestion.call(runtimeController,question);
+  assert(
+    matched.some(candidate=>candidate.sceneId===authorityScene.sceneId),
+    `${authorityScene.sceneId}: runtime lookup must expose the accepted Anchor Scene`
+  );
+  coveredChapters.add(authorityScene.chapter);
+}
+assert.deepStrictEqual(
+  [...coveredChapters].sort((a,b)=>a-b),
+  Array.from({length:12},(_,index)=>index+1),
+  'S3B runtime lookup must cover semantic Chapters 1-12'
+);
+
+const j049Scenes=AppController.prototype.narrativeScenesForQuestion.call(runtimeController,questions.J049);
+assert.deepStrictEqual(
+  Array.from(j049Scenes,scene=>scene.sceneId),
+  ['CH11-OPEN','CH11-REVERSAL'],
+  'Chapter 11 duplicate question reference must preserve both Scene authorities'
+);
+assert.strictEqual(view.renderNarrativeResult(j049Scenes,{mode:'story',resolved:true}),true);
+assert.strictEqual(
+  narrative.dataset.sceneId,
+  'CH11-REVERSAL',
+  'Chapter 11 duplicate reference must resolve to the later REVERSAL beat in one compact result'
+);
+
+const anchorReferences=new Set(authorityScenes.map(scene=>scene.referenceQuestionId));
+const examIds=new Set(sandbox.window.ExamPoolDefinition||[]);
+const nonAnchor=Object.values(questions).find(question=>
+  question.learningRole!=='review'&&!examIds.has(question.id)&&!anchorReferences.has(question.id)
+);
+assert(nonAnchor,'S3B test requires a non-anchor Story question');
+assert.deepStrictEqual(
+  Array.from(AppController.prototype.narrativeScenesForQuestion.call(runtimeController,nonAnchor)),
+  [],
+  'non-anchor Story questions must not invent a narrative result'
+);
+
+for(const mode of ['training','review','exam']){
+  runtimeController.model.state.mode=mode;
+  assert.deepStrictEqual(
+    Array.from(AppController.prototype.narrativeScenesForQuestion.call(runtimeController,questions.J001)),
+    [],
+    `${mode} must remain isolated from Anchor Scene result lookup`
+  );
+}
+runtimeController.model.state.mode='story';
 assert(controllerSource.includes('narrativeScenesForQuestion(question)'),'Controller needs Story-only anchor lookup');
 assert(controllerSource.includes('renderNarrativeResult'),'Controller must connect grading flow to narrative result');
 assert(controllerSource.includes('renderNarrativeResolution(question, resolved = false)'),'Controller must centralize safe Story-mode resolution');
