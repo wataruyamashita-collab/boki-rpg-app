@@ -1,5 +1,6 @@
 # Generation 96 Issue #179 S5A finalizer
 # corrected predecessor transform retry
+# narrative-length fix retry
 # Candidate authority is validated before commit.
 # Full npm/qa/browser validation runs on the exact final PR HEAD after publish.
 name: Issue 179 S5A Generation 96 finalizer
