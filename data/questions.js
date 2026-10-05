@@ -16620,6 +16620,31 @@ const narrativePhase = (position, count) => {
   if (position < 0 || count <= 1) return 0;
   return Math.min(4, Math.round((position * 4) / (count - 1)));
 };
+const MizunoRelationshipStage = Object.freeze({
+  1:'Teacher',2:'Teacher',3:'Teacher',
+  4:'Questioner',5:'Questioner',6:'Questioner',
+  7:'Reviewer',8:'Reviewer',9:'Reviewer',
+  10:'Supporter',11:'Supporter',
+  12:'Silent witness'
+});
+const storyNpcDialogue = (chapter, phase) => {
+  const stage = MizunoRelationshipStage[chapter] || 'Silent witness';
+  if (stage === 'Silent witness') return '';
+  if (phase !== 0 && phase !== 4) return '';
+  const opening = {
+    Teacher:'水野先輩「結論より先に、証憑と根拠を一つずつ確認しよう。」',
+    Questioner:'水野先輩「何が事実で、どこから確かめる？」',
+    Reviewer:'水野先輩「確認順は任せる。必要なら僕がレビューする。」',
+    Supporter:'水野先輩「先に君から説明して。必要なら僕が補足する。」'
+  };
+  const closing = {
+    Teacher:'水野先輩「根拠までそろえたら、君の言葉でまとめてみよう。」',
+    Questioner:'水野先輩「その結論を、どの根拠で説明する？」',
+    Reviewer:'水野先輩「君の結論を先に聞かせて。僕は確認する側に回る。」',
+    Supporter:'水野先輩「君の説明で進めよう。僕は補足に回る。」'
+  };
+  return (phase === 0 ? opening : closing)[stage] || '';
+};
 Object.values(QuestionData).forEach(item => {
   // Authored chapter is the educational/story authority. Object insertion order
   // must never reassign semantic chapters; unequal chapter volume is handled by
@@ -16663,10 +16688,13 @@ Object.values(QuestionData).forEach(item => {
     `締切が迫る。ここでの判断が、章末報告の数字を直接動かす。`,
     isStoryEligible && chapterPosition === storyCount - 1 ? `最後の資料がそろった。水野先輩は黙って報告書を差し出した。` : isStoryEligible ? `残る資料はあと${storyCount - chapterPosition - 1}件。矛盾の中心が見えてきた。` : `評価用の資料を確認する。`
   ];
-  const npc = phase === 0 ? '水野先輩「結論より先に、証憑が示す事実を読んで。」' : phase === 4 ? '水野先輩「ここからは、あなたの数字で決着をつけて。」' : '';
+  const npc = isStoryEligible
+    ? storyNpcDialogue(item.chapter, phase)
+    : phase === 0 ? '水野先輩「結論より先に、証憑が示す事実を読んで。」' : phase === 4 ? '水野先輩「ここからは、あなたの数字で決着をつけて。」' : '';
   const surprise = `${arc.theme}の手掛かりは、${item.category}の記録にある`;
   const nextArc = ChapterDrama[Math.min(12, item.chapter + 1)];
   item.chapterArc = arc;
+  if (isStoryEligible) item.mizunoRelationshipStage = MizunoRelationshipStage[item.chapter];
   item.scene = `${months[item.chapter - 1]}・${arc.theme}`;
   item.accountingSurprise = surprise;
   item.missionId = `chapter-${item.chapter}`;
