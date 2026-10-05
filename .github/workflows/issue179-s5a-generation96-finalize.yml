@@ -163,8 +163,8 @@ jobs:
           );
           imm=replaceOne(
             imm,
-            "'authority sequence tracks committed Generations through 94'",
             "'authority sequence tracks committed Generations through 95'",
+            "'authority sequence tracks committed Generations through 96'",
             'sequence title'
           );
           imm=replaceOne(
