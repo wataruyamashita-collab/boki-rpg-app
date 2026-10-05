@@ -93,8 +93,8 @@ jobs:
           );
           imm=replaceOne(
             imm,
-            `  const generation95Committed=committed(94);\n`,
-            `  const generation95Committed=committed(94);\n  const generation96Committed=committed(96);\n`,
+            `  const generation95Committed=committed(95);\n`,
+            `  const generation95Committed=committed(95);\n  const generation96Committed=committed(96);\n`,
             'generation 95 committed declaration'
           );
           imm=replaceOne(
@@ -105,8 +105,8 @@ jobs:
           );
           imm=replaceOne(
             imm,
-            `      generation95Committed\n        ? [${list95}]\n        : generation93Committed`,
-            `      generation96Committed\n        ? [${list96}]\n        : generation95Committed\n        ? [${list95}]\n        : generation93Committed`,
+            `      generation95Committed\n        ? [${list95}]\n        : generation94Committed`,
+            `      generation96Committed\n        ? [${list96}]\n        : generation95Committed\n        ? [${list95}]\n        : generation94Committed`,
             'sequence head'
           );
           imm=replaceOne(
@@ -117,8 +117,8 @@ jobs:
           );
           imm=replaceOne(
             imm,
-            `  const generation95Pending=\n    fs.existsSync(authorityPath(94))&&!generation95Committed;`,
-            `  const generation96Pending=\n    fs.existsSync(authorityPath(96))&&!generation96Committed;\n  const generation95Pending=\n    fs.existsSync(authorityPath(94))&&!generation95Committed;`,
+            `  const generation95Pending=\n    fs.existsSync(authorityPath(95))&&!generation95Committed;`,
+            `  const generation96Pending=\n    fs.existsSync(authorityPath(96))&&!generation96Committed;\n  const generation95Pending=\n    fs.existsSync(authorityPath(95))&&!generation95Committed;`,
             'generation 95 pending declaration'
           );
           const generation96Block=`  if(generation96Committed){\n    test(\n      'committed Generation 96 current integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCurrent().ok,\n        true\n      )\n    );\n  }else if(generation96Pending){\n    const generation96Candidate=\n      JSON.parse(fs.readFileSync(authorityPath(96),'utf8'));\n    test(\n      'pending Generation 96 candidate integrity passes',\n      ()=>assert.strictEqual(\n        lifecycle.verifyCandidate(generation96Candidate).ok,\n        true\n      )\n    );\n  }else if(generation95Committed){`;
