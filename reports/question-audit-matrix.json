@@ -19114,7 +19114,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:b3c9449058d189f9a7b39bffaf60efa30dda5cbce8d738f864a2da5524dbda28",
+      "sourceHash": "sha256:f3e2f8361e56386527444479400fc0445da40cecc02f0948b5e5a013b6ad2c28",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19660,7 +19660,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:23a21ebc636890e9bbd6d0abcf0451a9dcb1b99c47e4980759fa8cf428237d0e",
+      "sourceHash": "sha256:9e65c79c5db574a2babe8f6a1779ce0b29daef4836c36490e87c6d6491ccfe6c",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
@@ -19738,7 +19738,7 @@
         "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:356d9454d6847b48c72fa342dd0ae9f3c2695359d344bc5419d621e7f034f160",
+      "sourceHash": "sha256:6e2719b9b6323595468fc3f3d9d3c13201b62d7e1e72a2e4199c26867506953d",
       "answerSchemaHash": "sha256:d784d6cfe9ccdd8d57be0f0c81258bdce35143f3de3b0e5d42c16f485587c6a5"
     },
     {
