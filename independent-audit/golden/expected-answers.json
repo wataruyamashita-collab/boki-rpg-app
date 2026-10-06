@@ -769,14 +769,14 @@
     "J051": {
       "debit": [
         {
-          "account": "現金",
-          "amount": 3010000
+          "account": "繰越利益剰余金",
+          "amount": 300000
         }
       ],
       "credit": [
         {
-          "account": "資本金",
-          "amount": 3010000
+          "account": "未払配当金",
+          "amount": 300000
         }
       ]
     },
@@ -1533,14 +1533,14 @@
     "J101": {
       "debit": [
         {
-          "account": "繰越利益剰余金",
-          "amount": 300000
+          "account": "現金",
+          "amount": 3020000
         }
       ],
       "credit": [
         {
-          "account": "未払配当金",
-          "amount": 300000
+          "account": "資本金",
+          "amount": 3020000
         }
       ]
     },
@@ -3438,14 +3438,14 @@
   "J101": {
     "debit": [
       {
-        "account": "繰越利益剰余金",
-        "amount": 300000
+        "account": "現金",
+        "amount": 3020000
       }
     ],
     "credit": [
       {
-        "account": "未払配当金",
-        "amount": 300000
+        "account": "資本金",
+        "amount": 3020000
       }
     ]
   },
@@ -3457,5 +3457,19 @@
       "liabilityDecreaseSide": "借方",
       "balancePrinciple": "一致"
     }
+  },
+  "J051": {
+    "debit": [
+      {
+        "account": "繰越利益剰余金",
+        "amount": 300000
+      }
+    ],
+    "credit": [
+      {
+        "account": "未払配当金",
+        "amount": 300000
+      }
+    ]
   }
 }
