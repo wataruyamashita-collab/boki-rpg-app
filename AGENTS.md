@@ -84,3 +84,13 @@ A B-SIDE review request or response is not required for routine progression or m
 
 Important:
 GitHub remains the authoritative source for code, PRs, and recorded coordination state.
+
+## Foundation v1.0 requirements and preflight
+
+Before every planning, implementation, review, merge, release or scheduled-agent run, read [the Foundation master](docs/FOUNDATION_V1_MASTER_PROMPT.md), [the existing Grade-3 specification](docs/master_specification.md), live main, Roadmap #177, current-state hub #153, the active Issue and relevant #144 handoff notes.
+
+The latest explicit user instruction defines product requirements and priorities. The Foundation master is their single full-text source; it is not implementation or acceptance evidence. Code and exact-SHA tests/CI/browser observations establish implementation facts. Do not independently duplicate the master in Issues.
+
+Keep the existing Grade-3 RPG complete and preserve the separate employee-training product boundary. Extend through protected contracts, narrow adapters and representative Grade-2/Grade-1 problems, not a speculative rewrite. The existing 300-question invariant protects the current Grade-3 corpus; it is not a permanent platform-wide limit. Any additional content or changed answer authority still requires its own approved scope and tests.
+
+Classify work against the existing Roadmap as BLOCKER, Foundation必須, Foundation品質改善, Foundation後でもよい, or 将来対応. Record conflicts between stale Issue snapshots and live code instead of treating requirements as delivered features. Completion of one PR or one phase does not close an entire Issue unless all of that Issue's exit criteria are verified. This section does not waive any existing test, review, browser, integrity, or post-merge gate.
