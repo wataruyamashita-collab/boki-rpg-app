@@ -299,6 +299,7 @@
     }
     if(format==='bookkeeping-voucher-entry')return[{label:'現金の動きに合った伝票を選べているか確認する',expected:'増える → 入金伝票 / 減る → 出金伝票 / 動かない → 振替伝票',evidenceRefs:['table.rows'],checkKind:'classification'}];
     if(format==='bookkeeping-inventory-ledger'||/商品有高帳/u.test(category))return[{label:'数量・単価・金額の流れを確認する',expected:'払出後の残りを次の行へつなげる',evidenceRefs:['table.rows'],checkKind:'continuity'}];
+    if(format==='bookkeeping-account-rule')return[{label:'勘定記入法則と貸借平均を別々に確認する',expected:'資産：増加＝借方・減少＝貸方／負債：増加＝貸方・減少＝借方／借方合計＝貸方合計',evidenceRefs:['question','answer.cells'],checkKind:'concept-reconciliation'}];
     if(['bookkeeping-general-ledger','bookkeeping-account-ledger','bookkeeping-cash-book','bookkeeping-checking-book'].includes(format)||/元帳/u.test(category))return[{label:'残高を上から順に確認する',expected:'前の残高に増減を反映して次の残高へつなげる',evidenceRefs:['table.rows'],checkKind:'continuity'}];
     if(format==='bookkeeping-notes-receivable')return[{label:'受取手形だけを選べているか確認する',expected:'約束手形の受取だけを記帳対象にする',evidenceRefs:['materials'],checkKind:'selection'}];
     if(format==='bookkeeping-notes-payable')return[{label:'支払手形だけを選べているか確認する',expected:'自店振出の約束手形だけを記帳対象にする',evidenceRefs:['materials'],checkKind:'selection'}];
@@ -364,6 +365,10 @@
     if(format==='bookkeeping-voucher-entry')return[
       'この問題で求めるのは、取引に合う伝票と記入内容です。',
       '現金が増える・減る・動かないの3つに分けて、入金伝票・出金伝票・振替伝票を選びます。'
+    ];
+    if(format==='bookkeeping-account-rule')return[
+      'この問題で求めるのは、資産・負債の増減を記入する側と貸借平均の原理です。',
+      '勘定科目の種類ごとに「増加はどちら側か」を先に決め、減少は反対側と確認したうえで、最後に借方合計と貸方合計の一致を確認します。'
     ];
     if(format==='journal-book'||/仕訳帳/u.test(category))return[
       'この問題で求めるのは、取引を日付順に仕訳帳へ記入した結果です。',
