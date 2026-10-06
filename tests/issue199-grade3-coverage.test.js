@@ -84,6 +84,4 @@ assert.strictEqual(l031.primarySyllabusMapping.code,'P1-3');
 assert.strictEqual(l031.cognitiveLevel,'Understanding');
 assert(l031.explanationLearningObjective.targetConceptIds.includes('FND_DEBIT_CREDIT'));
 
-const lifecycle=require('../scripts/qa/phase-b-lifecycle');
-console.log('ISSUE199_GENERATION_111_CANDIDATE '+JSON.stringify(lifecycle.createCandidate()));
 console.log('ISSUE199_GRADE3_COVERAGE_PASS');
