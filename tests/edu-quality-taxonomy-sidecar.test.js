@@ -107,7 +107,7 @@ const expectedItemDerived=[
 ].sort();
 assert.deepStrictEqual([...itemDerived].sort(),expectedItemDerived,'item-derived exceptions');
 
-const expectedTransferReview=['J035','J085','J101','J131','J134','J135','J147','L031','L039','L050','D001','F001'].sort();
+const expectedTransferReview=['J035','J051','J085','J131','J134','J135','J147','L031','L039','L050','D001','F001'].sort();
 assert.deepStrictEqual([...transferReview].sort(),expectedTransferReview,'transfer review candidates');
 
 assert(!fs.readFileSync('index.html','utf8').includes(ARTIFACT),'runtime HTML must not load taxonomy sidecar');
