@@ -92,7 +92,7 @@ function resolveTip(rootDocument,generations,errors){
 }
 
 function currentHashes(){
-  const files=[...core.walk('independent-audit'),...core.walk('scripts/qa')].sort();
+  const files=[...core.walk('independent-audit'),'reports/edu-quality/question-taxonomy-2026.json',...core.walk('scripts/qa')].sort();
   const auditFiles=Object.fromEntries(files.map(file=>[file,core.sha(file)]));
   const productionHashes=Object.fromEntries(core.productionFiles().map(file=>[file,core.sha(file)]));
   return {files:auditFiles,productionHashes,auditHash:digest(JSON.stringify(auditFiles)),baselineIdentity:digest(JSON.stringify(productionHashes))};
