@@ -60,7 +60,7 @@ function validateArtifact(artifact,questions=loadQuestions()){
   if(JSON.stringify(rows.map(r=>r.id).sort())!==JSON.stringify(ids))fail('taxonomy IDs must exactly match QuestionData');
 
   const concepts=artifact.prerequisiteConcepts||{};
-  if(Object.keys(concepts).length!==35)fail('prerequisite concept count must be 35');
+  if(Object.keys(concepts).length!==36)fail('prerequisite concept count must be 36');
   const conceptSet=new Set(Object.keys(concepts));
   const visiting=new Set(),done=new Set();
   const visit=id=>{
@@ -129,9 +129,9 @@ function validateArtifact(artifact,questions=loadQuestions()){
     if(row.transferStatus==='TRANSFER_REVIEW_REQUIRED')transferReview.add(row.id);
   }
 
-  const expectedMapping={DIRECT:218,MULTI:55,ITEM_DERIVED:27};
+  const expectedMapping={DIRECT:219,MULTI:54,ITEM_DERIVED:27};
   if(JSON.stringify(mappingCounts)!==JSON.stringify(expectedMapping))fail('mappingMode aggregate mismatch');
-  const expectedCognitive={Knowledge:0,Understanding:0,Application:224,'Integrated Judgment':76};
+  const expectedCognitive={Knowledge:0,Understanding:1,Application:223,'Integrated Judgment':76};
   if(JSON.stringify(cognitiveCounts)!==JSON.stringify(expectedCognitive))fail('cognitive aggregate mismatch');
 
   const expectedItemDerived=[
@@ -140,7 +140,7 @@ function validateArtifact(artifact,questions=loadQuestions()){
   ].sort();
   if(JSON.stringify([...itemDerived].sort())!==JSON.stringify(expectedItemDerived))fail('item-derived exceptions mismatch');
 
-  const expectedTransferReview=['J035','J085','J131','J134','J135','J147','L039','L050','D001','F001'].sort();
+  const expectedTransferReview=['J035','J085','J101','J131','J134','J135','J147','L031','L039','L050','D001','F001'].sort();
   if(JSON.stringify([...transferReview].sort())!==JSON.stringify(expectedTransferReview))fail('transfer review candidates mismatch');
 
   const f001=rows.find(row=>row.id==='F001');
