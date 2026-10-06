@@ -5,11 +5,11 @@ const vm=require('vm');
 
 const sandbox={window:{},console:{log(){},warn(){},error(){}}};
 vm.runInNewContext(fs.readFileSync('data/accounting-domain.js','utf8'),sandbox,{filename:'data/accounting-domain.js'});
+const domain=sandbox.window.AccountingDomain;
 vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),sandbox,{filename:'data/questions.js'});
 
 const questions=sandbox.window.QuestionData;
 const examPool=sandbox.window.ExamPoolDefinition;
-const domain=sandbox.window.AccountingDomain;
 
 assert(questions,'QuestionData must load');
 assert.strictEqual(Object.keys(questions).length,300,'canonical question count remains 300');
