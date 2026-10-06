@@ -114,12 +114,15 @@ try{
   const generation113Committed=committed(113);
   const generation114Committed=committed(114);
   const generation115Committed=committed(115);
+  const generation116Committed=committed(116);
 
   test(
-    'authority sequence tracks committed Generations through 115',
+    'authority sequence tracks committed Generations through 116',
     ()=>assert.deepStrictEqual(
       generations,
-      generation115Committed
+      generation116Committed
+        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116]
+        : generation115Committed
         ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115]
         : generation114Committed
         ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114]
@@ -392,6 +395,8 @@ try{
     }
   );
 
+  const generation116Pending=
+    fs.existsSync(authorityPath(116))&&!generation116Committed;
   const generation115Pending=
     fs.existsSync(authorityPath(115))&&!generation115Committed;
   const generation114Pending=
@@ -489,7 +494,25 @@ try{
   const generation68Pending=
     fs.existsSync(authorityPath(68))&&!generation68Committed;
 
-  if(generation115Committed){
+  if(generation116Committed){
+    test(
+      'committed Generation 116 current integrity passes',
+      ()=>assert.strictEqual(
+        lifecycle.verifyCurrent().ok,
+        true
+      )
+    );
+  }else if(generation116Pending){
+    const generation116Candidate=
+      JSON.parse(fs.readFileSync(authorityPath(116),'utf8'));
+    test(
+      'pending Generation 116 candidate integrity passes',
+      ()=>assert.strictEqual(
+        lifecycle.verifyCandidate(generation116Candidate).ok,
+        true
+      )
+    );
+  }else if(generation115Committed){
     test(
       'committed Generation 115 current integrity passes',
       ()=>assert.strictEqual(
