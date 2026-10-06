@@ -81,4 +81,7 @@ assert.strictEqual(l031.primarySyllabusMapping.code,'P1-3');
 assert.strictEqual(l031.cognitiveLevel,'Understanding');
 assert(l031.explanationLearningObjective.targetConceptIds.includes('FND_DEBIT_CREDIT'));
 
+const runner=require('../scripts/qa/contract-runner');
+const reviewRows=runner.questionReview(questions);
+console.log('ISSUE199_DIRECT_AUDIT_DIAGNOSTIC '+JSON.stringify(reviewRows.filter(row=>['J101','L031'].includes(row.questionId))));
 console.log('ISSUE199_GRADE3_COVERAGE_PASS');
