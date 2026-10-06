@@ -15,7 +15,13 @@ assert.deepStrictEqual(eligible,['J050','J150','F004','F005','F006','F007','C004
 assert(examOnly.every(id=>examIds.includes(id)),'C006-C010 must remain in the Exam pool');
 assert(examOnly.every(id=>!storyIds.includes(id)),'C006-C010 must remain absent from Story');
 assert.strictEqual(storyIds.filter(id=>examIds.includes(id)).length,0,'Story and Exam membership must be disjoint');
-eligible.forEach((id,index)=>assert.match(production.questions[id].story,new RegExp(`〔調査 ${index+1}/${eligible.length}〕$`)));
+eligible.forEach((id,index)=>{
+  if(id==='C005'){
+    assert.match(production.questions[id].story,/〔最終報告〕$/,'Chapter 12 finale must exit the ordinary investigation counter');
+    return;
+  }
+  assert.match(production.questions[id].story,new RegExp(`〔調査 ${index+1}/${eligible.length}〕$`));
+});
 
 const result=core.audit(production);
 assert.strictEqual(result.story.expectedDisplayedCount,eligible.length);

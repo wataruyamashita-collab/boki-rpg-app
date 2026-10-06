@@ -704,7 +704,7 @@
       this.renderCorrectJournal(question);
       this.renderExplanation(question, score, userAnswer);
     }
-    renderNarrativeResult(scenes = [], { mode = 'story', resolved = false } = {}) {
+    renderNarrativeResult(scenes = [], { mode = 'story', resolved = false, epilogueFacts = [] } = {}) {
       if (typeof this.document?.getElementById !== 'function') return false;
       const container = this.byId('narrative-result');
       if (!container) return false;
@@ -716,20 +716,47 @@
       const order = { OPEN:0, REVERSAL:1, BOSS:2 };
       const scene = [...scenes].sort((a, b) => (order[a.beat] ?? 99) - (order[b.beat] ?? 99)).at(-1);
       if (!scene) return false;
+      const isEpilogue = scene.epilogue === true;
       const heading = this.document.createElement('h2');
       heading.id = 'narrative-result-heading';
-      heading.textContent = scene.epilogue === true ? '一年の結末' : '仕事の結果';
+      heading.textContent = isEpilogue ? '一年の結末' : '仕事の結果';
       const after = this.document.createElement('p');
       after.className = 'narrative-result-after';
       after.textContent = scene.after;
+      const content = [heading, after];
+      if (isEpilogue && scene.protagonistStatement) {
+        const statement = this.document.createElement('p');
+        statement.className = 'narrative-result-epilogue-statement';
+        statement.textContent = scene.protagonistStatement;
+        content.push(statement);
+      }
+      if (isEpilogue && Array.isArray(epilogueFacts) && epilogueFacts.length) {
+        const summary = this.document.createElement('section');
+        summary.className = 'narrative-result-epilogue-summary';
+        const summaryHeading = this.document.createElement('h3');
+        summaryHeading.textContent = '最終章で確定した数字';
+        const list = this.document.createElement('ul');
+        for (const fact of epilogueFacts) {
+          const item = this.document.createElement('li');
+          const label = this.document.createElement('span');
+          label.textContent = fact.label;
+          const value = this.document.createElement('strong');
+          value.textContent = `${Number(fact.value).toLocaleString('ja-JP')}円`;
+          item.append(label, value);
+          list.append(item);
+        }
+        summary.append(summaryHeading, list);
+        content.push(summary);
+      }
       const hookLabel = this.document.createElement('strong');
       hookLabel.className = 'narrative-result-hook-label';
-      hookLabel.textContent = '次の展開';
+      hookLabel.textContent = isEpilogue ? 'エピローグ' : '次の展開';
       const hook = this.document.createElement('p');
       hook.className = 'narrative-result-hook';
       hook.textContent = scene.hook;
-      container.append(heading, after, hookLabel, hook);
-      container.className = `narrative-result${scene.epilogue === true ? ' narrative-result-epilogue' : ''}`;
+      content.push(hookLabel, hook);
+      container.append(...content);
+      container.className = `narrative-result${isEpilogue ? ' narrative-result-epilogue' : ''}`;
       if (container.dataset) container.dataset.sceneId = scene.sceneId;
       container.hidden = false;
       return true;

@@ -32,18 +32,24 @@ async function run(){
               const result=document.getElementById('view-result');result.hidden=false;result.style.display='block';
               const view=new window.AppView(document);
               const baselinePageWidth=document.documentElement.scrollWidth;
-              const scene={sceneId:'CH12-BOSS',chapter:12,beat:'BOSS',after:'社長は「やっと、うちの会社が見えた」と答えました。',hook:'次は主人公が最初の一枚を渡す側です。',dialogue:'社長「やっと、うちの会社が見えた。」',epilogue:true};
-              const storyResolved=view.renderNarrativeResult([scene],{mode:'story',resolved:true});
               const node=document.getElementById('narrative-result');
+              const runtimeController=Object.create(window.AppController.prototype);
+              runtimeController.model={state:{mode:'story'}};
+              runtimeController.questions=window.QuestionData||{};
+              runtimeController.view=view;
+              const authorityScenes=window.AnchorScenes||[];
+              const questions=runtimeController.questions;
+              const finale=authorityScenes.find(candidate=>candidate.sceneId==='CH12-BOSS');
+              const finaleScenes=window.AppController.prototype.narrativeScenesForQuestion.call(runtimeController,questions.C005);
+              const epilogueFacts=window.AppController.prototype.epilogueFactsForScene.call(runtimeController,finale);
+              const storyResolved=view.renderNarrativeResult(finaleScenes,{mode:'story',resolved:true,epilogueFacts});
               const visibleText=node.textContent;
               const sceneId=node.dataset.sceneId;
               const epilogueClass=node.classList.contains('narrative-result-epilogue');
               const containerOverflow=node.scrollWidth>node.clientWidth+1;
               const pageOverflowAdded=document.documentElement.scrollWidth>baselinePageWidth+1;
-              const runtimeController=Object.create(window.AppController.prototype);
-              runtimeController.model={state:{mode:'story'}};
-              const authorityScenes=window.AnchorScenes||[];
-              const questions=window.QuestionData||{};
+              const finalReportMarker=String(questions.C005?.story||'').includes('〔最終報告〕');
+              const ordinaryCounterRemoved=!String(questions.C005?.story||'').includes('〔調査');
               const missingAuthorityScenes=authorityScenes.filter(authorityScene=>{
                 const question=questions[authorityScene.referenceQuestionId];
                 const matched=window.AppController.prototype.narrativeScenesForQuestion.call(runtimeController,question);
@@ -64,15 +70,28 @@ async function run(){
                 view.renderNarrativeResult([authorityScene],{mode:'story',resolved:true});
                 if(node.scrollWidth>node.clientWidth+1)overflowingAuthorityScenes.push(authorityScene.sceneId);
               }
-              view.renderNarrativeResult([scene],{mode:'story',resolved:true});
-              const wrongHidden=view.renderNarrativeResult([scene],{mode:'story',resolved:false})===false&&node.hidden===true;
-              const trainingHidden=view.renderNarrativeResult([scene],{mode:'training',resolved:true})===false&&node.hidden===true;
-              return{storyResolved,visibleText,sceneId,epilogueClass,containerOverflow,pageOverflowAdded,baselinePageWidth,finalPageWidth:document.documentElement.scrollWidth,wrongHidden,trainingHidden,authorityCount:authorityScenes.length,missingAuthorityScenes,coveredChapters,j049SceneIds,isolatedModes,overflowingAuthorityScenes};
+              view.renderNarrativeResult(finaleScenes,{mode:'story',resolved:true,epilogueFacts});
+              const wrongHidden=view.renderNarrativeResult(finaleScenes,{mode:'story',resolved:false,epilogueFacts})===false&&node.hidden===true;
+              const trainingHidden=view.renderNarrativeResult(finaleScenes,{mode:'training',resolved:true,epilogueFacts})===false&&node.hidden===true;
+              return{storyResolved,visibleText,sceneId,epilogueClass,epilogueFacts,finalReportMarker,ordinaryCounterRemoved,containerOverflow,pageOverflowAdded,baselinePageWidth,finalPageWidth:document.documentElement.scrollWidth,wrongHidden,trainingHidden,authorityCount:authorityScenes.length,missingAuthorityScenes,coveredChapters,j049SceneIds,isolatedModes,overflowingAuthorityScenes};
             });
             report.browser=browserName;report.width=width;report.pageErrors=pageErrors;report.violations=[];
             if(!report.storyResolved)report.violations.push('STORY_RESULT_NOT_RENDERED');
             if(!report.visibleText.includes('やっと、うちの会社が見えた'))report.violations.push('AFTER_MISSING');
             if(!report.visibleText.includes('最初の一枚'))report.violations.push('HOOK_MISSING');
+            if(!report.visibleText.includes('あなたは社長へ伝えます'))report.violations.push('PROTAGONIST_STATEMENT_MISSING');
+            if(!report.visibleText.includes('最終章で確定した数字'))report.violations.push('EPILOGUE_FACT_HEADING_MISSING');
+            for(const amount of ['420,000円','1,280,000円','275,000円','45,000円'])if(!report.visibleText.includes(amount))report.violations.push('EPILOGUE_FACT_VALUE_MISSING:'+amount);
+            if(!report.visibleText.includes('エピローグ'))report.violations.push('EPILOGUE_LABEL_MISSING');
+            if(report.visibleText.includes('次の展開'))report.violations.push('ORDINARY_HOOK_LABEL_IN_FINALE');
+            if(!report.finalReportMarker)report.violations.push('FINAL_REPORT_MARKER_MISSING');
+            if(!report.ordinaryCounterRemoved)report.violations.push('ORDINARY_INVESTIGATION_COUNTER_REMAINS');
+            if(JSON.stringify(report.epilogueFacts)!==JSON.stringify([
+              {label:'当期純利益',value:420000,sourceQuestionId:'J050'},
+              {label:'年度末資産合計',value:1280000,sourceQuestionId:'F005'},
+              {label:'3月末現金',value:275000,sourceQuestionId:'C005'},
+              {label:'3月利益',value:45000,sourceQuestionId:'C005'}
+            ]))report.violations.push('EPILOGUE_FACT_SOURCE_MISMATCH');
             if(report.sceneId!=='CH12-BOSS')report.violations.push('SCENE_ID_MISSING');
             if(!report.epilogueClass)report.violations.push('EPILOGUE_CLASS_MISSING');
             if(!report.wrongHidden)report.violations.push('WRONG_REVEALS_RESULT');
