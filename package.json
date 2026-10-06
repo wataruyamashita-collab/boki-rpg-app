@@ -68,7 +68,8 @@
     "qa:finalize:phase-b-generation-44": "node scripts/qa/finalize-phase-b-generation-44.js",
     "qa:finalize:phase-b-generation-45": "node scripts/qa/finalize-phase-b-generation-45.js",
     "qa:finalize:phase-b-generation-46": "node scripts/qa/finalize-phase-b-generation-46.js",
-    "qa:finalize:phase-b-generation-47": "node scripts/qa/finalize-phase-b-generation-47.js"
+    "qa:finalize:phase-b-generation-47": "node scripts/qa/finalize-phase-b-generation-47.js",
+    "audit:edu-taxonomy": "node scripts/qa/validate-edu-taxonomy.js"
   },
   "engines": {
     "node": ">=18"
