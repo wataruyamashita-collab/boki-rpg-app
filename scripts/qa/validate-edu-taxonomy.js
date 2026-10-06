@@ -140,7 +140,7 @@ function validateArtifact(artifact,questions=loadQuestions()){
   ].sort();
   if(JSON.stringify([...itemDerived].sort())!==JSON.stringify(expectedItemDerived))fail('item-derived exceptions mismatch');
 
-  const expectedTransferReview=['J035','J085','J101','J131','J134','J135','J147','L031','L039','L050','D001','F001'].sort();
+  const expectedTransferReview=['J035','J051','J085','J131','J134','J135','J147','L031','L039','L050','D001','F001'].sort();
   if(JSON.stringify([...transferReview].sort())!==JSON.stringify(expectedTransferReview))fail('transfer review candidates mismatch');
 
   const f001=rows.find(row=>row.id==='F001');
