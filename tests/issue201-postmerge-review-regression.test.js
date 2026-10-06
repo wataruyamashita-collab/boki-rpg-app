@@ -55,7 +55,4 @@ assert.throws(()=>validator.validateArtifact(broken),/primary syllabus/i,'dedica
 
 const candidate=lifecycle.createCandidate();
 assert(candidate.files[ARTIFACT],'Generation candidate locks taxonomy sidecar');
-console.log('ISSUE201_GENERATION_109_CANDIDATE '+JSON.stringify(candidate));
-
 console.log('ISSUE201_POSTMERGE_REVIEW_REGRESSION_PASS');
-throw new Error('ISSUE201_GENERATION_109_CAPTURE_STOP');
