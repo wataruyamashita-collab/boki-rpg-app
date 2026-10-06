@@ -14964,6 +14964,18 @@ function independentlyDerivedTableCells(item) {
   const rows=item?.table?.rows || [];
   const numeric=value => typeof value === 'number' ? value : 0;
   if (item?.format === 'bookkeeping-account-rule') {
+    const questionText=String(item.question||'');
+    const requiredQuestionTerms=['勘定記入法則','資産','負債','増減','貸借平均','借方合計','貸方合計'];
+    const requiredRowLabels=[
+      '資産の増加を記入する側',
+      '資産の減少を記入する側',
+      '負債の増加を記入する側',
+      '負債の減少を記入する側',
+      '貸借平均の原理：借方合計と貸方合計'
+    ];
+    const rowLabels=rows.map(row=>String(row?.item||''));
+    if(!requiredQuestionTerms.every(term=>questionText.includes(term)))return null;
+    if(!requiredRowLabels.every(label=>rowLabels.includes(label)))return null;
     return {assetIncreaseSide:'借方',assetDecreaseSide:'貸方',liabilityIncreaseSide:'貸方',liabilityDecreaseSide:'借方',balancePrinciple:'一致'};
   }
   if (item?.format === 'fixed-asset-ledger') {
