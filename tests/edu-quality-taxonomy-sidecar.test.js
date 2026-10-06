@@ -115,4 +115,5 @@ assert(!fs.readFileSync('service-worker.js','utf8').includes(ARTIFACT),'service 
 
 const auditCore=require('../scripts/qa/audit-core');
 console.log('ISSUE201_INTEGRITY_DIAGNOSTIC',JSON.stringify(auditCore.currentIntegrityCheck()));
+if(process.env.CI)throw new Error('ISSUE201_DIAGNOSTIC_STOP');
 console.log('ISSUE201_EDU_TAXONOMY_SIDECAR_PASS');
