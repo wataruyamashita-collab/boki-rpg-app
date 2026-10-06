@@ -9,8 +9,8 @@ assert(fs.existsSync(ARTIFACT),'Issue #201 taxonomy sidecar must exist');
 const artifact=JSON.parse(fs.readFileSync(ARTIFACT,'utf8'));
 assert.strictEqual(artifact.schemaVersion,1);
 assert.strictEqual(artifact.syllabusAuthorityVersion,'JCCI_GRADE3_2022_APPLIED_2026');
-assert.strictEqual(artifact.source.mainHead,'5b0799351c2247b33bf47b9d67d7565745b0fd43');
-assert.strictEqual(artifact.source.generation,106);
+assert.strictEqual(artifact.source.mainHead,'d68e08908a3b8aa7dba92abfa121a8c63b684c04');
+assert.strictEqual(artifact.source.generation,108);
 assert.strictEqual(artifact.source.release,'20260924-175');
 
 const sandbox={window:{},console:{log(){},warn(){},error(){}}};
@@ -43,7 +43,7 @@ const transferStatuses=new Set(['GROUP_CONFIRMED','CROSS_GROUP_CONFIRMED','TRANS
 
 assert(artifact.prerequisiteConcepts&&typeof artifact.prerequisiteConcepts==='object');
 const conceptIds=Object.keys(artifact.prerequisiteConcepts);
-assert.strictEqual(conceptIds.length,35,'controlled prerequisite concept count');
+assert.strictEqual(conceptIds.length,36,'controlled prerequisite concept count');
 const conceptSet=new Set(conceptIds);
 for(const [id,deps] of Object.entries(artifact.prerequisiteConcepts)){
   assert(Array.isArray(deps),id+': prerequisite DAG deps array');
@@ -98,8 +98,8 @@ for(const row of artifact.rows){
   if(row.mappingMode==='ITEM_DERIVED')itemDerived.add(row.id);
   if(row.transferStatus==='TRANSFER_REVIEW_REQUIRED')transferReview.add(row.id);
 }
-assert.deepStrictEqual(mappingCounts,{DIRECT:218,MULTI:55,ITEM_DERIVED:27},'mappingMode aggregate');
-assert.deepStrictEqual(cognitiveCounts,{Knowledge:0,Understanding:0,Application:224,'Integrated Judgment':76},'cognitive aggregate');
+assert.deepStrictEqual(mappingCounts,{DIRECT:219,MULTI:54,ITEM_DERIVED:27},'mappingMode aggregate');
+assert.deepStrictEqual(cognitiveCounts,{Knowledge:0,Understanding:1,Application:223,'Integrated Judgment':76},'cognitive aggregate');
 
 const expectedItemDerived=[
   ...Array.from({length:20},(_,i)=>'E'+String(i+1).padStart(3,'0')),
@@ -107,7 +107,7 @@ const expectedItemDerived=[
 ].sort();
 assert.deepStrictEqual([...itemDerived].sort(),expectedItemDerived,'item-derived exceptions');
 
-const expectedTransferReview=['J035','J085','J131','J134','J135','J147','L039','L050','D001','F001'].sort();
+const expectedTransferReview=['J035','J085','J101','J131','J134','J135','J147','L031','L039','L050','D001','F001'].sort();
 assert.deepStrictEqual([...transferReview].sort(),expectedTransferReview,'transfer review candidates');
 
 assert(!fs.readFileSync('index.html','utf8').includes(ARTIFACT),'runtime HTML must not load taxonomy sidecar');
