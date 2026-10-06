@@ -46,6 +46,8 @@ assert.deepStrictEqual(
   'J101 reviewed dividend answer'
 );
 assert.strictEqual(domain.accountType('未払配当金'),'liability','未払配当金 must be a recognized Grade-3 liability');
+const independentGolden=JSON.parse(fs.readFileSync('independent-audit/golden/expected-answers.json','utf8')).answers;
+assert.deepStrictEqual(independentGolden.J101,{debit:[{account:'繰越利益剰余金',amount:300000}],credit:[{account:'未払配当金',amount:300000}]},'J101 independent golden authority');
 
 const accountRule=questions.L031;
 assert.strictEqual(accountRule.type,'ledger');
@@ -63,6 +65,7 @@ assert.deepStrictEqual(
   },
   'L031 reviewed account-rule answers'
 );
+assert.deepStrictEqual(independentGolden.L031,{cells:{assetIncreaseSide:'借方',assetDecreaseSide:'貸方',liabilityIncreaseSide:'貸方',liabilityDecreaseSide:'借方',balancePrinciple:'一致'}},'L031 independent golden authority');
 
 const taxonomy=JSON.parse(fs.readFileSync('reports/edu-quality/question-taxonomy-2026.json','utf8'));
 assert.strictEqual(taxonomy.rows.length,300,'taxonomy remains 300 rows');
@@ -81,7 +84,4 @@ assert.strictEqual(l031.primarySyllabusMapping.code,'P1-3');
 assert.strictEqual(l031.cognitiveLevel,'Understanding');
 assert(l031.explanationLearningObjective.targetConceptIds.includes('FND_DEBIT_CREDIT'));
 
-const runner=require('../scripts/qa/contract-runner');
-const reviewRows=runner.questionReview(questions);
-console.log('ISSUE199_DIRECT_AUDIT_DIAGNOSTIC '+JSON.stringify(reviewRows.filter(row=>['J101','L031'].includes(row.questionId))));
 console.log('ISSUE199_GRADE3_COVERAGE_PASS');
