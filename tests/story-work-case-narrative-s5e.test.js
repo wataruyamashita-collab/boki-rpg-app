@@ -14,6 +14,7 @@ const examIds=new Set(sandbox.window.ExamPoolDefinition||[]);
 const anchors=sandbox.window.AnchorScenes||[];
 const authority=sandbox.window.WorkCaseNarratives;
 const acceptedS5D2=require('./fixtures/story-work-case-s5d2-accepted.json');
+const acceptedS5E=require('./fixtures/story-work-case-s5e-accepted.json');
 
 const s5eIds=[
   'J043',
@@ -29,16 +30,16 @@ assert.strictEqual(s5eIds.length,15,'S5E locked population must remain exactly 1
 assert.strictEqual(allExpected.length,126,'S5E total authority must be exactly 126 entries');
 
 assert.deepStrictEqual(
-  Object.keys(authority).sort(),
+  Object.keys(acceptedS5E).sort(),
   allExpected,
-  'S5E must extend WorkCaseNarratives from exactly 111 accepted entries to exactly 126 entries'
+  'S5E accepted snapshot must cover exactly the 126 locked entries'
 );
-
-for(const [id,before] of Object.entries(acceptedS5D2)){
+for(const [id,before] of Object.entries(acceptedS5E)){
+  assert(authority[id], `${id}: accepted S5E authority entry must remain present during later S5 batches`);
   assert.strictEqual(
-    authority[id]?.before,
+    authority[id].before,
     before,
-    `${id}: S5E must preserve accepted S5D2 Before text byte-for-byte`
+    `${id}: later S5 batches must preserve accepted S5E Before text byte-for-byte`
   );
 }
 
