@@ -31,7 +31,7 @@ for(const q of target){
   assert(!model.transfer.some(item=>/^(?:value\d+|annualA|monthsA|depreciationA|bookA|lossA|annualB|monthsB|depreciationB|bookB)$/u.test(String(item.to||''))),q.id+': no raw input key as transfer destination');
 }
 assert.deepStrictEqual(JSON.parse(JSON.stringify(profiles)),{
-  ledger:23,
+  ledger:22,
   inventory:7,
   fixedAsset:8,
   journalBook:2,
@@ -39,7 +39,8 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(profiles)),{
   cashBook:2,
   pettyCash:1,
   purchaseSales:2,
-  voucher:1
+  voucher:1,
+  accountRule:1
 },'format-specific teaching profile distribution');
 
 for(const id of ['L005','L010','L015','L020','L025','L030','L033','L040']){
