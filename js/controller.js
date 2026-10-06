@@ -54,15 +54,34 @@
         scene?.chapter === question.chapter && scene?.referenceQuestionId === question.id
       );
     }
+    epilogueFactsForScene(scene) {
+      if (scene?.epilogue !== true || !Array.isArray(scene.epilogueFacts)) return [];
+      return scene.epilogueFacts.map(fact => {
+        let value = this.questions?.[fact.questionId]?.answer;
+        for (const key of fact.answerPath || []) value = value?.[key];
+        return Number.isFinite(value)
+          ? { label:fact.label, value, sourceQuestionId:fact.questionId }
+          : null;
+      }).filter(Boolean);
+    }
     renderNarrativeResolution(question, resolved = false) {
       const mode = this.model?.state?.mode;
       if (mode !== 'story') {
-        this.view?.renderNarrativeResult?.([], { mode:mode || 'training', resolved:false });
+        this.view?.renderNarrativeResult?.([], { mode:mode || 'training', resolved:false, epilogueFacts:[] });
         return false;
       }
+      const scenes = Controller.prototype.narrativeScenesForQuestion.call(this, question);
+      const epilogueScene = scenes.find(scene => scene.epilogue === true);
+      const isResolved = resolved === true;
       return this.view?.renderNarrativeResult?.(
-        Controller.prototype.narrativeScenesForQuestion.call(this, question),
-        { mode, resolved:resolved === true }
+        scenes,
+        {
+          mode,
+          resolved:isResolved,
+          epilogueFacts:isResolved && epilogueScene
+            ? Controller.prototype.epilogueFactsForScene.call(this, epilogueScene)
+            : []
+        }
       ) || false;
     }
     static accountChoices(question, correct, mode = 'story') {

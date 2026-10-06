@@ -16354,9 +16354,16 @@ const AnchorScenes = Object.freeze([
     "place": "取締役会当日の経理室",
     "stakeholder": "社長",
     "before": "最後の資料を読み、現金の動きと会社の成果を分けて説明します。これが一年間の最終報告です。",
-    "after": "社長は「やっと、うちの会社が見えた」と答えます。水野先輩は最後まで主人公の説明に口を挟みませんでした。",
+    "after": "入社初日は一枚の追加出資資料から始まりました。今、主人公は一年分の数字を自分の言葉で説明し、社長は「やっと、うちの会社が見えた」と答えます。水野先輩は最後まで口を挟みませんでした。",
     "hook": "席へ戻ると、入社初日に扱った追加出資の資料がファイルの先頭にあります。次に新人が来るなら、今度は主人公が最初の一枚を渡す側です。",
     "dialogue": "社長「やっと、うちの会社が見えた。」",
+    "protagonistStatement": "あなたは社長へ伝えます。「現金の動きと利益は同じではありません。取引の根拠を積み上げれば、会社の成果と財政状態を分けて説明できます。」",
+    "epilogueFacts": Object.freeze([
+      Object.freeze({label:"当期純利益",questionId:"J050",answerPath:Object.freeze(["credit",0,"amount"])}),
+      Object.freeze({label:"年度末資産合計",questionId:"F005",answerPath:Object.freeze(["cells","assetsTotal"])}),
+      Object.freeze({label:"3月末現金",questionId:"C005",answerPath:Object.freeze(["cells","endingCash"])}),
+      Object.freeze({label:"3月利益",questionId:"C005",answerPath:Object.freeze(["cells","profit"])})
+    ]),
     "protagonistResponsibility": "一年の会計成果を自分の言葉で最終報告する",
     "mizunoRelationshipStage": "Silent witness",
     "learningObjective": "一年の取引・決算・財務諸表を統合して説明する",
@@ -16840,9 +16847,14 @@ Object.values(QuestionData).forEach(item => {
   item.bossCase = isStoryEligible && chapterPosition === storyCount - 1;
   item.workResult = `${item.category}の処理結果`;
   const authoredWorkCase = isStoryEligible ? WorkCaseNarratives[item.id] : null;
-  item.story = authoredWorkCase
-    ? `${authoredWorkCase.before}〔調査 ${chapterPosition + 1}/${storyCount}〕`
-    : `${ReaderFacingBeats[phase](arc, item, instruction, item.bossCase)}${isStoryEligible ? `〔調査 ${chapterPosition + 1}/${storyCount}〕` : `〔評価資料 ${item.caseNumber}〕`}`;
+  const finalEpilogueScene = isStoryEligible
+    ? AnchorScenes.find(scene => scene.epilogue === true && scene.referenceQuestionId === item.id)
+    : null;
+  item.story = finalEpilogueScene
+    ? `${finalEpilogueScene.before}〔最終報告〕`
+    : authoredWorkCase
+      ? `${authoredWorkCase.before}〔調査 ${chapterPosition + 1}/${storyCount}〕`
+      : `${ReaderFacingBeats[phase](arc, item, instruction, item.bossCase)}${isStoryEligible ? `〔調査 ${chapterPosition + 1}/${storyCount}〕` : `〔評価資料 ${item.caseNumber}〕`}`;
   // The prose stored with each question is reviewed teaching content.  Never
   // replace it with the generic fallback merely because runtime metadata was
   // added above; the fallback exists only for genuinely unauthored questions.

@@ -1003,7 +1003,13 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .narrative-result p { margin: 0; line-height: 1.7; }
 .narrative-result-hook-label { display: block; margin-top: 10px; font-size: .85rem; }
 .narrative-result-hook { margin-top: 3px; color: #44515a; }
-.narrative-result-epilogue { border-width: 2px; }
+.narrative-result-epilogue { border-width: 2px; padding: 16px; }
+.narrative-result-epilogue-statement { margin-top: 12px !important; font-weight: 700; }
+.narrative-result-epilogue-summary { margin-top: 14px; padding: 12px; border: 1px solid #cfd8dc; border-radius: 10px; }
+.narrative-result-epilogue-summary h3 { margin: 0 0 8px; font-size: .95rem; }
+.narrative-result-epilogue-summary ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.narrative-result-epilogue-summary li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.narrative-result-epilogue-summary li > * { min-width: 0; overflow-wrap: anywhere; }
 
 .explanation-box {
   margin-top: 20px;
