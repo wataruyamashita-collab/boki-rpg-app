@@ -17,7 +17,7 @@ function validate(){
   if(new Set(rows.map(r=>r.id)).size!==300)throw new Error('taxonomy IDs must be unique');
   if(JSON.stringify(rows.map(r=>r.id).sort())!==JSON.stringify(ids))throw new Error('taxonomy IDs must exactly match QuestionData');
   const concepts=artifact.prerequisiteConcepts||{};
-  if(Object.keys(concepts).length!==35)throw new Error('prerequisite concept count must be 35');
+  if(Object.keys(concepts).length!==36)throw new Error('prerequisite concept count must be 36');
   const conceptSet=new Set(Object.keys(concepts));
   const visiting=new Set(),done=new Set();
   const visit=id=>{if(visiting.has(id))throw new Error('prerequisite DAG cycle '+id);if(done.has(id))return;visiting.add(id);for(const dep of concepts[id]||[]){if(!conceptSet.has(dep))throw new Error('unknown prerequisite dependency '+dep);visit(dep);}visiting.delete(id);done.add(id);};
