@@ -1,9 +1,63 @@
 (function (root) {
   'use strict';
-  const CONTENT_REVISION = 3;
+  const CONTENT_REVISION = 4;
+  // These identities describe the two reviewed semantic replacements, not a release
+  // timestamp. A later replacement requires an explicit new identity/migration.
+  const CONTENT_IDENTITIES = Object.freeze({
+    J051: Object.freeze({ category:'剰余金の配当', type:'journal', identity:'J051:dividend-declaration-v1' }),
+    L031: Object.freeze({ category:'勘定記入法則', type:'ledger', identity:'L031:account-entry-rules-v1' })
+  });
+  const cloneContent = value => JSON.parse(JSON.stringify(value));
+  const emptyContentArchive = () => ({ schemaVersion:1, questions:{}, reviewAssignments:{}, completed:null });
   const LEARNING_SCHEMA_VERSION = 2;
   const FIXED_ASSET_SCHEMA_REVISION_2_IDS = new Set(['L005','L010','L015','L020','L025','L030','L033','L040']);
   class ProgressModel {
+    static currentContentVersions(questions = {}) {
+      return Object.fromEntries(Object.entries(CONTENT_IDENTITIES).filter(([id, spec]) =>
+        questions[id]?.category === spec.category && questions[id]?.type === spec.type).map(([id, spec]) => [id, spec.identity]));
+    }
+    static validContentMetadata(value, questions = {}) {
+      const plain = item => item && typeof item === 'object' && !Array.isArray(item);
+      const fields = ['questionContentVersions','contentMigrationArchive','contentRecheckIds'];
+      if ((value.contentRevision || 1) < 4) return fields.every(key => value[key] === undefined);
+      const versions = ProgressModel.currentContentVersions(questions);
+      if (!plain(value.questionContentVersions) || Object.keys(value.questionContentVersions).length !== Object.keys(versions).length ||
+          Object.keys(versions).some(id => value.questionContentVersions[id] !== versions[id])) return false;
+      if (!Array.isArray(value.contentRecheckIds) || new Set(value.contentRecheckIds).size !== value.contentRecheckIds.length ||
+          value.contentRecheckIds.some(id => !Object.hasOwn(versions, id))) return false;
+      const archive = value.contentMigrationArchive;
+      if (!plain(archive) || archive.schemaVersion !== 1 || !plain(archive.questions) || !plain(archive.reviewAssignments) ||
+          !(archive.completed === null || typeof archive.completed === 'boolean')) return false;
+      const probe = Object.create(ProgressModel.prototype);
+      for (const [id, item] of Object.entries(archive.questions)) {
+        if (!Object.hasOwn(versions, id) || !plain(item) || item.toIdentity !== versions[id] ||
+            !Number.isSafeInteger(item.fromRevision) || item.fromRevision < 1 || item.fromRevision > 3 ||
+            !(item.questionStats === null || probe.validQuestionStats(item.questionStats)) ||
+            !Array.isArray(item.attempts) || item.attempts.some(attempt => !plain(attempt) || (attempt.questionId || attempt.id) !== id || typeof attempt.correct !== 'boolean') ||
+            !plain(item.flags) || ['answered','correct','incorrect'].some(key => typeof item.flags[key] !== 'boolean') ||
+            !(item.draft === null || plain(item.draft)) || !(item.reviewSchedule === null || plain(item.reviewSchedule)) ||
+            !(item.mistakeCount === null || (Number.isSafeInteger(item.mistakeCount) && item.mistakeCount > 0)) ||
+            typeof item.provenComplete !== 'boolean') return false;
+      }
+      for (const [id, assignment] of Object.entries(archive.reviewAssignments)) {
+        if (!questions[id] || !plain(assignment) || assignment.sourceQuestionId !== id || !questions[assignment.reviewQuestionId]) return false;
+      }
+      if (value.contentRecheckIds.some(id => !Object.hasOwn(archive.questions, id))) return false;
+      if (!Array.isArray(value.attempts) || value.attempts.some(attempt => {
+        const id = attempt?.questionId || attempt?.id;
+        return Object.hasOwn(versions, id) && attempt.contentIdentity !== versions[id];
+      })) return false;
+      return true;
+    }
+    static prepareBackupState(value, questions = {}) {
+      if (!ProgressModel.validateBackupState(value, questions)) return null;
+      // Run migration before either real storage key is touched. The controller's
+      // existing two-key transaction retains rollback ownership.
+      let bytes = JSON.stringify(value);
+      const isolated = { getItem:() => bytes, setItem:(_key, next) => { bytes = next; return true; } };
+      const model = new ProgressModel(questions, isolated, 'backup-migration');
+      return !model.storageWriteBlocked && ProgressModel.validateBackupState(model.state, questions) ? cloneContent(model.state) : null;
+    }
     static validateBackupState(value, questions = {}) {
       const plain = item => item && typeof item === 'object' && !Array.isArray(item);
       const finite = number => typeof number === 'number' && Number.isFinite(number);
@@ -12,7 +66,7 @@
         (Array.isArray(item) && item.every(safeValue)) || (plain(item) && Object.keys(item).every(key => !dangerousKeys.has(key) && safeValue(item[key])));
       const knownId = id => typeof id === 'string' && Boolean(questions[id]);
       const idList = item => Array.isArray(item) && item.every(knownId);
-      if (!plain(value) || !safeValue(value)) return false;
+      if (!plain(value) || !safeValue(value) || !ProgressModel.validContentMetadata(value, questions)) return false;
       const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
       if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
       if (value.contentRevision !== undefined && !(Number.isSafeInteger(value.contentRevision) && value.contentRevision >= 1 && value.contentRevision <= CONTENT_REVISION)) return false;
@@ -58,20 +112,24 @@
     }
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
-      this.state = { contentRevision:CONTENT_REVISION, learningSchemaVersion:LEARNING_SCHEMA_VERSION, lastLearningAt:0, learningContinuityState:{ activeDayKeys:[], today:null }, questionStats:{}, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state = { contentRevision:CONTENT_REVISION, questionContentVersions:ProgressModel.currentContentVersions(this.questions), contentMigrationArchive:emptyContentArchive(), contentRecheckIds:[], learningSchemaVersion:LEARNING_SCHEMA_VERSION, lastLearningAt:0, learningContinuityState:{ activeDayKeys:[], today:null }, questionStats:{}, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.load();
     }
     load() {
       try {
         const saved = JSON.parse(this.storage?.getItem?.(this.key));
         if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
-          if (Number.isSafeInteger(saved.contentRevision) && saved.contentRevision > CONTENT_REVISION) return;
+          // Never overwrite a future or malformed versioned state with defaults.
+          if ((Number.isSafeInteger(saved.contentRevision) && saved.contentRevision > CONTENT_REVISION) ||
+              !ProgressModel.validContentMetadata(saved, this.questions)) {
+            this.storageWriteBlocked = true; return;
+          }
           const savedContentRevision = Number.isSafeInteger(saved.contentRevision) ? saved.contentRevision : 1;
           const needsRevision2Migration = savedContentRevision < 2;
           const needsRevision3Migration = savedContentRevision < 3;
           const needsContentMigration = savedContentRevision < CONTENT_REVISION;
           const savedLearningSchemaVersion = Number.isSafeInteger(saved.learningSchemaVersion) ? saved.learningSchemaVersion : 0;
-          if (savedLearningSchemaVersion > LEARNING_SCHEMA_VERSION) return;
+          if (savedLearningSchemaVersion > LEARNING_SCHEMA_VERSION) { this.storageWriteBlocked = true; return; }
           const hasLearningSchemaV1 = savedLearningSchemaVersion >= 1;
           const needsLearningMigration = savedLearningSchemaVersion < LEARNING_SCHEMA_VERSION;
           const migratedDrafts = saved.drafts && typeof saved.drafts === 'object' && !Array.isArray(saved.drafts)
@@ -125,9 +183,74 @@
           lastExamReview: saved.lastExamReview && typeof saved.lastExamReview === 'object' ? saved.lastExamReview : null
           });
           if (incompatibleExam && this.state.mode === 'exam') this.state.mode = 'story';
+          if (savedContentRevision < 4) this.migrateContentIdentity(savedContentRevision, hasLearningSchemaV1 ? saved.questionStats : null);
           if (needsContentMigration || needsLearningMigration) this.save();
         }
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
+    }
+    migrateContentIdentity(fromRevision, savedQuestionStats) {
+      const state = this.state, versions = ProgressModel.currentContentVersions(this.questions);
+      const archive = emptyContentArchive(), complete = new Set();
+      const statsKeys = ['correctCount','incorrectCount','correctStreak','incorrectStreak','lastResult','lastAnsweredAt'];
+      const changed = new Set(Object.keys(versions));
+      for (const id of changed) {
+        const original = state.attempts.filter(item => (item.questionId || item.id) === id);
+        const current = original.filter(item => (item.contentIdentity === undefined || item.contentIdentity === versions[id]) &&
+          item.category === this.questions[id].category && item.concept === this.questions[id].category &&
+          Number.isFinite(item.timestamp ?? item.at) && (item.timestamp ?? item.at) >= 0);
+        const derived = this.aggregateQuestionStats(current)[id];
+        // Only an original lifetime aggregate can corroborate a complete log.
+        // Reaggregating that same rolling log would be circular provenance.
+        const oldStats = this.validQuestionStats(savedQuestionStats?.[id]) ? savedQuestionStats[id] : null;
+        const provenComplete = Boolean(derived && current.length === original.length && oldStats &&
+          statsKeys.every(key => oldStats[key] === derived[key]));
+        if (provenComplete) complete.add(id);
+        const flags = { answered:state.answeredIds.includes(id), correct:state.correctIds.includes(id), incorrect:state.incorrectIds.includes(id) };
+        const hasEvidence = oldStats || original.length || Object.values(flags).some(Boolean) ||
+          state.drafts[id] || state.reviewSchedule[id] || state.mistakeCounts[id];
+        if (hasEvidence) {
+          archive.questions[id] = cloneContent({ toIdentity:versions[id], fromRevision, questionStats:oldStats,
+            attempts:original, flags, draft:state.drafts[id] || null, reviewSchedule:state.reviewSchedule[id] || null,
+            mistakeCount:state.mistakeCounts[id] || null, provenComplete });
+        }
+        // A shared journal shape does not prove which content an unversioned draft
+        // belongs to. L031 has disjoint old/new input keys, so schema is sufficient.
+        const draft = state.drafts[id];
+        const inputKeys = new Set((this.questions[id].table?.inputCells || []).map(cell => typeof cell === 'string' ? cell : cell.key));
+        const compatibleDraft = id === 'L031' && draft?.cells && Object.keys(draft.cells).length > 0 &&
+          Object.keys(draft.cells).every(key => inputKeys.has(key));
+        if (!compatibleDraft) delete state.drafts[id];
+        if (!provenComplete) {
+          if (derived) state.questionStats[id] = derived; else delete state.questionStats[id];
+          for (const key of ['answeredIds','correctIds','incorrectIds']) state[key] = state[key].filter(value => value !== id);
+          if (current.length) state.answeredIds.push(id);
+          if (current.some(item => item.correct)) state.correctIds.push(id);
+          if (current.some(item => !item.correct)) state.incorrectIds.push(id);
+          delete state.mistakeCounts[id];
+          if (derived?.incorrectCount) state.mistakeCounts[id] = derived.incorrectCount;
+          const schedule = state.reviewSchedule[id];
+          delete state.reviewSchedule[id];
+          if (schedule && derived) state.reviewSchedule[id] = { stage:0, dueAt:derived.lastAnsweredAt + 20 * 60 * 1000 };
+        }
+        // Lifetime effort is kept in learningContinuityState and in the archive;
+        // recent accuracy/adaptation must not consume obsolete-content attempts.
+        const confirmed = new Set(current);
+        state.attempts = state.attempts.filter(item => (item.questionId || item.id) !== id || confirmed.has(item))
+          .map(item => (item.questionId || item.id) === id ? { ...item, contentIdentity:versions[id] } : item);
+      }
+      for (const [sourceId, assignment] of Object.entries(state.reviewAssignments)) {
+        const targetId = assignment.reviewQuestionId;
+        if (!changed.has(sourceId) && !changed.has(targetId)) continue;
+        const source = this.questions[sourceId], target = this.questions[targetId], schedule = state.reviewSchedule[sourceId];
+        const safe = (!changed.has(sourceId) || complete.has(sourceId)) && (!changed.has(targetId) || complete.has(targetId)) &&
+          assignment.conceptId === source.category && target.category === source.category &&
+          schedule && assignment.stage === schedule.stage && assignment.dueAt === schedule.dueAt;
+        if (!safe) { archive.reviewAssignments[sourceId] = cloneContent(assignment); delete state.reviewAssignments[sourceId]; }
+      }
+      if (state.completed && !this.practicalEvidencePassed()) { archive.completed = true; state.completed = false; }
+      state.questionContentVersions = versions;
+      state.contentMigrationArchive = archive;
+      state.contentRecheckIds = Object.keys(archive.questions).filter(id => !complete.has(id));
     }
     validQuestionStats(item) {
       return item && typeof item === 'object' && !Array.isArray(item) &&
@@ -362,7 +485,7 @@
         typeof score.correct === 'boolean' && Number.isFinite(score.earned) && Number.isFinite(score.possible) &&
         Number.isFinite(score.ratio) && score.earned >= 0 && score.possible > 0 && score.earned <= score.possible && score.ratio >= 0 && score.ratio <= 1);
     }
-    save() { try { return this.storage?.setItem?.(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
+    save() { if (this.storageWriteBlocked) return false; try { return this.storage?.setItem?.(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
     setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; return this.save(); }
     clearDraft(id) { if (!this.questions[id]) return false; delete this.state.drafts[id]; return this.save(); }
     clearDrafts(ids) { if (!Array.isArray(ids)) return false; ids.filter(id => this.questions[id]).forEach(id => { delete this.state.drafts[id]; }); return this.save(); }
@@ -386,6 +509,7 @@
         this.state.incorrectIds = this.state.incorrectIds.filter(value => value !== id);
         this.state.reviewSchedule[id] = { stage:0, dueAt:now + intervals[0] };
       }
+      if (correct === true) this.state.contentRecheckIds = this.state.contentRecheckIds.filter(value => value !== id);
       delete this.state.drafts[id]; this.save(); return true;
     }
     dueReviewIds(now = Date.now()) {
@@ -396,7 +520,7 @@
       const schedule = this.state.reviewSchedule[sourceQuestionId];
       if (!this.questions[sourceQuestionId] || !this.questions[reviewQuestionId] || !schedule) return null;
       const current = this.state.reviewAssignments[sourceQuestionId];
-      if (current && current.status === 'assigned' && current.stage === schedule.stage && current.dueAt === schedule.dueAt && this.questions[current.reviewQuestionId]) return current;
+      if (current && current.status === 'assigned' && current.stage === schedule.stage && current.dueAt === schedule.dueAt && current.reviewQuestionId === reviewQuestionId && current.conceptId === (this.questions[sourceQuestionId].category || '') && this.questions[current.reviewQuestionId]) return current;
       const assignment = { sourceQuestionId, reviewQuestionId, conceptId:this.questions[sourceQuestionId].category || '', stage:schedule.stage, dueAt:schedule.dueAt, assignedAt:now, status:'assigned' };
       this.state.reviewAssignments[sourceQuestionId] = assignment; this.save(); return assignment;
     }
@@ -414,7 +538,7 @@
     }
     recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now(), reviewStage = null, confidence = 'unsure') {
       if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0 || !Number.isFinite(now) || now < 0) return false;
-      this.state.attempts.push({ questionId:id, id, concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now });
+      this.state.attempts.push({ questionId:id, id, ...(this.state.questionContentVersions[id] ? { contentIdentity:this.state.questionContentVersions[id] } : {}), concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now });
       this.state.attempts = this.state.attempts.slice(-200);
       this.recordLearningContinuity(id, correct, delayedSuccess === true, now);
       this.applyQuestionStat(this.state.questionStats, id, correct, now);
@@ -537,15 +661,14 @@
       this.save(); return true;
     }
     resetPlacement() { this.state.placement = null; this.save(); }
-    updateCompletion(rpg) {
-      const passedExams = this.state.examHistory.filter(item => item.points >= 70 && item.setSignature).map(item => item.setSignature);
+    practicalEvidencePassed() {
       const practicalTypes = ['ledger','worksheet','financial_statement','comprehensive'];
       // Graduation represents repeatable competence, not one lucky answer in each
       // format.  IDs are de-duplicated on load, but use a Set here as a final
       // defensive boundary for callers that construct state in memory.
       const correctEvidence = new Set(this.state.correctIds);
       const minimumEvidencePerType = 3;
-      const practicalPassed = practicalTypes.every(type => {
+      return practicalTypes.every(type => {
         const distinctCorrect = [...correctEvidence].map(id => this.questions[id]).filter(question => question?.type === type);
         // Repeated numeric variants must not masquerade as breadth.  Require both
         // three independent answers and two accounting structures (category plus
@@ -554,6 +677,10 @@
           `${question.category || 'uncategorized'}::${question.variantGroup || question.format || 'base'}`));
         return distinctCorrect.length >= minimumEvidencePerType && structures.size >= 2;
       });
+    }
+    updateCompletion(rpg) {
+      const passedExams = this.state.examHistory.filter(item => item.points >= 70 && item.setSignature).map(item => item.setSignature);
+      const practicalPassed = this.practicalEvidencePassed();
       const masteryPassed = ['仕訳','帳簿','決算整理','財務諸表'].every(skill => rpg?.skillMastery?.(skill) >= .7);
       this.state.completed = practicalPassed && masteryPassed && new Set(passedExams).size >= 2;
       this.save(); return this.state.completed;
