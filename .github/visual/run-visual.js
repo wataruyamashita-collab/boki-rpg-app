@@ -149,7 +149,8 @@ async function measure(page, caseName) {
     const computedCell = representativeCell instanceof Element ? getComputedStyle(representativeCell) : null;
     const borderTop = computedCell ? parseFloat(computedCell.borderTopWidth) : 0, borderBottom = computedCell ? parseFloat(computedCell.borderBottomWidth) : 0;
     const paddingTop = computedCell ? parseFloat(computedCell.paddingTop) : 0, paddingBottom = computedCell ? parseFloat(computedCell.paddingBottom) : 0;
-    const inputHeight = rect(editableRow?.querySelector('input,select'))?.height || 0;
+    const controlHeights = window.visualInputContracts.controlHeights(editableRow ? [...editableRow.querySelectorAll('input,select')].map(control => rect(control).height) : []);
+    const inputHeight = controlHeights.maximum;
     const lineHeight = computedCell ? parseFloat(computedCell.lineHeight) || parseFloat(computedCell.fontSize) * 1.2 : 0;
     const headerRow = isJournal ? wrapper.querySelector('.journal-header') : table.tHead?.rows?.[0];
     let journalBookInteraction = null;
@@ -179,7 +180,7 @@ async function measure(page, caseName) {
       questionId:document.body.dataset.questionId,
       table:{ ...dimensions(table),wrapper:dimensions(wrapper),horizontalOverflow:Math.max(0,(table?.scrollWidth || 0)-(wrapper?.clientWidth || 0)),requiresHorizontalScroll:(table?.scrollWidth || 0)>(wrapper?.clientWidth || 0),horizontalScrollAvailable:getComputedStyle(wrapper).overflowX !== 'visible',clipped:(wrapper?.scrollWidth || 0) < (table?.scrollWidth || 0) },
       columns,
-      rows:{ headerRowHeight:rect(headerRow)?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,journalRowHeight:isJournal ? rect(editableRow)?.height || 0 : 0,inputVisualHeight:inputHeight,hasEditableControl:Boolean(editableRow?.querySelector('input,select')),controlCount:table.querySelectorAll('input,select').length,headerCellCount:table.tHead?.rows?.[0]?.cells?.length || 0,journalBookAmountContextCount:isJournalBook ? table.querySelectorAll('.journal-book-amount-context').length : 0,journalBookFolioHelpCount:isJournalBook ? document.querySelectorAll('#journal-book-folio-help').length : 0,journalBookScrollNoteVisible:isJournalBook ? getComputedStyle(requireElement(document.querySelector('.journal-book-scroll-note'), 'scroll-guidance')).display !== 'none' : false,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom },
+      rows:{ headerRowHeight:rect(headerRow)?.height || 0,normalRowHeight:rect(normalRow)?.height || 0,editableRowHeight:rect(editableRow)?.height || 0,journalRowHeight:isJournal ? rect(editableRow)?.height || 0 : 0,inputVisualHeight:controlHeights.minimum,maximumControlHeight:controlHeights.maximum,hasEditableControl:Boolean(editableRow?.querySelector('input,select')),controlCount:table.querySelectorAll('input,select').length,headerCellCount:table.tHead?.rows?.[0]?.cells?.length || 0,journalBookAmountContextCount:isJournalBook ? table.querySelectorAll('.journal-book-amount-context').length : 0,journalBookFolioHelpCount:isJournalBook ? document.querySelectorAll('#journal-book-folio-help').length : 0,journalBookScrollNoteVisible:isJournalBook ? getComputedStyle(requireElement(document.querySelector('.journal-book-scroll-note'), 'scroll-guidance')).display !== 'none' : false,paddingTop:computedCell?.paddingTop || null,paddingBottom:computedCell?.paddingBottom || null,borderTop,borderBottom,totalTableHeight:rect(table)?.height || 0,expectedNormalRowHeight:Math.max(lineHeight,inputHeight)+paddingTop+paddingBottom+borderTop+borderBottom,expectedEditableRowHeight:inputHeight+paddingTop+paddingBottom+borderTop+borderBottom },
       sticky:{ viewportWidth:wrapper.clientWidth,scrollLeft:wrapper.scrollLeft,contextWidth:parseFloat(getComputedStyle(table).getPropertyValue('--sticky-context-width')) || 0 },
       journalBookInteraction
     };
@@ -198,6 +199,7 @@ async function run() {
         for (const caseName of cases) {
           activeContext = { phase:'representative-smoke',browser:browserName,viewport:{ width:390,height:844 },case:caseName };
           const page = await browser.newPage({ viewport:activeContext.viewport });
+          await page.addInitScript({ path:path.join(__dirname,'input-contracts.js') });
           try {
             await page.goto(url);
             const dependencies = await page.evaluate(() => window.visualHarness.assertDependencies());
@@ -209,6 +211,7 @@ async function run() {
           for (const caseName of ['fixed-asset',...(viewport.width <= 430 ? ['inventory','ledger','journal-book','notes-register','general-ledger','inventory-ledger','voucher'] : []),...(viewport.width === 390 ? ['journal','worksheet'] : [])]) {
             activeContext = { phase:'observation',browser:browserName,viewport,case:caseName };
             const page = await browser.newPage({ viewport });
+            await page.addInitScript({ path:path.join(__dirname,'input-contracts.js') });
             try {
               await page.goto(url); await page.evaluate(() => window.visualHarness.assertDependencies());
               const representative = await page.evaluate(name => window.visualHarness.render(name), caseName);
