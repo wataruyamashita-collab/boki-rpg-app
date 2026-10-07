@@ -1,28 +1,120 @@
-name: Issue207 repair transport verification
+name: Issue207 exact repair validation
 on:
   push:
     branches: [qa/pr205-exact-head-diagnostic-20261007]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  verify-transport:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
+          path: driver
           persist-credentials: false
-      - uses: actions/upload-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          name: issue207-repair-carrier
-          path: issue207-repair-*.b64
-          retention-days: 7
-      - name: Check transport without applying any code
+          path: candidate
+          ref: 04b2f27c7dce31ace0f6f33fd27bf8431036c3a4
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Decode hash-checked repair and create canonical successor
+        working-directory: candidate
         run: |
+          test "$(git rev-parse HEAD)" = 04b2f27c7dce31ace0f6f33fd27bf8431036c3a4
+          git diff --exit-code
           python3 - <<'PY'
           import pathlib,base64,gzip,hashlib
-          text=''.join(''.join(pathlib.Path(f'issue207-repair-{n}.b64').read_text().split()) for n in (1,2,3))
+          text=''.join(''.join(pathlib.Path(f'../driver/issue207-repair-{n}.b64').read_text().split()) for n in (1,2,3))
+          corrections=[[500,501,'3','7'],[561,562,'Y',''],[1732,1732,'','BGdG2abn/hh'],[1971,1971,'','L'],[1972,1973,'K',''],[1988,1990,'YF','R'],[2816,2818,'Hz',''],[11469,11469,'','1f'],[11815,11816,'1','87v98a7fH/S6g37X6+z5nfwQSo33Or3dsRd0g2']]
+          for start,end,old,new in reversed(corrections):
+              assert text[start:end]==old
+              text=text[:start]+new+text[end:]
           raw=gzip.decompress(base64.b64decode(text,validate=True))
           assert hashlib.sha256(raw).hexdigest()=='a69e8b763c1d487ad445080b1d7e9d6912a8140d1173ee50671f08e0f7f7b850'
-          print('TRANSPORT_SHA256_VERIFIED')
+          pathlib.Path('../repair.patch').write_bytes(raw)
+          print('EXACT_PATCH_SHA256_VERIFIED')
           PY
+          git apply --check --unidiff-zero ../repair.patch
+          git apply --unidiff-zero ../repair.patch
+          node - <<'JS'
+          const fs=require('fs'),assert=require('assert'),l=require('./scripts/qa/phase-b-lifecycle');
+          const c=l.createCandidate();assert.strictEqual(c.generation,118);assert(l.verifyCandidate(c).ok);
+          assert.strictEqual(c.auditHash,'69c197ef727465bead71f1eee3bba8c30b860e39ecacfdd6e17f2990a5ec1dcf');
+          assert.strictEqual(c.baselineIdentity,'a4802bbf6823196a613330c0a44ab47340775306e1ce0d4d525cb050fcab7f04');
+          fs.writeFileSync('reports/auto-gate/audit-locks/phase-b-generation-118.json',JSON.stringify(c,null,2)+'\n',{flag:'wx'});
+          for(const a of l.generationAuthorities())assert(fs.readFileSync(a.file).equals(a.bytes),a.file);
+          console.log('GENERATION118_CANDIDATE_VERIFIED');
+          JS
+          git diff --check
+          npm ci
+      - name: Mandatory precommit verify
+        working-directory: candidate
+        run: |
+          set +e
+          npm run verify > "$RUNNER_TEMP/issue207-verify.log" 2>&1
+          result=$?
+          tail -n 30 "$RUNNER_TEMP/issue207-verify.log"
+          exit "$result"
+      - name: Install pinned CI browser dependencies
+        working-directory: candidate
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+      - name: Real browser migration and reload checks
+        working-directory: candidate
+        run: node .github/visual/run-content-progress-migration.js
+      - name: Store verified objects only without updating any branch
+        working-directory: candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node - <<'JS'
+          const fs=require('fs'),assert=require('assert'),cp=require('child_process'),crypto=require('crypto');
+          const expected={
+            '.github/visual/run-content-progress-migration.js':'0d570697bc8b8d1a7d77ed2888b450e80e314791',
+            '.github/workflows/visual-gate.yml':'cd697196ba21ab789785d2fe2434504b04eb338a',
+            'independent-audit/tests/generation-immutability.test.js':'448bef147325a9e7951803680b569b8fb41f1674',
+            'index.html':'3b56857bdd1a02814e714d33121b81e083a70a19',
+            'js/controller.js':'4dbfaa3c23ab3399a2a7ab955fe5e40a37447f57',
+            'js/model.js':'c6514a70f6961886bda0d157283563ad0157e7c0',
+            'package.json':'8d2d14d82fa8657496b5814f6fdd2f25b87b1799',
+            'pwa-release-manifest.json':'0f358870cbc79d5b674e6de4163b224f1de82712',
+            'reports/auto-gate/audit-locks/phase-b-generation-118.json':'090a47731f279986a4b7c05a5e8203af926868b0',
+            'service-worker.js':'8b1176425bc3cf8b855963530a01a4956ae60011',
+            'tests/content-progress-integration.test.js':'5a565ab046af8ced8b08a1e7fef8471653740201',
+            'tests/content-progress-migration.test.js':'a9ed8b98f405a86b072027c7422c7d530a3e61ea',
+            'tests/fixed-asset-ledger.test.js':'9f994253bf2e7d45ebb8287ff9014b513bf50c6b',
+            'tests/helpers/issue207-fixtures.js':'6e41e0778410d9c015abc9aa6dbdc3fe21a1ce5c'
+          };
+          const l=require('./scripts/qa/phase-b-lifecycle');
+          for(const a of l.generationAuthorities())assert(fs.readFileSync(a.file).equals(a.bytes),a.file);
+          assert(l.verifyCandidate(JSON.parse(fs.readFileSync('reports/auto-gate/audit-locks/phase-b-generation-118.json'))).ok);
+          cp.execFileSync('git',['add','--',...Object.keys(expected)]);
+          cp.execFileSync('git',['diff','--exit-code']);cp.execFileSync('git',['diff','--cached','--check']);
+          const tree=cp.execFileSync('git',['write-tree'],{encoding:'utf8'}).trim();
+          assert.strictEqual(tree,'173d5c747353183b9a57f9effc3fb0f677c1c664');
+          (async()=>{
+            const blobs=[];
+            for(const [path,sha] of Object.entries(expected)){
+              const bytes=fs.readFileSync(path);
+              const actual=crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+bytes.length+'\0'),bytes])).digest('hex');assert.strictEqual(actual,sha,path);
+              const response=await fetch('https://api.github.com/repos/wataruyamashita-collab/boki-rpg-app/git/blobs',{method:'POST',headers:{Authorization:'Bearer '+process.env.GH_TOKEN,Accept:'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},body:JSON.stringify({content:bytes.toString('base64'),encoding:'base64'})});
+              if(!response.ok)throw new Error('Blob storage failed: '+response.status);
+              const result=await response.json();assert.strictEqual(result.sha,sha,path);blobs.push({path,sha});
+            }
+            console.log('ISSUE207_VERIFIED_TREE '+tree);console.log('ISSUE207_VERIFIED_BLOBS '+JSON.stringify(blobs));
+          })().catch(error=>{console.error(error.stack);process.exitCode=1;});
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue207-prepublication-validation
+          path: |
+            ${{ runner.temp }}/issue207-verify.log
+            candidate/artifacts/content-progress-migration
+          retention-days: 14
