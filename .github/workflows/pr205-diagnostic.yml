@@ -24,14 +24,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "0619ec7b591ab09a39cacf86c1ae923f74a56d5c"
           git diff --exit-code
           git rev-parse HEAD HEAD^{tree}
-      - name: Reproduce qa test failure without publishing changes
-        id: reproduction
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          npm run qa:test 2>&1 | tee "$RUNNER_TEMP/pr205-qa-test.log"
-      - name: Package tracked source and installed dependencies
-        if: always()
+      - name: Package exact tracked source, history and installed dependencies
         run: |
           mkdir -p "$RUNNER_TEMP/pr205-workspace"
           git archive HEAD | tar -x -C "$RUNNER_TEMP/pr205-workspace"
@@ -39,13 +32,23 @@ jobs:
           git rev-parse HEAD > "$RUNNER_TEMP/pr205-workspace/VERIFIED_HEAD.txt"
           git rev-parse HEAD^{tree} > "$RUNNER_TEMP/pr205-workspace/VERIFIED_TREE.txt"
           git ls-tree -r HEAD > "$RUNNER_TEMP/pr205-workspace/VERIFIED_GIT_TREE.txt"
+          git bundle create "$RUNNER_TEMP/pr205-exact-head.bundle" HEAD
           tar -czf "$RUNNER_TEMP/pr205-workspace.tar.gz" -C "$RUNNER_TEMP/pr205-workspace" .
-          sha256sum "$RUNNER_TEMP/pr205-workspace.tar.gz"
+          sha256sum "$RUNNER_TEMP/pr205-workspace.tar.gz" "$RUNNER_TEMP/pr205-exact-head.bundle"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr205-exact-head-workspace-history
+          path: |
+            ${{ runner.temp }}/pr205-workspace.tar.gz
+            ${{ runner.temp }}/pr205-exact-head.bundle
+          retention-days: 3
+      - name: Reproduce focused immutability failure
+        run: |
+          set -o pipefail
+          node independent-audit/tests/generation-immutability.test.js 2>&1 | tee "$RUNNER_TEMP/pr205-immutability.log"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: pr205-exact-head-workspace
-          path: |
-            ${{ runner.temp }}/pr205-workspace.tar.gz
-            ${{ runner.temp }}/pr205-qa-test.log
+          name: pr205-immutability-reproduction
+          path: ${{ runner.temp }}/pr205-immutability.log
           retention-days: 3
