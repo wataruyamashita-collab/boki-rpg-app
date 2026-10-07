@@ -1,28 +1,28 @@
-name: Exact main workspace export
+name: Issue207 repair transport verification
 on:
   push:
     branches: [qa/pr205-exact-head-diagnostic-20261007]
 permissions:
   contents: read
 jobs:
-  export:
+  verify-transport:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 04b2f27c7dce31ace0f6f33fd27bf8431036c3a4
-          fetch-depth: 0
           persist-credentials: false
-      - name: Package exact accepted history without credentials
-        run: |
-          test "$(git rev-parse HEAD)" = 04b2f27c7dce31ace0f6f33fd27bf8431036c3a4
-          test "$(git rev-parse HEAD^{tree})" = b46058c4da74be67473d466bad892dbc324b066b
-          git diff --exit-code
-          git bundle create "$RUNNER_TEMP/issue207-main.bundle" HEAD
-          sha256sum "$RUNNER_TEMP/issue207-main.bundle"
       - uses: actions/upload-artifact@v4
         with:
-          name: issue207-exact-main-history
-          path: ${{ runner.temp }}/issue207-main.bundle
+          name: issue207-repair-carrier
+          path: issue207-repair-*.b64
           retention-days: 7
+      - name: Check transport without applying any code
+        run: |
+          python3 - <<'PY'
+          import pathlib,base64,gzip,hashlib
+          text=''.join(''.join(pathlib.Path(f'issue207-repair-{n}.b64').read_text().split()) for n in (1,2,3))
+          raw=gzip.decompress(base64.b64decode(text,validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='a69e8b763c1d487ad445080b1d7e9d6912a8140d1173ee50671f08e0f7f7b850'
+          print('TRANSPORT_SHA256_VERIFIED')
+          PY
