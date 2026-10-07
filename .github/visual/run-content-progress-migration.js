@@ -20,8 +20,8 @@ async function run(){
       const browser=await launcher.launch();
       try{
         for(const width of [320,390,768])for(const id of ['J051','L031'])for(const kind of ['old','new','mixed']){
-          const context=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'});
-          const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(String(error)));
+          const context=await browser.newContext({viewport:{width,height:900}});
+          const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.stack || String(error)));
           try{
             const progress=fixture(kind,id);
             progress.placement={completed:true,foundation:0,closing:0,startQuestionId:'J001',completedAt:1};

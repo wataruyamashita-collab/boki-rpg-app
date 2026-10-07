@@ -183,12 +183,12 @@
           lastExamReview: saved.lastExamReview && typeof saved.lastExamReview === 'object' ? saved.lastExamReview : null
           });
           if (incompatibleExam && this.state.mode === 'exam') this.state.mode = 'story';
-          if (savedContentRevision < 4) this.migrateContentIdentity(savedContentRevision);
+          if (savedContentRevision < 4) this.migrateContentIdentity(savedContentRevision, hasLearningSchemaV1 ? saved.questionStats : null);
           if (needsContentMigration || needsLearningMigration) this.save();
         }
       } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
     }
-    migrateContentIdentity(fromRevision) {
+    migrateContentIdentity(fromRevision, savedQuestionStats) {
       const state = this.state, versions = ProgressModel.currentContentVersions(this.questions);
       const archive = emptyContentArchive(), complete = new Set();
       const statsKeys = ['correctCount','incorrectCount','correctStreak','incorrectStreak','lastResult','lastAnsweredAt'];
@@ -199,7 +199,9 @@
           item.category === this.questions[id].category && item.concept === this.questions[id].category &&
           Number.isFinite(item.timestamp ?? item.at) && (item.timestamp ?? item.at) >= 0);
         const derived = this.aggregateQuestionStats(current)[id];
-        const oldStats = state.questionStats[id] || null;
+        // Only an original lifetime aggregate can corroborate a complete log.
+        // Reaggregating that same rolling log would be circular provenance.
+        const oldStats = this.validQuestionStats(savedQuestionStats?.[id]) ? savedQuestionStats[id] : null;
         const provenComplete = Boolean(derived && current.length === original.length && oldStats &&
           statsKeys.every(key => oldStats[key] === derived[key]));
         if (provenComplete) complete.add(id);

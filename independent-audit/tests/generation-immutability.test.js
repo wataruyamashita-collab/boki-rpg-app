@@ -121,12 +121,15 @@ try{
   const generation116Committed=committed(116);
   const generation117Committed=committed(117);
   const generation118Committed=committed(118);
+  const generation119Committed=committed(119);
 
   test(
-    'authority sequence tracks committed Generations through 118',
+    'authority sequence tracks committed Generations through 119',
     ()=>assert.deepStrictEqual(
       generations,
-      generation118Committed
+      generation119Committed
+        ? Array.from({length:118},(_,index)=>index+2)
+        :generation118Committed
         ? Array.from({length:117},(_,index)=>index+2)
         : generation117Committed
         ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117]
@@ -413,6 +416,7 @@ try{
     }
   );
 
+  const generation119Pending=fs.existsSync(authorityPath(119))&&!generation119Committed;
   const generation118Pending=
     fs.existsSync(authorityPath(118))&&!generation118Committed;
   const generation117Pending=
@@ -516,7 +520,12 @@ try{
   const generation68Pending=
     fs.existsSync(authorityPath(68))&&!generation68Committed;
 
-  if(generation118Committed){
+  if(generation119Committed){
+    test('committed Generation 119 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation119Pending){
+    const generation119Candidate=JSON.parse(fs.readFileSync(authorityPath(119),'utf8'));
+    test('pending Generation 119 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation119Candidate).ok,true));
+  }else if(generation118Committed){
     test('committed Generation 118 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
   }else if(generation118Pending){
     const generation118Candidate=JSON.parse(fs.readFileSync(authorityPath(118),'utf8'));

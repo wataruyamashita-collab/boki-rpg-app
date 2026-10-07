@@ -33,6 +33,25 @@ async function run(){
     assert.strictEqual(model.state.contentMigrationArchive.questions.J051.questionStats.correctCount,503);
     assert(model.state.contentRecheckIds.includes('J051'));
   });
+  for(const id of ['J051','L031'])for(const schema of ['legacy','missing-aggregate']){
+    test(`${id}: ${schema} recent failures cannot authenticate a stale completion flag`,()=>{
+      // The rolling log can lose old successes while the lifetime completion flag
+      // remains. Without the original aggregate, rebuilding that log is not proof.
+      const before=fixture('new',id);delete before.questionStats;
+      if(schema==='legacy')delete before.learningSchemaVersion;
+      before.attempts.filter(attempt=>attempt.id===id).forEach(attempt=>{attempt.correct=false;});
+      const model=new Model(questions,storage(JSON.stringify(before)));
+      assert.strictEqual(model.statsForQuestion(id).correctCount,0);
+      assert.strictEqual(model.statsForQuestion(id).incorrectCount,3);
+      assert(!model.state.correctIds.includes(id));
+      assert(model.state.contentRecheckIds.includes(id));
+      const archive=model.state.contentMigrationArchive.questions[id];
+      assert.strictEqual(archive.questionStats,null);
+      assert.strictEqual(archive.flags.correct,true);
+      assert.strictEqual(archive.provenComplete,false);
+      assert(Model.validateBackupState(model.state,questions));
+    });
+  }
   test('matching category alone or a conflicting explicit identity is not accepted evidence',()=>{
     for(const change of [attempt=>delete attempt.concept,attempt=>attempt.contentIdentity='old-capital-v1',attempt=>{attempt.timestamp=null;attempt.at=null;}]){
       const before=fixture('new','J051');before.attempts.filter(item=>item.id==='J051').forEach(change);
