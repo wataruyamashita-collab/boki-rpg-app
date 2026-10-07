@@ -1,0 +1,51 @@
+name: PR205 exact-head diagnostic
+on:
+  push:
+    branches: [qa/pr205-exact-head-diagnostic-20261007]
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0619ec7b591ab09a39cacf86c1ae923f74a56d5c
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Assert exact immutable source
+        run: |
+          test "$(git rev-parse HEAD)" = "0619ec7b591ab09a39cacf86c1ae923f74a56d5c"
+          git diff --exit-code
+          git rev-parse HEAD HEAD^{tree}
+      - name: Reproduce qa test failure without publishing changes
+        id: reproduction
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm run qa:test 2>&1 | tee "$RUNNER_TEMP/pr205-qa-test.log"
+      - name: Package tracked source and installed dependencies
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/pr205-workspace"
+          git archive HEAD | tar -x -C "$RUNNER_TEMP/pr205-workspace"
+          if test -d node_modules; then cp -a node_modules "$RUNNER_TEMP/pr205-workspace/node_modules"; fi
+          git rev-parse HEAD > "$RUNNER_TEMP/pr205-workspace/VERIFIED_HEAD.txt"
+          git rev-parse HEAD^{tree} > "$RUNNER_TEMP/pr205-workspace/VERIFIED_TREE.txt"
+          git ls-tree -r HEAD > "$RUNNER_TEMP/pr205-workspace/VERIFIED_GIT_TREE.txt"
+          tar -czf "$RUNNER_TEMP/pr205-workspace.tar.gz" -C "$RUNNER_TEMP/pr205-workspace" .
+          sha256sum "$RUNNER_TEMP/pr205-workspace.tar.gz"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr205-exact-head-workspace
+          path: |
+            ${{ runner.temp }}/pr205-workspace.tar.gz
+            ${{ runner.temp }}/pr205-qa-test.log
+          retention-days: 3
