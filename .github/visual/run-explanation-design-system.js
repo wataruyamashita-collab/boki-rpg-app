@@ -92,7 +92,7 @@ async function run(){
       }finally{await browser.close();}
     }
     if(evidence.all300.some(row=>row.total!==300))evidence.failures.push('ALL300_COVERAGE_INCOMPLETE');
-    if(evidence.representatives.some(row=>row.count!==25))evidence.failures.push('FORMAT_REPRESENTATIVE_COVERAGE_INCOMPLETE');
+    if(evidence.representatives.some(row=>row.count!==26))evidence.failures.push('FORMAT_REPRESENTATIVE_COVERAGE_INCOMPLETE');
     if(evidence.failures.length)throw new Error(evidence.failures.join('\n'));
     evidence.status='PASS';write();console.log('ISSUE161_EXPLANATION_DESIGN_SYSTEM_BROWSER_PASS');
   }catch(error){evidence.status='FAIL';evidence.error=String(error?.stack||error);write();throw error;}

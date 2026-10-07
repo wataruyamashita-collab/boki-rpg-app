@@ -15,10 +15,10 @@
     },
     "byRenderer": {
       "renderJournal": 150,
-      "renderTable": 97,
+      "renderTable": 96,
       "renderFixedAssetLedger": 8,
       "renderJournalBook": 2,
-      "renderBookkeepingForm": 14,
+      "renderBookkeepingForm": 15,
       "renderCorrection": 20,
       "renderBalanceSheet": 9
     },
@@ -30,11 +30,11 @@
     },
     "examPoolCount": 74,
     "reviewRoleCount": 60,
-    "questionsWithReviewVariant": 119,
+    "questionsWithReviewVariant": 117,
     "questionsWithExplanationModel": 300,
     "questionsWithAuthoredExplanation": 300,
     "questionsWithTableInputs": 150,
-    "totalTableInputCells": 533
+    "totalTableInputCells": 536
   },
   "contracts": {
     "explanationIncorrect": "structured explanation is eligible when explanationModel exists; current inventory is metadata only, not a teaching-quality PASS",
@@ -1649,11 +1649,11 @@
       "format": null,
       "renderer": "renderJournal",
       "chapter": 1,
-      "category": "資本金・追加出資",
-      "difficulty": 1,
+      "category": "剰余金の配当",
+      "difficulty": 2,
       "learningRole": "review",
       "timelineRole": "review",
-      "variantGroup": "資本金・追加出資",
+      "variantGroup": "剰余金の配当",
       "examPool": false,
       "reviewVariantIds": [],
       "explanation": {
@@ -3159,9 +3159,7 @@
       "timelineRole": "timeless_case",
       "variantGroup": "資本金・追加出資",
       "examPool": false,
-      "reviewVariantIds": [
-        "J051"
-      ],
+      "reviewVariantIds": [],
       "explanation": {
         "hasAuthored": true,
         "hasModel": true,
@@ -4747,8 +4745,7 @@
       "examPool": false,
       "reviewVariantIds": [
         "L021",
-        "L026",
-        "L031"
+        "L026"
       ],
       "explanation": {
         "hasAuthored": true,
@@ -4922,8 +4919,7 @@
       "examPool": false,
       "reviewVariantIds": [
         "L021",
-        "L026",
-        "L031"
+        "L026"
       ],
       "explanation": {
         "hasAuthored": true,
@@ -5097,8 +5093,7 @@
       "examPool": false,
       "reviewVariantIds": [
         "L021",
-        "L026",
-        "L031"
+        "L026"
       ],
       "explanation": {
         "hasAuthored": true,
@@ -5273,8 +5268,7 @@
       "examPool": false,
       "reviewVariantIds": [
         "L021",
-        "L026",
-        "L031"
+        "L026"
       ],
       "explanation": {
         "hasAuthored": true,
@@ -5447,8 +5441,7 @@
       "variantGroup": "総勘定元帳（現金）",
       "examPool": false,
       "reviewVariantIds": [
-        "L026",
-        "L031"
+        "L026"
       ],
       "explanation": {
         "hasAuthored": true,
@@ -5619,8 +5612,7 @@
       "variantGroup": "総勘定元帳（現金）",
       "examPool": false,
       "reviewVariantIds": [
-        "L021",
-        "L031"
+        "L021"
       ],
       "explanation": {
         "hasAuthored": true,
@@ -5781,31 +5773,28 @@
     {
       "id": "L031",
       "type": "ledger",
-      "format": null,
-      "renderer": "renderTable",
+      "format": "bookkeeping-account-rule",
+      "renderer": "renderBookkeepingForm",
       "chapter": 8,
-      "category": "総勘定元帳（現金）",
+      "category": "勘定記入法則",
       "difficulty": 2,
       "learningRole": "review",
       "timelineRole": "main",
-      "variantGroup": "総勘定元帳（現金）",
+      "variantGroup": "勘定記入法則",
       "examPool": false,
-      "reviewVariantIds": [
-        "L021",
-        "L026"
-      ],
+      "reviewVariantIds": [],
       "explanation": {
         "hasAuthored": true,
         "hasModel": true,
         "structuredIncorrectEligible": true
       },
       "inputs": {
-        "cellCount": 2,
+        "cellCount": 5,
         "semanticCounts": {
-          "amount": 2
+          "text": 5
         },
         "calculatorPolicy": "coarse-pointer-global",
-        "hasAmountLike": true
+        "hasAmountLike": false
       },
       "materials": {
         "hasMaterials": false,

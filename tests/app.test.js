@@ -517,6 +517,7 @@ assert.strictEqual(fullWidthAmountInput.value, '1,234', 'iOS IMEの全角数字�
 const mixedAmountInput = { value: '１，2３４', selectionStart: 5, selectionEnd: 5, setSelectionRange(...range) { this.range = range; } };
 browserSandbox.window.AppController.prototype.formatAmount(mixedAmountInput);
 assert.strictEqual(mixedAmountInput.value, '1,234', '全角カンマを含む混在入力も整形する');
+vm.runInNewContext(fs.readFileSync('data/accounting-domain.js', 'utf8'), browserSandbox);
 const viewSource = fs.readFileSync('js/view.js', 'utf8');
 assert(!viewSource.includes("createElement('pre')"), 'IOS-REVIEW-03: 模試レビューへ内部JSON用preを生成しない');
 assert(viewSource.includes("answerReviewBlock('自分の回答'") && viewSource.includes('this.journalTable(answer)'), 'IOS-REVIEW-02: 長い仕訳回答を意味のある仕訳表で表示する');

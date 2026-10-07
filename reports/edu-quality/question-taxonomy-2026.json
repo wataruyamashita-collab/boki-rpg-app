@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "syllabusAuthorityVersion": "JCCI_GRADE3_2022_APPLIED_2026",
   "source": {
-    "mainHead": "5b0799351c2247b33bf47b9d67d7565745b0fd43",
-    "generation": 106,
+    "mainHead": "08d13e806d4983114e44506407ef7b7b109356e6",
+    "generation": 109,
     "release": "20260924-175"
   },
   "prerequisiteConcepts": {
@@ -131,6 +131,10 @@
       "ADJ_INVENTORY_COST",
       "FS_INCOME_STATEMENT",
       "FS_BALANCE_SHEET"
+    ],
+    "EQ_DIVIDEND": [
+      "FND_JOURNAL_ENTRY",
+      "CLOSE_PROFIT_TRANSFER"
     ]
   },
   "rows": [
@@ -4327,23 +4331,23 @@
     {
       "id": "J051",
       "syllabusAuthorityVersion": "JCCI_GRADE3_2022_APPLIED_2026",
-      "authoredCategory": "資本金・追加出資",
+      "authoredCategory": "剰余金の配当",
       "mappingMode": "DIRECT",
       "primarySyllabusMapping": {
-        "code": "P4-1"
+        "code": "P4-4"
       },
       "secondarySyllabusMappings": [],
       "scopeStatus2026": "IN_SCOPE",
-      "mappingRationale": "資本金・追加出資の主たる解答要求と2026年度3級出題区分の対応が一義的であるため直接対応付けした。",
+      "mappingRationale": "株主総会で決議した剰余金の配当を、繰越利益剰余金と未払配当金で処理する2026年度3級P4-4の直接評価である。",
       "prerequisiteConcepts": [
-        "FND_TRANSACTION_ANALYSIS",
-        "FND_DEBIT_CREDIT"
+        "FND_JOURNAL_ENTRY",
+        "CLOSE_PROFIT_TRANSFER"
       ],
       "sequencingEvidenceQuestionIds": [],
-      "difficulty": 1,
+      "difficulty": 2,
       "cognitiveLevel": "Application",
       "cognitiveEvidence": [
-        "J051は具体的な取引・帳簿・表に既知の簿記規則を適用して解く課題である。"
+        "J051は配当決議という具体的事実から、純資産の減少と未払配当金という支払義務を仕訳へ適用する課題である。"
       ],
       "answerType": "journal",
       "likelyErrorTags": [
@@ -4353,13 +4357,13 @@
       ],
       "explanationLearningObjective": {
         "targetConceptIds": [
-          "FND_ACCOUNT_CLASSIFICATION"
+          "EQ_DIVIDEND"
         ],
         "performanceVerb": "APPLY",
-        "observableOutcome": "資本金・追加出資の取引事実を読み、適切な勘定科目・借貸方向・金額へ変換して処理できる。"
+        "observableOutcome": "配当決議時点と支払時点を区別し、繰越利益剰余金の減少と未払配当金の増加を正しく仕訳できる。"
       },
-      "transferGroup": "VG:資本金・追加出資",
-      "transferStatus": "GROUP_CONFIRMED"
+      "transferGroup": "XFER:dividend-declaration",
+      "transferStatus": "TRANSFER_REVIEW_REQUIRED"
     },
     {
       "id": "J052",
@@ -9280,43 +9284,37 @@
     {
       "id": "L031",
       "syllabusAuthorityVersion": "JCCI_GRADE3_2022_APPLIED_2026",
-      "authoredCategory": "総勘定元帳（現金）",
-      "mappingMode": "MULTI",
+      "authoredCategory": "勘定記入法則",
+      "mappingMode": "DIRECT",
       "primarySyllabusMapping": {
-        "code": "P1-4"
+        "code": "P1-3"
       },
-      "secondarySyllabusMappings": [
-        {
-          "code": "P2-1"
-        }
-      ],
+      "secondarySyllabusMappings": [],
       "scopeStatus2026": "IN_SCOPE",
-      "mappingRationale": "総勘定元帳（現金）は主論点に加えて帳簿・債権債務・決算等の副論点を同時に扱うため複合対応付けとした。",
+      "mappingRationale": "資産・負債の増減を記入する側と貸借平均の原理を直接答えさせるため、2026年度3級P1-3の勘定記入法則を直接評価する。",
       "prerequisiteConcepts": [
-        "FND_JOURNAL_ENTRY",
-        "FND_DEBIT_CREDIT"
+        "FND_ACCOUNT_CLASSIFICATION"
       ],
       "sequencingEvidenceQuestionIds": [],
       "difficulty": 2,
-      "cognitiveLevel": "Application",
+      "cognitiveLevel": "Understanding",
       "cognitiveEvidence": [
-        "L031は具体的な取引・帳簿・表に既知の簿記規則を適用して解く課題である。"
+        "L031は資産・負債の増減と借方・貸方の関係、および貸借平均の原理を区別して説明可能な形で選別する課題である。"
       ],
       "answerType": "ledger",
       "likelyErrorTags": [
-        "TABLE_CELL_MEANING",
-        "SIDE_DIRECTION"
+        "SIDE_DIRECTION",
+        "TABLE_CELL_MEANING"
       ],
       "explanationLearningObjective": {
         "targetConceptIds": [
-          "FND_LEDGER_POSTING",
-          "TX_CASH_DEPOSITS"
+          "FND_DEBIT_CREDIT"
         ],
-        "performanceVerb": "POST",
-        "observableOutcome": "総勘定元帳（現金）の取引根拠を読み、必要な帳簿欄へ正しく転記して残高を確定できる。"
+        "performanceVerb": "CLASSIFY",
+        "observableOutcome": "資産・負債の増加・減少を借方または貸方へ分類し、借方合計と貸方合計が一致する原理を確認できる。"
       },
-      "transferGroup": "VG:総勘定元帳（現金）",
-      "transferStatus": "GROUP_CONFIRMED"
+      "transferGroup": "XFER:account-entry-rules",
+      "transferStatus": "TRANSFER_REVIEW_REQUIRED"
     },
     {
       "id": "L032",

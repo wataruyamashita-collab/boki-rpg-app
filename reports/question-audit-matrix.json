@@ -1,10 +1,10 @@
 {
   "classification": {
     "editorialAndIndependentAccounting": "VERIFIED after 10-loop master editorial; independent accounting evidence retained",
-    "external2026OfficialScope": "EXTERNAL-UNVERIFIED (web search returned HTTP 401 on 2026-08-26)"
+    "external2026OfficialScope": "VERIFIED — official 日本商工会議所 2022-applied syllabus confirmed applicable to 2026; taxonomy authority retained in repository"
   },
   "total": 300,
-  "auditedAt": "2026-09-03",
+  "auditedAt": "2026-10-07",
   "batchSize": 25,
   "rows": [
     {
@@ -3912,77 +3912,77 @@
       "sequence": 51,
       "chapter": 1,
       "type": "journal",
-      "category": "資本金・追加出資",
+      "category": "剰余金の配当",
       "story": {
         "status": "VERIFIED",
-        "finding": "runtimeの章文脈を実問題の時系列・論点へ再整合し、「資本金・追加出資」の会計事実との非矛盾を再検証した。"
+        "finding": "review専用ケースとして、株主総会の配当決議を確認する文脈と設問を照合し、旧「追加出資」文脈が残っていないことを再検証した。"
       },
       "questionText": {
         "status": "VERIFIED",
-        "finding": "要求は「事業拡大のため、株主から現金3,010,000円の追加出資を受けた。」。解答対象と取引条件を表示資料と突合した。"
+        "finding": "要求は「株主総会で、繰越利益剰余金から現金配当300,000円を行うことを決議した。利益準備金は法定限度額に達しており、追加積立は不要である。決議時の仕訳を行いなさい。」。決議時点の処理であること、利益準備金の追加積立が不要であることを明示している。"
       },
       "materials": {
         "status": "VERIFIED",
-        "finding": "仕訳に必要な事実は設問本文に明示。追加表を前提としない。"
+        "finding": "仕訳に必要な事実（配当額、決議時点、追加積立不要）は設問本文に明示され、外部資料を前提としない。"
       },
       "solvability": {
         "status": "VERIFIED",
-        "finding": "answerを期待値の出発点にせず、設問・materials・固定セルから2個の解答要素を再導出。一意解を阻む欠落条件はなかった。"
+        "finding": "配当決議と実際の支払を区別できる条件が明示され、追加の利益準備金計算を要求しないため、3級範囲で一意に仕訳を導出できる。"
       },
       "accountingOracle": {
         "status": "VERIFIED",
-        "finding": "表示事実からの独立導出値と一致：借方 現金 3,010,000円／貸方 資本金 3,010,000円。"
+        "finding": "表示事実から独立導出し、借方 繰越利益剰余金 300,000円／貸方 未払配当金 300,000円と一致した。"
       },
       "answerCorrectness": {
         "status": "VERIFIED",
-        "finding": "科目・方向・金額または各セルを再計算し、著者解「借方 現金 3,010,000円／貸方 資本金 3,010,000円」と一致した。"
+        "finding": "配当決議で純資産が減少し支払義務が発生することを再計算し、著者解と独立goldenが一致した。"
       },
       "explanationCorrectness": {
         "status": "VERIFIED",
-        "finding": "解説を取引事実、会計上の増減、計算結果と逆照合し、著者解との矛盾がないことを確認した。"
+        "finding": "決議時点では現金を動かさず、繰越利益剰余金の減少と未払配当金の増加を処理する説明が正答と一致する。"
       },
       "explanationQuality": {
         "status": "VERIFIED",
-        "finding": "「【処理の根拠】 受け取った現金は資産の増加、株主からの払込みは純資産である資本金の増加として処理します。 【金額確認】借方合計・貸方合計はいずれも3,010,000円です。」を実査。問題固有の根拠または計算過程を含み、循環説明だけではない。"
+        "finding": "決議時点と支払時点の区別、利益準備金を追加計上しない理由、貸借一致までを問題固有の根拠として説明している。"
       },
       "wrongAnswerFeedback": {
         "status": "VERIFIED",
-        "finding": "誤答候補は借貸逆転・類似科目・金額差として生成経路を確認。正しい判断基準へ戻す問題固有フィードバックとの対応を監査した。"
+        "finding": "仕訳問題の既存診断経路で借貸逆転・科目違い・金額差を検出でき、未払配当金はAccountingDomainで負債として分類される。"
       },
       "terminology": {
         "status": "VERIFIED",
-        "finding": "「資本金・追加出資」および解答科目を3級教材内の表記と照合し、独自語を試験用語として扱っていない。"
+        "finding": "繰越利益剰余金・未払配当金・剰余金の配当を日商簿記3級2026適用の公式範囲と照合した。"
       },
       "japaneseQuality": {
         "status": "VERIFIED",
-        "finding": "本文・資料・解説の助詞、主述、句読点、円・日付表記、全半角を実査。句点後ASCII空白を含む検出事項は修正後に再検索した。"
+        "finding": "決議・支払・利益準備金の条件を誤解しない日本語となっており、取引時点と処理要求が明確である。"
       },
       "ambiguity": {
         "status": "VERIFIED",
-        "finding": "決済方法・対象・金額・必要な期間条件を確認し、合理的な複数解を生む条件欠落はない。"
+        "finding": "配当額300,000円、決議時点、追加積立不要が明記され、合理的な別解を生む条件欠落はない。"
       },
       "examRelevance": {
-        "status": "EXTERNAL-UNVERIFIED",
-        "finding": "内部分類では日商簿記3級の「資本金・追加出資」能力へ接続。2026年度日本商工会議所一次資料は検索API 401のため外部照合のみ未完了。"
+        "status": "VERIFIED",
+        "finding": "2026年度適用の日商簿記3級出題区分P4-4「剰余金の配当など」への直接対応をtaxonomy authorityで確認した。"
       },
       "transferQuality": {
         "status": "VERIFIED",
-        "finding": "review問題として、journal形式の資本金・追加出資を資本金・追加出資群内で確認。数値だけでなく資料読解または勘定判断を要求する。"
+        "finding": "review専用の独立ケースとしてP4-4を直接評価する。現時点では同技能の別文脈問題がないためTRANSFER_REVIEW_REQUIREDを維持する。"
       },
       "duplication": {
         "status": "VERIFIED",
-        "finding": "正規化同型2問。異なる時点での数値再計算と反復定着を目的とするdrillとして保持し、当該問の金額は個別再計算した。"
+        "finding": "旧J051の追加出資数値違いを置換し、J001/J101に残るP4-1の重複を減らしつつP4-4の明示的な不足を補った。"
       },
       "knowledgeLink": {
         "status": "VERIFIED",
-        "finding": "明示リンクなし。自己完結しており、解答に外部遷移を必要としないため追加不要。"
+        "finding": "設問と解説だけで決議時点の仕訳を完結でき、外部遷移を解答条件としない。"
       },
       "gameMeaning": {
         "status": "VERIFIED",
-        "finding": "scene「復習編・水野先輩の確認」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
+        "finding": "Story本編ではなくreview評価資料として扱い、受入済みJ101 Story authorityを変更せずに配当論点を追加している。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:7d59729fe3c21877b023f6d9388214c6f3a9e6389d4761f7af11ae3ef8643cab",
+      "sourceHash": "sha256:72d606a811b754981859aca71b36907c56c0dbc9fd0b0b63a130216ad5f1fbbc",
       "answerSchemaHash": "sha256:44d7fbb21e5aa23bcfd013f8893009f79f646909460f41233f44b11a4248bc8f"
     },
     {
@@ -14052,78 +14052,78 @@
       "sequence": 181,
       "chapter": 8,
       "type": "ledger",
-      "category": "総勘定元帳（現金）",
+      "category": "勘定記入法則",
       "story": {
         "status": "VERIFIED",
-        "finding": "semantic chapterに整合したNarrative Bibleへ更新後のruntime Storyを再検証し、「総勘定元帳（現金）」の業務文脈とchapter整合を確認した。"
+        "finding": "数値元帳の旧文脈を除去し、資産・負債の増減と借方・貸方、貸借平均の原理を確認する概念review文脈へ再整合した。"
       },
       "questionText": {
         "status": "VERIFIED",
-        "finding": "要求は「現金元帳の残高欄を完成させなさい。現金は資産なので、借方記入で増加し、貸方記入で減少します。」。解答対象と取引条件を表示資料と突合した。"
+        "finding": "要求は「勘定記入法則を確認する。資産・負債の増減を記入する側と、貸借平均の原理により仕訳の借方合計と貸方合計がどうなるかを答えなさい。」。P1-3の勘定記入法則を直接問う5つの回答欄に分解されている。"
       },
       "materials": {
         "status": "VERIFIED",
-        "finding": "表示資料3行（うち解答欄3行）と入力キー2個を一対一で照合した。"
+        "finding": "5つの確認事項を表形式で提示し、数値資料・日付・相手先を前提とせず概念判断だけを要求する。"
       },
       "solvability": {
         "status": "VERIFIED",
-        "finding": "answerを期待値の出発点にせず、設問・materials・固定セルから2個の解答要素を再導出。一意解を阻む欠落条件はなかった。"
+        "finding": "資産・負債の増減方向と貸借平均の原理という既知の簿記原則から5欄を一意に回答できる。"
       },
       "accountingOracle": {
         "status": "VERIFIED",
-        "finding": "表示事実からの独立導出値と一致：r2_balance=598,000、r3_balance=526,500。"
+        "finding": "独立auditで、資産増加=借方、資産減少=貸方、負債増加=貸方、負債減少=借方、借方合計と貸方合計=一致を確認した。"
       },
       "answerCorrectness": {
         "status": "VERIFIED",
-        "finding": "科目・方向・金額または各セルを再計算し、著者解「r2_balance=598,000、r3_balance=526,500」と一致した。"
+        "finding": "5つの文字列セルを独立goldenと照合し、勘定記入法則および貸借平均の原理と一致した。"
       },
       "explanationCorrectness": {
         "status": "VERIFIED",
-        "finding": "解説を取引事実、会計上の増減、計算結果と逆照合し、著者解との矛盾がないことを確認した。"
+        "finding": "資産と負債で増減の記入側が反対になること、複式簿記では借方合計と貸方合計が一致することを正しく説明している。"
       },
       "explanationQuality": {
         "status": "VERIFIED",
-        "finding": "「現金は資産なので、借方記入で増加し、貸方記入で減少します。したがって残高は順に598,000円、526,500円です。」を実査。問題固有の根拠または計算過程を含み、循環説明だけではない。"
+        "finding": "旧「期首残高→期末残高」の算術説明を除去し、判断順序・解答確認・検算を概念問題に即して提示する。"
       },
       "wrongAnswerFeedback": {
         "status": "VERIFIED",
-        "finding": "誤答候補は入力セル別の計算違いとして生成経路を確認。正しい判断基準へ戻す問題固有フィードバックとの対応を監査した。"
+        "finding": "表形式セルの誤答比較経路を維持し、借方・貸方の選択違いをセル単位で確認できる。"
       },
       "terminology": {
         "status": "VERIFIED",
-        "finding": "「総勘定元帳（現金）」および解答科目を3級教材内の表記と照合し、独自語を試験用語として扱っていない。"
+        "finding": "「勘定記入法則」「借方」「貸方」「貸借平均の原理」を2026年度適用の日商簿記3級P1-3と照合した。"
       },
       "japaneseQuality": {
         "status": "VERIFIED",
-        "finding": "本文・資料・解説の助詞、主述、句読点、円・日付表記、全半角を実査。句点後ASCII空白を含む検出事項は修正後に再検索した。"
+        "finding": "数値元帳向けの旧表現を残さず、概念の対応関係を初学者が追える文章へ整理した。"
       },
       "ambiguity": {
         "status": "VERIFIED",
-        "finding": "資料の各数値の意味と入力対象を確認し、合理的な複数解を生む条件欠落はない。"
+        "finding": "各回答欄の対象が明示され、借方・貸方または一致という回答要求に曖昧さはない。"
       },
       "examRelevance": {
-        "status": "EXTERNAL-UNVERIFIED",
-        "finding": "内部分類では日商簿記3級の「総勘定元帳（現金）」能力へ接続。2026年度日本商工会議所一次資料は検索API 401のため外部照合のみ未完了。"
+        "status": "VERIFIED",
+        "finding": "2026年度適用の日商簿記3級出題区分P1-3「勘定」への直接対応をtaxonomy authorityで確認した。"
       },
       "transferQuality": {
         "status": "VERIFIED",
-        "finding": "review問題として、ledger形式の総勘定元帳（現金）を総勘定元帳（現金）群内で確認。数値だけでなく資料読解または勘定判断を要求する。"
+        "finding": "review専用の概念確認としてP1-3を直接測定する。現時点では同形式の別文脈問題がないためTRANSFER_REVIEW_REQUIREDを維持する。"
       },
       "duplication": {
         "status": "VERIFIED",
-        "finding": "正規化同型3問。異なる時点での数値再計算と反復定着を目的とするdrillとして保持し、当該問の金額は個別再計算した。"
+        "finding": "旧L031の現金元帳数値違いを置換し、重複していた元帳反復を削減して専用の概念評価へ転換した。"
       },
       "knowledgeLink": {
         "status": "VERIFIED",
-        "finding": "明示リンクなし。自己完結しており、解答に外部遷移を必要としないため追加不要。"
+        "finding": "設問・確認表・解説だけで自己完結し、外部資料を解答条件としない。"
       },
       "gameMeaning": {
         "status": "VERIFIED",
-        "finding": "scene「11月・残高の点検」とstoryを照合し、この業務を行う時点・役割が会計処理を妨げず自然である。"
+        "finding": "review評価資料として勘定記入法則の再確認に限定し、Story本編やExam membershipを変更しない。"
       },
       "finalStatus": "PASS",
-      "sourceHash": "sha256:a43490b9338bbea1ff9e23790b975f8639867f1be0aa8e502170c02e85b517f3",
-      "answerSchemaHash": "sha256:267e4afe10a3bfb029a94384504bcab420bd0afc38bf13cb587806da2d7fe62a"
+      "sourceHash": "sha256:9b0ab0aaabe104c10cda10d4442720283be562d15fe8ce6b429d7255e428e2e0",
+      "answerSchemaHash": "sha256:d7496cc51fa2772294db6f01bce0b1d24b838edc080555c9755080a46c9d76d4"
     },
     {
       "id": "L032",

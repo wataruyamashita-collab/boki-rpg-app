@@ -25,6 +25,15 @@ for(const phrase of ['株主から現金3,020,000円の追加払込みを受け�
   const q=structuredClone(root.QuestionData.J101);q.question=phrase;assert.strictEqual(root.deriveAccountingExpected('J101',null,q).expected.debit[0].account,'現金');
 }
 {
+  const base=structuredClone(root.QuestionData.J051);
+  const expected=root.deriveAccountingExpected('J051',null,base).expected;
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(expected)),{debit:[{account:'繰越利益剰余金',amount:300000}],credit:[{account:'未払配当金',amount:300000}]},'J051 dividend declaration is independently derived from visible facts');
+  const changed=structuredClone(base);
+  changed.question=changed.question.replace('300,000円','310,000円');
+  const changedExpected=root.deriveAccountingExpected('J051',null,changed).expected;
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(changedExpected)),{debit:[{account:'繰越利益剰余金',amount:310000}],credit:[{account:'未払配当金',amount:310000}]},'J051 derivation follows the visible dividend amount');
+}
+{
   const folio=structuredClone(root.QuestionData.L034);folio.question=folio.question.replace('売掛金113','売掛金999');
   assert.strictEqual(root.deriveAccountingExpected('L034',null,folio).expected.cells.d1Ref,999,'L034 debit folio follows the source account code');
   const cash=structuredClone(root.QuestionData.L034);cash.materials[0].内容=cash.materials[0].内容.replace('掛販売','現金販売');

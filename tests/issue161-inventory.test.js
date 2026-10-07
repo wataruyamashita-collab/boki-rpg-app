@@ -46,6 +46,6 @@ assert.strictEqual(inventory.summary.questionsWithExplanationModel,300,'all ques
 assert.strictEqual(inventory.summary.questionsWithAuthoredExplanation,300,'all questions have authored explanation prose');
 assert.strictEqual(inventory.summary.examPoolCount,74,'explicit exam pool size');
 assert.strictEqual(inventory.summary.reviewRoleCount,60,'review-role inventory count');
-assert.strictEqual(inventory.summary.totalTableInputCells,533,'table input-cell census');
+assert.strictEqual(inventory.summary.totalTableInputCells,536,'table input-cell census');
 assert.strictEqual([...rows.values()].filter(row=>!row.renderer).length,0,'no unknown renderer');
 console.log('ISSUE161_GATE1_INVENTORY_PASS');
