@@ -60,6 +60,30 @@ const tableIssues = question => {
   for (const [key, value] of Object.entries(question.answer?.cells || {})) {
     if (!includesAmount(text, value)) issues.push(`回答「${key}=${value}」がない`);
   }
+  // Account-entry concepts have no opening/closing balance to calculate.
+  // Require the complete semantic contract instead of exempting them from audit.
+  if (question.format === 'bookkeeping-account-rule') {
+    const expected = [
+      ['assetIncreaseSide','資産の増加を記入する側','借方'],
+      ['assetDecreaseSide','資産の減少を記入する側','貸方'],
+      ['liabilityIncreaseSide','負債の増加を記入する側','貸方'],
+      ['liabilityDecreaseSide','負債の減少を記入する側','借方'],
+      ['balancePrinciple','貸借平均の原理：借方合計と貸方合計','一致']
+    ];
+    if (question.type !== 'ledger' || JSON.stringify(question.table?.inputCells) !== JSON.stringify(expected.map(([key]) => key))) issues.push('勘定記入法則の5項目が揃っていない');
+    for (const [key, label, value] of expected) {
+      if (!question.table?.rows?.some(row => row.item === label)) issues.push(`勘定記入法則の確認事項「${label}」がない`);
+      if (question.answer?.cells?.[key] !== value) issues.push(`勘定記入法則の正答「${label}＝${value}」と不一致`);
+      if (!text.includes(`${label}＝${value}`)) issues.push(`解答確認に「${label}＝${value}」がない`);
+    }
+    if (!['勘定記入法則','資産','負債','増減','貸借平均','借方合計','貸方合計'].every(term => String(question.question || '').includes(term))) issues.push('問題文に勘定記入法則の根拠がない');
+    if (!['【使用する資料】','【判断の順序】','【解答確認】','【検算】'].every(heading => text.includes(heading))) issues.push('資料から判断・解答確認・検算へ進む説明構造がない');
+    const reasoning = (text.split('【判断の順序】')[1] || '').split('【解答確認】')[0];
+    if (!/資産は増加を借方[・、]減少を貸方/u.test(reasoning)) issues.push('資産の増減と借方・貸方の説明が不一致');
+    if (!/負債は増加を貸方[・、]減少を借方/u.test(reasoning)) issues.push('負債の増減と借方・貸方の説明が不一致');
+    if (!/一つの取引[^。]*借方[^。]*貸方[^。]*同額/u.test(reasoning) || !/借方合計と貸方合計は(?:必ず)?一致/u.test(reasoning)) issues.push('同額記録から貸借一致に至る根拠がない');
+    return issues;
+  }
   if (!text.includes('【使用する資料】') || !text.includes('【計算と転記】')) issues.push('資料から計算へ進む説明構造がない');
   if (question.type === 'ledger') {
     const special = /(手形記入帳|商品有高帳|固定資産台帳|仕訳帳|伝票|仕入帳|売上帳)/u.test(question.category);

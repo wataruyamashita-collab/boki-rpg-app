@@ -5,6 +5,41 @@ assert.strictEqual(Object.keys(c.loadProduction().questions).length,300);
 const preExisting=[{gate:'GATE-10',code:'UNREACHABLE_STORY_QUESTION',id:'C006'}];
 const noCausalChange=c.findingDelta(preExisting,structuredClone(preExisting),'UNREACHABLE_STORY_QUESTION');
 assert.strictEqual(noCausalChange.causalDeltaConfirmed,false,'a pre-existing failure code cannot kill a mutation without a new finding');
+// One integrity invocation must use one authority snapshot, never a global cache.
+// Keep the same fail-closed decisions for current, pending and competing tips.
+{
+  const lifecycle=require('../../scripts/qa/phase-b-lifecycle');
+  const saved={verifyCurrent:lifecycle.verifyCurrent,generationAuthorities:lifecycle.generationAuthorities,verifyCandidate:lifecycle.verifyCandidate};
+  const directory='reports/auto-gate/audit-locks';
+  const files=fs.readdirSync(path.join(c.ROOT,directory)).filter(name=>/^phase-b-generation-\d+\.json$/u.test(name)).sort((a,b)=>Number(a.match(/\d+/u)[0])-Number(b.match(/\d+/u)[0]));
+  const authorities=files.map(name=>({file:`${directory}/${name}`}));
+  const pending=JSON.parse(fs.readFileSync(path.join(c.ROOT,authorities[authorities.length-1].file),'utf8'));
+  let historyCalls=0,candidateCalls=0,selected=authorities.slice(0,-1),candidateOK=true;
+  const drift={ok:false,errors:['INTEGRITY_SNAPSHOT_TEST_DRIFT']};
+  try{
+    lifecycle.verifyCurrent=()=>drift;
+    lifecycle.generationAuthorities=()=>{historyCalls++;return selected;};
+    lifecycle.verifyCandidate=candidate=>{candidateCalls++;assert.strictEqual(candidate.generation,pending.generation);return {ok:candidateOK,errors:candidateOK?[]:['INVALID_PENDING']};};
+    const valid=c.currentIntegrityCheck();
+    assert.strictEqual(valid.ok,true,'one valid pending successor remains accepted');
+    assert.strictEqual(valid.generation,pending.generation);
+    assert.strictEqual(historyCalls,1,'load generation history once per integrity invocation');
+    assert.strictEqual(candidateCalls,1,'validate the pending candidate');
+    selected=authorities;
+    assert.strictEqual(c.currentIntegrityCheck(),drift,'no pending successor retains the current failure');
+    assert.strictEqual(historyCalls,2,'a new invocation must re-read authority state');
+    assert.strictEqual(candidateCalls,1);
+    selected=authorities.slice(0,-2);
+    assert.strictEqual(c.currentIntegrityCheck(),drift,'competing pending successors fail closed');
+    assert.strictEqual(historyCalls,3);assert.strictEqual(candidateCalls,1);
+    selected=authorities.slice(0,-1);candidateOK=false;
+    assert.strictEqual(c.currentIntegrityCheck(),drift,'an invalid pending successor cannot hide current drift');
+    assert.strictEqual(historyCalls,4);assert.strictEqual(candidateCalls,2);
+    const current={ok:true};lifecycle.verifyCurrent=()=>current;
+    assert.strictEqual(c.currentIntegrityCheck(),current,'a valid committed authority remains authoritative');
+    assert.strictEqual(historyCalls,4,'do not perform pending discovery for a valid committed tip');
+  }finally{Object.assign(lifecycle,saved);}
+}
 const mutations=c.mutations();
 assert.strictEqual(mutations.length,19);
 assert.strictEqual(mutations.filter(x=>x.status==='SURVIVED').length,0);

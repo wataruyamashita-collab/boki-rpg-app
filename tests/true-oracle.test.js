@@ -21,6 +21,9 @@ for(const id of ['J001','J101','L001','D001','C004']){
   assert.strictEqual(finding.match,false,`${id}: coordinated answer/mirror/fingerprint/semantic mutation must be detected`);
   assert.strictEqual(finding.fallbackUsed,false,`${id}: mutation detection must not use fallback`);
 }
+for(const phrase of ['株主から現金3,020,000円の追加払込みを受けた。','株主からの払込みとして現金3,020,000円を受けた。','増資として現金3,020,000円が払い込まれた。']){
+  const q=structuredClone(root.QuestionData.J101);q.question=phrase;assert.strictEqual(root.deriveAccountingExpected('J101',null,q).expected.debit[0].account,'現金');
+}
 {
   const base=structuredClone(root.QuestionData.J051);
   const expected=root.deriveAccountingExpected('J051',null,base).expected;
