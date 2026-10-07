@@ -56,12 +56,12 @@ const compatible={...saved,mode:'exam',drafts:{J001:{debit:[],credit:[]}},examSe
 const legacyBackup={...saved,mode:'story',examSession:null};
 assert.strictEqual(root.ProgressModel.validateBackupState(legacyBackup,questions),true,'legacy backup v1 remains importable');
 assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:2},questions),true,'revision 2 backup remains importable');
-assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:3},questions),true,'current content revision accepted');
-assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:4},questions),false,'future content revision rejected');
-const futureState={...saved,contentRevision:4,mode:'exam',currentQuestionId:'L033',answeredIds:['L005'],correctIds:['L005'],incorrectIds:['L010'],drafts:{L033:{cells:{future:1}}},examSession:saved.examSession};
+assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:3},questions),true,'revision 3 remains importable before migration');
+assert.strictEqual(root.ProgressModel.validateBackupState({...legacyBackup,contentRevision:5},questions),false,'future content revision rejected');
+const futureState={...saved,contentRevision:5,mode:'exam',currentQuestionId:'L033',answeredIds:['L005'],correctIds:['L005'],incorrectIds:['L010'],drafts:{L033:{cells:{future:1}}},examSession:saved.examSession};
 stored=JSON.stringify(futureState);let futureWrites=0;
 const futureModel=new root.ProgressModel(questions,{getItem:()=>stored,setItem:()=>{futureWrites++;return true;}});
-assert.deepStrictEqual(JSON.parse(JSON.stringify(futureModel.state)),{contentRevision:3,learningSchemaVersion:2,lastLearningAt:0,learningContinuityState:{activeDayKeys:[],today:null},questionStats:{},mode:'story',currentQuestionId:null,answeredIds:[],correctIds:[],incorrectIds:[],mistakeCounts:{},reviewSchedule:{},reviewAssignments:{},attempts:[],drafts:{},completed:false,placement:null,examAttempt:0,examSession:null,examHistory:[],lastExamReview:null},'future persisted state leaves the safe default state intact');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(futureModel.state)),{contentRevision:4,questionContentVersions:{},contentMigrationArchive:{schemaVersion:1,questions:{},reviewAssignments:{},completed:null},contentRecheckIds:[],learningSchemaVersion:2,lastLearningAt:0,learningContinuityState:{activeDayKeys:[],today:null},questionStats:{},mode:'story',currentQuestionId:null,answeredIds:[],correctIds:[],incorrectIds:[],mistakeCounts:{},reviewSchedule:{},reviewAssignments:{},attempts:[],drafts:{},completed:false,placement:null,examAttempt:0,examSession:null,examHistory:[],lastExamReview:null},'future persisted state leaves the safe default state intact');
 assert.strictEqual(futureWrites,0,'future persisted state is not silently downgraded or saved');
 for(const id of ids){const item=root.QuestionData[id];assert(!JSON.stringify(item).includes('当期減価償却額'),`${id}: terminology`);assert.deepStrictEqual(JSON.parse(JSON.stringify(root.independentlyDerivedTableCells(item))),JSON.parse(JSON.stringify(item.answer.cells)),`${id}: independent arithmetic`);}
 assert.strictEqual(root.QuestionData.L030.table.inputMetadata.annualDepreciation.label,'1年分の減価償却費');
