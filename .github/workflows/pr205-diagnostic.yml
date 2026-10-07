@@ -52,17 +52,7 @@ jobs:
           JS
           npm ci
           npm run verify > "$RUNNER_TEMP/issue207-generation118-verify.log" 2>&1
-          node - <<'JS'
-          const fs=require('fs'),cp=require('child_process'),assert=require('assert'),crypto=require('crypto');
-          const paths=cp.execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim().split('\n');paths.push('reports/auto-gate/audit-locks/phase-b-generation-118.json');assert.strictEqual(paths.length,14);
-          const blob=(path,bytes)=>({path,sha:crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+bytes.length+'\0'),bytes])).digest('hex'),content:bytes.toString('base64')});
-          const objects=paths.map(path=>blob(path,fs.readFileSync(path)));
-          const testPackage=Buffer.from(fs.readFileSync('package.json','utf8').replace('node tests/content-progress-integration.test.js && ',''));
-          const testBlob=blob('package.json',testPackage);assert.strictEqual(testBlob.sha,'4a9d063e2f3b2c05db6e7133d87472240994d47f');objects.push(testBlob);
-          fs.writeFileSync(process.env.RUNNER_TEMP+'/issue207-objects.json',JSON.stringify(objects));
-          cp.execFileSync('git',['add','--',...paths]);cp.execFileSync('git',['diff','--exit-code']);
-          const tree=cp.execFileSync('git',['write-tree'],{encoding:'utf8'}).trim();assert.strictEqual(tree,'173d5c747353183b9a57f9effc3fb0f677c1c664');console.log('IMMUTABLE_PREDECESSOR_TREE '+tree);
-          JS
+          node ../driver/issue207-objects.js capture
           git -c user.name=issue207-validation -c user.email=validation@users.noreply.github.com commit -m 'Local-only immutable Generation118 premerge candidate; not accepted'
       - name: Apply reviewed provenance correction and append Generation119
         working-directory: candidate
@@ -97,27 +87,7 @@ jobs:
         working-directory: candidate
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          node - <<'JS'
-          const fs=require('fs'),assert=require('assert'),cp=require('child_process'),crypto=require('crypto');
-          const l=require('./scripts/qa/phase-b-lifecycle');
-          for(const a of l.generationAuthorities())assert(fs.readFileSync(a.file).equals(a.bytes),a.file);
-          assert(l.verifyCandidate(JSON.parse(fs.readFileSync('reports/auto-gate/audit-locks/phase-b-generation-119.json'))).ok);
-          const paths=cp.execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim().split('\n');paths.push('reports/auto-gate/audit-locks/phase-b-generation-119.json');assert.strictEqual(paths.length,8);
-          cp.execFileSync('git',['add','--',...paths]);cp.execFileSync('git',['diff','--exit-code']);cp.execFileSync('git',['diff','--cached','--check']);
-          const tree=cp.execFileSync('git',['write-tree'],{encoding:'utf8'}).trim();assert.strictEqual(tree,'d218a125e8df73cdb2e36a2c6d0824afc7d03229');
-          const objects=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/issue207-objects.json'));
-          for(const path of paths){const bytes=fs.readFileSync(path);objects.push({path,sha:crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+bytes.length+'\0'),bytes])).digest('hex'),content:bytes.toString('base64')});}
-          (async()=>{
-            const unique=new Map(objects.map(object=>[object.sha,object]));
-            for(const {sha,content} of unique.values()){
-              const response=await fetch('https://api.github.com/repos/wataruyamashita-collab/boki-rpg-app/git/blobs',{method:'POST',headers:{Authorization:'Bearer '+process.env.GH_TOKEN,Accept:'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},body:JSON.stringify({content,encoding:'base64'})});
-              if(!response.ok)throw new Error('Blob storage failed: '+response.status);
-              assert.strictEqual((await response.json()).sha,sha);
-            }
-            const metadata=objects.map(({path,sha})=>({path,sha}));fs.writeFileSync(process.env.RUNNER_TEMP+'/issue207-verified-objects.json',JSON.stringify({tree,objects:metadata},null,2));console.log('ISSUE207_VERIFIED_TREE '+tree);console.log('ISSUE207_VERIFIED_OBJECTS '+JSON.stringify(metadata));
-          })().catch(error=>{console.error(error.stack);process.exitCode=1;});
-          JS
+        run: node ../driver/issue207-objects.js publish
       - uses: actions/upload-artifact@v4
         if: always()
         with:
