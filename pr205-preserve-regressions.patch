@@ -1,0 +1,17 @@
+diff --git a/.github/visual/run-journal-explanation-ticket.js b/.github/visual/run-journal-explanation-ticket.js
+index 43061a3..0cb0700 100644
+--- a/.github/visual/run-journal-explanation-ticket.js
++++ b/.github/visual/run-journal-explanation-ticket.js
+@@ -5 +5 @@ const ROOT=path.resolve(__dirname,'../..'),OUTPUT=path.join(ROOT,'artifacts','jo
+-const engines={chromium,webkit},widths=[320,375,390,430],cases=['J001','J128','J051','J135'];
++const engines={chromium,webkit},widths=[320,375,390,430],cases=['J001','J128','J101','J051','J135'];
+@@ -48,0 +49 @@ async function run(){
++              if(id==='J101'&&!report.rowReports.some(row=>row.cells.some(cell=>cell.text==='3,020,000')))violations.push('MAX_AMOUNT_MISSING');
+diff --git a/tests/true-oracle.test.js b/tests/true-oracle.test.js
+index cfb5caf..765c86a 100644
+--- a/tests/true-oracle.test.js
++++ b/tests/true-oracle.test.js
+@@ -23,0 +24,3 @@ for(const id of ['J001','J101','L001','D001','C004']){
++for(const phrase of ['株主から現金3,020,000円の追加払込みを受けた。','株主からの払込みとして現金3,020,000円を受けた。','増資として現金3,020,000円が払い込まれた。']){
++  const q=structuredClone(root.QuestionData.J101);q.question=phrase;assert.strictEqual(root.deriveAccountingExpected('J101',null,q).expected.debit[0].account,'現金');
++}

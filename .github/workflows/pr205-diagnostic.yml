@@ -22,13 +22,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Apply exact reviewed patch and generate successor
+      - name: Apply exact reviewed patches and generate successor
         working-directory: candidate
         run: |
           test "$(git rev-parse HEAD)" = "0619ec7b591ab09a39cacf86c1ae923f74a56d5c"
           git diff --exit-code
           git apply --check --unidiff-zero ../driver/pr205-repair.patch
           git apply --unidiff-zero ../driver/pr205-repair.patch
+          git apply --check --unidiff-zero ../driver/pr205-preserve-regressions.patch
+          git apply --unidiff-zero ../driver/pr205-preserve-regressions.patch
           node - <<'JS'
           const fs=require('fs'),assert=require('assert'),l=require('./scripts/qa/phase-b-lifecycle');
           const c=l.createCandidate();
@@ -69,7 +71,9 @@ jobs:
             'independent-audit/tests/generation-immutability.test.js':'c9af4dfa5abc2d8b6be90de7d7e2412b8989cc162153e1cb4a999194125073ee',
             'scripts/audit-explanations.js':'5b77a5e9c10a899168c8077c6c299ba93f450aff647340563b015a87d6587aea',
             'tests/explanation-audit-regression.test.js':'ea5b14c604bd101dd0c124ade0eba90c3528d8c1f5c36a4fb93202ac1fd8142c',
-            'reports/auto-gate/audit-locks/phase-b-generation-117.json':'cceaeb1fc835c4e468f7f4e0f86e979162982424eacd3fa80fc56176bab64b8e'
+            'reports/auto-gate/audit-locks/phase-b-generation-117.json':'cceaeb1fc835c4e468f7f4e0f86e979162982424eacd3fa80fc56176bab64b8e',
+            'tests/true-oracle.test.js':'2489d76113893db36803a1e0de24a883ac4721dbdb63a66889b80e7059fdc84f',
+            '.github/visual/run-journal-explanation-ticket.js':'6db5eb77ac1315501370d59b847dfee20ec8685554d8f9ac6658c13657b0e3b6'
           };
           const l=require('./scripts/qa/phase-b-lifecycle');
           for(const a of l.generationAuthorities())assert(fs.readFileSync(a.file).equals(a.bytes),a.file);
