@@ -1,100 +1,29 @@
-name: Issue207 exact successor validation
+name: Issue207 exact merged-main history export
 on:
   push:
     branches: [qa/pr205-exact-head-diagnostic-20261007]
 permissions:
-  contents: write
-concurrency:
-  group: issue207-isolated-validation
-  cancel-in-progress: true
+  contents: read
 jobs:
-  validate:
+  export:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          path: driver
-          persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          path: candidate
-          ref: 04b2f27c7dce31ace0f6f33fd27bf8431036c3a4
+          ref: 69e9ba9ce5b309e7331874a03567bc979f50ba57
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Reconstruct immutable Generation118 candidate
-        working-directory: candidate
+      - name: Verify actual merged history and export without credentials
         run: |
-          test "$(git rev-parse HEAD)" = 04b2f27c7dce31ace0f6f33fd27bf8431036c3a4
+          test "$(git rev-parse HEAD)" = 69e9ba9ce5b309e7331874a03567bc979f50ba57
+          test "$(git rev-parse HEAD^{tree})" = d218a125e8df73cdb2e36a2c6d0824afc7d03229
+          test "$(git show -s --format=%P HEAD)" = "04b2f27c7dce31ace0f6f33fd27bf8431036c3a4 6e337300937dcc60a54be4bf31aab56b3208f6d0"
           git diff --exit-code
-          python3 - <<'PY'
-          import pathlib,base64,gzip,hashlib
-          text=''.join(''.join(pathlib.Path(f'../driver/issue207-repair-{n}.b64').read_text().split()) for n in (1,2,3))
-          corrections=[[500,501,'3','7'],[561,562,'Y',''],[1732,1732,'','BGdG2abn/hh'],[1971,1971,'','L'],[1972,1973,'K',''],[1988,1990,'YF','R'],[2816,2818,'Hz',''],[11469,11469,'','1f'],[11815,11816,'1','87v98a7fH/S6g37X6+z5nfwQSo33Or3dsRd0g2']]
-          for start,end,old,new in reversed(corrections):
-              assert text[start:end]==old
-              text=text[:start]+new+text[end:]
-          raw=gzip.decompress(base64.b64decode(text,validate=True))
-          assert hashlib.sha256(raw).hexdigest()=='a69e8b763c1d487ad445080b1d7e9d6912a8140d1173ee50671f08e0f7f7b850'
-          pathlib.Path('../repair.patch').write_bytes(raw)
-          PY
-          git apply --check --unidiff-zero ../repair.patch
-          git apply --unidiff-zero ../repair.patch
-          node - <<'JS'
-          const fs=require('fs'),assert=require('assert'),l=require('./scripts/qa/phase-b-lifecycle');
-          const c=l.createCandidate();assert.strictEqual(c.generation,118);assert(l.verifyCandidate(c).ok);
-          assert.strictEqual(c.auditHash,'69c197ef727465bead71f1eee3bba8c30b860e39ecacfdd6e17f2990a5ec1dcf');
-          assert.strictEqual(c.baselineIdentity,'a4802bbf6823196a613330c0a44ab47340775306e1ce0d4d525cb050fcab7f04');
-          fs.writeFileSync('reports/auto-gate/audit-locks/phase-b-generation-118.json',JSON.stringify(c,null,2)+'\n',{flag:'wx'});
-          JS
-          npm ci
-          npm run verify > "$RUNNER_TEMP/issue207-generation118-verify.log" 2>&1
-          node ../driver/issue207-objects.js capture
-          git -c user.name=issue207-validation -c user.email=validation@users.noreply.github.com commit -m 'Local-only immutable Generation118 premerge candidate; not accepted'
-      - name: Apply reviewed provenance correction and append Generation119
-        working-directory: candidate
-        run: |
-          python3 ../driver/issue207-successor119.py
-          node - <<'JS'
-          const fs=require('fs'),assert=require('assert'),l=require('./scripts/qa/phase-b-lifecycle');
-          const c=l.createCandidate();assert.strictEqual(c.generation,119);assert(l.verifyCandidate(c).ok);
-          assert.strictEqual(c.auditHash,'6e9ace978ea3e5f405cacd03a32f23c09bce5f7de80728f3243b3ec71141c554');
-          assert.strictEqual(c.baselineIdentity,'5e0b982b6e8a92e2d1bf81490eb54ce5bd5384728bcee6b6f2b30e623d020b12');
-          fs.writeFileSync('reports/auto-gate/audit-locks/phase-b-generation-119.json',JSON.stringify(c,null,2)+'\n',{flag:'wx'});
-          for(const a of l.generationAuthorities())assert(fs.readFileSync(a.file).equals(a.bytes),a.file);
-          JS
-          git diff --check
-      - name: Mandatory successor precommit verify
-        working-directory: candidate
-        run: |
-          set +e
-          npm run verify > "$RUNNER_TEMP/issue207-generation119-verify.log" 2>&1
-          result=$?
-          tail -n 25 "$RUNNER_TEMP/issue207-generation119-verify.log"
-          exit "$result"
-      - name: Install pinned CI browser dependencies
-        working-directory: candidate
-        run: |
-          npm install --no-save --package-lock=false playwright@1.55.0
-          npx playwright install --with-deps chromium webkit
-      - name: Real browser migration and reload checks
-        working-directory: candidate
-        run: node .github/visual/run-content-progress-migration.js
-      - name: Store exact candidate objects only - no branch update
-        working-directory: candidate
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node ../driver/issue207-objects.js publish
+          git bundle create "$RUNNER_TEMP/issue207-merged-main.bundle" HEAD
+          sha256sum "$RUNNER_TEMP/issue207-merged-main.bundle"
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: issue207-successor-validation
-          path: |
-            ${{ runner.temp }}/issue207-generation118-verify.log
-            ${{ runner.temp }}/issue207-generation119-verify.log
-            ${{ runner.temp }}/issue207-verified-objects.json
-            candidate/artifacts/content-progress-migration
-          retention-days: 14
+          name: issue207-exact-merged-main-history
+          path: ${{ runner.temp }}/issue207-merged-main.bundle
+          retention-days: 7
