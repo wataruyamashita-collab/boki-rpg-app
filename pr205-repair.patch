@@ -1,0 +1,103 @@
+diff --git a/independent-audit/tests/generation-immutability.test.js b/independent-audit/tests/generation-immutability.test.js
+index 7582ae3..dc6cc14 100644
+--- a/independent-audit/tests/generation-immutability.test.js
++++ b/independent-audit/tests/generation-immutability.test.js
+@@ -21,0 +22,2 @@ const auditPath=path.join(
++// Snapshot every present authority, including a pending successor. A fixed
++// numeric ceiling can omit the latest immutable authority after finalization.
+@@ -23,2 +25,4 @@ const authorityBytes=new Map(
+-  [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115]
+-    .filter(generation=>fs.existsSync(authorityPath(generation)))
++  fs.readdirSync(path.dirname(authorityPath(2)))
++    .filter(file=>/^phase-b-generation-[0-9]+\.json$/u.test(file))
++    .map(file=>Number(file.match(/^phase-b-generation-([0-9]+)\.json$/u)[1]))
++    .sort((left,right)=>left-right)
+@@ -117,0 +122 @@ try{
++  const generation117Committed=committed(117);
+@@ -120 +125 @@ try{
+-    'authority sequence tracks committed Generations through 116',
++    'authority sequence tracks committed Generations through 117',
+@@ -123 +128,3 @@ try{
+-      generation116Committed
++      generation117Committed
++        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117]
++        : generation116Committed
+@@ -226,0 +234,8 @@ try{
++  test(
++    'every committed authority has a raw-byte snapshot',
++    ()=>assert.deepStrictEqual(
++      generations.filter(generation=>!Buffer.isBuffer(authorityBytes.get(generation))),
++      []
++    )
++  );
++
+@@ -301 +316 @@ try{
+-  for(const generation of [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103]){
++  for(const generation of generations){
+@@ -397,0 +413,2 @@ try{
++  const generation117Pending=
++    fs.existsSync(authorityPath(117))&&!generation117Committed;
+@@ -497 +514,19 @@ try{
+-  if(generation116Committed){
++  if(generation117Committed){
++    test(
++      'committed Generation 117 current integrity passes',
++      ()=>assert.strictEqual(
++        lifecycle.verifyCurrent().ok,
++        true
++      )
++    );
++  }else if(generation117Pending){
++    const generation117Candidate=
++      JSON.parse(fs.readFileSync(authorityPath(117),'utf8'));
++    test(
++      'pending Generation 117 candidate integrity passes',
++      ()=>assert.strictEqual(
++        lifecycle.verifyCandidate(generation117Candidate).ok,
++        true
++      )
++    );
++  }else if(generation116Committed){
+diff --git a/scripts/audit-explanations.js b/scripts/audit-explanations.js
+index d47f9c1..6d2bf18 100644
+--- a/scripts/audit-explanations.js
++++ b/scripts/audit-explanations.js
+@@ -62,0 +63,24 @@ const tableIssues = question => {
++  // Account-entry concepts have no opening/closing balance to calculate.
++  // Require the complete semantic contract instead of exempting them from audit.
++  if (question.format === 'bookkeeping-account-rule') {
++    const expected = [
++      ['assetIncreaseSide','資産の増加を記入する側','借方'],
++      ['assetDecreaseSide','資産の減少を記入する側','貸方'],
++      ['liabilityIncreaseSide','負債の増加を記入する側','貸方'],
++      ['liabilityDecreaseSide','負債の減少を記入する側','借方'],
++      ['balancePrinciple','貸借平均の原理：借方合計と貸方合計','一致']
++    ];
++    if (question.type !== 'ledger' || JSON.stringify(question.table?.inputCells) !== JSON.stringify(expected.map(([key]) => key))) issues.push('勘定記入法則の5項目が揃っていない');
++    for (const [key, label, value] of expected) {
++      if (!question.table?.rows?.some(row => row.item === label)) issues.push(`勘定記入法則の確認事項「${label}」がない`);
++      if (question.answer?.cells?.[key] !== value) issues.push(`勘定記入法則の正答「${label}＝${value}」と不一致`);
++      if (!text.includes(`${label}＝${value}`)) issues.push(`解答確認に「${label}＝${value}」がない`);
++    }
++    if (!['勘定記入法則','資産','負債','増減','貸借平均','借方合計','貸方合計'].every(term => String(question.question || '').includes(term))) issues.push('問題文に勘定記入法則の根拠がない');
++    if (!['【使用する資料】','【判断の順序】','【解答確認】','【検算】'].every(heading => text.includes(heading))) issues.push('資料から判断・解答確認・検算へ進む説明構造がない');
++    const reasoning = (text.split('【判断の順序】')[1] || '').split('【解答確認】')[0];
++    if (!/資産は増加を借方[・、]減少を貸方/u.test(reasoning)) issues.push('資産の増減と借方・貸方の説明が不一致');
++    if (!/負債は増加を貸方[・、]減少を借方/u.test(reasoning)) issues.push('負債の増減と借方・貸方の説明が不一致');
++    if (!/一つの取引[^。]*借方[^。]*貸方[^。]*同額/u.test(reasoning) || !/借方合計と貸方合計は(?:必ず)?一致/u.test(reasoning)) issues.push('同額記録から貸借一致に至る根拠がない');
++    return issues;
++  }
+diff --git a/tests/explanation-audit-regression.test.js b/tests/explanation-audit-regression.test.js
+index 6cae5e4..c88b3dd 100644
+--- a/tests/explanation-audit-regression.test.js
++++ b/tests/explanation-audit-regression.test.js
+@@ -33,0 +34,9 @@ mustFail('Mutation I: ledger subtype mismatch', q => { q.L035.explanation = '【
++// A non-numeric account-entry task must pass its own strict semantic audit.
++assert.strictEqual(auditExplanations(fresh()).ok, true, 'all 300 authored explanations pass their applicable audit');
++mustFail('account rule: wrong asset directions', q => { q.L031.explanation = q.L031.explanation.replace('資産は増加を借方・減少を貸方', '資産は増加を貸方・減少を借方'); }, 'L031');
++mustFail('account rule: wrong liability directions', q => { q.L031.explanation = q.L031.explanation.replace('負債は増加を貸方・減少を借方', '負債は増加を借方・減少を貸方'); }, 'L031');
++mustFail('account rule: wrong answer authority', q => { q.L031.answer.cells.assetIncreaseSide = '貸方'; }, 'L031');
++mustFail('account rule: missing source principle', q => { q.L031.question = q.L031.question.replaceAll('貸借平均', '別の原理'); }, 'L031');
++mustFail('account rule: no reasoning', q => { q.L031.explanation = q.L031.explanation.replace(/【判断の順序】[\s\S]*?【解答確認】/u, '【解答確認】'); }, 'L031');
++mustFail('account rule: no same-amount basis', q => { q.L031.explanation = q.L031.explanation.replaceAll('同額', '異なる額'); }, 'L031');
++mustFail('numeric ledger cannot bypass calculation audit', q => { q.L001.format = 'bookkeeping-account-rule'; }, 'L001');

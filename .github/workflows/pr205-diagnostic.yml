@@ -1,54 +1,98 @@
-name: PR205 exact-head diagnostic
+name: PR205 repair validation
 on:
   push:
     branches: [qa/pr205-exact-head-diagnostic-20261007]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  diagnostic:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
+          path: driver
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
           ref: 0619ec7b591ab09a39cacf86c1ae923f74a56d5c
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - name: Assert exact immutable source
+      - name: Apply exact reviewed patch and generate successor
+        working-directory: candidate
         run: |
           test "$(git rev-parse HEAD)" = "0619ec7b591ab09a39cacf86c1ae923f74a56d5c"
           git diff --exit-code
-          git rev-parse HEAD HEAD^{tree}
-      - name: Package exact tracked source, history and installed dependencies
+          git apply --check --unidiff-zero ../driver/pr205-repair.patch
+          git apply --unidiff-zero ../driver/pr205-repair.patch
+          node - <<'JS'
+          const fs=require('fs'),assert=require('assert'),l=require('./scripts/qa/phase-b-lifecycle');
+          const c=l.createCandidate();
+          assert.strictEqual(c.generation,117);
+          assert(l.verifyCandidate(c).ok);
+          const previous=JSON.parse(fs.readFileSync('reports/auto-gate/audit-locks/phase-b-generation-116.json'));
+          assert.deepStrictEqual(c.productionHashes,previous.productionHashes);
+          assert.deepStrictEqual(Object.keys(c.files).filter(p=>c.files[p]!==previous.files[p]),['independent-audit/tests/generation-immutability.test.js']);
+          fs.writeFileSync('reports/auto-gate/audit-locks/phase-b-generation-117.json',JSON.stringify(c,null,2)+'\n',{flag:'wx'});
+          console.log('GENERATION_117_CANDIDATE '+c.auditHash);
+          JS
+          git diff --check
+          npm ci
+      - name: Mandatory precommit verify
+        working-directory: candidate
         run: |
-          mkdir -p "$RUNNER_TEMP/pr205-workspace"
-          git archive HEAD | tar -x -C "$RUNNER_TEMP/pr205-workspace"
-          if test -d node_modules; then cp -a node_modules "$RUNNER_TEMP/pr205-workspace/node_modules"; fi
-          git rev-parse HEAD > "$RUNNER_TEMP/pr205-workspace/VERIFIED_HEAD.txt"
-          git rev-parse HEAD^{tree} > "$RUNNER_TEMP/pr205-workspace/VERIFIED_TREE.txt"
-          git ls-tree -r HEAD > "$RUNNER_TEMP/pr205-workspace/VERIFIED_GIT_TREE.txt"
-          git bundle create "$RUNNER_TEMP/pr205-exact-head.bundle" HEAD
-          tar -czf "$RUNNER_TEMP/pr205-workspace.tar.gz" -C "$RUNNER_TEMP/pr205-workspace" .
-          sha256sum "$RUNNER_TEMP/pr205-workspace.tar.gz" "$RUNNER_TEMP/pr205-exact-head.bundle"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr205-exact-head-workspace-history
-          path: |
-            ${{ runner.temp }}/pr205-workspace.tar.gz
-            ${{ runner.temp }}/pr205-exact-head.bundle
-          retention-days: 3
-      - name: Reproduce focused immutability failure
+          set +e
+          npm run verify > "$RUNNER_TEMP/pr205-verify.log" 2>&1
+          result=$?
+          tail -n 40 "$RUNNER_TEMP/pr205-verify.log"
+          exit "$result"
+      - name: Pending successor immutability regression
+        working-directory: candidate
         run: |
-          set -o pipefail
-          node independent-audit/tests/generation-immutability.test.js 2>&1 | tee "$RUNNER_TEMP/pr205-immutability.log"
+          set +e
+          node independent-audit/tests/generation-immutability.test.js > "$RUNNER_TEMP/pr205-immutability.log" 2>&1
+          result=$?
+          tail -n 12 "$RUNNER_TEMP/pr205-immutability.log"
+          exit "$result"
+      - name: Store verified file objects only - never update a branch
+        working-directory: candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node - <<'JS'
+          const fs=require('fs'),crypto=require('crypto'),assert=require('assert');
+          const expected={
+            'independent-audit/tests/generation-immutability.test.js':'c9af4dfa5abc2d8b6be90de7d7e2412b8989cc162153e1cb4a999194125073ee',
+            'scripts/audit-explanations.js':'5b77a5e9c10a899168c8077c6c299ba93f450aff647340563b015a87d6587aea',
+            'tests/explanation-audit-regression.test.js':'ea5b14c604bd101dd0c124ade0eba90c3528d8c1f5c36a4fb93202ac1fd8142c',
+            'reports/auto-gate/audit-locks/phase-b-generation-117.json':'cceaeb1fc835c4e468f7f4e0f86e979162982424eacd3fa80fc56176bab64b8e'
+          };
+          const l=require('./scripts/qa/phase-b-lifecycle');
+          for(const a of l.generationAuthorities())assert(fs.readFileSync(a.file).equals(a.bytes),a.file);
+          assert(l.verifyCandidate(JSON.parse(fs.readFileSync('reports/auto-gate/audit-locks/phase-b-generation-117.json'))).ok);
+          (async()=>{
+            const blobs=[];
+            for(const [path,hash] of Object.entries(expected)){
+              const bytes=fs.readFileSync(path);
+              assert.strictEqual(crypto.createHash('sha256').update(bytes).digest('hex'),hash,path);
+              const gitSha=crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+bytes.length+'\0'),bytes])).digest('hex');
+              const response=await fetch('https://api.github.com/repos/wataruyamashita-collab/boki-rpg-app/git/blobs',{method:'POST',headers:{Authorization:'Bearer '+process.env.GH_TOKEN,Accept:'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},body:JSON.stringify({content:bytes.toString('base64'),encoding:'base64'})});
+              if(!response.ok)throw new Error('Blob storage failed: '+response.status);
+              const result=await response.json();assert.strictEqual(result.sha,gitSha,path);
+              blobs.push({path,sha:result.sha,sha256:hash});
+            }
+            console.log('PR205_VALIDATED_BLOBS '+JSON.stringify(blobs));
+          })().catch(error=>{console.error(error.message);process.exitCode=1;});
+          JS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: pr205-immutability-reproduction
-          path: ${{ runner.temp }}/pr205-immutability.log
-          retention-days: 3
+          name: pr205-repair-verification-logs
+          path: |
+            ${{ runner.temp }}/pr205-verify.log
+            ${{ runner.temp }}/pr205-immutability.log
+          retention-days: 7
