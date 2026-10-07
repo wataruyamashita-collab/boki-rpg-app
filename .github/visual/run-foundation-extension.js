@@ -5,6 +5,15 @@ const ROOT=path.resolve(__dirname,'../..'),OUT=path.join(ROOT,'artifacts/foundat
 const fixtures=require('../../tests/fixtures/foundation-extension-cases');
 const widths=[320,390,768],engines={chromium,webkit},prefix='foundation-ext:browser:';
 const keys=['boki-rpg-progress-v2','boki-rpg-character-v1'];
+const explanationRequirements={
+  equipment:['備品','現金','100,000円','貸借差額は0円'],
+  fx:['USD1,000×150円＝150,000円','普通預金149,000円','支払手数料1,000円','売掛金140,000円','為替差益10,000円'],
+  cost:['120,000＋80,000＋40,001＝240,001円','1,200.005円/個','1,200.01円/個','240,002円','1円多い'],
+  npvPositive:['54,546円','49,584円','104,130円','104,130－100,000＝4,130円'],
+  npvNegative:['54,546円','49,584円','104,130円','104,130－110,000＝-5,870円'],
+  npvZero:['54,546円','49,584円','104,130円','104,130－104,130＝0円'],
+  accrual:['発生主義','当月','支払前でも当月の費用','現金主義なら支払った翌月']
+};
 const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT,file))).digest('hex');
 const git=(...args)=>cp.execFileSync('git',args,{cwd:ROOT,encoding:'utf8'}).trim();
 const evidence={status:'RUNNING',testedHead:git('rev-parse','HEAD'),testedTree:git('rev-parse','HEAD^{tree}'),fixtureSha256:hash('tests/fixtures/foundation-extension-cases.js'),adapterSha256:hash('tests/helpers/foundation-extension-adapter.js'),reports:[]};
@@ -19,8 +28,13 @@ window.extensionController=extensionController;
 extensionController.model.state.placement ||= {completed:true,foundation:0,closing:0,startQuestionId:FoundationExtensionCases[requested].id,completedAt:1};
 if(extensionController.model.state.mode!=='review')extensionController.model.state.mode='training';
 extensionController.bindEvents();extensionController.view.updateRpg(extensionController.rpg);
-if(extensionController.model.state.mode==='review')extensionController.reviewIds();
-extensionController.start(FoundationExtensionCases[requested].id);
+let startId=FoundationExtensionCases[requested].id;
+if(extensionController.model.state.mode==='review'){
+  const dueIds=extensionController.reviewIds();
+  startId=dueIds[0]||null;
+  if(!startId){extensionController.currentId=null;extensionController.reviewSourceId=null;extensionController.renderModes();extensionController.view.show('view-review');}
+}
+if(startId)extensionController.start(startId);
 </script>`;
 const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8').replace(/<script src="js\/app\.js[^"]*"><\/script>/u,'').replace('</body>',bootstrap+'</body>');
 assert(!html.includes('src="js/app.js'),'Original application must not also bootstrap');
@@ -79,6 +93,18 @@ async function run(){
           await page.locator('.confirm-button').click();
           assert.strictEqual((await inspect(page,q.id)).score.correct,false,'Blank answer must fail');
           await page.evaluate(id=>extensionController.start(id,{fresh:true}),q.id);
+          const exactProbe=await page.evaluate(()=>({
+            large:FoundationExtensionAdapter.roundHalfUp(FoundationExtensionAdapter.evaluateDecimalExpression('115308668+0.005'),2),
+            division:FoundationExtensionAdapter.evaluateDecimalExpression('240001/200'),
+            signed:FoundationExtensionAdapter.evaluateDecimalExpression('0-5870'),
+            grouped:FoundationExtensionAdapter.evaluateDecimalExpression('(1.005+1.67)*2')
+          }));
+          assert.deepStrictEqual(exactProbe,{large:'115308668.01',division:'1200.005',signed:'-5870',grouped:'5.35'});
+          if(key==='cost'){
+            await amount(page,'[data-cell-id="unitCost"]','115308668＋0.005');
+            assert.strictEqual(await page.locator('[data-cell-id="unitCost"]').inputValue(),'115,308,668.01');
+            await page.evaluate(id=>extensionController.start(id,{fresh:true}),q.id);
+          }
           await fill(page,key);
           if(key==='cost'&&width===768){const field=page.locator('[data-cell-id="unitCost"]');await field.evaluate(el=>el.setSelectionRange(2,2));await field.dispatchEvent('input');assert.strictEqual(await field.evaluate(el=>el.selectionStart),2,'Interior caret moved');}
           const draft=await inspect(page,q.id);
@@ -87,9 +113,13 @@ async function run(){
           if(key==='cost')assert.strictEqual(draft.stored.drafts[q.id].cells.unitCost,'1,200.01');
           if(key==='npvNegative')assert.strictEqual(draft.stored.drafts[q.id].cells.npv,'-5,870');
           await page.reload({waitUntil:'load'});const restored=await inspect(page,q.id);assert.deepStrictEqual(restored.answer,draft.answer,'Draft must survive real reload');
+          if(key==='npvNegative'){
+            const retained=page.locator('[data-cell-id="npv"]');if(width<500)await retained.tap();else await retained.click();
+            assert.strictEqual(await page.evaluate(()=>extensionController.expression),'-5870','Reloaded signed calculator target must retain -5870');
+          }
           await page.locator('.confirm-button').click();const result=await inspect(page,q.id);
           assert(result.score.correct);assert.strictEqual(result.stored.questionStats[q.id].correctCount,1);assert.strictEqual(result.stored.questionStats[q.id].incorrectCount,1);
-          for(const text of q.explanation.split('\n').map(line=>line.replace(/^【[^】]+】/u,'')))assert(result.explanation.includes(text),'Missing topic-specific teaching');
+          for(const text of explanationRequirements[key])assert(result.explanation.includes(text),'Missing independently required topic teaching: '+text);
           assert(!result.overflow&&result.clipCount===0);assert.deepStrictEqual(result.originals,keys.map(key=>'sentinel:'+key));
           await page.screenshot({path:path.join(OUT,`${engine}-${width}-${key}.png`),fullPage:true});
           // Time setup only; assignment and completion use the real controller/submit path.
@@ -97,8 +127,17 @@ async function run(){
           const assigned=await page.evaluate(id=>extensionController.model.state.reviewAssignments[id]?.status,q.id);assert.strictEqual(assigned,'assigned');
           await fill(page,key);await page.locator('.confirm-button').click();
           const reviewed=await inspect(page,q.id);assert(reviewed.score.correct);assert.strictEqual(reviewed.stored.reviewSchedule[q.id].stage,1);assert.strictEqual(reviewed.stored.reviewAssignments[q.id],undefined);assert(reviewed.backupValid);
-          await page.reload({waitUntil:'load'});const end=await inspect(page,q.id);assert.strictEqual(end.stored.questionStats[q.id].correctCount,2);assert.strictEqual(end.stored.questionStats[q.id].incorrectCount,1);assert.deepStrictEqual(end.originals,keys.map(key=>'sentinel:'+key));assert.deepStrictEqual(errors,[]);
-          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReload:true,canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
+          await page.reload({waitUntil:'load'});
+          const end=await page.evaluate(({id,prefix,keys})=>{const c=extensionController,stored=JSON.parse(localStorage.getItem(prefix+c.model.key));return{
+            stored,due:c.reviewIds(),currentId:c.currentId,reviewSourceId:c.reviewSourceId,
+            reviewViewActive:document.getElementById('view-review').classList.contains('active'),
+            reviewEntryCount:document.querySelectorAll('#review-list [data-action="start"]').length,
+            originals:keys.map(key=>localStorage.getItem(key))
+          };},{id:q.id,prefix,keys});
+          assert.strictEqual(end.stored.questionStats[q.id].correctCount,2);assert.strictEqual(end.stored.questionStats[q.id].incorrectCount,1);
+          assert.deepStrictEqual(end.due,[]);assert.strictEqual(end.currentId,null);assert.strictEqual(end.reviewSourceId,null);assert(end.reviewViewActive);assert.strictEqual(end.reviewEntryCount,0);
+          assert.deepStrictEqual(end.originals,keys.map(key=>'sentinel:'+key));assert.deepStrictEqual(errors,[]);
+          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
         }finally{await context.close();}
       }}finally{await browser.close();}
     }

@@ -31,6 +31,90 @@
     const sign = negative && scaled !== 0n ? '-' : '';
     return sign + (precision ? digits.slice(0, -precision) + '.' + digits.slice(-precision) : digits);
   }
+  const absBigInt = value => value < 0n ? -value : value;
+  const gcd = (left, right) => {
+    let a = absBigInt(left), b = absBigInt(right);
+    while (b) [a, b] = [b, a % b];
+    return a || 1n;
+  };
+  const fraction = (numerator, denominator = 1n) => {
+    if (denominator === 0n) throw new RangeError('Division by zero');
+    if (denominator < 0n) { numerator = -numerator; denominator = -denominator; }
+    const divisor = gcd(numerator, denominator);
+    const reduced = { numerator:numerator / divisor, denominator:denominator / divisor };
+    if (absBigInt(reduced.numerator).toString().length > 40 || reduced.denominator.toString().length > 40) throw new RangeError('Expression result is too large');
+    return reduced;
+  };
+  const decimalFraction = value => {
+    const raw = normalize(value);
+    const normalized = raw.startsWith('.') ? '0' + raw : raw.startsWith('-.') ? '-0' + raw.slice(1) : raw.startsWith('+.') ? '0' + raw.slice(1) : raw.replace(/^\+/, '');
+    const parsed = parseDecimal(normalized);
+    const digits = parsed.whole + parsed.fraction;
+    const numerator = BigInt(digits || '0') * (parsed.negative ? -1n : 1n);
+    return fraction(numerator, 10n ** BigInt(parsed.fraction.length));
+  };
+  const exactDecimal = value => {
+    let { numerator, denominator } = fraction(value.numerator, value.denominator);
+    const negative = numerator < 0n;
+    numerator = absBigInt(numerator);
+    let reducedDenominator = denominator, twos = 0, fives = 0;
+    while (reducedDenominator % 2n === 0n) { reducedDenominator /= 2n; twos += 1; }
+    while (reducedDenominator % 5n === 0n) { reducedDenominator /= 5n; fives += 1; }
+    if (reducedDenominator !== 1n) throw new RangeError('Non-terminating decimal result');
+    const scale = Math.max(twos, fives);
+    if (scale > 12) throw new RangeError('Too many decimal places');
+    const power = 10n ** BigInt(scale);
+    const scaled = numerator * power / denominator;
+    const digits = scaled.toString().padStart(scale + 1, '0');
+    const unsigned = scale ? digits.slice(0, -scale) + '.' + digits.slice(-scale) : digits;
+    const result = (negative && scaled !== 0n ? '-' : '') + unsigned;
+    parseDecimal(result);
+    return result;
+  };
+  function evaluateDecimalExpression(expression) {
+    const source = normalize(expression).replace(/,/g, '').replace(/[＋−×÷]/g, token => ({'＋':'+','−':'-','×':'*','÷':'/'}[token])).replace(/\s/g, '');
+    if (!source || source.length > 256) throw new RangeError('Invalid expression');
+    const tokens = source.match(/\d+(?:\.\d*)?|\.\d+|[()+\-*/]/g) || [];
+    if (tokens.join('') !== source || tokens.length > 128) throw new RangeError('Invalid expression');
+    let index = 0;
+    const primary = () => {
+      const token = tokens[index++];
+      if (token === '+' || token === '-') {
+        const value = primary();
+        return token === '-' ? fraction(-value.numerator, value.denominator) : value;
+      }
+      if (token === '(') {
+        const value = expressionValue();
+        if (tokens[index++] !== ')') throw new RangeError('Invalid parenthesis');
+        return value;
+      }
+      if (!token || !/^(?:\d|\.)/.test(token)) throw new RangeError('Expected decimal operand');
+      return decimalFraction(token);
+    };
+    const term = () => {
+      let value = primary();
+      while (tokens[index] === '*' || tokens[index] === '/') {
+        const operator = tokens[index++], right = primary();
+        value = operator === '*'
+          ? fraction(value.numerator * right.numerator, value.denominator * right.denominator)
+          : fraction(value.numerator * right.denominator, value.denominator * right.numerator);
+      }
+      return value;
+    };
+    const expressionValue = () => {
+      let value = term();
+      while (tokens[index] === '+' || tokens[index] === '-') {
+        const operator = tokens[index++], right = term();
+        value = operator === '+'
+          ? fraction(value.numerator * right.denominator + right.numerator * value.denominator, value.denominator * right.denominator)
+          : fraction(value.numerator * right.denominator - right.numerator * value.denominator, value.denominator * right.denominator);
+      }
+      return value;
+    };
+    const result = expressionValue();
+    if (index !== tokens.length) throw new RangeError('Unexpected expression token');
+    return exactDecimal(result);
+  }
   function formatDecimal(input, event = {}) {
     if (event.isComposing) return true;
     const spec = specFor(input), before = normalize(input.value);
@@ -109,6 +193,22 @@
     formatAmount(input, event = {}) {
       return specFor(input) ? formatDecimal(input, event) : super.formatAmount(input, event);
     }
+    selectCalculatorTarget(input) {
+      super.selectCalculatorTarget(input);
+      const spec = specFor(input);
+      if (!spec) return;
+      const current = normalize(input.value).replace(/,/g, '');
+      if (!current) return;
+      try {
+        const parsed = parseDecimal(current);
+        if (parsed.negative && !spec.signed) return;
+        this.expression = current;
+        this.updateCalculatorDisplay();
+      } catch (_) { /* superclass fallback remains authoritative for invalid text */ }
+    }
+    operate(left, operator, right) {
+      return evaluateDecimalExpression(`${left}${operator}${right}`);
+    }
     insertCalculatorResult(shouldCalculate) {
       const selected = this.document.querySelector?.('.amount-input.calculator-selected');
       const target = this.document.body.contains(this.calculatorTarget) ? this.calculatorTarget : selected;
@@ -116,7 +216,7 @@
       if (!spec) return super.insertCalculatorResult(shouldCalculate);
       if (!target || target.disabled || !this.document.body.contains(target) || target.dataset.extensionQuestion !== this.currentId) return false;
       try {
-        const value = shouldCalculate ? String(root.SafeCalculator.evaluate(this.expression)) : this.expression;
+        const value = shouldCalculate ? evaluateDecimalExpression(this.expression) : this.expression;
         const parsed = parseDecimal(value);
         if (parsed.negative && !spec.signed) throw new RangeError('This field is unsigned');
         const rounded = roundHalfUp(value, spec.precision);
@@ -134,5 +234,5 @@
     }
   }
   function catalog(cases) { return Object.fromEntries(Object.values(cases).map(q => [q.id, JSON.parse(JSON.stringify(q))])); }
-  return { ExtensionView, ExtensionController, catalog, roundHalfUp, formatDecimal, namespacedStorage };
+  return { ExtensionView, ExtensionController, catalog, roundHalfUp, evaluateDecimalExpression, formatDecimal, namespacedStorage };
 }));

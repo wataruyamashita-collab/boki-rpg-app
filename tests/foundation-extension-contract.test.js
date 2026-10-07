@@ -21,20 +21,24 @@ for(const whole of [0,1,2,9,99,1200])for(const fraction of ['004','005','006','0
   test('HALF_UP '+whole+'.'+fraction,()=>assert.strictEqual(api.roundHalfUp(whole+'.'+fraction,2),expected));
 }
 for(const [value,precision,expected] of [['-1.005',2,'-1.01'],['-2.675',2,'-2.68'],['-0.004',2,'0.00'],['-5870',0,'-5870'],['0',0,'0'],['4130',0,'4130']])test('signed '+value,()=>assert.strictEqual(api.roundHalfUp(value,precision),expected));
+for(const [expression,expected] of [['115308668+0.005','115308668.005'],['240001/200','1200.005'],['0-5870','-5870'],['(1.005+1.67)*2','5.35']])test('exact decimal expression '+expression,()=>assert.strictEqual(api.evaluateDecimalExpression(expression),expected));
+test('large decimal direct HALF_UP',()=>assert.strictEqual(api.roundHalfUp(api.evaluateDecimalExpression('115308668+0.005'),2),'115308668.01'));
+test('decimal division by zero is rejected',()=>assert.throws(()=>api.evaluateDecimalExpression('1/0')));
 for(const value of ['', 'NaN','Infinity','1e3','1,00','--1','0x10'])test('reject '+JSON.stringify(value),()=>assert.throws(()=>api.roundHalfUp(value,2)));
-const input=(value,precision=2,signed=false)=>({value,dataset:{cellId:'unitCost',extensionPrecision:String(precision),extensionSigned:String(signed),extensionQuestion:cases.cost.id},selectionStart:2,selectionEnd:2,selectionDirection:'none',disabled:false,error:'',setCustomValidity(value){this.error=value;},setSelectionRange(start,end,direction){this.selectionStart=start;this.selectionEnd=end;this.selectionDirection=direction;},getAttribute(){return '1個当たり原価（円/個）';}});
+const input=(value,precision=2,signed=false)=>({value,dataset:{cellId:'unitCost',extensionPrecision:String(precision),extensionSigned:String(signed),extensionQuestion:cases.cost.id},selectionStart:2,selectionEnd:2,selectionDirection:'none',disabled:false,readOnly:false,error:'',classList:{toggle(){},add(){},remove(){}},setCustomValidity(value){this.error=value;},setSelectionRange(start,end,direction){this.selectionStart=start;this.selectionEnd=end;this.selectionDirection=direction;},getAttribute(){return '1個当たり原価（円/個）';}});
 for(const [value,start,end,direction] of [['1,200.01',2,2,'none'],['-5,870',1,3,'backward'],['12,345.67',4,7,'forward']])test('caret '+value,()=>{const field=input(value,2,true);field.selectionStart=start;field.selectionEnd=end;field.selectionDirection=direction;assert(api.formatDecimal(field));assert.deepStrictEqual([field.selectionStart,field.selectionEnd,field.selectionDirection],[start,end,direction]);});
 test('new grouping preserves logical selection',()=>{const field=input('1234.50');assert(api.formatDecimal(field));assert.strictEqual(field.value,'1,234.50');assert.strictEqual(field.selectionStart,3);});
 for(const value of ['1,00','1.234','-1','1e3'])test('invalid field '+value,()=>{const field=input(value);assert.strictEqual(api.formatDecimal(field),false);assert(field.error);assert.strictEqual(field.value,value);});
 test('blank is not zero',()=>{const field=input('');assert(api.formatDecimal(field));assert.strictEqual(field.value,'');});
 const fields=[{...input('240001',0),dataset:{cellId:'totalCost'}},input('')];
 const elements=new Map();
-const doc={body:{contains:item=>fields.includes(item)},querySelectorAll:selector=>selector==='.table-input'?fields:[],querySelector:()=>null,getElementById:id=>{if(!elements.has(id))elements.set(id,{textContent:'',classList:{add(){},remove(){},toggle(){}}});return elements.get(id);}};
+const doc={body:{contains:item=>fields.includes(item)},querySelectorAll:selector=>selector==='.table-input'||selector==='.amount-input'?fields:[],querySelector:()=>null,getElementById:id=>{if(!elements.has(id))elements.set(id,{textContent:'',classList:{add(){},remove(){},toggle(){}}});return elements.get(id);}};
 const protectedKeys=['boki-rpg-progress-v2','boki-rpg-character-v1'];for(const key of protectedKeys)store.setItem(key,'canonical sentinel '+key);
 const originalDescriptor=Object.getOwnPropertyDescriptor(root,'localStorage');
 const controller=new api.ExtensionController(doc,questions,store,'foundation-ext:node:');
 controller.currentId=cases.cost.id;controller.learningFlow={phase:'I'};controller.model.state.mode='training';
 test('real superclass and store captured during construction',()=>{assert(controller instanceof root.AppController);assert(controller.view instanceof root.AppView);assert.deepStrictEqual(Object.getOwnPropertyDescriptor(root,'localStorage'),originalDescriptor);});
+test('signed target selection preserves retained negative value',()=>{const field=fields[1],before={value:field.value,dataset:{...field.dataset}},currentId=controller.currentId;field.value='-5,870';field.dataset.extensionPrecision='0';field.dataset.extensionSigned='true';field.dataset.extensionQuestion=cases.npvNegative.id;controller.currentId=cases.npvNegative.id;controller.selectCalculatorTarget(field);assert.strictEqual(controller.expression,'-5870');field.value=before.value;field.dataset=before.dataset;controller.currentId=currentId;controller.clearCalculator();});
 test('calculator to actual controller saveDraft and ProgressModel',()=>{
   controller.calculatorTarget=fields[1];controller.expression='1200.005';assert.strictEqual(controller.insertCalculatorResult(false),true);
   assert.strictEqual(fields[1].value,'1,200.01');const saved=JSON.parse(store.getItem('foundation-ext:node:'+controller.model.key));
@@ -47,7 +51,19 @@ test('unmarked positive-integer behavior is unchanged',()=>{const ordinary=field
 test('real controller review assignment and model completion',()=>{const q=cases.cost,now=Date.now();controller.model.record(q.id,false,now);controller.model.state.reviewSchedule[q.id].dueAt=now-1;controller.model.state.mode='review';const ids=controller.reviewIds();assert(ids.includes(q.id));assert.strictEqual(controller.model.state.reviewAssignments[q.id].status,'assigned');assert(controller.model.completeReview(q.id,true,now,q.id));assert.strictEqual(controller.model.state.reviewAssignments[q.id],undefined);const saved=JSON.parse(store.getItem('foundation-ext:node:'+controller.model.key));assert(saved.correctIds.includes(q.id));assert.strictEqual(saved.reviewSchedule[q.id].stage,1);});
 test('backup preparation is isolated and idempotent',()=>{const saved=clone(controller.model.state),bytes=JSON.stringify(saved),prepared=root.ProgressModel.prepareBackupState(saved,questions);assert(prepared);assert.strictEqual(JSON.stringify(saved),bytes);assert.deepStrictEqual(clone(root.ProgressModel.prepareBackupState(prepared,questions)),clone(prepared));});
 test('canonical catalog, progress and rewards untouched',()=>{assert.strictEqual(Object.keys(root.QuestionData).length,300);assert.strictEqual(JSON.stringify(root.QuestionData),canonical);for(const key of protectedKeys)assert.strictEqual(store.getItem(key),'canonical sentinel '+key);assert(Object.keys(questions).every(id=>!root.QuestionData[id]));});
-test('independent fixture arithmetic',()=>{assert.strictEqual(1000*150,150000);assert.strictEqual(149000+1000,140000+10000);assert.strictEqual(120000+80000+40001,240001);assert.strictEqual(120001*200-240001*100,100);assert.deepStrictEqual([60000*9091/10000,60000*8264/10000],[54546,49584]);assert.deepStrictEqual([104130-100000,104130-110000,104130-104130],[4130,-5870,0]);});
+test('independent fixture arithmetic is bound to authored answers',()=>{
+  assert.deepStrictEqual(cases.equipment.answer,{debit:[{account:'備品',amount:100000}],credit:[{account:'現金',amount:100000}]});
+  const fxSettlement=1000*150,fxBank=fxSettlement-1000,fxGain=fxSettlement-140000;
+  assert.strictEqual(fxSettlement,150000);assert.strictEqual(fxBank+1000,140000+fxGain);
+  assert.deepStrictEqual(cases.fx.answer,{debit:[{account:'普通預金',amount:fxBank},{account:'支払手数料',amount:1000}],credit:[{account:'売掛金',amount:140000},{account:'為替差益',amount:fxGain}]});
+  const totalCost=120000+80000+40001,unitExact=api.evaluateDecimalExpression(totalCost+'/200'),unitRounded=Number(api.roundHalfUp(unitExact,2));
+  assert.strictEqual(totalCost,240001);assert.strictEqual(unitExact,'1200.005');assert.strictEqual(unitRounded,1200.01);assert.strictEqual(unitRounded*200-totalCost,1);
+  assert.deepStrictEqual(cases.cost.answer.cells,{totalCost,unitCost:unitRounded});
+  const pv1=60000*9091/10000,pv2=60000*8264/10000,pv=pv1+pv2;
+  assert.deepStrictEqual([pv1,pv2,pv],[54546,49584,104130]);
+  for(const [key,initial] of [['npvPositive',100000],['npvNegative',110000],['npvZero',104130]])assert.strictEqual(cases[key].answer.cells.npv,pv-initial);
+  assert.strictEqual(cases.accrual.answer.cells.basis,'発生主義');
+});
 test('distinct NPV text and explicit scope',()=>{assert.strictEqual(new Set(['npvPositive','npvNegative','npvZero'].map(key=>cases[key].question)).size,3);for(const key of ['npvPositive','npvNegative','npvZero'])assert.strictEqual(cases[key].extension.scope,'cost:nineteenth2');assert(!cases.cost.question.includes('240,001'));assert(cases.cost.explanation.includes('240,002'));});
 console.log('FOUNDATION_EXTENSION_CONTRACT '+passed+'/'+passed+' PASS');
 console.log('FIXTURE_SHA256 '+crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname,'fixtures/foundation-extension-cases.js'))).digest('hex'));
