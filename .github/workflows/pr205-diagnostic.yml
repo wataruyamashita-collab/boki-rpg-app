@@ -1,26 +1,42 @@
-name: Issue207 accepted-main handoff publication
+name: Foundation exact-baseline workspace
 on:
   push:
     branches: [qa/pr205-exact-head-diagnostic-20261007]
 permissions:
   contents: read
-  actions: read
-  issues: write
 jobs:
-  publish:
+  snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: 69e9ba9ce5b309e7331874a03567bc979f50ba57
+          fetch-depth: 0
           persist-credentials: false
-      - name: Recheck exact merged-main GREEN and preserve prior issue bodies
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node issue207-publish-handoff.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify exact baseline before preparing candidate
+        run: |
+          test "$(git rev-parse HEAD)" = "69e9ba9ce5b309e7331874a03567bc979f50ba57"
+          test "$(git rev-parse HEAD^{tree})" = "d218a125e8df73cdb2e36a2c6d0824afc7d03229"
+          npm ci
+          npm run verify > "$RUNNER_TEMP/foundation-baseline-verify.log" 2>&1
+          git diff --exit-code
+      - name: Export only Git objects and tracked source
+        run: |
+          git cat-file -e 1ed5adfba49579695fa414fb50398bbaff23657a^{commit}
+          git update-ref refs/export/accepted-main 69e9ba9ce5b309e7331874a03567bc979f50ba57
+          git update-ref refs/export/existing-foundation-pr 1ed5adfba49579695fa414fb50398bbaff23657a
+          git bundle create "$RUNNER_TEMP/foundation-exact-history.bundle" refs/export/accepted-main refs/export/existing-foundation-pr
+          git archive --format=tar.gz -o "$RUNNER_TEMP/foundation-main69.tar.gz" HEAD
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: issue207-handoff-before-after
-          path: ${{ runner.temp }}/issue207-handoff
-          retention-days: 14
+          name: foundation-exact-workspace
+          path: |
+            ${{ runner.temp }}/foundation-exact-history.bundle
+            ${{ runner.temp }}/foundation-main69.tar.gz
+            ${{ runner.temp }}/foundation-baseline-verify.log
+          retention-days: 7
