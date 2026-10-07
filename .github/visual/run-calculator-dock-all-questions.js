@@ -3,6 +3,7 @@ const fs=require('fs');
 const http=require('http');
 const path=require('path');
 const {chromium,webkit}=require('playwright');
+const {sameControlKeys}=require('./input-contracts');
 
 const ROOT=path.resolve(__dirname,'../..');
 const OUTPUT=path.join(ROOT,'artifacts','calculator-dock-all-questions');
@@ -20,6 +21,47 @@ const server=http.createServer((req,res)=>{
   res.end(fs.readFileSync(file));
 });
 
+async function verifyTextOnlyQuestion(page,id){
+  const expected=await page.evaluate(id=>{
+    const question=window.QuestionData[id];
+    const cells=window.visualInputContracts.textOnlyCells(question);
+    const panel=document.querySelector('.calculator'); panel.open=false;
+    const view=new window.AppView(document);
+    view.renderQuestion(question,{},'training');
+    for(const [tag,elementId] of [['input','filter-query'],['select','filter-account'],['select','filter-mistakes'],['form','placement-form']]){
+      if(!document.getElementById(elementId)){const element=document.createElement(tag);element.id=elementId;element.hidden=true;document.body.append(element);}
+    }
+    const model={state:{mode:'training',drafts:{}},writes:0,setDraft(questionId,answer){this.state.drafts[questionId]=structuredClone(answer);this.writes++;return true;}};
+    const controller=Object.assign(Object.create(window.AppController.prototype),{document,view,model,questions:window.QuestionData,currentId:id,filters:{query:'',account:'',mistakes:'all'},expression:'0',calculator:{accumulator:null,operator:null,waitingForOperand:false,lastOperator:null,lastOperand:null}});
+    controller.bindEvents();
+    window.__textInputController=controller;
+    const root=document.getElementById('table-container');
+    return {cells,answers:question.answer.cells,actual:[...root.querySelectorAll('input,select')].map(input=>input.dataset.cellId),amounts:root.querySelectorAll('.amount-input').length};
+  },id);
+  if(!sameControlKeys(expected.cells,expected.actual)||expected.amounts!==0)throw new Error(id+':TEXT_CONTROL_TOPOLOGY');
+  for(const cell of expected.cells){
+    const input=page.locator(`#table-container input.table-text-input[data-cell-id="${cell}"]`);
+    if(!await input.isEditable())throw new Error(id+':TEXT_CONTROL_NOT_EDITABLE:'+cell);
+    await input.click();
+    await input.fill(expected.answers[cell]);
+  }
+  const result=await page.evaluate(id=>{
+    const question=window.QuestionData[id];
+    const controller=window.__textInputController;
+    const collect=()=>controller.view.readAnswer(question).cells;
+    const entered=collect(),calculatorOpened=document.querySelector('.calculator').open;
+    const draft=controller.model.state.drafts[id];
+    controller.view.renderQuestion(question,draft,'training');
+    return {id,entered,draft,retained:collect(),calculatorOpened,draftWrites:controller.model.writes};
+  },id);
+  for(const cell of expected.cells){
+    if(result.entered[cell]!==expected.answers[cell]||result.draft?.cells?.[cell]!==expected.answers[cell]||result.retained[cell]!==expected.answers[cell])throw new Error(id+':TEXT_DRAFT_NOT_RETAINED:'+cell);
+  }
+  if(result.draftWrites<expected.cells.length)throw new Error(id+':TEXT_DRAFT_EVENTS_MISSING');
+  if(result.calculatorOpened)throw new Error(id+':TEXT_INPUT_OPENED_CALCULATOR');
+  return result;
+}
+
 async function run(){
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const url='http://127.0.0.1:'+server.address().port+'/';
@@ -31,6 +73,9 @@ async function run(){
         for(const width of widths){
           const context=await browser.newContext({viewport:{width,height:900},hasTouch:true,isMobile:true});
           const page=await context.newPage();
+          await page.addInitScript({path:path.join(__dirname,'input-contracts.js')});
+          const pageErrors=[];
+          page.on('pageerror',error=>pageErrors.push(error.message));
           try{
             await page.goto(url,{waitUntil:'load'});
             const setup=await page.evaluate(()=>{
@@ -51,6 +96,12 @@ async function run(){
             if(setup.count!==300) throw new Error(browserName+'/'+width+': QUESTION_COUNT_'+setup.count);
             const report=await page.evaluate(async()=>{
               const ids=Object.keys(window.QuestionData);
+              const contracts=window.visualInputContracts;
+              const expectedKeys=Object.fromEntries(ids.map(id=>[id,contracts.amountControlKeys(window.QuestionData[id])]));
+              const expectedByType={};
+              for(const id of ids){const type=window.QuestionData[id].type;expectedByType[type]=(expectedByType[type]||0)+expectedKeys[id].length;}
+              const expectedAmountInputs=Object.values(expectedByType).reduce((sum,count)=>sum+count,0);
+              const textOnlyQuestionIds=[];
               const failures=[];
               let amountInputsSeen=0;
               const byType={};
@@ -74,9 +125,14 @@ async function run(){
                 new window.AppView(document).renderQuestion(question,{},'training');
                 const activeAnswerRoot=document.getElementById(question.type==='journal'?'journal-container':'table-container');
                 const inputs=[...(activeAnswerRoot?.querySelectorAll('.amount-input:not(:disabled)')||[])];
+                const journalRows=[...(activeAnswerRoot?.querySelectorAll('.journal-row')||[])];
+                const actualKeys=inputs.map(input=>question.type==='journal'
+                  ? `${input.classList.contains('debit-amount')?'debit':'credit'}:${journalRows.indexOf(input.closest('.journal-row'))}`
+                  : input.dataset.cellId);
+                if(!contracts.sameControlKeys(expectedKeys[id],actualKeys))failures.push(id+':AMOUNT_CONTROL_KEYS:'+JSON.stringify({expected:expectedKeys[id],actual:actualKeys}));
                 amountInputsSeen+=inputs.length;
                 byType[question.type]=(byType[question.type]||0)+inputs.length;
-                if(!inputs.length){failures.push(id+':NO_AMOUNT_INPUT');continue;}
+                if(!expectedKeys[id].length)textOnlyQuestionIds.push(id);
                 for(let inputIndex=0;inputIndex<inputs.length;inputIndex+=1){
                   const input=inputs[inputIndex];
                   panel.open=false; panel.classList.remove('calculator-contextual-float'); form.classList.remove('calculator-dock-active'); form.classList.remove('calculator-workspace-active');
@@ -105,13 +161,15 @@ async function run(){
                   if(issues.length)failures.push(id+'#'+(inputIndex+1)+':'+issues.join(','));
                 }
               }
-              return {questionCount:ids.length,amountInputsSeen,byType,failures};
+              return {questionCount:ids.length,amountInputsSeen,byType,expectedAmountInputs,expectedByType,textOnlyQuestionIds,failures};
             });
+            report.textOnly=[];
+            for(const id of report.textOnlyQuestionIds)report.textOnly.push(await verifyTextOnlyQuestion(page,id));
+            if(pageErrors.length)throw new Error(browserName+'/'+width+':PAGE_ERRORS:'+pageErrors.join(';'));
             evidence.reports.push({browser:browserName,width,...report});
             if(report.questionCount!==300)evidence.failures.push(browserName+'/'+width+':QUESTION_COUNT');
-            const expectedByType={journal:349,ledger:131,trial_balance:80,correction:40,worksheet:104,financial_statement:31,comprehensive:46};
-            if(report.amountInputsSeen!==781)evidence.failures.push(browserName+'/'+width+':AMOUNT_INPUT_COUNT_'+report.amountInputsSeen);
-            for(const [type,expected] of Object.entries(expectedByType)){
+            if(report.amountInputsSeen!==report.expectedAmountInputs)evidence.failures.push(browserName+'/'+width+':AMOUNT_INPUT_COUNT_'+report.amountInputsSeen);
+            for(const [type,expected] of Object.entries(report.expectedByType)){
               if(report.byType[type]!==expected)evidence.failures.push(browserName+'/'+width+':'+type.toUpperCase()+'_AMOUNT_INPUT_COUNT_'+report.byType[type]);
             }
             if(report.failures.length)evidence.failures.push(...report.failures.map(item=>browserName+'/'+width+':'+item));

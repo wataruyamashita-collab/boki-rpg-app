@@ -4,6 +4,9 @@ const fs = require('fs');
 
 const harness = fs.readFileSync('.github/visual/harness.html','utf8');
 const runner = fs.readFileSync('.github/visual/run-visual.js','utf8');
+require('./input-contracts.test');
+assert(runner.includes("querySelectorAll('input,select')].map(control => rect(control).height)"), 'row measurement includes every control, including later native selects');
+assert(runner.includes('inputVisualHeight:controlHeights.minimum'), 'touch-target evidence uses the smallest control independently of row fit');
 const order = ['data/accounting-domain.js','data/questions.js','js/view.js','js/controller.js'].map(source => harness.indexOf(`src="/${source}"`));
 assert(order.every(position => position >= 0),'harness loads every required production dependency');
 assert.deepStrictEqual(order,[...order].sort((left,right) => left-right),'production dependencies load in deterministic order');
