@@ -1,11 +1,11 @@
-name: Foundation exact-baseline workspace
+name: Foundation documentation precommit verification
 on:
   push:
     branches: [qa/pr205-exact-head-diagnostic-20261007]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  snapshot:
+  validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -17,26 +17,87 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Verify exact baseline before preparing candidate
+      - name: Build only the four reviewed Markdown files
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(git rev-parse HEAD)" = "69e9ba9ce5b309e7331874a03567bc979f50ba57"
-          test "$(git rev-parse HEAD^{tree})" = "d218a125e8df73cdb2e36a2c6d0824afc7d03229"
+          node - <<'JS'
+          const fs=require('fs'),cp=require('child_process'),crypto=require('crypto'),assert=require('assert');
+          const repo='wataruyamashita-collab/boki-rpg-app',base='69e9ba9ce5b309e7331874a03567bc979f50ba57';
+          assert.strictEqual(cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),base);
+          const headers={Authorization:'Bearer '+process.env.GH_TOKEN,Accept:'application/vnd.github+json'};
+          const get=async endpoint=>{const r=await fetch('https://api.github.com/repos/'+repo+'/'+endpoint,{headers});if(!r.ok)throw new Error(endpoint+': '+r.status);return r.json();};
+          (async()=>{
+            assert.strictEqual((await get('git/ref/heads/main')).object.sha,base,'live main changed');
+            const objects={
+              'AGENTS.md':'a4f6a92b643f24c00d9b769f300e7dd82aedd349',
+              'docs/FOUNDATION_V1_MASTER_PROMPT.md':'879939bb5aad4a23bb8f8467765d4e244fe1d236',
+              'docs/FOUNDATION_V1_ACCEPTANCE.md':'3f6993ada536cc072b64d6b29f6d494af23a9d32',
+              'docs/master_specification.md':'ab9c54dfe4e0afb4328ed0f881d870134727f42d'
+            };
+            const expected={
+              'AGENTS.md':'d6b6072b9eddbe3785d35208c0a35d11130b2bfbbc706b020b6b7d27116f32e2',
+              'docs/FOUNDATION_V1_MASTER_PROMPT.md':'bae3acaba1b1dafc92a3869c987060b50110852421f2b15be88c82371c39c4be',
+              'docs/FOUNDATION_V1_ACCEPTANCE.md':'59677a1504a2efe69ca6ee3f4b4f7e9934795ab3101fb55dbc1f2b79887ee813',
+              'docs/master_specification.md':'972a9be891c6bdd04e67b792d616df33c2a0682a6813183dba0cdb766aaa23d9'
+            };
+            const original=cp.execFileSync('git',['show',base+':docs/master_specification.md']);
+            assert.strictEqual((original.toString().match(/^# \d+\./gm)||[]).length,63);
+            for(const [path,sha] of Object.entries(objects)){
+              const data=await get('git/blobs/'+sha);assert.strictEqual(data.sha,sha);
+              let bytes=Buffer.from(data.content,'base64');
+              if(path==='docs/master_specification.md')bytes=Buffer.concat([bytes,original]);
+              assert.strictEqual(crypto.createHash('sha256').update(bytes).digest('hex'),expected[path],path);
+              fs.writeFileSync(path,bytes);
+            }
+            assert(fs.readFileSync('docs/master_specification.md').subarray(-original.length).equals(original),'63 sections changed');
+            fs.writeFileSync(process.env.RUNNER_TEMP+'/foundation-expected.json',JSON.stringify(expected));
+          })().catch(e=>{console.error(e.message);process.exitCode=1;});
+          JS
+          git diff --check
           npm ci
-          npm run verify > "$RUNNER_TEMP/foundation-baseline-verify.log" 2>&1
-          git diff --exit-code
-      - name: Export only Git objects and tracked source
+      - name: Mandatory precommit verify
         run: |
-          git cat-file -e 1ed5adfba49579695fa414fb50398bbaff23657a^{commit}
-          git update-ref refs/export/accepted-main 69e9ba9ce5b309e7331874a03567bc979f50ba57
-          git update-ref refs/export/existing-foundation-pr 1ed5adfba49579695fa414fb50398bbaff23657a
-          git bundle create "$RUNNER_TEMP/foundation-exact-history.bundle" refs/export/accepted-main refs/export/existing-foundation-pr
-          git archive --format=tar.gz -o "$RUNNER_TEMP/foundation-main69.tar.gz" HEAD
+          set +e
+          npm run verify > "$RUNNER_TEMP/foundation-docs-verify.log" 2>&1
+          result=$?
+          tail -n 20 "$RUNNER_TEMP/foundation-docs-verify.log"
+          exit "$result"
+      - name: Unchanged authority integrity
+        run: npm run qa:integrity | tee "$RUNNER_TEMP/foundation-docs-integrity.log"
+      - name: Prove exact tree and store verified file objects without updating refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node - <<'JS'
+          const fs=require('fs'),cp=require('child_process'),crypto=require('crypto'),assert=require('assert'),path=require('path');
+          const expected=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/foundation-expected.json'));
+          const run=args=>cp.execFileSync('git',args,{encoding:'utf8'}).trim();
+          for(const [file,hash] of Object.entries(expected)){
+            const bytes=fs.readFileSync(file);assert.strictEqual(crypto.createHash('sha256').update(bytes).digest('hex'),hash,file);
+            for(const m of bytes.toString().matchAll(/\]\(([^)]+)\)/g))if(!m[1].includes('://')&&!m[1].startsWith('#'))assert(fs.existsSync(path.resolve(path.dirname(file),m[1].split('#')[0])),m[1]);
+          }
+          assert(run(['diff','--name-only']).split('\n').filter(Boolean).every(f=>Object.hasOwn(expected,f)),'non-doc drift');
+          cp.execFileSync('git',['add','--',...Object.keys(expected)]);
+          cp.execFileSync('git',['diff','--exit-code']);cp.execFileSync('git',['diff','--cached','--check']);
+          const tree=run(['write-tree']);assert.strictEqual(tree,'2c1e68d674e57ebfacd2b0f2d376fae6657b8d1f');
+          (async()=>{
+            const blobs=[];
+            for(const file of Object.keys(expected)){
+              const bytes=fs.readFileSync(file),sha=run(['hash-object',file]);
+              const r=await fetch('https://api.github.com/repos/wataruyamashita-collab/boki-rpg-app/git/blobs',{method:'POST',headers:{Authorization:'Bearer '+process.env.GH_TOKEN,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({content:bytes.toString('base64'),encoding:'base64'})});
+              if(!r.ok)throw new Error('blob store failed: '+r.status);const b=await r.json();assert.strictEqual(b.sha,sha);blobs.push({path:file,sha});
+            }
+            console.log('FOUNDATION_VERIFIED_TREE '+tree);console.log('FOUNDATION_VERIFIED_BLOBS '+JSON.stringify(blobs));
+            fs.writeFileSync(process.env.RUNNER_TEMP+'/foundation-verified-objects.json',JSON.stringify({tree,blobs},null,2));
+          })().catch(e=>{console.error(e.message);process.exitCode=1;});
+          JS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: foundation-exact-workspace
+          name: foundation-docs-precommit-evidence
           path: |
-            ${{ runner.temp }}/foundation-exact-history.bundle
-            ${{ runner.temp }}/foundation-main69.tar.gz
-            ${{ runner.temp }}/foundation-baseline-verify.log
-          retention-days: 7
+            ${{ runner.temp }}/foundation-docs-verify.log
+            ${{ runner.temp }}/foundation-docs-integrity.log
+            ${{ runner.temp }}/foundation-verified-objects.json
+          retention-days: 14
