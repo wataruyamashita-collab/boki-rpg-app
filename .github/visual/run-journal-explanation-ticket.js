@@ -2,7 +2,7 @@
 const fs=require('fs'),http=require('http'),path=require('path');
 const {chromium,webkit}=require('playwright');
 const ROOT=path.resolve(__dirname,'../..'),OUTPUT=path.join(ROOT,'artifacts','journal-explanation-ticket');
-const engines={chromium,webkit},widths=[320,375,390,430],cases=['J001','J128','J101','J135'];
+const engines={chromium,webkit},widths=[320,375,390,430],cases=['J001','J128','J101','J051','J135'];
 const mime={'.css':'text/css','.html':'text/html','.js':'text/javascript','.json':'application/json'};
 const evidence={status:'RUNNING',reports:[],failures:[]};
 const write=()=>{fs.mkdirSync(OUTPUT,{recursive:true});fs.writeFileSync(path.join(OUTPUT,'report.json'),JSON.stringify(evidence,null,2)+'\n');};
@@ -45,6 +45,7 @@ async function run(){
                 }
               }
               if(id==='J135'&&!report.rowReports.some(row=>row.cells.some(cell=>cell.text==='法人税、住民税及び事業税')))violations.push('LONGEST_ACCOUNT_MISSING');
+              if(id==='J001'&&!report.rowReports.some(row=>row.cells.some(cell=>cell.text==='3,000,000')))violations.push('MAX_AMOUNT_MISSING');
               if(id==='J101'&&!report.rowReports.some(row=>row.cells.some(cell=>cell.text==='3,020,000')))violations.push('MAX_AMOUNT_MISSING');
               if(id==='J128'){
                 const structuralRows=report.rowReports.slice(1);

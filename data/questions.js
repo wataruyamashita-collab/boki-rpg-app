@@ -14742,6 +14742,53 @@ Object.assign(QuestionData.J134, { category:'償却債権取立益', variantGrou
 Object.assign(QuestionData.J137, { category:'未収入金', variantGroup:'固定資産売却・未収入金', scene:'応用・固定資産の後日決済', story:'商品売買以外から生じる未回収額を売掛金と区別して管理する。', question:'取得原価300,000円、減価償却累計額120,000円の備品を220,000円で売却し、代金は翌月受け取ることとした。', answer:{debit:[{account:'未収入金',amount:220000},{account:'減価償却累計額',amount:120000}],credit:[{account:'備品',amount:300000},{account:'固定資産売却益',amount:40000}]}, explanation:'未回収の売却代金は未収入金です。間接法では取得原価300,000円と減価償却累計額120,000円を取り崩し、売却価額との差額40,000円を固定資産売却益にします。' });
 Object.assign(QuestionData.J147, { category:'当座借越', variantGroup:'当座借越', scene:'応用・当座預金の残高不足', story:'小切手決済後の銀行残高を確認し、不足額を短期の銀行借入として区分する。', question:'当店は銀行と当座借越契約を締結している。期中に、当座預金の帳簿残高が30,000円のとき、仕入代金80,000円を小切手を振り出して支払った。この取引の仕訳を行いなさい。', answer:{debit:[{account:'仕入',amount:80000}],credit:[{account:'当座預金',amount:80000}]}, explanation:'【処理の根拠】\n商品80,000円を仕入れたため、仕入（費用）が80,000円増加し、借方に記入します。期中の小切手による支払いは、支払前の当座預金残高が30,000円であっても、支払額の全額を当座預金の減少として処理するため、当座預金80,000円を貸方に記入します。\n\n【金額確認】\n借方は仕入80,000円、貸方は当座預金80,000円で、貸借は一致します。支払後は当座預金勘定が50,000円の貸方残高となります。\n\n【決算時の処理】\n決算日に当座預金勘定が貸方残高である場合は、その貸方残高を当座借越または借入金へ振り替えます。期中の支払時点で、残高30,000円と不足額50,000円に分けて記帳しない点に注意します。' });
 
+// Issue #199 Phase 1: preserve canonical IDs while replacing redundant variants
+// with explicit 2026 Grade-3 coverage for P4-4 and P1-3.
+Object.assign(QuestionData.J051, {
+  category:'剰余金の配当',
+  variantGroup:'剰余金の配当',
+  scene:'応用・配当決議',
+  story:'株主総会の議事録を読み、利益処分の決議時点と実際の支払時点を区別して仕訳する。',
+  question:'株主総会で、繰越利益剰余金から現金配当300,000円を行うことを決議した。利益準備金は法定限度額に達しており、追加積立は不要である。決議時の仕訳を行いなさい。',
+  answer:{debit:[{account:'繰越利益剰余金',amount:300000}],credit:[{account:'未払配当金',amount:300000}]},
+  explanation:'【処理の根拠】\n配当を決議した時点で、配当に充てる繰越利益剰余金が減少するため借方に記入し、株主へ支払う義務が生じるため未払配当金（負債）を貸方に記入します。決議時点ではまだ現金を支払っていないため、現金は記入しません。問題文で利益準備金の追加積立は不要と示されているので、この仕訳では利益準備金を計上しません。\n【金額確認】借方・貸方はいずれも300,000円です。',
+  difficulty:2,
+  learningRole:'review',
+  timelineRole:'review'
+});
+Object.assign(QuestionData.L031, {
+  category:'勘定記入法則',
+  variantGroup:'勘定記入法則',
+  format:'bookkeeping-account-rule',
+  scene:'11月・勘定記入法則の再確認',
+  story:'元帳の反復に入る前に、資産・負債の増減をどちら側へ記入するかと貸借平均の原理を確認する。',
+  question:'勘定記入法則を確認する。資産・負債の増減を記入する側と、貸借平均の原理により仕訳の借方合計と貸方合計がどうなるかを答えなさい。',
+  materials:[],
+  table:{
+    columns:['確認事項','解答'],
+    rows:[
+      {item:'資産の増加を記入する側',answer:'入力'},
+      {item:'資産の減少を記入する側',answer:'入力'},
+      {item:'負債の増加を記入する側',answer:'入力'},
+      {item:'負債の減少を記入する側',answer:'入力'},
+      {item:'貸借平均の原理：借方合計と貸方合計',answer:'入力'}
+    ],
+    inputCells:['assetIncreaseSide','assetDecreaseSide','liabilityIncreaseSide','liabilityDecreaseSide','balancePrinciple'],
+    inputTypes:{assetIncreaseSide:'text',assetDecreaseSide:'text',liabilityIncreaseSide:'text',liabilityDecreaseSide:'text',balancePrinciple:'text'},
+    inputMetadata:{
+      assetIncreaseSide:{label:'資産の増加を記入する側',semanticType:'text'},
+      assetDecreaseSide:{label:'資産の減少を記入する側',semanticType:'text'},
+      liabilityIncreaseSide:{label:'負債の増加を記入する側',semanticType:'text'},
+      liabilityDecreaseSide:{label:'負債の減少を記入する側',semanticType:'text'},
+      balancePrinciple:{label:'貸借平均の原理：借方合計と貸方合計',semanticType:'text'}
+    }
+  },
+  answer:{cells:{assetIncreaseSide:'借方',assetDecreaseSide:'貸方',liabilityIncreaseSide:'貸方',liabilityDecreaseSide:'借方',balancePrinciple:'一致'}},
+  explanation:'資産は増加を借方、減少を貸方に記入します。負債は反対に、増加を貸方、減少を借方に記入します。また、複式簿記では一つの取引を借方と貸方の両面から同額で記録するため、仕訳の借方合計と貸方合計は必ず一致します。これが貸借平均の原理です。',
+  learningRole:'review',
+  timelineRole:'main'
+});
+
 // 第8次教材監査: 第2問の実地記帳と、互いに構造の異なる第3問級統合決算を追加する。
 // 既存IDを置換して総数・型別件数・保存済み学習履歴との互換性を維持する。
 const practicalLedger = (id, category, question, materials, rows, cells, explanation) => ({
@@ -14881,7 +14928,7 @@ function answerFingerprint(answer) {
   for (const character of JSON.stringify(answer)) { hash ^= character.charCodeAt(0); hash = Math.imul(hash, 16777619); }
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
-const ReviewedAnswerFingerprints = Object.freeze({"J001":"d8e1c623","J002":"90c0eb06","J003":"000b10fe","J004":"0ec62aa1","J005":"37e4f9a8","J006":"9c615d8f","J007":"4276b057","J008":"eea9a423","J009":"d0284858","J010":"692f6625","J011":"57d82400","J012":"7c3bdf04","J013":"866e6f47","J014":"6a5a27dc","J015":"595da73e","J016":"6b79a2c8","J017":"405975aa","J018":"bcec67cd","J019":"e7cec67c","J020":"e839c7af","J021":"99b7dc60","J022":"13d9868a","J023":"09591681","J024":"cbf936d8","J025":"841a43be","J026":"886fd7d6","J027":"d357bb11","J028":"e921fa24","J029":"1b3d5a5b","J030":"3df1ac2a","J031":"938e7318","J032":"6da3bc3e","J033":"961583ca","J034":"8ad2899a","J035":"f324b1fa","J036":"bd1dd412","J037":"38468aee","J038":"49d23923","J039":"45d064fc","J040":"d708b5ac","J041":"de4d666a","J042":"989c7e9b","J043":"f418c9d5","J044":"991c75d1","J045":"122946f5","J046":"449a7dad","J047":"4faceaa5","J048":"afb7c946","J049":"3a76ef79","J050":"6ff6d32a","J051":"878a4a27","J052":"860f328a","J053":"b4f7e0e6","J054":"d242f36f","J055":"5e10a610","J056":"4dc01d99","J057":"2730b86b","J058":"39d31d01","J059":"7659d404","J060":"3ae1464b","J061":"9e4c0b00","J062":"3c1ca560","J063":"39654e15","J064":"c4f4a63c","J065":"d0a83a90","J066":"d37a3ee4","J067":"1849bd72","J068":"0c3db45f","J069":"32028cba","J070":"e839c7af","J071":"5dede936","J072":"d8c4e847","J073":"1d481c2f","J074":"bdc9bc10","J075":"e6d0ed78","J076":"ec98f716","J077":"5f3566cb","J078":"2c74d912","J079":"79fcdf65","J080":"3df1ac2a","J081":"938e7318","J082":"d5be62b8","J083":"61f51106","J084":"2371a8e4","J085":"d52786f1","J086":"de543e10","J087":"9855dcf6","J088":"0a40e16f","J089":"45d064fc","J090":"b0b067e8","J091":"cdeb5486","J092":"73334d89","J093":"4fe348e3","J094":"165d2583","J095":"a3f7e795","J096":"c4c7c981","J097":"965ce771","J098":"666a41b2","J099":"56d6f7e3","J100":"9427eeec","J101":"1f384c37","J102":"9d4b2846","J103":"d2715cda","J104":"917a6f75","J105":"451accc8","J106":"c045ff8b","J107":"17176333","J108":"f54e1463","J109":"92223788","J110":"44c8eaf7","J111":"c7732388","J112":"2d687d58","J113":"38ddfc8f","J114":"173da264","J115":"493e4aca","J116":"266570a0","J117":"d0b8bcde","J118":"89a1575d","J119":"d5825c78","J120":"e839c7af","J121":"50c52f16","J122":"2ebd6e72","J123":"37907545","J124":"5a31b008","J125":"ff657bc2","J126":"ad424646","J127":"82f029f5","J128":"6d069904","J129":"ad22f837","J130":"3df1ac2a","J131":"5b9288db","J132":"8ff0c342","J133":"858e9406","J134":"e6715465","J135":"24cefe8c","J136":"c173a64a","J137":"8b829b35","J138":"22b7f06b","J139":"45d064fc","J140":"b39d19f4","J141":"86758e3e","J142":"8e2d676f","J143":"241fef41","J144":"7b382d11","J145":"09fb42bd","J146":"517222ad","J147":"95746a79","J148":"b2f45e3c","J149":"70f9a78d","J150":"02b7de4d","L001":"30e8882b","L002":"d9b24adb","L003":"e27e8cf1","L004":"313c9cdb","L005":"b23d0c2d","L006":"c9993f62","L007":"b969a7bd","L008":"01da67d1","L009":"209f326d","L010":"91eb031f","L011":"1415bb03","L012":"8d471f3d","L013":"1fd17166","L014":"639a28e0","L015":"669d77e7","L016":"c8d324a5","L017":"2d43a24e","L018":"2251a2ba","L019":"80737433","L020":"56481a9e","L021":"422c0829","L022":"74dcc52a","L023":"89113099","L024":"45822471","L025":"5c1dcdb2","L026":"79185952","L027":"1f50785d","L028":"940590a5","L029":"9ace9e94","L030":"f23023da","L031":"1162b987","L032":"8985aab4","L033":"fcbfdad2","L034":"ba91544a","L035":"588e149b","L036":"458982c2","L037":"aaf34a8e","L038":"dbd65de5","L039":"0109514b","L040":"dd6f0e89","L041":"557937c9","L042":"165b7152","L043":"48616ca4","L044":"903cf70c","L045":"b521774f","L046":"a2db7875","L047":"4a377801","L048":"91ae93e3","L049":"4392707f","L050":"c64a094d","T001":"5194d1c3","T002":"ac0b810b","T003":"543ad825","T004":"20ae2401","T005":"730bcf49","T006":"7e652a69","T007":"a10e7e61","T008":"cf9a69c3","T009":"e4bd12ed","T010":"9ac2336f","T011":"75ddcef3","T012":"df7fcfa1","T013":"b5919213","T014":"f269f023","T015":"e258a2df","T016":"331b7d99","T017":"09520621","T018":"80a602a7","T019":"ba2db99d","T020":"63c211bb","T021":"5ce3b7e9","T022":"6d1f9313","T023":"e25baa41","T024":"7eb7bc15","T025":"5ef98d01","T026":"713e6b2f","T027":"709d827f","T028":"00dfcac9","T029":"a7afbd81","T030":"24d302a1","T031":"600d6a93","T032":"43551a2f","T033":"4d6dd643","T034":"1c93f1fb","T035":"a492f949","T036":"a837d1f5","T037":"fa5f9aa1","T038":"bed837a1","T039":"f5491dc1","T040":"8310e8e7","E001":"917a82fa","E002":"b9ea9fe4","E003":"e217b7db","E004":"3ec70254","E005":"4b0e4435","E006":"187911d8","E007":"81f3f7a1","E008":"64156aed","E009":"ef9542c7","E010":"d899cdb2","E011":"adec7923","E012":"ee824d83","E013":"f4440ba3","E014":"9796574f","E015":"69f9ae35","E016":"b16f7ae4","E017":"18a8f0d0","E018":"b3355226","E019":"ded867c0","E020":"b24906e4","D001":"9ac7b8d4","D002":"25fc6159","D003":"b81f871d","D004":"3e0f7fbf","D005":"a116e047","D006":"98f50cb8","D007":"7c8018bf","D008":"787ed897","D009":"f8f3242c","D010":"5772d519","D011":"c35ce912","D012":"d40b11e8","D013":"7bcb0b14","D014":"2ca6aba7","D015":"6c4ff213","D016":"b6049069","D017":"8b48d74c","D018":"f754625c","D019":"7619ee65","D020":"8c305999","F001":"60c9a696","F002":"a50f7f00","F003":"1ae6477a","F004":"6c7a1529","F005":"ae5bb262","F006":"14c68a85","F007":"da6ad7d5","F008":"e463d96b","F009":"f3662ec7","F010":"bfe0a46c","C001":"a0f27f54","C002":"d54bf897","C003":"679225b3","C004":"db1d15be","C005":"375dcb65","C006":"e5100f3c","C007":"40d33ebc","C008":"0b26fd79","C009":"d5ff0eb4","C010":"d02182dc"});
+const ReviewedAnswerFingerprints = Object.freeze({"J001":"d8e1c623","J002":"90c0eb06","J003":"000b10fe","J004":"0ec62aa1","J005":"37e4f9a8","J006":"9c615d8f","J007":"4276b057","J008":"eea9a423","J009":"d0284858","J010":"692f6625","J011":"57d82400","J012":"7c3bdf04","J013":"866e6f47","J014":"6a5a27dc","J015":"595da73e","J016":"6b79a2c8","J017":"405975aa","J018":"bcec67cd","J019":"e7cec67c","J020":"e839c7af","J021":"99b7dc60","J022":"13d9868a","J023":"09591681","J024":"cbf936d8","J025":"841a43be","J026":"886fd7d6","J027":"d357bb11","J028":"e921fa24","J029":"1b3d5a5b","J030":"3df1ac2a","J031":"938e7318","J032":"6da3bc3e","J033":"961583ca","J034":"8ad2899a","J035":"f324b1fa","J036":"bd1dd412","J037":"38468aee","J038":"49d23923","J039":"45d064fc","J040":"d708b5ac","J041":"de4d666a","J042":"989c7e9b","J043":"f418c9d5","J044":"991c75d1","J045":"122946f5","J046":"449a7dad","J047":"4faceaa5","J048":"afb7c946","J049":"3a76ef79","J050":"6ff6d32a","J051":"57fe6179","J052":"860f328a","J053":"b4f7e0e6","J054":"d242f36f","J055":"5e10a610","J056":"4dc01d99","J057":"2730b86b","J058":"39d31d01","J059":"7659d404","J060":"3ae1464b","J061":"9e4c0b00","J062":"3c1ca560","J063":"39654e15","J064":"c4f4a63c","J065":"d0a83a90","J066":"d37a3ee4","J067":"1849bd72","J068":"0c3db45f","J069":"32028cba","J070":"e839c7af","J071":"5dede936","J072":"d8c4e847","J073":"1d481c2f","J074":"bdc9bc10","J075":"e6d0ed78","J076":"ec98f716","J077":"5f3566cb","J078":"2c74d912","J079":"79fcdf65","J080":"3df1ac2a","J081":"938e7318","J082":"d5be62b8","J083":"61f51106","J084":"2371a8e4","J085":"d52786f1","J086":"de543e10","J087":"9855dcf6","J088":"0a40e16f","J089":"45d064fc","J090":"b0b067e8","J091":"cdeb5486","J092":"73334d89","J093":"4fe348e3","J094":"165d2583","J095":"a3f7e795","J096":"c4c7c981","J097":"965ce771","J098":"666a41b2","J099":"56d6f7e3","J100":"9427eeec","J101":"1f384c37","J102":"9d4b2846","J103":"d2715cda","J104":"917a6f75","J105":"451accc8","J106":"c045ff8b","J107":"17176333","J108":"f54e1463","J109":"92223788","J110":"44c8eaf7","J111":"c7732388","J112":"2d687d58","J113":"38ddfc8f","J114":"173da264","J115":"493e4aca","J116":"266570a0","J117":"d0b8bcde","J118":"89a1575d","J119":"d5825c78","J120":"e839c7af","J121":"50c52f16","J122":"2ebd6e72","J123":"37907545","J124":"5a31b008","J125":"ff657bc2","J126":"ad424646","J127":"82f029f5","J128":"6d069904","J129":"ad22f837","J130":"3df1ac2a","J131":"5b9288db","J132":"8ff0c342","J133":"858e9406","J134":"e6715465","J135":"24cefe8c","J136":"c173a64a","J137":"8b829b35","J138":"22b7f06b","J139":"45d064fc","J140":"b39d19f4","J141":"86758e3e","J142":"8e2d676f","J143":"241fef41","J144":"7b382d11","J145":"09fb42bd","J146":"517222ad","J147":"95746a79","J148":"b2f45e3c","J149":"70f9a78d","J150":"02b7de4d","L001":"30e8882b","L002":"d9b24adb","L003":"e27e8cf1","L004":"313c9cdb","L005":"b23d0c2d","L006":"c9993f62","L007":"b969a7bd","L008":"01da67d1","L009":"209f326d","L010":"91eb031f","L011":"1415bb03","L012":"8d471f3d","L013":"1fd17166","L014":"639a28e0","L015":"669d77e7","L016":"c8d324a5","L017":"2d43a24e","L018":"2251a2ba","L019":"80737433","L020":"56481a9e","L021":"422c0829","L022":"74dcc52a","L023":"89113099","L024":"45822471","L025":"5c1dcdb2","L026":"79185952","L027":"1f50785d","L028":"940590a5","L029":"9ace9e94","L030":"f23023da","L031":"36343226","L032":"8985aab4","L033":"fcbfdad2","L034":"ba91544a","L035":"588e149b","L036":"458982c2","L037":"aaf34a8e","L038":"dbd65de5","L039":"0109514b","L040":"dd6f0e89","L041":"557937c9","L042":"165b7152","L043":"48616ca4","L044":"903cf70c","L045":"b521774f","L046":"a2db7875","L047":"4a377801","L048":"91ae93e3","L049":"4392707f","L050":"c64a094d","T001":"5194d1c3","T002":"ac0b810b","T003":"543ad825","T004":"20ae2401","T005":"730bcf49","T006":"7e652a69","T007":"a10e7e61","T008":"cf9a69c3","T009":"e4bd12ed","T010":"9ac2336f","T011":"75ddcef3","T012":"df7fcfa1","T013":"b5919213","T014":"f269f023","T015":"e258a2df","T016":"331b7d99","T017":"09520621","T018":"80a602a7","T019":"ba2db99d","T020":"63c211bb","T021":"5ce3b7e9","T022":"6d1f9313","T023":"e25baa41","T024":"7eb7bc15","T025":"5ef98d01","T026":"713e6b2f","T027":"709d827f","T028":"00dfcac9","T029":"a7afbd81","T030":"24d302a1","T031":"600d6a93","T032":"43551a2f","T033":"4d6dd643","T034":"1c93f1fb","T035":"a492f949","T036":"a837d1f5","T037":"fa5f9aa1","T038":"bed837a1","T039":"f5491dc1","T040":"8310e8e7","E001":"917a82fa","E002":"b9ea9fe4","E003":"e217b7db","E004":"3ec70254","E005":"4b0e4435","E006":"187911d8","E007":"81f3f7a1","E008":"64156aed","E009":"ef9542c7","E010":"d899cdb2","E011":"adec7923","E012":"ee824d83","E013":"f4440ba3","E014":"9796574f","E015":"69f9ae35","E016":"b16f7ae4","E017":"18a8f0d0","E018":"b3355226","E019":"ded867c0","E020":"b24906e4","D001":"9ac7b8d4","D002":"25fc6159","D003":"b81f871d","D004":"3e0f7fbf","D005":"a116e047","D006":"98f50cb8","D007":"7c8018bf","D008":"787ed897","D009":"f8f3242c","D010":"5772d519","D011":"c35ce912","D012":"d40b11e8","D013":"7bcb0b14","D014":"2ca6aba7","D015":"6c4ff213","D016":"b6049069","D017":"8b48d74c","D018":"f754625c","D019":"7619ee65","D020":"8c305999","F001":"60c9a696","F002":"a50f7f00","F003":"1ae6477a","F004":"6c7a1529","F005":"ae5bb262","F006":"14c68a85","F007":"da6ad7d5","F008":"e463d96b","F009":"f3662ec7","F010":"bfe0a46c","C001":"a0f27f54","C002":"d54bf897","C003":"679225b3","C004":"db1d15be","C005":"375dcb65","C006":"e5100f3c","C007":"40d33ebc","C008":"0b26fd79","C009":"d5ff0eb4","C010":"d02182dc"});
 
 const SemanticJournalAnswerKey = new Map(Object.values(QuestionData)
   .filter(item => item.type === 'journal')
@@ -14916,6 +14963,21 @@ function chronologicalRows(rows,dateKey) {
 function independentlyDerivedTableCells(item) {
   const rows=item?.table?.rows || [];
   const numeric=value => typeof value === 'number' ? value : 0;
+  if (item?.format === 'bookkeeping-account-rule') {
+    const questionText=String(item.question||'');
+    const requiredQuestionTerms=['勘定記入法則','資産','負債','増減','貸借平均','借方合計','貸方合計'];
+    const requiredRowLabels=[
+      '資産の増加を記入する側',
+      '資産の減少を記入する側',
+      '負債の増加を記入する側',
+      '負債の減少を記入する側',
+      '貸借平均の原理：借方合計と貸方合計'
+    ];
+    const rowLabels=rows.map(row=>String(row?.item||''));
+    if(!requiredQuestionTerms.every(term=>questionText.includes(term)))return null;
+    if(!requiredRowLabels.every(label=>rowLabels.includes(label)))return null;
+    return {assetIncreaseSide:'借方',assetDecreaseSide:'貸方',liabilityIncreaseSide:'貸方',liabilityDecreaseSide:'借方',balancePrinciple:'一致'};
+  }
   if (item?.format === 'fixed-asset-ledger') {
     if(item.id==='L030'){
       const questionText=String(item.question||''),row=rows[0]||{};
@@ -15159,6 +15221,9 @@ function independentlyDerivedJournal(item) {
   const amount=(index=0)=>yen[index];
   const entry=(debit,credit)=>({debit,credit});
   const row=(account,value)=>({account,amount:value});
+  if (/繰越利益剰余金.+現金配当.+決議/.test(text) && /追加積立は不要/.test(text)) {
+    return entry([row('繰越利益剰余金',amount())],[row('未払配当金',amount())]);
+  }
   // Normalize synonymous surface forms before applying double-entry rules.
   const transactionType = /追加出資|追加払込み|株主から.+払込み|増資として.+払/.test(text) ? 'capital_contribution'
     : /販売用商品.+翌月払い|商品.+仕入れ?.+代金.+(?:後日|翌月).*(?:支払|掛け)/.test(text) ? 'credit_purchase'
@@ -16699,6 +16764,12 @@ const sourceLine = item => {
 const tableExplanation = item => {
   const answers = Object.entries(item.answer?.cells || {}).map(([key, value]) => `${answerFieldLabel(item, key)}＝${formatSemanticValue(value, answerSemanticType(item, key, value))}`).join('、');
   const sources = sourceLine(item);
+  if (item.format === 'bookkeeping-account-rule') {
+    return `【使用する資料】この問題では、資産・負債の増減と貸借平均の原理を確認します。\n` +
+      `【判断の順序】資産は増加を借方・減少を貸方、負債は増加を貸方・減少を借方に記入します。複式簿記では一つの取引を借方と貸方へ同額で記録するため、借方合計と貸方合計は一致します。\n` +
+      `【解答確認】${answers}。\n` +
+      `【検算】資産と負債で増減の記入側が反対になること、最後に借方合計＝貸方合計となることを確認します。`;
+  }
   if (item.format === 'balance-sheet') {
     const rows = item.table.rows; const terms = section => rows.filter(row => row.section === section && typeof row.amount === 'number');
     const expression = section => terms(section).map(row => `${row.account}${yenText(row.amount)}`).join('＋');
@@ -16790,7 +16861,11 @@ Object.values(QuestionData).forEach(item => {
   // Authored chapter is the educational/story authority. Object insertion order
   // must never reassign semantic chapters; unequal chapter volume is handled by
   // chapter-local progress and later Mission-level presentation.
-  const arc = ChapterDrama[item.chapter] || ChapterDrama[12];
+  const arc = item.id === 'J051'
+    ? {theme:'利益処分の確認',place:'レビュー用資料を確認する経理室',requester:'水野先輩',problem:'株主総会で決議された配当の記録を確認する必要があります',goal:'配当決議時点の仕訳を根拠から整理する',result:'配当決議の正しい仕訳',stakes:'決議時点と支払時点を混同すれば、現金と未払配当金の処理を誤る'}
+    : item.id === 'L031'
+      ? {theme:'勘定記入法則の再確認',place:'元帳ルールを確認する会議室',requester:'水野先輩',problem:'資産・負債の増減と借方・貸方の対応を確認する必要があります',goal:'勘定記入法則と貸借平均の原理を言葉で整理する',result:'借方・貸方の記入原則',stakes:'記入方向を取り違えると、仕訳と元帳の両方を誤る'}
+      : ChapterDrama[item.chapter] || ChapterDrama[12];
   const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
   const authoredChapterIds = AllChapterIds[item.chapter] || [];
   const authoredChapterPosition = authoredChapterIds.indexOf(item.id);
@@ -16821,7 +16896,9 @@ Object.values(QuestionData).forEach(item => {
     isStoryEligible ? chapterPosition : authoredChapterPosition,
     isStoryEligible ? storyCount : authoredChapterIds.length
   );
-  const instruction = WorkInstructions[item.type] || WorkInstructions.comprehensive;
+  const instruction = item.format === 'bookkeeping-account-rule'
+    ? '資産・負債の増減と借方・貸方の対応、貸借平均の原理を確認してください'
+    : WorkInstructions[item.type] || WorkInstructions.comprehensive;
   const beats = [
     `水野先輩が資料を一枚だけ抜き出した。「まず事実を固定しよう」`,
     `照合を進めるほど、最初の説明ではつじつまが合わなくなる。${arc.stakes}。`,

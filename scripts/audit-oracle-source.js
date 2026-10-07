@@ -17,6 +17,10 @@ const sourceCandidates = question => {
   const visit=(value,path=[])=>{
     if (typeof value === 'number' && Number.isFinite(value)) candidates.push({path, value, replacement:value === 0 ? 17 : value + Math.max(1, Math.round(Math.abs(value)*.17))});
     else if (typeof value === 'string') {
+      const semanticTokens=['勘定記入法則','資産','負債','借方','貸方','貸借平均','増加','減少'];
+      semanticTokens.filter(token=>value.includes(token)).forEach(token=>{
+        candidates.push({path,value,replacement:value.replace(token,'別概念')});
+      });
       const matches=[...value.matchAll(/\d[\d,]*/g)].reverse();
       matches.forEach(match=>{
         const numeric=Number(match[0].replace(/,/g,'')); if (!Number.isFinite(numeric)) return;

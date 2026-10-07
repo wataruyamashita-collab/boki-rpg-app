@@ -31,7 +31,8 @@ function lockCheck(){
 function currentIntegrityCheck(){
   const lifecycle=require('./phase-b-lifecycle'),current=lifecycle.verifyCurrent();
   if(current.ok)return current;
-  const candidates=walk('reports/auto-gate/audit-locks').filter(file=>/phase-b-generation-\d+\.json$/u.test(file)&&!lifecycle.generationAuthorities().some(item=>item.file===file));
+  const committedFiles=new Set(lifecycle.generationAuthorities().map(item=>item.file));
+  const candidates=walk('reports/auto-gate/audit-locks').filter(file=>/phase-b-generation-\d+\.json$/u.test(file)&&!committedFiles.has(file));
   if(candidates.length!==1)return current;
   const candidate=json(candidates[0]),verification=lifecycle.verifyCandidate(candidate);
   return verification.ok?{ok:true,errors:[],hash:candidate.auditHash,baselineIdentity:candidate.baselineIdentity,generation:candidate.generation,phase:candidate.phase,reachableFinalV2:1}:current;

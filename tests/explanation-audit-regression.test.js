@@ -31,4 +31,13 @@ mustFail('Mutation I: ledger subtype mismatch', q => { q.L035.explanation = '【
   const result = auditExplanations(questions); const failures = new Set([...result.journalQuality, ...result.tableQuality, ...result.lengthViolations, ...result.insufficientSpecificText].map(entry => entry.id));
   assert(failures.size >= 299, `299-question generic mutation must produce at least 299 failures, got ${failures.size}`);
 }
+// A non-numeric account-entry task must pass its own strict semantic audit.
+assert.strictEqual(auditExplanations(fresh()).ok, true, 'all 300 authored explanations pass their applicable audit');
+mustFail('account rule: wrong asset directions', q => { q.L031.explanation = q.L031.explanation.replace('資産は増加を借方・減少を貸方', '資産は増加を貸方・減少を借方'); }, 'L031');
+mustFail('account rule: wrong liability directions', q => { q.L031.explanation = q.L031.explanation.replace('負債は増加を貸方・減少を借方', '負債は増加を借方・減少を貸方'); }, 'L031');
+mustFail('account rule: wrong answer authority', q => { q.L031.answer.cells.assetIncreaseSide = '貸方'; }, 'L031');
+mustFail('account rule: missing source principle', q => { q.L031.question = q.L031.question.replaceAll('貸借平均', '別の原理'); }, 'L031');
+mustFail('account rule: no reasoning', q => { q.L031.explanation = q.L031.explanation.replace(/【判断の順序】[\s\S]*?【解答確認】/u, '【解答確認】'); }, 'L031');
+mustFail('account rule: no same-amount basis', q => { q.L031.explanation = q.L031.explanation.replaceAll('同額', '異なる額'); }, 'L031');
+mustFail('numeric ledger cannot bypass calculation audit', q => { q.L001.format = 'bookkeeping-account-rule'; }, 'L001');
 console.log('explanation audit regression tests: ok');

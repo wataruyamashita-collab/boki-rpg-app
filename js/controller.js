@@ -168,6 +168,11 @@
       root.addEventListener?.('boki-storage-error', () => { const warning = this.document.getElementById('storage-warning'); if (warning) warning.hidden = false; });
     }
     openSettings() {
+      const migration = this.document.getElementById('content-migration-status');
+      if (migration) {
+        migration.hidden = !Object.keys(this.model.state.contentMigrationArchive?.questions || {}).length;
+        migration.textContent = migration.hidden ? '' : '内容を更新した問題の以前の成績・入力は、このJSONバックアップに保管されています。現在の習熟度には、更新後の内容と確認できた回答だけを使用します。';
+      }
       const dialog = this.document.getElementById('settings-dialog');
       if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
     }
@@ -235,6 +240,13 @@
         make('h4', 'log-analysis-title', '学習ログ分析'),
         make('p', 'log-analysis-note', '累積はこれまでの全回答、直近5回は最近の回答だけを集計しています。')
       );
+
+      if (Object.keys(this.model.state.contentMigrationArchive?.questions || {}).length) {
+        const recheck = (this.model.state.contentRecheckIds || []).map(id => this.questions[id]?.category).filter(Boolean);
+        panel.append(make('p', 'log-analysis-note content-migration-note',
+          '内容を更新した問題の以前の成績・入力は、バックアップ内に保管しています。現在の習熟度には、更新後の内容と確認できた回答だけを使用します。' +
+          (recheck.length ? ` 再確認が必要：${recheck.join('、')}。` : '')));
+      }
 
       const summary = make('div', 'learning-metric-grid');
       const overall = this.model.overallAccuracy();
@@ -314,7 +326,9 @@
       try {
         const payload = JSON.parse(await file.text());
         if (payload?.format !== 'boki-rpg-backup' || payload.version !== 1 || !root.ProgressModel.validateBackupState(payload.progress, this.questions) || !root.RPGModel.validateBackupState(payload.character)) throw new Error('invalid');
-        const progressValue = JSON.stringify(payload.progress); const characterValue = JSON.stringify(payload.character);
+        const prepared = root.ProgressModel.prepareBackupState(payload.progress, this.questions);
+        if (!prepared) throw new Error('invalid-progress-migration');
+        const progressValue = JSON.stringify(prepared); const characterValue = JSON.stringify(payload.character);
         const progressSnapshot = this.storageRead(this.model.storage, this.model.key); const characterSnapshot = this.storageRead(this.rpg.storage, this.rpg.key);
         if (!progressSnapshot.ok || !characterSnapshot.ok) throw new Error('storage-read');
         let forwardFailed = false;

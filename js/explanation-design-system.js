@@ -21,6 +21,7 @@
     journal:profile('仕訳',['取引事実','勘定科目','増減を判断','借方・貸方','金額','仕訳票','貸借一致'],['journalTable']),
     journalBook:profile('仕訳帳',['取引資料','仕訳を完成','日付・摘要','元丁と金額','仕訳帳へ記入','資料と照合'],['journalTable','timeline']),
     ledger:profile('元帳・補助簿',['元資料','対象勘定','増減と相手勘定','元帳へ転記','残高を確認']),
+    accountRule:profile('勘定記入法則',['勘定の種類','増加か減少か','借方・貸方を対応','貸借を照合','原理を言葉で確認']),
     inventory:profile('商品有高帳',['取引資料','数量と単価','払出単価を決定','払出額と残高','数量・金額を検算'],['formula']),
     cashBook:profile('現金・預金出納帳',['日付順の入出金','受入・支払の区分','該当欄へ記入','直前残高から更新','資料と残高を照合'],['timeline','formula']),
     pettyCash:profile('小口現金出納帳',['領収証と精算書','費用科目を判断','支払を記入','支払合計と補給','残高を照合'],['formula']),
@@ -38,13 +39,14 @@
     comprehensive:profile('総合問題',['資料と求める答え','必要な処理を分離','各取引を計算・転記','集計して答えを記入','別根拠で照合'],['formula','journalTable','beforeAfter']),
     comprehensiveClosing:profile('総合決算',['整理前残高','未処理取引','決算整理','損益計算書と貸借対照表','利益と貸借を検算'],['formula','journalTable','beforeAfter'])
   });
-  // Explicit 25/25 matrix: new question formats must be deliberately classified.
+  // Explicit matrix: every concrete type/format combination must be deliberately classified.
   const MATRIX=Object.freeze({
     'journal/default':'journal',
     'ledger/default':'ledger',
     'ledger/journal-book':'journalBook',
     'ledger/fixed-asset-ledger':'fixedAsset',
     'ledger/bookkeeping-account-ledger':'ledger',
+    'ledger/bookkeeping-account-rule':'accountRule',
     'ledger/bookkeeping-general-ledger':'ledger',
     'ledger/bookkeeping-cash-book':'cashBook',
     'ledger/bookkeeping-checking-book':'cashBook',
