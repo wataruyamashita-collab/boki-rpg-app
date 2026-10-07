@@ -1,86 +1,41 @@
-# Repository instructions
+# Repository execution instructions
 
-Before committing any change, run the mandatory quality gate:
+## Live source and single writer
+
+GitHub main is the production source of truth. Read current main HEAD/TREE, Issue #153 (current state), Roadmap #177 and the active Issue/PR; read Issue #144 when prior decisions/releases/blockers matter. [Product Charter](docs/master_specification.md), [Foundation Acceptance](docs/FOUNDATION_V1_ACCEPTANCE.md) and the [requirement index](docs/FOUNDATION_V1_MASTER_PROMPT.md) have distinct roles. Latest explicit user requirements govern scope; code and exact-SHA tests prove implementation.
+
+Do the initial role/gap audit once or on material requirement changes; routine work checks only changed main, relevant scope/CI/reviews and the critical path. Do not repeat accepted work, duplicate issues/PRs/roadmaps/docs or grow the master prompt. Classify work as RPG-ONLY, RPG-CORE, SHARED-CANDIDATE, TRAINING-DESIGN or TRAINING-IMPLEMENTATION. Prioritize evidenced P0/P1; do not demote mandatory RPG features or add attractive P2 work to Foundation acceptance.
+
+One writer per implementation/branch/Generation/merge. Delegate bounded Codex implementation/tests with Issue, purpose, start SHA, task branch, allowed/protected files, acceptance, real test commands and output. Do not write its branch concurrently; record a handoff before changing writers. A/B are logical roles, not a mandatory two-person approval or proof of independent expert review. Already-authorized steps do not need repeated user confirmation.
+
+## Git and scope safety
+
+Compare local HEAD to live main before implementation; rebaseline and select a task-specific branch from current main or safely update the existing PR branch. Local `work` is not a published branch. An absent local remote proves only missing local configuration, not absent GitHub history. Configure a valid remote before relying on CLI fetch/pull/push; otherwise identify authenticated-connector use. Stop production edits when the authoritative baseline is unknown. Production changes reach main through PRs, never direct writes. Preserve concurrent changes with expected-SHA leases; re-read on conflict.
+
+Keep exactly300 canonical IDs, grading/Oracle, Exam/Review membership, authored explanation coverage, state isolation, continuity/mastery/review authority, RPG progression/rewards/anti-farming and historical Generation files unchanged except for explicitly design-locked changes with tests. Content replacement requires explicit content identity and safe old/new/mixed/missing-history migration; preserve old evidence, valid current evidence, lifetime effort and earned rewards. Validate backup/import transactionally. Never reset all questions to repair one migration.
+
+Keep journal input horizontal: `借方科目 | 借方金額 | 貸方科目 | 貸方金額`. Preserve tap/focus, contextual calculator, next-cell behavior, input retention and mobile no-unnecessary-horizontal-scroll contracts. Runtime explanations teach the exact question: prompt/table evidence, relevant account/formula and increase/decrease, debit/credit or cell placement, amount calculation and final entry/value; common errors when useful. No generic token-only/answer-only substitute or forced long template. Unsupported error-cause inference is candidate/unknown, not a diagnosis.
+
+No secrets, credentials, personal/personnel/payroll/company financial data or unrelated chat history in this repo. Verify necessary current external facts from official sources; do not copy third-party questions, explanations, code, images or screen designs.
+
+## Test, review and merge
+
+Before committing **any change**, run the mandatory gate:
 
 ```sh
 npm run verify
 ```
 
-Do not weaken an audit or regression assertion merely to make this command pass. Keep journal entries horizontal (debit account, debit amount, credit account, credit amount), and preserve authored question explanations at runtime.
+Run applicable existing QA/integrity/browser/normal/boundary/negative regressions and independent accounting recalculation. Discover actual commands; never invent results. Do not remove tests, exempt inconvenient cases, weaken assertions or rewrite authority/expected values just to turn red green. Use the normal successor Generation/Release lifecycle for relevant changes; keep historical bytes immutable.
 
-Every runtime explanation must let a beginner solve that exact question again. Identify the prompt or table evidence, each selected account and its increase/decrease, why it is debit or credit, every answer amount and calculation, and the final entry or table value. Add a common-error note when it materially helps. Generic theory, answer-only prose, and token presence without meaningful reasoning are not acceptable.
+Review the exact diff against scope. Codex review is normally required for nontrivial grading/state/storage/review/PWA/input/shared-core/content/authority/security changes; nonfunctional Markdown may use risk-based primary review under repository rules. After changes repeat affected tests/review on the new candidate. Inspect branch/ruleset enforcement; do not silently change admin settings or claim protection from instructions alone.
 
-## A/B development coordination
+Immediately before Ready/merge re-read main, exact HEAD/TREE, required CI, reviews and comparison. Require latest-HEAD GREEN, behind=0, mergeable=true and unresolved review threads=0. Failed, stale, unexpectedly skipped, action-required or ambiguous checks are not GREEN. Use `expected_head_sha` and a normal merge where authority ancestry must be preserved. User merge authorization never waives gates.
 
-This repository uses two logical development lanes:
+After merge verify the actual merged SHA/TREE, ALL parents in repository order (label first parent), main CI, regression/integrity, accounting and relevant PWA/publication behavior. Accept/close completed work and start further production edits only after exact merged-main GREEN. Update existing roadmap/current-state/ledger by delta, re-read after writes, then return to the critical path.
 
-- A-SIDE: Primary Development Lead
-- B-SIDE: Review / QA / Audit perspective
+## Evidence reporting
 
-A-SIDE and B-SIDE may be operated by the same human owner. They are logical roles, not a mandatory two-person approval model.
+Report work done, main/PR HEAD and actual merge SHA, CI run/results, recalculation, merge decision, unmet conditions and next step. Before each PR record baseline/task branch/HEAD, locally observable cleanliness and pending browser/device checks. Distinguish Foundation, Grade3 RPG, Grade2 and Grade1 completion; do not infer completion percentages from PR counts.
 
-GitHub Issue #144, "A/B Development Handoff — Bookkeeping RPG", remains the authoritative coordination ledger for important baseline, release, blocker, review, and handoff records.
-
-Before beginning any new development, planning, implementation, review, release, or audit task:
-
-1. Read GitHub Issue #144 when the current task depends on prior handoff, blocker, release, or review state.
-2. Verify the current GitHub `main` branch before acting.
-3. Treat GitHub `main` as the authoritative code source.
-4. Reconcile any stale Issue #144 status against the current GitHub `main` before implementation.
-
-Do not rely on:
-
-- email
-- external messages
-- another Codex task's local history
-- copied private notes
-- assumed A-side/B-side state
-
-If the authoritative GitHub baseline cannot be determined, stop production modification until the GitHub state is resolved.
-
-### Git baseline and branch-safety rules
-
-The following rules are mandatory whenever a Codex workspace or another local Git checkout is used.
-
-1. GitHub `main`, not a local branch name, defines the authoritative baseline.
-2. A local branch named `work` is workspace-local unless a GitHub branch with that exact name is independently verified. Never describe local `work` as a published or shared GitHub branch merely because it is currently checked out.
-3. Before implementation, compare the local HEAD commit with the current GitHub `main` HEAD. If they differ, explicitly re-baseline from the current GitHub `main` before making production changes.
-4. Do not accumulate new development commits directly on a generic local `work` branch. Create a task-specific GitHub branch from the verified current `main` HEAD, then use that branch for implementation and PR review.
-5. Production changes must reach `main` through a pull request. Do not push or write implementation changes directly to `main`.
-6. When reporting a merge commit, report ALL parent SHAs in repository order. If first-parent ancestry is specifically relevant, label it `first parent` and report the other merge parent separately.
-7. An empty local `git remote -v` means only that the current local checkout has no configured Git remote. It does NOT prove that the GitHub repository, branch, or PR history is absent. Verify GitHub state through the connected GitHub source before drawing any repository-level conclusion.
-8. If command-line `git fetch`, `git pull`, or `git push` is required, a valid remote must be configured before those commands are relied upon. If work is performed through an authenticated GitHub integration instead, record that distinction explicitly rather than inventing or assuming a local remote.
-9. Before each PR, record at minimum: verified GitHub `main` HEAD, task branch, task branch HEAD, working-tree cleanliness when locally observable, tests actually run, and any device/browser verification that remains pending.
-10. Never claim physical-device or browser acceptance unless it was actually performed after the exact candidate being accepted. Automated structural verification and real-device acceptance are separate statuses.
-
-### A-side execution rule
-
-A-SIDE is the primary execution path. Before implementation:
-
-- verify current GitHub `main` HEAD and TREE
-- compare any local workspace HEAD against that GitHub baseline
-- create or select a task-specific branch based on the verified current `main`
-- inspect applicable Issue #144 blocker/release notes when relevant
-- implement the change
-- run the required automated verification
-- review the PR diff and scope before merge
-
-A-SIDE does not need to wait for a separate B-SIDE response when the same human owner operates both roles. After required checks pass and the PR review is satisfactory, A-SIDE may merge the PR directly.
-
-### B-side review rule
-
-B-SIDE is an optional review/QA perspective, not a blocking approval gate when A-SIDE and B-SIDE are operated by the same human owner.
-
-Use B-SIDE-style independent review when it adds value, especially for high-impact changes involving:
-
-- accounting correctness
-- protected-learning authority
-- release/audit lifecycle
-- data migrations or destructive changes
-- security or privacy
-- broad mobile/browser regressions
-
-A B-SIDE review request or response is not required for routine progression or merge unless the human owner explicitly asks for a separate review cycle.
-
-Important:
-GitHub remains the authoritative source for code, PRs, and recorded coordination state.
+Codex states: not-requested / prepared / sent / start-confirmed / running / completed / blocked or failed. A request is not a running task; retain task/bot/commit evidence. No claimed background work without a launched service. Automated browser evidence is not physical-device evidence. The same AI under another title is not an independent expert. Unverified facts and missing provenance stay unknown.
