@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - '.github/visual/**'
+      - 'tests/foundation-extension-contract.test.js'
+      - 'tests/fixtures/foundation-extension-cases.js'
+      - 'tests/helpers/foundation-extension-adapter.js'
       - '.github/workflows/visual-gate.yml'
       - 'css/**'
       - 'data/**'
@@ -28,6 +31,8 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
       - name: Run content-progress migration and reload gate
         run: node .github/visual/run-content-progress-migration.js
+      - name: Run Foundation extension contract gate
+        run: node .github/visual/run-foundation-extension.js
       - name: Run strict physical-recovery gate in real browsers
         run: node .github/visual/run-visual.js strict
       - name: Run explanation integration gate in real browsers
