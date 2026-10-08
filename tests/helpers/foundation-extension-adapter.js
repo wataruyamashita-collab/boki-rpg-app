@@ -74,7 +74,7 @@
     parseDecimal(result);
     return result;
   };
-  function evaluateDecimalExpression(expression) {
+  function evaluateFractionExpression(expression) {
     const source = normalize(expression).replace(/[＋−×÷]/g, token => ({'＋':'+','−':'-','×':'*','÷':'/'}[token]));
     if (!source || source.length > 256) throw new RangeError('Invalid expression');
     const tokens = source.match(/\d+(?:\.\d*)?|\.\d+|[()+\-*/]/g) || [];
@@ -116,7 +116,33 @@
     };
     const result = expressionValue();
     if (index !== tokens.length) throw new RangeError('Unexpected expression token');
-    return exactDecimal(result);
+    return result;
+  }
+  function roundFractionHalfUp(value, precision) {
+    if (!Number.isInteger(precision) || precision < 0 || precision > 2) throw new RangeError('Unsupported precision');
+    const { numerator, denominator } = fraction(value.numerator, value.denominator);
+    const scaled = absBigInt(numerator) * 10n ** BigInt(precision);
+    const rounded = scaled / denominator + (scaled % denominator * 2n >= denominator ? 1n : 0n);
+    if (rounded > BigInt(Number.MAX_SAFE_INTEGER)) throw new RangeError('Unsafe scaled amount');
+    const digits = rounded.toString().padStart(precision + 1, '0');
+    const result = (numerator < 0n && rounded !== 0n ? '-' : '') + (precision ? digits.slice(0, -precision) + '.' + digits.slice(-precision) : digits);
+    parseDecimal(result);
+    return result;
+  }
+  function evaluateDecimalExpression(expression, precision) {
+    const value = evaluateFractionExpression(expression);
+    return precision === undefined ? exactDecimal(value) : roundFractionHalfUp(value, precision);
+  }
+  function fractionDisplay(value) {
+    try { return exactDecimal(value); } catch (_) {
+      // The display is a bounded preview; calculation and insertion retain the fraction.
+      const scaled = absBigInt(value.numerator) * 1000000000000n / value.denominator;
+      const digits = scaled.toString().padStart(13, '0');
+      const unsigned = (digits.slice(0, -12) + '.' + digits.slice(-12)).replace(/\.?0+$/, '');
+      const text = (value.numerator < 0n && scaled !== 0n ? '-' : '') + unsigned;
+      parseDecimal(text);
+      return text;
+    }
   }
   function formatDecimal(input, event = {}) {
     if (event.isComposing) return true;
@@ -215,19 +241,37 @@
       return Boolean(target && !target.disabled && this.document.body.contains(target) &&
         target.dataset.extensionQuestion === this.currentId && specFor(target));
     }
+    calcKey(key) {
+      if (this.isExtensionCalculatorTarget() && !['＋', '−', '×', '÷', '＝'].includes(key)) this.calculator.exactOperand = null;
+      return super.calcKey(key);
+    }
+    extensionOperand() {
+      return this.calculator.exactOperand && this.calculator.exactDisplay === this.expression
+        ? this.calculator.exactOperand : evaluateFractionExpression(this.expression);
+    }
+    displayExtensionResult(value) {
+      this.expression = fractionDisplay(value);
+      this.calculator.exactOperand = value;
+      this.calculator.exactDisplay = this.expression;
+    }
     operate(left, operator, right) {
-      return this.isExtensionCalculatorTarget()
-        ? evaluateDecimalExpression(`${left}${operator}${right}`)
-        : super.operate(left, operator, right);
+      if (!this.isExtensionCalculatorTarget()) return super.operate(left, operator, right);
+      const asFraction = value => typeof value === 'object' ? fraction(value.numerator, value.denominator) : evaluateFractionExpression(value);
+      const a = asFraction(left), b = asFraction(right);
+      if (operator === '＋' || operator === '+') return fraction(a.numerator * b.denominator + b.numerator * a.denominator, a.denominator * b.denominator);
+      if (operator === '−' || operator === '-') return fraction(a.numerator * b.denominator - b.numerator * a.denominator, a.denominator * b.denominator);
+      if (operator === '×' || operator === '*') return fraction(a.numerator * b.numerator, a.denominator * b.denominator);
+      if (operator === '÷' || operator === '/') return fraction(a.numerator * b.denominator, a.denominator * b.numerator);
+      throw new RangeError('Unsupported operator');
     }
     setOperator(operator) {
       if (!this.isExtensionCalculatorTarget()) return super.setOperator(operator);
       try {
-        const current = evaluateDecimalExpression(this.expression);
+        const current = this.extensionOperand();
         if (this.calculator.operator && !this.calculator.waitingForOperand) {
           this.calculator.accumulator = this.operate(this.calculator.accumulator, this.calculator.operator, current);
-        } else if (this.calculator.accumulator === null) this.calculator.accumulator = current;
-        this.expression = String(this.calculator.accumulator);
+        } else if (!this.calculator.operator || this.calculator.accumulator === null) this.calculator.accumulator = current;
+        this.displayExtensionResult(this.calculator.accumulator);
         this.calculator.operator = operator;
         this.calculator.waitingForOperand = true;
         this.calculator.lastOperator = null;
@@ -236,31 +280,34 @@
         this.expression = 'エラー';
         this.calculator.accumulator = null;
         this.calculator.operator = null;
+        this.calculator.exactOperand = null;
       }
     }
     calculateEquals() {
       if (!this.isExtensionCalculatorTarget()) return super.calculateEquals();
       let operator = this.calculator.operator;
-      let operand = this.expression;
+      let operand;
       const repeating = !operator && this.calculator.lastOperator;
-      if (repeating) { operator = this.calculator.lastOperator; operand = this.calculator.lastOperand; }
       try {
+        operand = repeating ? this.calculator.lastOperand : this.extensionOperand();
+        if (repeating) operator = this.calculator.lastOperator;
         if (!operator || this.calculator.accumulator === null) {
-          this.expression = evaluateDecimalExpression(this.expression);
+          this.displayExtensionResult(operand);
           return;
         }
         if (this.calculator.waitingForOperand && !repeating) operand = this.calculator.accumulator;
         const result = this.operate(this.calculator.accumulator, operator, operand);
-        this.expression = String(result);
-        this.calculator.accumulator = String(result);
+        this.displayExtensionResult(result);
+        this.calculator.accumulator = result;
         this.calculator.lastOperator = operator;
-        this.calculator.lastOperand = String(operand);
+        this.calculator.lastOperand = operand;
         this.calculator.operator = null;
         this.calculator.waitingForOperand = true;
       } catch (_) {
         this.expression = 'エラー';
         this.calculator.accumulator = null;
         this.calculator.operator = null;
+        this.calculator.exactOperand = null;
       }
     }
     insertCalculatorResult(shouldCalculate) {
@@ -271,15 +318,17 @@
       if (!target || target.disabled || !this.document.body.contains(target) || target.dataset.extensionQuestion !== this.currentId) return false;
       try {
         const expression = normalize(this.expression);
-        const value = shouldCalculate ? evaluateDecimalExpression(expression) : expression.endsWith('.') ? expression + '0' : expression;
-        const parsed = parseDecimal(value);
-        if (parsed.negative && !spec.signed) throw new RangeError('This field is unsigned');
-        const rounded = roundHalfUp(value, spec.precision);
+        const value = expression.endsWith('.') ? expression + '0' : expression;
+        const hasExact = this.calculator.exactOperand && this.calculator.exactDisplay === this.expression;
+        if (!shouldCalculate && !hasExact) parseDecimal(value);
+        const exact = hasExact ? this.calculator.exactOperand : evaluateFractionExpression(value);
+        if (exact.numerator < 0n && !spec.signed) throw new RangeError('This field is unsigned');
+        const rounded = roundFractionHalfUp(exact, spec.precision);
         target.value = rounded;
         target.setSelectionRange?.(rounded.length, rounded.length);
         if (!this.formatAmount(target)) return false;
         const saved = this.saveDraft(false);
-        this.expression = value;
+        this.displayExtensionResult(exact);
         this.calculatorTarget = target; this.updateCalculatorDisplay();
         this.document.getElementById('calculator-target').textContent = `${target.getAttribute('aria-label')}へ${target.value}を入力しました`;
         return saved;

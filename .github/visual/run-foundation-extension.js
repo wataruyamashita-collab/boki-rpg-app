@@ -141,6 +141,17 @@ async function run(){
           assert.deepStrictEqual(exactProbe,{large:'115308668.01',division:'1200.005',signed:'-5870',grouped:'5.35'});
           const decimalSelector=key==='cost'?'[data-cell-id="unitCost"]':key.startsWith('npv')?'[data-cell-id="npv"]':null;
           if(decimalSelector){
+            await amount(page,decimalSelector,'1÷3');
+            assert.strictEqual(await page.locator(decimalSelector).inputValue(),key==='cost'?'0.33':'0','Recurring division must round at the selected precision');
+            for(const button of ['×','3','＝'])await page.locator(`[data-action="calc"][data-calc="${button}"]`).click();
+            assert.strictEqual(await page.evaluate(()=>extensionController.expression),'1','A rounded insertion must preserve the exact fraction for later operations');
+            await page.locator('[data-action="calc-insert"]').click();
+            assert.strictEqual(await page.locator(decimalSelector).inputValue(),key==='cost'?'1.00':'1');
+            if(key.startsWith('npv')){
+              await amount(page,decimalSelector,'0−1÷6×3');
+              assert.strictEqual(await page.locator(decimalSelector).inputValue(),'-1','Signed halfway results round away from zero');
+            }
+            await page.evaluate(id=>extensionController.start(id,{fresh:true}),q.id);
             for(const equals of [true,false]){
               await amount(page,decimalSelector,'1.',equals);
               if(equals)assert.strictEqual(await page.evaluate(()=>extensionController.expression),'1','Operator-free equals must normalize a trailing decimal');
@@ -222,7 +233,7 @@ async function run(){
           assert.strictEqual(end.stored.questionStats[q.id].correctCount,2);assert.strictEqual(end.stored.questionStats[q.id].incorrectCount,1);
           assert.deepStrictEqual(end.due,[]);assert.strictEqual(end.currentId,null);assert.strictEqual(end.reviewSourceId,null);assert(end.reviewViewActive);assert.strictEqual(end.reviewEntryCount,0);
           assert.deepStrictEqual(end.originals,keys.map(key=>'sentinel:'+key));assert.deepStrictEqual(errors,[]);
-          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,reviewReloadDue:true,ordinaryCalculatorChecked:key==='equipment',trailingDecimalChecked:key==='cost',trailingDecimalEqualsAndDirectInsertChecked:Boolean(decimalSelector),canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
+          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,reviewReloadDue:true,ordinaryCalculatorChecked:key==='equipment',trailingDecimalChecked:key==='cost',trailingDecimalEqualsAndDirectInsertChecked:Boolean(decimalSelector),recurringDivisionAndChainingChecked:Boolean(decimalSelector),signedRecurringHalfUpChecked:key.startsWith('npv'),canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
         }finally{await context.close();}
       }}finally{await browser.close();}
     }

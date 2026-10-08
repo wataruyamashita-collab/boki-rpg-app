@@ -24,6 +24,11 @@ for(const [value,precision,expected] of [['-1.005',2,'-1.01'],['-2.675',2,'-2.68
 for(const [expression,expected] of [['115308668+0.005','115308668.005'],['240001/200','1200.005'],['0-5870','-5870'],['(1.005+1.67)*2','5.35']])test('exact decimal expression '+expression,()=>assert.strictEqual(api.evaluateDecimalExpression(expression),expected));
 test('large decimal direct HALF_UP',()=>assert.strictEqual(api.roundHalfUp(api.evaluateDecimalExpression('115308668+0.005'),2),'115308668.01'));
 test('decimal division by zero is rejected',()=>assert.throws(()=>api.evaluateDecimalExpression('1/0')));
+test('rational expression rounding applies HALF_UP only to the final value',()=>{
+  for(const [expression,precision,expected] of [['1/3',2,'0.33'],['1/6',2,'0.17'],['-1/6',2,'-0.17'],['1/6*3',0,'1'],['-1/6*3',0,'-1'],['1/3*3',2,'1.00'],['1/3/3',2,'0.11'],['-1/300',2,'0.00']])assert.strictEqual(api.evaluateDecimalExpression(expression,precision),expected);
+  for(const invalid of ['1/0','1 2','1,000/3','1e3/3','(1/3','10000000000000/3'])assert.throws(()=>api.evaluateDecimalExpression(invalid,2));
+  for(const precision of [-1,3,1.5])assert.throws(()=>api.evaluateDecimalExpression('1/3',precision));
+});
 test('separator cannot merge numeric operands',()=>{
   for(const invalid of ['1 2','1,00+2','1,000+2','1. 2','1e3'])assert.throws(()=>api.evaluateDecimalExpression(invalid),invalid);
   assert.strictEqual(api.evaluateDecimalExpression('1 + 2'),'3');
@@ -81,6 +86,35 @@ test('extension calculator trailing decimal equals and direct insertion preserve
   }
   controller.clearCalculator();field.value=before.value;field.dataset=before.dataset;
   controller.model.state=previousState;
+  if(saved===null)store.removeItem('foundation-ext:node:'+controller.model.key);else store.setItem('foundation-ext:node:'+controller.model.key,saved);
+});
+test('extension divisions retain rational state until target HALF_UP insertion',()=>{
+  const field=fields[1],before={value:field.value,dataset:{...field.dataset}};
+  const saved=store.getItem('foundation-ext:node:'+controller.model.key),previousState=clone(controller.model.state);
+  controller.calculatorTarget=field;
+  const keys=value=>{for(const key of value)controller.calcKey(key);};
+  for(const [precision,expected] of [[0,'0'],[1,'0.3'],[2,'0.33']]){
+    field.dataset.extensionPrecision=String(precision);field.dataset.extensionSigned='true';
+    controller.clearCalculator();keys('1÷3＝');
+    assert.notStrictEqual(controller.expression,'エラー','Recurring divisions must remain usable');
+    assert.strictEqual(controller.insertCalculatorResult(false),true);assert.strictEqual(field.value,expected);
+    keys('×3＝');assert.strictEqual(controller.expression,'1','Insertion must not round the exact accumulator');
+    assert.strictEqual(controller.insertCalculatorResult(false),true);
+    assert.strictEqual(field.value,'1'+(precision?'.'+'0'.repeat(precision):''));
+  }
+  field.dataset.extensionPrecision='2';
+  for(const [sequence,expected] of [['1÷6＝','0.17'],['0−1÷6＝','-0.17'],['1÷3＝＝','0.11'],['1÷6×3＝','0.50'],['1÷3＝4＋2＝','6.00'],['1÷3＝C2＋1＝','3.00']]){
+    controller.clearCalculator();keys(sequence);assert.strictEqual(controller.insertCalculatorResult(false),true,sequence);assert.strictEqual(field.value,expected,sequence);
+  }
+  for(const [expression,precision,expected] of [['1/3',2,'0.33'],['-1/6',2,'-0.17'],['1/6*3',0,'1'],['-1/6*3',0,'-1'],['1/3*3',2,'1.00'],['(1/3)/3',2,'0.11']]){
+    controller.clearCalculator();field.dataset.extensionPrecision=String(precision);controller.expression=expression;
+    assert.strictEqual(controller.insertCalculatorResult(true),true);assert.strictEqual(field.value,expected);
+  }
+  controller.clearCalculator();field.dataset.extensionSigned='false';keys('0−1÷3＝');
+  const retained=field.value,stored=store.getItem('foundation-ext:node:'+controller.model.key);
+  assert.strictEqual(controller.insertCalculatorResult(false),false);assert.strictEqual(field.value,retained);assert.strictEqual(store.getItem('foundation-ext:node:'+controller.model.key),stored);
+  controller.clearCalculator();keys('1÷0＝');assert.strictEqual(controller.expression,'エラー');assert.strictEqual(controller.insertCalculatorResult(false),false);assert.strictEqual(field.value,retained);
+  controller.clearCalculator();field.value=before.value;field.dataset=before.dataset;controller.model.state=previousState;
   if(saved===null)store.removeItem('foundation-ext:node:'+controller.model.key);else store.setItem('foundation-ext:node:'+controller.model.key,saved);
 });
 test('ordinary calculator division retains superclass behavior',()=>{
