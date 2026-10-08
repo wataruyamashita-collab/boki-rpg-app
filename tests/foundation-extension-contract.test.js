@@ -116,6 +116,19 @@ test('independent fixture arithmetic is bound to authored answers',()=>{
   assert.strictEqual(cases.accrual.answer.cells.basis,'発生主義');
 });
 test('distinct NPV text and explicit scope',()=>{assert.strictEqual(new Set(['npvPositive','npvNegative','npvZero'].map(key=>cases[key].question)).size,3);for(const key of ['npvPositive','npvNegative','npvZero'])assert.strictEqual(cases[key].extension.scope,'cost:nineteenth2');assert(!cases.cost.question.includes('240,001'));assert(cases.cost.explanation.includes('240,002'));});
+test('journal explanation gate rejects missing reasoning and reversed debit/credit sides',()=>{
+  const runner=fs.readFileSync(path.join(ROOT,'.github/visual/run-foundation-extension.js'),'utf8');
+  const definition=runner.match(/const explanationRequirements=(\{[^]*?\n\});/);assert(definition);
+  const requirements=vm.runInNewContext('('+definition[1]+')');
+  for(const key of ['equipment','fx']){
+    const validate=text=>{for(const required of requirements[key])assert(text.includes(required),'Missing '+key+' teaching: '+required);};
+    validate(cases[key].explanation);
+    const withoutReason=cases[key].explanation.split('\n').filter(line=>!line.startsWith('【考え方】')).join('\n');
+    assert.throws(()=>validate(withoutReason),/Missing/,'Account and amount tokens alone must not prove side reasoning');
+    const reversed=cases[key].explanation.replace(/借方|貸方/g,side=>side==='借方'?'貸方':'借方');
+    assert.throws(()=>validate(reversed),/Missing/,'Reversed debit/credit teaching must fail');
+  }
+});
 test('browser evidence hashes served bytes and rejects changes at the same path',()=>{
   const runner=fs.readFileSync(path.join(ROOT,'.github/visual/run-foundation-extension.js'),'utf8');
   const definition=runner.match(/function recordSourceBlob\([^]*?\n\}/);
