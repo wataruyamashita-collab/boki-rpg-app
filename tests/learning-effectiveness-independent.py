@@ -68,6 +68,14 @@ for origin, result in actual.items():
                          highestConfirmedStage=max(min(e['stage']+1, 4) for e in successes) if successes else None,
                          stages=[dict(attempts=sum(e['stage'] == stage for e in due),
                                       successes=sum(e['stage'] == stage for e in successes)) for stage in range(5)])
+        retention['receipts'] = {}
+        for kind, result_correct in [('correct', True), ('incorrect', False)]:
+            matches = [(i, e) for i, e in enumerate(events) if qid == 'R' and e['due'] and e['correct'] == result_correct]
+            if not matches:
+                retention['receipts'][kind] = None
+            else:
+                i, event = matches[-1]
+                retention['receipts'][kind] = dict(questionId=event['id'], observationNumber=sum(e['id'] == event['id'] for e in events[:i+1]), at=event['at'], stage=event['stage'])
         assert value['delayedReview'] == retention
         tags = ['journal-entry'] if qid != 'T' else ['cell:a', 'cell:b', 'table-cell']
         patterns = {}

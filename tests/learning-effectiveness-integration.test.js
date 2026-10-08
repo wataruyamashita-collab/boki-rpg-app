@@ -4,7 +4,7 @@ const Model = require('../js/model'), RPG = require('../js/rpg');
 const {fixture, questions:canonical, storage:legacyStorage} = require('./helpers/issue207-fixtures');
 const clone = value => JSON.parse(JSON.stringify(value));
 const questions = { Q:{id:'Q',type:'journal',category:'仕訳',difficulty:1}, R:{id:'R',type:'journal',category:'仕訳',difficulty:1} };
-const values = () => ({data:{},getItem(key){return this.data[key] ?? null;},setItem(key,value){this.data[key]=value;return true;}});
+const values = () => ({data:{},getItem(key){return this.data[key] ?? null;},setItem(key,value){this.data[key]=value;return true;},removeItem(key){delete this.data[key];return true;}});
 let reloads=0;
 const sandbox={window:{ProgressModel:Model,RPGModel:RPG,GradingEngine:{grade:(_q,answer)=>({correct:answer.correct,earned:answer.correct?1:0,possible:1,ratio:answer.correct?1:0})},location:{reload(){reloads++;}}},console};
 vm.runInNewContext(fs.readFileSync('js/controller.js','utf8'),sandbox);
@@ -38,6 +38,63 @@ test('failed persistence stops scoring side effects and retains a retryable rece
   assert.strictEqual(ctx.submit(),false);assert.strictEqual(JSON.stringify(model.state),state);assert.strictEqual(JSON.stringify(rpg.state),character);
   assert.strictEqual(JSON.stringify(store.data),bytes);assert.strictEqual(ctx.submitting,false);assert(notices.length);
   store.setItem=set;ctx.submit();assert.strictEqual(model.questionAccuracy('Q').attempts,1);assert.strictEqual(model.learningEffectivenessForQuestion('Q').observedAttempts,1);
+});
+test('partial answer writes roll back finalization and rewards before any result',()=>{
+  for(const mode of ['story','training','review','exam']){
+    const {ctx,model,rpg,store}=context(mode);
+    if(mode==='review'){const now=Date.now();model.state.reviewSchedule.Q={stage:0,dueAt:now-1};model.assignReview('Q','Q',now-1);ctx.start('Q');}
+    if(mode==='exam')model.state.examSession={scores:{}};
+    model.save();rpg.save();const before=clone(model.state),character=clone(rpg.state),bytes=clone(store.data),set=store.setItem;let writes=0;
+    store.setItem=function(key,value){writes++;if(writes===2)return false;return set.call(this,key,value);};
+    assert.strictEqual(ctx.submit(),false,mode);assert.deepStrictEqual(clone(model.state),before);assert.deepStrictEqual(clone(rpg.state),character);
+    assert.strictEqual(store.data.p,bytes.p);assert.strictEqual(store.data.r,bytes.r);assert.strictEqual(ctx.submitting,false);
+    store.setItem=set;ctx.submit();assert.strictEqual(model.learningEffectivenessForQuestion('Q').observedAttempts,1);
+    assert(mode==='exam'||model.state.answeredIds.includes('Q'));
+  }
+});
+test('each transaction write and commit failure restores both saved keys',()=>{
+  for(const failure of [1,2,3,4]){
+    const {ctx,model,rpg,store}=context();model.save();rpg.save();const before=clone(model.state),character=clone(rpg.state),bytes=clone(store.data);
+    const set=store.setItem,remove=store.removeItem;let calls=0;
+    store.setItem=function(k,v){if(++calls===failure)return false;return set.call(this,k,v);};
+    store.removeItem=function(k){if(++calls===failure)return false;return remove.call(this,k);};
+    assert.strictEqual(ctx.submit(),false,'failure '+failure);assert.deepStrictEqual(clone(model.state),before);assert.deepStrictEqual(clone(rpg.state),character);
+    assert.deepStrictEqual(store.data,bytes);assert.strictEqual(ctx.learningFlow.phase,'I');
+  }
+});
+test('persistent rollback failure is recovered before the next launch loads progress and rewards',()=>{
+  const {ctx,model,rpg,store}=context();model.save();rpg.save();const bytes=clone(store.data),set=store.setItem;let calls=0;
+  store.setItem=function(k,v){if(++calls>=3)return false;return set.call(this,k,v);};
+  assert.strictEqual(ctx.submit(),false);assert.strictEqual(model.storageWriteBlocked,true);assert(store.data['p:pending-answer-v1']);
+  assert.strictEqual(JSON.parse(store.data.p).learningEffectiveness.questions.Q.observedAttempts,1,'partial physical write exists only behind the pending journal');
+  store.setItem=set;assert(Controller.recoverAnswerTransaction(store,'p','r'));assert.deepStrictEqual(store.data,bytes);
+  ctx.model=new Model(questions,store,'p');ctx.rpg=new RPG(store,'r');ctx.start('Q');ctx.submit();
+  assert.strictEqual(ctx.model.learningEffectivenessForQuestion('Q').observedAttempts,1);assert.strictEqual(ctx.rpg.state.mastery['仕訳'].possible,1);
+  assert.strictEqual(store.data['p:pending-answer-v1'],undefined);
+});
+test('a corrupted pending before-image cannot overwrite the original saved pair',()=>{
+  const {ctx,model,rpg,store}=context();model.save();rpg.save();const set=store.setItem;let calls=0;
+  store.setItem=function(k,v){if(++calls>=3)return false;return set.call(this,k,v);};ctx.submit();store.setItem=set;
+  const journal=JSON.parse(store.data['p:pending-answer-v1']);journal.progress='{}';store.data['p:pending-answer-v1']=JSON.stringify(journal);const before=clone(store.data);
+  assert.strictEqual(Controller.recoverAnswerTransaction(store,'p','r'),false);assert.deepStrictEqual(store.data,before);
+});
+test('invalid or unreadable transaction journals cannot overwrite saved data',()=>{
+  const {store}=context();store.data['p:pending-answer-v1']='{bad';const before=clone(store.data);
+  assert.strictEqual(Controller.recoverAnswerTransaction(store,'p','r'),false);assert.deepStrictEqual(store.data,before);
+  assert.strictEqual(Controller.recoverAnswerTransaction({getItem(){throw Error('unreadable');},setItem(){throw Error('must not write');}},'p','r'),false);
+});
+test('exam finalization commits history, mastery and rewards once after a failed write',()=>{
+  const {ctx,store}=context('exam'),model=new Model(canonical,values(),'p'),ids=Object.keys(canonical).slice(0,15),now=Date.now(),rpg=new RPG(model.storage,'r');
+  ctx.model=model;ctx.rpg=rpg;ctx.questions=canonical;ctx.stopExamTimer=()=>{};let results=0;ctx.view.examResult=()=>{results++;};
+  model.state.mode='exam';model.state.examSession={ids,startedAt:now-1000,endAt:now+100000,status:'RUNNING',scores:{}};
+  assert(model.recordAttempt(ids[0],true,10,'',false,now,null,'unsure',{mode:'exam',support:'none'}));
+  model.state.examSession.scores[ids[0]]={correct:true,earned:1,possible:1,ratio:1,answer:{correct:true}};
+  ctx.unansweredExamIds=()=>ids.slice(1);model.save();rpg.save();const progress=clone(model.state),character=clone(rpg.state),saved=clone(model.storage.data),set=model.storage.setItem;let calls=0;
+  model.storage.setItem=function(k,v){if(++calls===3)return false;return set.call(this,k,v);};
+  assert.strictEqual(ctx.finishExam(true,now),false);assert.deepStrictEqual(clone(model.state),progress);assert.deepStrictEqual(clone(rpg.state),character);assert.deepStrictEqual(model.storage.data,saved);assert.strictEqual(results,0);
+  model.storage.setItem=set;assert.strictEqual(ctx.finishExam(true,now),true);assert.strictEqual(model.state.examAttempt,1);assert.strictEqual(model.state.examHistory.length,1);
+  assert.strictEqual(model.learningEffectivenessForQuestion(ids[0]).observedAttempts,1);assert.strictEqual(rpg.state.mastery[canonical[ids[0]].category].possible,1);assert.strictEqual(rpg.state.xp,20*canonical[ids[0]].difficulty);
+  assert.strictEqual(ctx.finishExam(true,now),false);assert.strictEqual(results,1);assert(Model.validateBackupState(model.state,canonical));
 });
 test('coaching only persists assisted recovery and remains idempotent',()=>{
   const {ctx,model,rpg}=context();ctx.view.readAnswer=()=>({correct:false});ctx.submit();

@@ -83,8 +83,25 @@ async function run(){
               c.model.storage.setItem=()=>false;const result=c.submit();c.model.storage.setItem=set;
               return {rejected:result===false,stateSame:before===JSON.stringify(c.model.state),characterSame:character===JSON.stringify(c.rpg.state),bytesSame:stored===localStorage.getItem(c.model.key)};
             });
-            assert(Object.values(failure).every(Boolean));assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,pageErrors:errors});write();
+            assert(Object.values(failure).every(Boolean));
+            const interrupted=await page.evaluate(()=>{
+              const c=window.App.controller;c.view.applyRetryDraft(c.questions.J002,c.questions.J002.answer);
+              const before={progress:JSON.parse(localStorage.getItem(c.model.key)),character:JSON.parse(localStorage.getItem(c.rpg.key))};
+              const set=Storage.prototype.setItem;let writes=0;
+              Storage.prototype.setItem=function(key,value){if(++writes>=3)throw new Error('simulated persistent storage failure');return set.call(this,key,value);};
+              let result;try{result=c.submit();}finally{Storage.prototype.setItem=set;}
+              return {before,rejected:result===false,blocked:c.model.storageWriteBlocked,pending:Boolean(localStorage.getItem(`${c.model.key}:pending-answer-v1`))};
+            });
+            assert(interrupted.rejected&&interrupted.blocked&&interrupted.pending);
+            await page.reload({waitUntil:'load'});
+            const recovered=await page.evaluate(()=>{const c=window.App.controller;return {progress:c.model.state,character:c.rpg.state,pending:localStorage.getItem(`${c.model.key}:pending-answer-v1`),blocked:Boolean(c.model.storageWriteBlocked)};});
+            assert.strictEqual(recovered.pending,null);assert.strictEqual(recovered.blocked,false);
+            for(const field of ['learningEffectiveness','questionStats','answeredIds','correctIds','incorrectIds','reviewSchedule'])assert.deepStrictEqual(recovered.progress[field],interrupted.before.progress[field]);
+            assert.deepStrictEqual(recovered.character,interrupted.before.character);
+            await page.evaluate(()=>{const c=window.App.controller;c.model.state.mode='training';c.start('J002');c.view.applyRetryDraft(c.questions.J002,c.questions.J002.answer);c.submit();});
+            assert.strictEqual(await page.evaluate(()=>window.App.controller.model.learningEffectivenessForQuestion('J002').observedAttempts),1);
+            assert.deepStrictEqual(errors,[]);
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

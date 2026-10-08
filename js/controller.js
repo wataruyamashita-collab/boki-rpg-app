@@ -4,13 +4,19 @@
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
   const validAmountText = value => value === '' || /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(value);
+  const transactionSignature = value => {
+    let hash = 2166136261;
+    const text = JSON.stringify([value.schemaVersion,value.progressKey,value.characterKey,value.progress,value.character]);
+    for (let index=0; index<text.length; index++) hash = Math.imul(hash ^ text.charCodeAt(index),16777619) >>> 0;
+    return hash.toString(16).padStart(8,'0');
+  };
   const getStorage = () => {
     const reportFailure = () => root.dispatchEvent?.(new Event('boki-storage-error'));
     try {
       const storage = root.localStorage;
       if (!storage) { queueMicrotask(reportFailure); return null; }
       let writable = true;
-      return {
+      const adapter = {
         getItem(key) { try { return storage.getItem(key); } catch (_) { return null; } },
         readItem(key) { try { return { ok:true, value:storage.getItem(key) }; } catch (_) { return { ok:false, value:null }; } },
         setItem(key, value) {
@@ -21,6 +27,10 @@
         removeItem(key) { try { storage.removeItem(key); return true; } catch (_) { return false; } },
         restoreItem(key, value) { try { if (value === null) storage.removeItem(key); else storage.setItem(key, value); return true; } catch (_) { reportFailure(); return false; } }
       };
+      if (!Controller.recoverAnswerTransaction(adapter)) {
+        writable = false; adapter.readItem = () => ({ok:false,value:null}); adapter.getItem = () => null; reportFailure();
+      }
+      return adapter;
     } catch (_) { queueMicrotask(reportFailure); return null; }
   };
   // 同じ会計的性質の科目を先に提示し、単なる見た目の5択ではなく識別学習にする。
@@ -192,9 +202,10 @@
     }
     resetLearningData() {
       const status = this.document.getElementById('backup-status');
+      const recovered = this.model.storage !== this.rpg.storage || Controller.recoverAnswerTransaction(this.model.storage,this.model.key,this.rpg.key);
       const progressSnapshot = this.storageRead(this.model.storage, this.model.key);
       const characterSnapshot = this.storageRead(this.rpg.storage, this.rpg.key);
-      if (!progressSnapshot.ok || !characterSnapshot.ok) {
+      if (!recovered || !progressSnapshot.ok || !characterSnapshot.ok) {
         if (status) { status.textContent = '保存データを安全に確認できないため、初期化しませんでした。'; status.classList.add('storage-error'); }
         this.openSettings(); return false;
       }
@@ -316,6 +327,7 @@
       this.model.state.mode = 'story'; this.model.save(); this.start(id); return true;
     }
     exportBackup() {
+      if (this.model.storageWriteBlocked) { this.document.getElementById('backup-status').textContent='保存状態を安全に読み取れないため、書き出しませんでした。'; return false; }
       const payload = { format:'boki-rpg-backup', version:1, exportedAt:new Date().toISOString(), progress:this.model.state, character:this.rpg.state };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
       const link = this.document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `boki-rpg-backup-${new Date().toISOString().slice(0, 10)}.json`; link.click(); URL.revokeObjectURL(link.href);
@@ -326,6 +338,7 @@
       try {
         const payload = JSON.parse(await file.text());
         if (payload?.format !== 'boki-rpg-backup' || payload.version !== 1 || !root.ProgressModel.validateBackupState(payload.progress, this.questions) || !root.RPGModel.validateBackupState(payload.character)) throw new Error('invalid');
+        if (this.model.storage === this.rpg.storage && !Controller.recoverAnswerTransaction(this.model.storage,this.model.key,this.rpg.key)) throw new Error('pending-answer');
         const prepared = root.ProgressModel.prepareBackupState(payload.progress, this.questions);
         if (!prepared) throw new Error('invalid-progress-migration');
         const progressValue = JSON.stringify(prepared); const characterValue = JSON.stringify(payload.character);
@@ -343,6 +356,56 @@
         status.classList.remove('storage-error');
         status.textContent = 'バックアップを復元しました。画面を再読み込みします。'; root.location?.reload?.(); return true;
       } catch (error) { status.textContent = error.rollbackFailed ? '復元に失敗し、元の保存状態も完全には戻せませんでした。保存データが不整合な可能性があります。画面は再読み込みしていません。' : '復元できませんでした。BOKI RPGが書き出した有効なJSONファイルを選んでください。画面は再読み込みしていません。'; status.classList.add('storage-error'); return false; }
+    }
+    static recoverAnswerTransaction(storage, progressKey = 'boki-rpg-progress-v2', characterKey = 'boki-rpg-character-v1') {
+      const io = Controller.prototype, key = `${progressKey}:pending-answer-v1`, read = io.storageRead(storage, key);
+      if (!read.ok) return false;
+      if (read.value === null || read.value === '') return true;
+      try {
+        const value = JSON.parse(read.value);
+        if (!value || Object.keys(value).length !== 6 || value.schemaVersion !== 1 || value.signature !== transactionSignature(value) || value.progressKey !== progressKey || value.characterKey !== characterKey ||
+            !['progress','character'].every(name => value[name] === null || typeof value[name] === 'string')) return false;
+        // Before-images stay durable until both keys have been restored. A failed
+        // rollback therefore remains recoverable on the next launch.
+        for (const [name, target] of [['progress',progressKey],['character',characterKey]]) {
+          const current = io.storageRead(storage, target);
+          if (!current.ok || (current.value !== value[name] && !io.storageRestore(storage, target, value[name]))) return false;
+        }
+        return typeof storage?.removeItem === 'function' ? io.storageRemove(storage,key) : io.storageWrite(storage,key,'');
+      } catch (_) { return false; }
+    }
+    learningTransaction(operation) {
+      const model = this.model, rpg = this.rpg, io = Controller.prototype;
+      // Lightweight callers without persistence use the same state operation.
+      // The application always supplies both concrete model keys and one store.
+      if (!model.key || !rpg.key) return operation() !== false;
+      const storage = model.storage;
+      if (!storage || storage !== rpg.storage || model.storageWriteBlocked ||
+          !Controller.recoverAnswerTransaction(storage,model.key,rpg.key)) return false;
+      const progress = io.storageRead(storage,model.key), character = io.storageRead(storage,rpg.key);
+      if (!progress.ok || !character.ok) return false;
+      const oldProgress = JSON.parse(JSON.stringify(model.state)), oldCharacter = JSON.parse(JSON.stringify(rpg.state)), completed = rpg.progressCompleted;
+      const restoreMemory = () => { model.state=oldProgress; rpg.state=oldCharacter; rpg.progressCompleted=completed; };
+      const saves = [model,rpg].map(object => ({object,own:Object.hasOwn(object,'save'),save:object.save}));
+      let staged = false;
+      try {
+        model.save = rpg.save = () => true;
+        staged = operation() !== false;
+      } catch (_) { staged = false; }
+      finally { for (const item of saves) { if(item.own)item.object.save=item.save;else delete item.object.save; } }
+      if (!staged) { restoreMemory(); return false; }
+      const key = `${model.key}:pending-answer-v1`;
+      const pending = {schemaVersion:1,progressKey:model.key,characterKey:rpg.key,progress:progress.value,character:character.value};
+      const journal = JSON.stringify({...pending,signature:transactionSignature(pending)});
+      const nextProgress = JSON.stringify(model.state), nextCharacter = JSON.stringify(rpg.state);
+      if (!io.storageWrite(storage,key,journal)) { restoreMemory(); return false; }
+      const written = io.storageWrite(storage,model.key,nextProgress) && io.storageWrite(storage,rpg.key,nextCharacter);
+      const committed = written && (typeof storage.removeItem === 'function' ? io.storageRemove(storage,key) : io.storageWrite(storage,key,''));
+      if (committed) return true;
+      const recovered = Controller.recoverAnswerTransaction(storage,model.key,rpg.key);
+      restoreMemory();
+      if (!recovered) { model.storageWriteBlocked = true; rpg.save = () => false; }
+      return false;
     }
     storageRead(storage, key) { if (typeof storage?.readItem === 'function') return storage.readItem(key); try { return storage?.getItem ? { ok:true, value:storage.getItem(key) } : { ok:false, value:null }; } catch (_) { return { ok:false, value:null }; } }
     storageWrite(storage, key, value) { try { return Boolean(storage?.setItem) && storage.setItem(key, value) !== false; } catch (_) { return false; } }
@@ -541,18 +604,24 @@
         });
         return false;
       }
-      session.status = 'FINISHING';
-      const previousProgress = { level:this.rpg.level, role:this.rpg.role };
+      const previousProgress = {level:this.rpg.level,role:this.rpg.role};
+      let review;
+      const saved = Controller.prototype.learningTransaction.call(this, () => {
+        session.status = 'FINISHING';
       const earned = session.ids.reduce((sum, id, index) => sum + (session.scores[id]?.ratio || 0) * EXAM_POINTS[index], 0);
       const points = Math.round(earned); const correct = points >= 70;
       session.ids.forEach(id => { const result = session.scores[id]; if (result) { this.model.record(id, result.correct); this.rpg.recordMastery(this.questions[id], result); if (result.correct) this.rpg.reward?.(this.questions[id], result, 1); } });
       this.model.clearDrafts?.(session.ids);
-      const review = { finishedAt: now, startedAt: session.startedAt, points, passed: correct, durationMs: Math.max(0, Math.min(now, session.endAt) - session.startedAt), unansweredCount: unanswered.length, items: session.ids.map((id, index) => ({ id, topic: this.questions[id].category, points: EXAM_POINTS[index], earned: Math.round((session.scores[id]?.ratio || 0) * EXAM_POINTS[index]), correct: session.scores[id]?.correct === true, answer: session.scores[id]?.answer ?? null })) };
+      review = { finishedAt: now, startedAt: session.startedAt, points, passed: correct, durationMs: Math.max(0, Math.min(now, session.endAt) - session.startedAt), unansweredCount: unanswered.length, items: session.ids.map((id, index) => ({ id, topic: this.questions[id].category, points: EXAM_POINTS[index], earned: Math.round((session.scores[id]?.ratio || 0) * EXAM_POINTS[index]), correct: session.scores[id]?.correct === true, answer: session.scores[id]?.answer ?? null })) };
       review.topicScores = review.items.reduce((out, item) => { const row = out[item.topic] || { earned: 0, possible: 0 }; row.earned += item.earned; row.possible += item.points; out[item.topic] = row; return out; }, {});
       const setSignature = [...session.ids].sort().join('|');
       session.status = 'FINISHED'; this.model.state.lastExamReview = review; this.model.state.examHistory = [...(this.model.state.examHistory || []), { finishedAt: review.finishedAt, points, passed: correct, durationMs: review.durationMs, topicScores: review.topicScores, unansweredCount: review.unansweredCount, setSignature }].slice(-10);
       this.rpg.progressCompleted = this.model.updateCompletion?.(this.rpg) === true;
-      this.model.state.examAttempt += 1; this.model.state.examSession = null; this.model.save(); this.stopExamTimer();
+      this.model.state.examAttempt += 1; this.model.state.examSession = null; this.model.save();
+        return true;
+      });
+      if (!saved) { this.submitting=false; this.view.showNotice?.('模試結果を保存できませんでした。回答を保持しています。保存状態を確認してから再度お試しください。',{title:'模試を記録できません'}); return false; }
+      this.stopExamTimer();
       this.document?.body?.classList?.remove('exam-active');
       const achievement = { level:this.rpg.level > previousProgress.level ? this.rpg.level : null, role:this.rpg.role !== previousProgress.role ? this.rpg.role : null };
       this.view.examResult(review, this.questions, this.model.state.examHistory, achievement);
@@ -1024,38 +1093,38 @@
         this.model.state.examSession.status = 'EXPIRED'; this.finishExam(true); return;
       }
       const support = this.learningFlow?.hintStage ? `hint-${this.learningFlow.hintStage}` : 'none';
-      const recorded = this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, Boolean(this.reviewSourceId && score.correct), answeredAt, reviewStage, confidence,
-        { mode:this.model.state.mode, support, observationNumber:this.learningObservationNumber, reviewSourceId:this.reviewSourceId });
-      if (recorded === false) {
+      const previousProgress = { level:this.rpg.level, role:this.rpg.role };
+      let rewardOutcome;
+      const saved = Controller.prototype.learningTransaction.call(this, () => {
+        const recorded = this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, Boolean(this.reviewSourceId && score.correct), answeredAt, reviewStage, confidence,
+          { mode:this.model.state.mode, support, observationNumber:this.learningObservationNumber, reviewSourceId:this.reviewSourceId });
+        if (recorded === false) return false;
+        if (this.model.state.mode === 'exam') {
+          this.model.state.examSession.scores[question.id] = { correct:score.correct, earned:score.earned, possible:score.possible, ratio:score.ratio, answer };
+          this.model.setDraft(question.id,answer); this.model.save();
+          return true;
+        }
+        const reviewCompleted = this.reviewSourceId ? this.model.completeReview(this.reviewSourceId,score.correct,answeredAt,question.id) : false;
+        if (!this.reviewSourceId && this.model.record(question.id,score.correct,answeredAt) === false) return false;
+        this.rpg.recordMastery?.(question,score);
+        this.rpg.progressCompleted = this.model.updateCompletion?.(this.rpg) === true;
+        const afterPriority = !this.reviewSourceId ? this.model.studyPriority?.(question.id,answeredAt) : null;
+        rewardOutcome = Controller.prototype.rewardLearningOutcome.call(this,{question,score,beforePriority,afterPriority,reviewSourceId:this.reviewSourceId,reviewStage,reviewCompleted});
+        this.rpg.applyAnswer(score.correct,confidence);
+        return true;
+      });
+      if (!saved) {
         this.submitting = false;
-        this.view.showNotice?.('回答記録を保存できませんでした。入力はこの画面に残っています。保存状態を確認してから再度お試しください。', { title:'回答を記録できません' });
+        this.view.showNotice?.('回答記録を保存できませんでした。入力はこの画面に残っています。保存状態を確認してから再度お試しください。',{title:'回答を記録できません'});
         return false;
       }
       if (this.model.state.mode === 'exam') {
-        const session = this.model.state.examSession;
-        session.scores[question.id] = { correct: score.correct, earned: score.earned, possible: score.possible, ratio: score.ratio, answer };
-        this.model.setDraft(question.id, answer); this.model.save(); this.updateExamStatus();
-        const unanswered = this.unansweredExamIds(); const ids = this.modeIds(); const following = ids.slice(ids.indexOf(this.currentId) + 1).find(id => unanswered.includes(id));
+        this.updateExamStatus();
+        const unanswered = this.unansweredExamIds(); const ids = this.modeIds(); const following = ids.slice(ids.indexOf(this.currentId)+1).find(id => unanswered.includes(id));
         if (following) return this.start(following);
         if (unanswered.length) return this.start(unanswered[0]);
         this.renderModes(); this.showMode('exam'); return;
       }
-      const previousProgress = { level:this.rpg.level, role:this.rpg.role };
-      const reviewCompleted = this.reviewSourceId ? this.model.completeReview(this.reviewSourceId, score.correct, answeredAt, question.id) : false;
-      if (!this.reviewSourceId) this.model.record(question.id, score.correct, answeredAt);
-      this.rpg.recordMastery?.(question, score);
-      this.rpg.progressCompleted = this.model.updateCompletion?.(this.rpg) === true;
-      const afterPriority = !this.reviewSourceId ? this.model.studyPriority?.(question.id, answeredAt) : null;
-      const rewardOutcome = Controller.prototype.rewardLearningOutcome.call(this, {
-        question,
-        score,
-        beforePriority,
-        afterPriority,
-        reviewSourceId:this.reviewSourceId,
-        reviewStage,
-        reviewCompleted
-      });
-      this.rpg.applyAnswer(score.correct, confidence);
       const achievement = {
         reward: rewardOutcome.bonusLabel || null,
         level: this.rpg.level > previousProgress.level ? this.rpg.level : null,

@@ -1184,7 +1184,7 @@ assert.deepStrictEqual(['A','B','C'].map(id=>reviewModel.state.reviewSchedule[id
 const isolationStoreValues={}; const isolationStore={getItem:key=>isolationStoreValues[key]||null,setItem:(key,value)=>{isolationStoreValues[key]=value;}};
 const isolationQuestions=Object.fromEntries(['A','B','C','D','V'].map(id=>[id,{id,category:'shared',difficulty:2,learningRole:id==='V'?'review':'core'}]));
 const isolationModel=new ProgressModel(isolationQuestions,isolationStore,'spacing-isolation');
-const isolationNow=Date.now(); ['A','B','C','D'].forEach(id=>isolationModel.record(id,false,isolationNow));
+const isolationNow=Date.now(); ['A','B','C','D'].forEach(id=>{ assert(isolationModel.recordAttempt(id,false,10,'table-cell',false,isolationNow)); isolationModel.record(id,false,isolationNow); });
 isolationModel.state.reviewSchedule={A:{stage:0,dueAt:isolationNow-1},B:{stage:1,dueAt:isolationNow+86400000},C:{stage:2,dueAt:isolationNow+259200000},D:{stage:3,dueAt:isolationNow+604800000}};
 isolationModel.recommendedIds=()=>['B','C','D','V','A'];
 const isolationController={model:isolationModel,questions:isolationQuestions,reviewMappings:new Map(),reviewIds:browserSandbox.window.AppController.prototype.reviewIds};

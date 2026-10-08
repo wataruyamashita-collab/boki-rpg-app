@@ -12,11 +12,19 @@
   const LEARNING_SCHEMA_VERSION = 2;
   const EVIDENCE_MODES = ['story','training','review','exam','desk'];
   const EVIDENCE_SUPPORT = ['none','hint-1','hint-2','unknown'];
-  const emptyEffectiveness = (initialHistory = 'complete') => ({ schemaVersion:1, initialHistory, questions:{} });
+  // A bounded checksum detects accidental disagreement between the retained log
+  // and its evidence. It is integrity metadata, not authentication of user JSON.
+  const attemptsSignature = rows => {
+    let hash = 2166136261;
+    const text = JSON.stringify(rows);
+    for (let index=0; index<text.length; index++) hash = Math.imul(hash ^ text.charCodeAt(index), 16777619) >>> 0;
+    return hash.toString(16).padStart(8, '0');
+  };
+  const emptyEffectiveness = (initialHistory = 'complete', attempts = []) => ({ schemaVersion:1, initialHistory, retainedAttemptsSignature:attemptsSignature(attempts), questions:{} });
   const emptyEvidence = () => ({
     observedAttempts:0, correctCount:0, incorrectCount:0, firstObservedAt:null, lastObservedAt:null, firstAttempt:null,
     modes:Object.fromEntries(EVIDENCE_MODES.map(mode => [mode, { attempts:0, successes:0 }])),
-    delayedReview:{ attempts:0, successes:0, lastAt:null, highestConfirmedStage:null,
+    delayedReview:{ attempts:0, successes:0, lastAt:null, highestConfirmedStage:null, receipts:{correct:null,incorrect:null},
       stages:Array.from({ length:5 }, () => ({ attempts:0, successes:0 })) },
     misconceptionStats:{}
   });
@@ -137,7 +145,8 @@
       }
       if (state.contentRevision !== CONTENT_REVISION || state.learningSchemaVersion !== LEARNING_SCHEMA_VERSION ||
           !ProgressModel.validLearningEffectiveness(evidence, questions) || !Number.isFinite(state.lastLearningAt) || state.lastLearningAt < 0 ||
-          !state.questionStats || typeof state.questionStats !== 'object' || Array.isArray(state.questionStats) || !Array.isArray(state.attempts)) return false;
+          !state.questionStats || typeof state.questionStats !== 'object' || Array.isArray(state.questionStats) || !Array.isArray(state.attempts) ||
+          state.attempts.length > 200 || evidence.retainedAttemptsSignature !== attemptsSignature(state.attempts)) return false;
       const complete = evidence.initialHistory === 'complete';
       const probe = Object.create(ProgressModel.prototype);
       probe.questions = questions;
@@ -151,25 +160,55 @@
         const stats = state.questionStats[id];
         if (item.observedAttempts && (!stats || stats.correctCount < item.correctCount || stats.incorrectCount < item.incorrectCount)) return false;
       }
+      const retained = {};
       for (const row of state.attempts) {
         const id = row?.questionId || row?.id, item = evidence.questions[id];
         if (!Object.hasOwn(questions, id) || (complete && !item?.observedAttempts)) return false;
-        if (row.observationNumber !== undefined && (!Number.isSafeInteger(row.observationNumber) || row.observationNumber < 1 ||
-            !item || row.observationNumber > item.observedAttempts)) return false;
+        if (row.observationNumber === undefined) { if (complete) return false; continue; }
+        if (!Number.isSafeInteger(row.observationNumber) || row.observationNumber < 1 || !item || row.observationNumber > item.observedAttempts ||
+            row.questionId !== id || row.id !== id || typeof row.correct !== 'boolean' || !EVIDENCE_MODES.includes(row.mode) ||
+            !EVIDENCE_SUPPORT.includes(row.support) || !Number.isFinite(row.timestamp) || row.at !== row.timestamp ||
+            row.timestamp < 0 || row.timestamp > item.lastObservedAt || !Number.isFinite(row.responseMs) || row.responseMs < 0) return false;
+        const rows = retained[id] ||= [];
+        if (rows.length && row.observationNumber !== rows.at(-1).observationNumber + 1) return false;
+        rows.push(row);
+        if (row.observationNumber === 1 && (row.timestamp !== item.firstObservedAt || (complete &&
+            ['correct','mode','support'].some(key => row[key] !== item.firstAttempt[key])))) return false;
       }
-      // record()/review-source finalization can set a flag without an assessment;
-      // such entries exist with zero observations and no invented first answer.
-      return ['answeredIds','correctIds','incorrectIds'].every(key => Array.isArray(state[key]) &&
-        (!complete || state[key].every(id => Object.hasOwn(evidence.questions, id))));
+      for (const [id, rows] of Object.entries(retained)) {
+        const item = evidence.questions[id], last = rows.at(-1), stats = state.questionStats[id];
+        if (last.observationNumber !== item.observedAttempts || last.correct !== stats.lastResult || (complete ? item.lastObservedAt !== stats.lastAnsweredAt : item.lastObservedAt > stats.lastAnsweredAt)) return false;
+        for (const mode of EVIDENCE_MODES) {
+          const selected = rows.filter(row => row.mode === mode), successes = selected.filter(row => row.correct).length, aggregate = item.modes[mode];
+          if (selected.length > aggregate.attempts || successes > aggregate.successes || selected.length-successes > aggregate.attempts-aggregate.successes ||
+              (rows[0].observationNumber === 1 && (selected.length !== aggregate.attempts || successes !== aggregate.successes))) return false;
+        }
+      }
+      for (const [sourceId,item] of Object.entries(evidence.questions)) for (const [kind, receipt] of Object.entries(item.delayedReview.receipts)) {
+        if (!receipt) continue;
+        const target = evidence.questions[receipt.questionId], correct = kind === 'correct';
+        if (!target || receipt.observationNumber > target.observedAttempts || receipt.at > target.lastObservedAt || questions[sourceId].category !== questions[receipt.questionId].category ||
+            (correct ? target.modes.review.successes < 1 : target.modes.review.attempts <= target.modes.review.successes)) return false;
+        const row = retained[receipt.questionId]?.find(row => row.observationNumber === receipt.observationNumber);
+        if (row && (row.correct !== correct || row.timestamp !== receipt.at || row.mode !== 'review')) return false;
+      }
+      return ['answeredIds','correctIds','incorrectIds'].every(key => Array.isArray(state[key]) && (!complete || state[key].every(id => {
+        const item = evidence.questions[id];
+        if (!item) return false;
+        if (key === 'correctIds') return item.correctCount > 0 || item.delayedReview.receipts.correct !== null;
+        if (key === 'incorrectIds') return item.incorrectCount > 0 || item.delayedReview.receipts.incorrect !== null;
+        return item.observedAttempts > 0 || item.delayedReview.attempts > 0;
+      })));
     }
+
     static validLearningEffectiveness(value, questions = {}) {
       const plain = item => item && typeof item === 'object' && !Array.isArray(item);
       const exact = (item, keys) => plain(item) && Object.keys(item).length === keys.length && keys.every(key => Object.hasOwn(item, key));
       const count = n => Number.isSafeInteger(n) && n >= 0;
       const time = n => typeof n === 'number' && Number.isFinite(n) && n >= 0;
       const pair = item => exact(item, ['attempts','successes']) && count(item.attempts) && count(item.successes) && item.successes <= item.attempts;
-      if (!exact(value, ['schemaVersion','initialHistory','questions']) || value.schemaVersion !== 1 ||
-          !['complete','unknown'].includes(value.initialHistory) || !plain(value.questions)) return false;
+      if (!exact(value, ['schemaVersion','initialHistory','retainedAttemptsSignature','questions']) || value.schemaVersion !== 1 ||
+          !['complete','unknown'].includes(value.initialHistory) || !/^[0-9a-f]{8}$/.test(value.retainedAttemptsSignature) || !plain(value.questions)) return false;
       for (const [id, item] of Object.entries(value.questions)) {
         if (!Object.hasOwn(questions, id) || !exact(item, Object.keys(emptyEvidence())) ||
             !['observedAttempts','correctCount','incorrectCount'].every(key => count(item[key])) ||
@@ -187,12 +226,21 @@
         if (first && (item[first.correct ? 'correctCount' : 'incorrectCount'] < 1 || item.modes[first.mode].attempts < 1 ||
             (first.correct ? item.modes[first.mode].successes < 1 : item.modes[first.mode].successes === item.modes[first.mode].attempts))) return false;
         const delayed = item.delayedReview;
-        if (!exact(delayed, ['attempts','successes','lastAt','highestConfirmedStage','stages']) || !count(delayed.attempts) ||
+        if (!exact(delayed, ['attempts','successes','lastAt','highestConfirmedStage','receipts','stages']) || !count(delayed.attempts) ||
             !count(delayed.successes) || delayed.successes > delayed.attempts ||
             !(delayed.attempts ? time(delayed.lastAt) : delayed.lastAt === null) ||
             !Array.isArray(delayed.stages) || delayed.stages.length !== 5 || !delayed.stages.every(pair) ||
             delayed.stages.reduce((sum, stage) => sum + stage.attempts, 0) !== delayed.attempts ||
             delayed.stages.reduce((sum, stage) => sum + stage.successes, 0) !== delayed.successes) return false;
+        if (!exact(delayed.receipts, ['correct','incorrect'])) return false;
+        for (const [kind, receipt] of Object.entries(delayed.receipts)) {
+          const events = kind === 'correct' ? delayed.successes : delayed.attempts-delayed.successes;
+          if (!events) { if (receipt !== null) return false; continue; }
+          if (!exact(receipt, ['questionId','observationNumber','at','stage']) || !Object.hasOwn(questions, receipt.questionId) ||
+              !Number.isSafeInteger(receipt.observationNumber) || receipt.observationNumber < 1 || !time(receipt.at) || receipt.at > delayed.lastAt ||
+              !Number.isSafeInteger(receipt.stage) || receipt.stage < 0 || receipt.stage > 4 ||
+              (kind === 'correct' ? delayed.stages[receipt.stage].successes < 1 : delayed.stages[receipt.stage].attempts <= delayed.stages[receipt.stage].successes)) return false;
+        }
         const confirmed = delayed.stages.flatMap((stage, index) => stage.successes ? [Math.min(index + 1, 4)] : []);
         if (delayed.highestConfirmedStage !== (confirmed.length ? Math.max(...confirmed) : null)) return false;
         const tags = ProgressModel.evidenceTags(questions[id]);
@@ -294,7 +342,7 @@
           if (savedContentRevision < 4) this.migrateContentIdentity(savedContentRevision, hasLearningSchemaV1 ? saved.questionStats : null);
           // A missing row/flag in an old save cannot prove a never-attempted question.
           const needsEvidenceMigration = saved.learningEffectiveness === undefined;
-          if (needsEvidenceMigration) this.state.learningEffectiveness = emptyEffectiveness('unknown');
+          if (needsEvidenceMigration) this.state.learningEffectiveness = emptyEffectiveness('unknown', this.state.attempts);
           if (needsContentMigration || needsLearningMigration || needsEvidenceMigration) this.save();
         }
       } catch (_) { this.storageWriteBlocked = true; }
@@ -722,6 +770,7 @@
       }
       if (delayed) {
         const retention = (evidence.questions[delayed.sourceId] ||= emptyEvidence()).delayedReview;
+        retention.receipts[correct ? 'correct' : 'incorrect'] = { questionId:id, observationNumber, at:now, stage:delayed.stage };
         retention.attempts += 1; retention.lastAt = Math.max(retention.lastAt ?? 0, now); retention.stages[delayed.stage].attempts += 1;
         if (correct) {
           retention.successes += 1; retention.stages[delayed.stage].successes += 1;
@@ -730,6 +779,7 @@
       }
       this.state.attempts.push({ questionId:id, id, ...(this.state.questionContentVersions[id] ? { contentIdentity:this.state.questionContentVersions[id] } : {}), concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now, mode, support, observationNumber });
       this.state.attempts = this.state.attempts.slice(-200);
+      evidence.retainedAttemptsSignature = attemptsSignature(this.state.attempts);
       this.recordLearningContinuity(id, correct, delayedSuccess === true, now);
       const stats = this.applyQuestionStat(this.state.questionStats, id, correct, now);
       this.state.lastLearningAt = Math.max(this.state.lastLearningAt || 0, now);

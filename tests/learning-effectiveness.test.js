@@ -199,7 +199,7 @@ test('a missing evidence root with new observation receipts is corruption, not a
   const loaded=fresh(JSON.stringify(bad));assert.strictEqual(loaded.model.save(),false);
 });
 test('source finalization alone survives reload without becoming a graded first answer',()=>{
-  let {model,store}=fresh();assert(model.record('Q',true,1000));model=new Model(questions,store,'test');
+  let {model,store}=fresh();schedule(model,'Q','R',0,1000);assert(answer(model,'R',true,1000,{mode:'review',reviewSourceId:'Q',stage:0}));assert(model.completeReview('Q',true,1000,'R'));model=new Model(questions,store,'test');
   assert.strictEqual(model.state.answeredIds[0],'Q');assert(Model.validateBackupState(model.state,questions));
   assert.strictEqual(evidence(model).observedAttempts,0);assert.strictEqual(evidence(model).firstAttempt,null);
 });
@@ -210,6 +210,24 @@ test('modern evidence cannot invoke legacy aggregation or continuity reconstruct
     const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
     const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert.strictEqual(loaded.model.save(),false);assert.strictEqual(loaded.store.value,bytes);
   }
+});
+test('complete retained receipts cannot disagree with durable first evidence or disappear',()=>{
+  const {model}=fresh();answer(model,'Q',false,1000);answer(model,'Q',true,1001);answer(model,'Q',true,1002);const original=clone(model.state);
+  for(const mutate of [v=>v.attempts[0].correct=true,v=>v.attempts[0].mode='exam',v=>v.attempts[0].support='hint-2',
+    v=>delete v.attempts[0].observationNumber,v=>v.attempts[1].support='hint-1',v=>v.attempts[1].timestamp=1000,
+    v=>v.attempts[1].observationNumber=1]){
+    const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+    const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert.strictEqual(loaded.model.save(),false);assert.strictEqual(loaded.store.value,bytes);
+  }
+});
+test('empty evidence entries cannot authorize completion or practical competence',()=>{
+  const {model}=fresh();model.record('T',true,1000);const forged=clone(model.state);
+  assert.strictEqual(Model.validateBackupState(forged,questions),false);assert.strictEqual(Model.prepareBackupState(forged,questions),null);
+});
+test('a backward wall clock preserves ordered observations and existing maximum timestamps',()=>{
+  let {model,store}=fresh();assert(answer(model,'Q',false,1000));assert(answer(model,'Q',true,900));assert(answer(model,'Q',true,950));
+  model=new Model(questions,store,'test');assert.strictEqual(evidence(model).observedAttempts,3);assert.strictEqual(evidence(model).firstAttempt.at,1000);
+  assert.strictEqual(model.state.questionStats.Q.lastAnsweredAt,1000);assert(Model.validateBackupState(model.state,questions));
 });
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;
