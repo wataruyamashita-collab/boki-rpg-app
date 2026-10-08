@@ -24,6 +24,13 @@ for(const [value,precision,expected] of [['-1.005',2,'-1.01'],['-2.675',2,'-2.68
 for(const [expression,expected] of [['115308668+0.005','115308668.005'],['240001/200','1200.005'],['0-5870','-5870'],['(1.005+1.67)*2','5.35']])test('exact decimal expression '+expression,()=>assert.strictEqual(api.evaluateDecimalExpression(expression),expected));
 test('large decimal direct HALF_UP',()=>assert.strictEqual(api.roundHalfUp(api.evaluateDecimalExpression('115308668+0.005'),2),'115308668.01'));
 test('decimal division by zero is rejected',()=>assert.throws(()=>api.evaluateDecimalExpression('1/0')));
+test('separator cannot merge numeric operands',()=>{
+  for(const invalid of ['1 2','1,00+2','1,000+2','1. 2','1e3'])assert.throws(()=>api.evaluateDecimalExpression(invalid),invalid);
+  assert.strictEqual(api.evaluateDecimalExpression('1 + 2'),'3');
+});
+test('bounded submicro decimal arithmetic preserves plain notation',()=>{
+  assert.strictEqual(api.evaluateDecimalExpression('0.0000001+1'),'1.0000001');
+});
 for(const value of ['', 'NaN','Infinity','1e3','1,00','--1','0x10'])test('reject '+JSON.stringify(value),()=>assert.throws(()=>api.roundHalfUp(value,2)));
 const input=(value,precision=2,signed=false)=>({value,dataset:{cellId:'unitCost',extensionPrecision:String(precision),extensionSigned:String(signed),extensionQuestion:cases.cost.id},selectionStart:2,selectionEnd:2,selectionDirection:'none',disabled:false,readOnly:false,error:'',classList:{toggle(){},add(){},remove(){}},setCustomValidity(value){this.error=value;},setSelectionRange(start,end,direction){this.selectionStart=start;this.selectionEnd=end;this.selectionDirection=direction;},getAttribute(){return '1個当たり原価（円/個）';}});
 for(const [value,start,end,direction] of [['1,200.01',2,2,'none'],['-5,870',1,3,'backward'],['12,345.67',4,7,'forward']])test('caret '+value,()=>{const field=input(value,2,true);field.selectionStart=start;field.selectionEnd=end;field.selectionDirection=direction;assert(api.formatDecimal(field));assert.deepStrictEqual([field.selectionStart,field.selectionEnd,field.selectionDirection],[start,end,direction]);});
@@ -38,6 +45,20 @@ const originalDescriptor=Object.getOwnPropertyDescriptor(root,'localStorage');
 const controller=new api.ExtensionController(doc,questions,store,'foundation-ext:node:');
 controller.currentId=cases.cost.id;controller.learningFlow={phase:'I'};controller.model.state.mode='training';
 test('real superclass and store captured during construction',()=>{assert(controller instanceof root.AppController);assert(controller.view instanceof root.AppView);assert.deepStrictEqual(Object.getOwnPropertyDescriptor(root,'localStorage'),originalDescriptor);});
+test('extension calculator chaining preserves bounded decimals',()=>{
+  const field=fields[1],savedDataset={...field.dataset},oldId=controller.currentId;
+  field.dataset.extensionPrecision='2';field.dataset.extensionSigned='false';field.dataset.extensionQuestion=cases.cost.id;
+  controller.currentId=cases.cost.id;controller.calculatorTarget=field;controller.clearCalculator();
+  controller.expression='0.0000001';controller.setOperator('＋');controller.expression='1';controller.calculator.waitingForOperand=false;controller.calculateEquals();
+  assert.strictEqual(controller.expression,'1.0000001');
+  controller.clearCalculator();field.dataset=savedDataset;controller.currentId=oldId;
+});
+test('ordinary calculator division retains superclass behavior',()=>{
+  const original=fields[0].dataset;fields[0].dataset={cellId:'totalCost'};
+  controller.calculatorTarget=fields[0];controller.clearCalculator();
+  assert.strictEqual(controller.operate(10,'÷',3),root.SafeCalculator.evaluate('10÷3'));
+  fields[0].dataset=original;
+});
 test('signed target selection preserves retained negative value',()=>{const field=fields[1],before={value:field.value,dataset:{...field.dataset}},currentId=controller.currentId;field.value='-5,870';field.dataset.extensionPrecision='0';field.dataset.extensionSigned='true';field.dataset.extensionQuestion=cases.npvNegative.id;controller.currentId=cases.npvNegative.id;controller.selectCalculatorTarget(field);assert.strictEqual(controller.expression,'-5870');field.value=before.value;field.dataset=before.dataset;controller.currentId=currentId;controller.clearCalculator();});
 test('calculator to actual controller saveDraft and ProgressModel',()=>{
   controller.calculatorTarget=fields[1];controller.expression='1200.005';assert.strictEqual(controller.insertCalculatorResult(false),true);
@@ -65,5 +86,41 @@ test('independent fixture arithmetic is bound to authored answers',()=>{
   assert.strictEqual(cases.accrual.answer.cells.basis,'発生主義');
 });
 test('distinct NPV text and explicit scope',()=>{assert.strictEqual(new Set(['npvPositive','npvNegative','npvZero'].map(key=>cases[key].question)).size,3);for(const key of ['npvPositive','npvNegative','npvZero'])assert.strictEqual(cases[key].extension.scope,'cost:nineteenth2');assert(!cases.cost.question.includes('240,001'));assert(cases.cost.explanation.includes('240,002'));});
+// Probe the actual browser bootstrap with isolated DOM/controller doubles; neither
+// an old, completed review nor a missing due assignment may restart a fixture.
+// The native Chromium/WebKit UI gate remains independently mandatory.
+for(const due of [[],[cases.cost.id]])test('browser bootstrap review route '+(due.length?'due':'empty'),()=>{
+  const runner=fs.readFileSync(path.join(ROOT,'.github/visual/run-foundation-extension.js'),'utf8');
+  const template=runner.match(/const bootstrap=`([\s\S]*?)`;/);
+  assert(template,'Missing actual bootstrap source');
+  const script=template[1].match(/<script>([\s\S]*?)<\/script>/);
+  assert(script,'Missing inline bootstrap controller path');
+  const storageDouble={},seen={started:[],view:null,renders:0,reviewListClears:0};
+  const documentDouble={getElementById(id){assert.strictEqual(id,'review-list');return{replaceChildren(...children){assert.deepStrictEqual(children,[]);seen.reviewListClears++;}};}};
+  class ControllerDouble {
+    constructor(document,questions,storage,prefix){
+      assert.strictEqual(document,documentDouble);assert.strictEqual(storage,storageDouble);
+      assert.strictEqual(prefix,'foundation-ext:test:');assert(questions[cases.cost.id]);
+      this.model={state:{placement:{completed:true},mode:'training'}};
+      this.rpg={};this.view={updateRpg(){},show:id=>{seen.view=id;}};
+      this.currentId='PREVIOUS-ID';this.reviewSourceId='PREVIOUS-ID';
+    }
+    bindEvents(){}
+    reviewIds(){return due;}
+    renderModes(){seen.renders++;throw new Error('Full Story/Exam rendering requires the canonical catalog');}
+    start(id){seen.started.push(id);this.currentId=id;this.reviewSourceId=id;}
+  }
+  const url='http://127.0.0.1/foundation-extension.html?fixture=cost&mode=review';
+  const scope={URL,location:{href:url},document:documentDouble,window:{localStorage:storageDouble},
+    FoundationExtensionCases:cases,
+    FoundationExtensionAdapter:{ExtensionController:ControllerDouble,catalog:fixture=>Object.fromEntries(Object.values(fixture).map(q=>[q.id,q]))}};
+  vm.runInNewContext(script[1].replace("'${prefix}'","'foundation-ext:test:'"),scope,{timeout:1000});
+  const c=scope.window.extensionController;
+  assert.strictEqual(c.model.state.mode,'review');
+  assert.strictEqual(seen.renders,0,'An isolated review reload must not render unrelated Story/Exam pools');
+  if(due.length){assert.deepStrictEqual(seen.started,due);assert.strictEqual(c.currentId,cases.cost.id);assert.strictEqual(seen.reviewListClears,0);}
+  else {assert.deepStrictEqual(seen.started,[]);assert.strictEqual(c.currentId,null);
+    assert.strictEqual(c.reviewSourceId,null);assert.strictEqual(seen.view,'view-review');assert.strictEqual(seen.reviewListClears,1);}
+});
 console.log('FOUNDATION_EXTENSION_CONTRACT '+passed+'/'+passed+' PASS');
 console.log('FIXTURE_SHA256 '+crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname,'fixtures/foundation-extension-cases.js'))).digest('hex'));

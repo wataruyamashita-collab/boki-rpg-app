@@ -16,23 +16,49 @@ const explanationRequirements={
 };
 const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT,file))).digest('hex');
 const git=(...args)=>cp.execFileSync('git',args,{cwd:ROOT,encoding:'utf8'}).trim();
-const evidence={status:'RUNNING',testedHead:git('rev-parse','HEAD'),testedTree:git('rev-parse','HEAD^{tree}'),fixtureSha256:hash('tests/fixtures/foundation-extension-cases.js'),adapterSha256:hash('tests/helpers/foundation-extension-adapter.js'),reports:[]};
+// HEAD^{tree} is the committed baseline, not proof of an uncommitted candidate.
+// Hash the actual files loaded by this runner so pre-commit evidence is attributable.
+const sourceFiles={
+  browserRunner:'.github/visual/run-foundation-extension.js',
+  adapter:'tests/helpers/foundation-extension-adapter.js',
+  contract:'tests/foundation-extension-contract.test.js',
+  fixtures:'tests/fixtures/foundation-extension-cases.js',
+  controller:'js/controller.js',
+  calculator:'js/calculator.js'
+};
+const evidence={
+  status:'RUNNING',
+  testedHead:git('rev-parse','HEAD'),
+  testedTree:git('rev-parse','HEAD^{tree}'),
+  testedTreeMeaning:'HEAD committed baseline; for uncommitted candidates use testedSourceBlobs',
+  testedSourceBlobs:Object.fromEntries(Object.entries(sourceFiles).map(([label,file])=>[label,{path:file,sha:git('hash-object',file)}])),
+  fixtureSha256:hash('tests/fixtures/foundation-extension-cases.js'),
+  adapterSha256:hash('tests/helpers/foundation-extension-adapter.js'),
+  reports:[]
+};
 fs.mkdirSync(OUT,{recursive:true});
 const write=()=>fs.writeFileSync(path.join(OUT,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');
 const bootstrap=`<script src="/tests/fixtures/foundation-extension-cases.js"></script><script src="/tests/helpers/foundation-extension-adapter.js"></script><script>
 const requested=new URL(location.href).searchParams.get('fixture');
+const reviewRoute=new URL(location.href).searchParams.get('mode')==='review';
 if(!Object.hasOwn(FoundationExtensionCases,requested))throw new Error('Unknown fixture');
 const rawFixtureStorage=window.localStorage;
 const extensionController=new FoundationExtensionAdapter.ExtensionController(document,FoundationExtensionAdapter.catalog(FoundationExtensionCases),rawFixtureStorage,'${prefix}');
 window.extensionController=extensionController;
 extensionController.model.state.placement ||= {completed:true,foundation:0,closing:0,startQuestionId:FoundationExtensionCases[requested].id,completedAt:1};
-if(extensionController.model.state.mode!=='review')extensionController.model.state.mode='training';
+extensionController.model.state.mode=reviewRoute?'review':'training';
 extensionController.bindEvents();extensionController.view.updateRpg(extensionController.rpg);
 let startId=FoundationExtensionCases[requested].id;
 if(extensionController.model.state.mode==='review'){
   const dueIds=extensionController.reviewIds();
   startId=dueIds[0]||null;
-  if(!startId){extensionController.currentId=null;extensionController.reviewSourceId=null;extensionController.renderModes();extensionController.view.show('view-review');}
+  if(!startId){
+    extensionController.currentId=null;extensionController.reviewSourceId=null;
+    // This isolated catalog has no full Story/Exam pools. Render the empty
+    // due-review list without invoking the unrelated full-catalog renderer.
+    document.getElementById('review-list').replaceChildren();
+    extensionController.view.show('view-review');
+  }
 }
 if(startId)extensionController.start(startId);
 </script>`;
@@ -105,6 +131,19 @@ async function run(){
             assert.strictEqual(await page.locator('[data-cell-id="unitCost"]').inputValue(),'115,308,668.01');
             await page.evaluate(id=>extensionController.start(id,{fresh:true}),q.id);
           }
+          if(key==='equipment'){
+            // Exercise the ordinary, unmarked Grade-3 calculator with real clicks.
+            // A decimal-only extension override must not break the inherited 10 / 3 path.
+            const ordinaryField=page.locator('.debit-amount').first();
+            if(width<500)await ordinaryField.tap();else await ordinaryField.click();
+            if(!await page.locator('.calculator').evaluate(el=>el.open))await page.locator('.calculator > summary').click();
+            for(const digit of ['AC','1','0','÷','3','＝'])await page.locator(`[data-action="calc"][data-calc="${digit}"]`).click();
+            assert.strictEqual(await page.evaluate(()=>extensionController.expression),'3.3333333333','Ordinary 10÷3 calculator regression');
+            await page.locator('[data-action="calc-insert"]').click();
+            assert.strictEqual(await ordinaryField.inputValue(),'3','Ordinary integer insertion must round like the base controller');
+            await page.evaluate(id=>extensionController.start(id,{fresh:true}),q.id);
+            assert.strictEqual(await page.locator('.debit-amount').first().inputValue(),'','Probe must not affect the graded answer');
+          }
           await fill(page,key);
           if(key==='cost'&&width===768){const field=page.locator('[data-cell-id="unitCost"]');await field.evaluate(el=>el.setSelectionRange(2,2));await field.dispatchEvent('input');assert.strictEqual(await field.evaluate(el=>el.selectionStart),2,'Interior caret moved');}
           const draft=await inspect(page,q.id);
@@ -116,6 +155,9 @@ async function run(){
           if(key==='npvNegative'){
             const retained=page.locator('[data-cell-id="npv"]');if(width<500)await retained.tap();else await retained.click();
             assert.strictEqual(await page.evaluate(()=>extensionController.expression),'-5870','Reloaded signed calculator target must retain -5870');
+            // Finish the retap probe through the normal UI before submitting.
+            if(await page.locator('.calculator').evaluate(el=>el.open))await page.locator('.calculator > summary').click();
+            assert.strictEqual(await page.locator('.calculator').evaluate(el=>el.open),false,'Close the calculator before confirming the retained answer');
           }
           await page.locator('.confirm-button').click();const result=await inspect(page,q.id);
           assert(result.score.correct);assert.strictEqual(result.stored.questionStats[q.id].correctCount,1);assert.strictEqual(result.stored.questionStats[q.id].incorrectCount,1);
@@ -124,20 +166,37 @@ async function run(){
           await page.screenshot({path:path.join(OUT,`${engine}-${width}-${key}.png`),fullPage:true});
           // Time setup only; assignment and completion use the real controller/submit path.
           await page.evaluate(id=>{const c=extensionController;c.model.state.reviewSchedule[id].dueAt=Date.now()-1;c.model.state.mode='review';c.model.save();const ids=c.reviewIds();if(!ids.includes(id))throw new Error('Missing due review');c.start(id);},q.id);
-          const assigned=await page.evaluate(id=>extensionController.model.state.reviewAssignments[id]?.status,q.id);assert.strictEqual(assigned,'assigned');
+          // Reload while the persisted review is still due; this exercises the actual
+          // browser bootstrap and assignment restoration, not just in-memory reviewIds().
+          await page.goto(url+'&mode=review',{waitUntil:'load'});
+          const dueReload=await page.evaluate(id=>{
+            const c=window.extensionController;
+            return {
+              mode:c.model.state.mode,currentId:c.currentId,reviewSourceId:c.reviewSourceId,
+              assignment:c.model.state.reviewAssignments[id],due:c.reviewIds(),
+              questionViewActive:document.getElementById('view-question').classList.contains('active')
+            };
+          },q.id);
+          assert.strictEqual(dueReload.mode,'review');
+          assert.strictEqual(dueReload.currentId,q.id);
+          assert.strictEqual(dueReload.reviewSourceId,q.id);
+          assert.strictEqual(dueReload.assignment?.status,'assigned');
+          assert(dueReload.due.includes(q.id),'Persisted review must still be due after reload');
+          assert(dueReload.questionViewActive,'Persisted due review must open the question view');
           await fill(page,key);await page.locator('.confirm-button').click();
           const reviewed=await inspect(page,q.id);assert(reviewed.score.correct);assert.strictEqual(reviewed.stored.reviewSchedule[q.id].stage,1);assert.strictEqual(reviewed.stored.reviewAssignments[q.id],undefined);assert(reviewed.backupValid);
-          await page.reload({waitUntil:'load'});
+          await page.goto(url+'&mode=review',{waitUntil:'load'});
           const end=await page.evaluate(({id,prefix,keys})=>{const c=extensionController,stored=JSON.parse(localStorage.getItem(prefix+c.model.key));return{
             stored,due:c.reviewIds(),currentId:c.currentId,reviewSourceId:c.reviewSourceId,
             reviewViewActive:document.getElementById('view-review').classList.contains('active'),
             reviewEntryCount:document.querySelectorAll('#review-list [data-action="start"]').length,
             originals:keys.map(key=>localStorage.getItem(key))
           };},{id:q.id,prefix,keys});
+          assert.deepStrictEqual(errors,[],'Review reload must not throw while rendering an isolated fixture catalog');
           assert.strictEqual(end.stored.questionStats[q.id].correctCount,2);assert.strictEqual(end.stored.questionStats[q.id].incorrectCount,1);
           assert.deepStrictEqual(end.due,[]);assert.strictEqual(end.currentId,null);assert.strictEqual(end.reviewSourceId,null);assert(end.reviewViewActive);assert.strictEqual(end.reviewEntryCount,0);
           assert.deepStrictEqual(end.originals,keys.map(key=>'sentinel:'+key));assert.deepStrictEqual(errors,[]);
-          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
+          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,reviewReloadDue:true,ordinaryCalculatorChecked:key==='equipment',canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
         }finally{await context.close();}
       }}finally{await browser.close();}
     }

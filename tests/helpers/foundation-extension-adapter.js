@@ -72,10 +72,10 @@
     return result;
   };
   function evaluateDecimalExpression(expression) {
-    const source = normalize(expression).replace(/,/g, '').replace(/[＋−×÷]/g, token => ({'＋':'+','−':'-','×':'*','÷':'/'}[token])).replace(/\s/g, '');
+    const source = normalize(expression).replace(/[＋−×÷]/g, token => ({'＋':'+','−':'-','×':'*','÷':'/'}[token]));
     if (!source || source.length > 256) throw new RangeError('Invalid expression');
     const tokens = source.match(/\d+(?:\.\d*)?|\.\d+|[()+\-*/]/g) || [];
-    if (tokens.join('') !== source || tokens.length > 128) throw new RangeError('Invalid expression');
+    if (tokens.join('') !== source.replace(/\s/g, '') || tokens.length > 128) throw new RangeError('Invalid expression');
     let index = 0;
     const primary = () => {
       const token = tokens[index++];
@@ -206,8 +206,56 @@
         this.updateCalculatorDisplay();
       } catch (_) { /* superclass fallback remains authoritative for invalid text */ }
     }
+    isExtensionCalculatorTarget() {
+      const selected = this.document.querySelector?.('.amount-input.calculator-selected');
+      const target = this.document.body.contains(this.calculatorTarget) ? this.calculatorTarget : selected;
+      return Boolean(target && !target.disabled && this.document.body.contains(target) &&
+        target.dataset.extensionQuestion === this.currentId && specFor(target));
+    }
     operate(left, operator, right) {
-      return evaluateDecimalExpression(`${left}${operator}${right}`);
+      return this.isExtensionCalculatorTarget()
+        ? evaluateDecimalExpression(`${left}${operator}${right}`)
+        : super.operate(left, operator, right);
+    }
+    setOperator(operator) {
+      if (!this.isExtensionCalculatorTarget()) return super.setOperator(operator);
+      try {
+        const current = evaluateDecimalExpression(this.expression);
+        if (this.calculator.operator && !this.calculator.waitingForOperand) {
+          this.calculator.accumulator = this.operate(this.calculator.accumulator, this.calculator.operator, current);
+        } else if (this.calculator.accumulator === null) this.calculator.accumulator = current;
+        this.expression = String(this.calculator.accumulator);
+        this.calculator.operator = operator;
+        this.calculator.waitingForOperand = true;
+        this.calculator.lastOperator = null;
+        this.calculator.lastOperand = null;
+      } catch (_) {
+        this.expression = 'エラー';
+        this.calculator.accumulator = null;
+        this.calculator.operator = null;
+      }
+    }
+    calculateEquals() {
+      if (!this.isExtensionCalculatorTarget()) return super.calculateEquals();
+      let operator = this.calculator.operator;
+      let operand = this.expression;
+      const repeating = !operator && this.calculator.lastOperator;
+      if (repeating) { operator = this.calculator.lastOperator; operand = this.calculator.lastOperand; }
+      if (!operator || this.calculator.accumulator === null) return;
+      if (this.calculator.waitingForOperand && !repeating) operand = this.calculator.accumulator;
+      try {
+        const result = this.operate(this.calculator.accumulator, operator, operand);
+        this.expression = String(result);
+        this.calculator.accumulator = String(result);
+        this.calculator.lastOperator = operator;
+        this.calculator.lastOperand = String(operand);
+        this.calculator.operator = null;
+        this.calculator.waitingForOperand = true;
+      } catch (_) {
+        this.expression = 'エラー';
+        this.calculator.accumulator = null;
+        this.calculator.operator = null;
+      }
     }
     insertCalculatorResult(shouldCalculate) {
       const selected = this.document.querySelector?.('.amount-input.calculator-selected');
