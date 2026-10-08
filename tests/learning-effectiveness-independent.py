@@ -75,7 +75,7 @@ for origin, result in actual.items():
                 retention['receipts'][kind] = None
             else:
                 i, event = matches[-1]
-                retention['receipts'][kind] = dict(questionId=event['id'], observationNumber=sum(e['id'] == event['id'] for e in events[:i+1]), at=event['at'], stage=event['stage'])
+                retention['receipts'][kind] = dict(sourceId=qid, questionId=event['id'], observationNumber=sum(e['id'] == event['id'] for e in events[:i+1]), at=event['at'], stage=event['stage'])
         assert value['delayedReview'] == retention
         tags = ['journal-entry'] if qid != 'T' else ['cell:a', 'cell:b', 'table-cell']
         patterns = {}

@@ -3,7 +3,7 @@ const assert = require('assert'), fs = require('fs'), vm = require('vm');
 const Model = require('../js/model'), RPG = require('../js/rpg');
 const {fixture, questions:canonical, storage:legacyStorage} = require('./helpers/issue207-fixtures');
 const clone = value => JSON.parse(JSON.stringify(value));
-const questions = { Q:{id:'Q',type:'journal',category:'仕訳',difficulty:1}, R:{id:'R',type:'journal',category:'仕訳',difficulty:1} };
+const questions = { ...Object.fromEntries(Array.from({length:13},(_,i)=>['E'+i,{id:'E'+i,type:'journal',category:'仕訳',difficulty:1}])), Q:{id:'Q',type:'journal',category:'仕訳',difficulty:1}, R:{id:'R',type:'journal',category:'仕訳',difficulty:1} };
 const values = () => ({data:{},getItem(key){return this.data[key] ?? null;},setItem(key,value){this.data[key]=value;return true;},removeItem(key){delete this.data[key];return true;}});
 let reloads=0;
 const sandbox={window:{ProgressModel:Model,RPGModel:RPG,GradingEngine:{grade:(_q,answer)=>({correct:answer.correct,earned:answer.correct?1:0,possible:1,ratio:answer.correct?1:0})},location:{reload(){reloads++;}}},console};
@@ -15,9 +15,9 @@ function context(mode='training') {
   const ctx=Object.create(Controller.prototype);
   Object.assign(ctx,{questions,ids:Object.keys(questions),model,rpg,reviewMappings:new Map(),
     document:{getElementById:()=>node(),createElement:()=>node(),querySelector:()=>null,querySelectorAll:()=>[]},
-    view:{readAnswer:()=>({correct:true}),result(){},updateRpg(){},renderQuestion(){},show(){},showNotice(text){notices.push(text);}},
+    view:{readAnswer:()=>({correct:true,debit:[],credit:[]}),result(){},updateRpg(){},renderQuestion(){},show(){},showNotice(text){notices.push(text);}},
     resetCalculator(){},renderModes(){},showMode(){},updateExamStatus(){},isExamExpired:()=>false,modeIds:()=>['Q','R'],unansweredExamIds:()=>[]});
-  model.state.mode=mode;ctx.start('Q');return {ctx,store,model,rpg,notices};
+  model.state.mode=mode;if(mode==='exam')model.state.examSession={ids:Object.keys(questions),startedAt:Date.now()-1000,endAt:Date.now()+60000,status:'RUNNING',scores:{}};ctx.start('Q');return {ctx,store,model,rpg,notices};
 }
 let passed=0,failed=0;
 function test(name,fn){try{fn();passed++;console.log('PASS '+name);}catch(error){failed++;console.error('FAIL '+name+'\n'+error.stack);}}
@@ -43,7 +43,7 @@ test('partial answer writes roll back finalization and rewards before any result
   for(const mode of ['story','training','review','exam']){
     const {ctx,model,rpg,store}=context(mode);
     if(mode==='review'){const now=Date.now();model.state.reviewSchedule.Q={stage:0,dueAt:now-1};model.assignReview('Q','Q',now-1);ctx.start('Q');}
-    if(mode==='exam')model.state.examSession={scores:{}};
+    if(mode==='exam')model.state.examSession.scores={};
     model.save();rpg.save();const before=clone(model.state),character=clone(rpg.state),bytes=clone(store.data),set=store.setItem;let writes=0;
     store.setItem=function(key,value){writes++;if(writes===2)return false;return set.call(this,key,value);};
     assert.strictEqual(ctx.submit(),false,mode);assert.deepStrictEqual(clone(model.state),before);assert.deepStrictEqual(clone(rpg.state),character);
@@ -96,8 +96,23 @@ test('exam finalization commits history, mastery and rewards once after a failed
   assert.strictEqual(model.learningEffectivenessForQuestion(ids[0]).observedAttempts,1);assert.strictEqual(rpg.state.mastery[canonical[ids[0]].category].possible,1);assert.strictEqual(rpg.state.xp,20*canonical[ids[0]].difficulty);
   assert.strictEqual(ctx.finishExam(true,now),false);assert.strictEqual(results,1);assert(Model.validateBackupState(model.state,canonical));
 });
+test('Accepted isolated negative NPV keeps its existing reward behavior when progress commits',()=>{
+  const {ctx}=context(),q=require('./fixtures/foundation-extension-cases').npvNegative, catalog={[q.id]:q},store=values();
+  ctx.questions=catalog;ctx.model=new Model(catalog,store,'p');ctx.rpg=new RPG(store,'r');ctx.model.state.mode='training';
+  ctx.view.readAnswer=()=>({...clone(q.answer),correct:true});ctx.start(q.id);
+  assert.notStrictEqual(ctx.submit(),false);assert.strictEqual(ctx.model.learningEffectivenessForQuestion(q.id).correctCount,1);
+  assert.strictEqual(ctx.rpg.state.totalTransactionAmount,-5870);assert(ctx.rpg.state.rewardedIds.includes(q.id));
+  assert(Model.validateBackupState(ctx.model.state,catalog));
+});
+test('a staged invalid exam outcome cannot commit progress or RPG side effects',()=>{
+  const {ctx}=context('exam'),ids=Object.keys(canonical).slice(0,15),store=values(),model=new Model(canonical,store,'p'),rpg=new RPG(store,'r'),now=Date.now();
+  ctx.model=model;ctx.rpg=rpg;ctx.questions=canonical;ctx.stopExamTimer=()=>{};ctx.view.examResult=()=>{throw Error('must not display an invalid result');};ctx.unansweredExamIds=()=>ids.slice(1);
+  model.state.mode='exam';model.state.examSession={ids,startedAt:now-1000,endAt:now+1000,status:'RUNNING',scores:{[ids[0]]:{correct:true,earned:1,possible:1,ratio:1}}};
+  model.save();rpg.save();const progress=clone(model.state),character=clone(rpg.state),bytes=clone(store.data);
+  assert.strictEqual(ctx.finishExam(true,now),false);assert.deepStrictEqual(clone(model.state),progress);assert.deepStrictEqual(clone(rpg.state),character);assert.deepStrictEqual(store.data,bytes);
+});
 test('coaching only persists assisted recovery and remains idempotent',()=>{
-  const {ctx,model,rpg}=context();ctx.view.readAnswer=()=>({correct:false});ctx.submit();
+  const {ctx,model,rpg}=context();ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});ctx.submit();
   const stats=clone(model.state.questionStats),rows=clone(model.state.attempts),character=JSON.stringify(rpg.state);
   ctx.learningFlow.phase='R';ctx.submitting=false;ctx.view.readAnswer=()=>({correct:true});ctx.submit();
   const error=model.learningEffectivenessForQuestion('Q').misconceptionStats['journal-entry'];
@@ -106,7 +121,7 @@ test('coaching only persists assisted recovery and remains idempotent',()=>{
   ctx.submit();assert.strictEqual(model.learningEffectivenessForQuestion('Q').misconceptionStats['journal-entry'].assistedRecoveredCount,1);
 });
 test('failed coaching persistence cannot report saved recovery or consume the retry',()=>{
-  const {ctx,model,store}=context();ctx.view.readAnswer=()=>({correct:false});ctx.submit();
+  const {ctx,model,store}=context();ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});ctx.submit();
   const before=JSON.stringify(model.state),set=store.setItem;ctx.learningFlow.phase='R';ctx.submitting=false;ctx.view.readAnswer=()=>({correct:true});store.setItem=()=>false;
   assert.strictEqual(ctx.submit(),false);assert.strictEqual(ctx.learningFlow.phase,'R');assert.strictEqual(JSON.stringify(model.state),before);
   store.setItem=set;ctx.submit();assert.strictEqual(model.learningEffectivenessForQuestion('Q').misconceptionStats['journal-entry'].assistedRecoveredCount,1);
@@ -119,13 +134,13 @@ test('controller supplies due source and keeps review target statistics separate
   assert.strictEqual(target.firstAttempt.mode,'review');assert.strictEqual(target.observedAttempts,1);
 });
 test('exam submitted blank is wrong; unsubmitted and expired items add no observation',()=>{
-  const {ctx,model}=context('exam');model.state.examSession={scores:{}};ctx.view.readAnswer=()=>({correct:false});ctx.submit();
+  const {ctx,model}=context('exam');model.state.examSession.scores={};ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});ctx.submit();
   assert.strictEqual(model.learningEffectivenessForQuestion('Q').firstAttempt.correct,false);assert.strictEqual(model.learningEffectivenessForQuestion('Q').firstAttempt.mode,'exam');
   assert.strictEqual(model.learningEffectivenessForQuestion('R').observedAttempts,0);
   const before=clone(model.state.learningEffectiveness);ctx.submitting=false;ctx.isExamExpired=()=>true;ctx.finishExam=()=>{};ctx.submit();assert.deepStrictEqual(model.state.learningEffectiveness,before);
 });
 test('deadline reached during grading cannot leave a recorded unanswered exam item',()=>{
-  const {ctx,model}=context('exam');model.state.examSession={scores:{}};let checks=0,finished=0;
+  const {ctx,model}=context('exam');model.state.examSession.scores={};let checks=0,finished=0;
   ctx.isExamExpired=()=>++checks>=3;ctx.finishExam=()=>{finished++;};ctx.submit();
   assert.strictEqual(finished,1);assert.strictEqual(model.learningEffectivenessForQuestion('Q').observedAttempts,0);
   assert.strictEqual(model.state.attempts.length,0);assert.deepStrictEqual(model.state.examSession.scores,{});
@@ -151,7 +166,7 @@ test('revision 1–3 cannot attach current evidence to pre-identity content',()=
   }
 });
 async function backupTests(){
-  const {ctx,model,rpg,store}=context();ctx.view.readAnswer=()=>({correct:false});ctx.submit();
+  const {ctx,model,rpg,store}=context();ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});ctx.submit();
   const payload={format:'boki-rpg-backup',version:1,progress:clone(model.state),character:clone(rpg.state)};
   const file={text:async()=>JSON.stringify(payload)},before=JSON.stringify(store.data),set=store.setItem;
   let failedOnce=false;store.setItem=function(key,value){if(key==='r'&&!failedOnce){failedOnce=true;return false;}return set.call(this,key,value);};

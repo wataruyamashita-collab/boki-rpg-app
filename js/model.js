@@ -169,6 +169,8 @@
             row.questionId !== id || row.id !== id || typeof row.correct !== 'boolean' || !EVIDENCE_MODES.includes(row.mode) ||
             !EVIDENCE_SUPPORT.includes(row.support) || !Number.isFinite(row.timestamp) || row.at !== row.timestamp ||
             row.timestamp < 0 || row.timestamp > item.lastObservedAt || !Number.isFinite(row.responseMs) || row.responseMs < 0) return false;
+        if (row.reviewSourceId !== null && (!Object.hasOwn(questions,row.reviewSourceId) || row.mode !== 'review' ||
+            questions[row.reviewSourceId].category !== questions[id].category || !Number.isSafeInteger(row.reviewStage) || row.reviewStage < 0 || row.reviewStage > 4)) return false;
         const rows = retained[id] ||= [];
         if (rows.length && row.observationNumber !== rows.at(-1).observationNumber + 1) return false;
         rows.push(row);
@@ -184,13 +186,21 @@
               (rows[0].observationNumber === 1 && (selected.length !== aggregate.attempts || successes !== aggregate.successes))) return false;
         }
       }
+      const usedReviewReceipts = new Set();
       for (const [sourceId,item] of Object.entries(evidence.questions)) for (const [kind, receipt] of Object.entries(item.delayedReview.receipts)) {
         if (!receipt) continue;
+        const identity = JSON.stringify([receipt.questionId,receipt.observationNumber]);
+        if (receipt.sourceId !== sourceId || usedReviewReceipts.has(identity)) return false;
+        usedReviewReceipts.add(identity);
         const target = evidence.questions[receipt.questionId], correct = kind === 'correct';
         if (!target || receipt.observationNumber > target.observedAttempts || receipt.at > target.lastObservedAt || questions[sourceId].category !== questions[receipt.questionId].category ||
             (correct ? target.modes.review.successes < 1 : target.modes.review.attempts <= target.modes.review.successes)) return false;
         const row = retained[receipt.questionId]?.find(row => row.observationNumber === receipt.observationNumber);
-        if (row && (row.correct !== correct || row.timestamp !== receipt.at || row.mode !== 'review')) return false;
+        if (row && (row.correct !== correct || row.timestamp !== receipt.at || row.mode !== 'review' || row.reviewSourceId !== sourceId || row.reviewStage !== receipt.stage)) return false;
+      }
+      if (complete && state.examSession?.scores) for (const [id,score] of Object.entries(state.examSession.scores)) {
+        const mode = evidence.questions[id]?.modes.exam;
+        if (!mode || typeof score?.correct !== 'boolean' || (score.correct ? mode.successes < 1 : mode.attempts <= mode.successes)) return false;
       }
       return ['answeredIds','correctIds','incorrectIds'].every(key => Array.isArray(state[key]) && (!complete || state[key].every(id => {
         const item = evidence.questions[id];
@@ -236,7 +246,7 @@
         for (const [kind, receipt] of Object.entries(delayed.receipts)) {
           const events = kind === 'correct' ? delayed.successes : delayed.attempts-delayed.successes;
           if (!events) { if (receipt !== null) return false; continue; }
-          if (!exact(receipt, ['questionId','observationNumber','at','stage']) || !Object.hasOwn(questions, receipt.questionId) ||
+          if (!exact(receipt, ['sourceId','questionId','observationNumber','at','stage']) || receipt.sourceId !== id || !Object.hasOwn(questions, receipt.questionId) ||
               !Number.isSafeInteger(receipt.observationNumber) || receipt.observationNumber < 1 || !time(receipt.at) || receipt.at > delayed.lastAt ||
               !Number.isSafeInteger(receipt.stage) || receipt.stage < 0 || receipt.stage > 4 ||
               (kind === 'correct' ? delayed.stages[receipt.stage].successes < 1 : delayed.stages[receipt.stage].attempts <= delayed.stages[receipt.stage].successes)) return false;
@@ -723,10 +733,11 @@
       let changed = false;
       for (const error of Object.values(item.misconceptionStats)) {
         if (!error.pending) continue;
+        const recoveredAt = Math.max(now,item.lastObservedAt ?? 0,error.lastOccurredAt ?? 0,error.lastRecoveredAt ?? 0,error.lastAssistedRecoveredAt ?? 0);
         if (support === 'none') {
-          error.recoveredCount += 1; error.lastRecoveredAt = now; error.pending = false; changed = true;
+          error.recoveredCount += 1; error.lastRecoveredAt = recoveredAt; error.pending = false; changed = true;
         } else if (['hint-1','hint-2','coaching'].includes(support) && !error.assisted) {
-          error.assistedRecoveredCount += 1; error.lastAssistedRecoveredAt = now; error.assisted = true; changed = true;
+          error.assistedRecoveredCount += 1; error.lastAssistedRecoveredAt = recoveredAt; error.assisted = true; changed = true;
         }
       }
       return changed;
@@ -735,7 +746,7 @@
       const item = this.state.learningEffectiveness.questions[id];
       if (this.storageWriteBlocked || !Object.hasOwn(this.questions, id) || !item || !Number.isSafeInteger(observationNumber) ||
           observationNumber < 1 || observationNumber !== item.observedAttempts || this.statsForQuestion(id).lastResult !== false ||
-          !Number.isFinite(now) || now < item.lastObservedAt) return false;
+          !Number.isFinite(now) || now < 0) return false;
       const before = cloneContent(this.state);
       if (!this.applyRecovery(item, 'coaching', now) || !ProgressModel.validLearningEffectiveness(this.state.learningEffectiveness, this.questions) || !this.save()) {
         this.state = before; return false;
@@ -770,14 +781,14 @@
       }
       if (delayed) {
         const retention = (evidence.questions[delayed.sourceId] ||= emptyEvidence()).delayedReview;
-        retention.receipts[correct ? 'correct' : 'incorrect'] = { questionId:id, observationNumber, at:now, stage:delayed.stage };
+        retention.receipts[correct ? 'correct' : 'incorrect'] = { sourceId:delayed.sourceId, questionId:id, observationNumber, at:now, stage:delayed.stage };
         retention.attempts += 1; retention.lastAt = Math.max(retention.lastAt ?? 0, now); retention.stages[delayed.stage].attempts += 1;
         if (correct) {
           retention.successes += 1; retention.stages[delayed.stage].successes += 1;
           retention.highestConfirmedStage = Math.max(retention.highestConfirmedStage ?? 0, Math.min(delayed.stage + 1, 4));
         }
       }
-      this.state.attempts.push({ questionId:id, id, ...(this.state.questionContentVersions[id] ? { contentIdentity:this.state.questionContentVersions[id] } : {}), concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now, mode, support, observationNumber });
+      this.state.attempts.push({ questionId:id, id, ...(this.state.questionContentVersions[id] ? { contentIdentity:this.state.questionContentVersions[id] } : {}), concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:delayed ? delayed.stage : Number.isSafeInteger(reviewStage) ? reviewStage : null, reviewSourceId:delayed?.sourceId || null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now, mode, support, observationNumber });
       this.state.attempts = this.state.attempts.slice(-200);
       evidence.retainedAttemptsSignature = attemptsSignature(this.state.attempts);
       this.recordLearningContinuity(id, correct, delayedSuccess === true, now);

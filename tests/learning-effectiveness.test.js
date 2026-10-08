@@ -229,5 +229,33 @@ test('a backward wall clock preserves ordered observations and existing maximum 
   model=new Model(questions,store,'test');assert.strictEqual(evidence(model).observedAttempts,3);assert.strictEqual(evidence(model).firstAttempt.at,1000);
   assert.strictEqual(model.state.questionStats.Q.lastAnsweredAt,1000);assert(Model.validateBackupState(model.state,questions));
 });
+test('a review receipt cannot authorize two same-category sources, including after eviction',()=>{
+  const catalog={...questions,S:{...questions.Q,id:'S'}},store=storage(),model=new Model(catalog,store,'test');
+  schedule(model);assert(answer(model,'R',true,2000,{mode:'review',reviewSourceId:'Q',stage:1}));assert(model.completeReview('Q',true,2000,'R'));
+  for(const evict of [false,true]){
+    if(evict)for(let i=0;i<201;i++)assert(answer(model,'T',true,3000+i,{mode:'training'}));
+    for(const changeSource of [false,true]){
+      const bad=clone(model.state);bad.learningEffectiveness.questions.S=clone(bad.learningEffectiveness.questions.Q);
+      if(changeSource&&bad.learningEffectiveness.questions.S.delayedReview.receipts.correct)bad.learningEffectiveness.questions.S.delayedReview.receipts.correct.sourceId='S';
+      bad.answeredIds.push('S');bad.correctIds.push('S');assert.strictEqual(Model.validateBackupState(bad,catalog),false);assert.strictEqual(Model.prepareBackupState(bad,catalog),null);
+    }
+  }
+});
+test('complete-history active exam scores require observed answers in exam mode',()=>{
+  const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{...questions.Q,id:'E'+i}])),model=new Model(catalog,storage(),'test');
+  model.state.examSession={ids:Object.keys(catalog),startedAt:100,endAt:20000,status:'RUNNING',scores:{E0:{correct:true,earned:1,possible:1,ratio:1}}};
+  assert.strictEqual(Model.validateBackupState(model.state,catalog),false);assert.strictEqual(Model.prepareBackupState(model.state,catalog),null);
+  assert(answer(model,'E0',true,1000,{mode:'training'}));assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
+  assert(answer(model,'E0',true,1001,{mode:'exam'}));assert(Model.validateBackupState(model.state,catalog));
+  model.state.examSession.scores.E0={correct:false,earned:0,possible:1,ratio:0};assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
+});
+test('a backward coaching clock records assisted recovery once with a monotonic timestamp',()=>{
+  const {model}=fresh();assert(answer(model,'Q',false,1000));const stats=clone(model.state.questionStats),rows=clone(model.state.attempts);
+  assert.strictEqual(model.recordAssistedRecovery('Q',1,900),true);assert.strictEqual(model.recordAssistedRecovery('Q',1,800),false);
+  let item=evidence(model).misconceptionStats['journal-entry'];assert.strictEqual(item.assistedRecoveredCount,1);assert.strictEqual(item.lastAssistedRecoveredAt,1000);
+  assert.deepStrictEqual(model.state.questionStats,stats);assert.deepStrictEqual(model.state.attempts,rows);
+  assert(answer(model,'Q',false,700));assert.strictEqual(model.recordAssistedRecovery('Q',2,600),true);
+  item=evidence(model).misconceptionStats['journal-entry'];assert.strictEqual(item.assistedRecoveredCount,2);assert.strictEqual(item.lastAssistedRecoveredAt,1000);assert(Model.validateBackupState(model.state,questions));
+});
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;
