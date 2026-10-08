@@ -53,6 +53,17 @@ test('extension calculator chaining preserves bounded decimals',()=>{
   assert.strictEqual(controller.expression,'1.0000001');
   controller.clearCalculator();field.dataset=savedDataset;controller.currentId=oldId;
 });
+test('extension calculator accepts a trailing decimal when changing operators',()=>{
+  controller.calculatorTarget=fields[1];controller.clearCalculator();
+  controller.expression='1.';controller.setOperator('＋');
+  assert.strictEqual(controller.expression,'1');
+  controller.expression='2.';controller.calculator.waitingForOperand=false;controller.calculateEquals();
+  assert.strictEqual(controller.expression,'3');
+  controller.calculateEquals();assert.strictEqual(controller.expression,'5');
+  controller.clearCalculator();
+  for(const [expression,expected] of [['1.+2.','3'],['0.+.5','0.5'],['-1.+2.','1']])assert.strictEqual(api.evaluateDecimalExpression(expression),expected);
+  for(const invalid of ['1..+2','.','1. 2'])assert.throws(()=>api.evaluateDecimalExpression(invalid));
+});
 test('ordinary calculator division retains superclass behavior',()=>{
   const original=fields[0].dataset;fields[0].dataset={cellId:'totalCost'};
   controller.calculatorTarget=fields[0];controller.clearCalculator();
@@ -86,6 +97,22 @@ test('independent fixture arithmetic is bound to authored answers',()=>{
   assert.strictEqual(cases.accrual.answer.cells.basis,'発生主義');
 });
 test('distinct NPV text and explicit scope',()=>{assert.strictEqual(new Set(['npvPositive','npvNegative','npvZero'].map(key=>cases[key].question)).size,3);for(const key of ['npvPositive','npvNegative','npvZero'])assert.strictEqual(cases[key].extension.scope,'cost:nineteenth2');assert(!cases.cost.question.includes('240,001'));assert(cases.cost.explanation.includes('240,002'));});
+test('browser evidence hashes served bytes and rejects changes at the same path',()=>{
+  const runner=fs.readFileSync(path.join(ROOT,'.github/visual/run-foundation-extension.js'),'utf8');
+  const definition=runner.match(/function recordSourceBlob\([^]*?\n\}/);
+  assert(definition,'Missing source recorder');
+  const record=vm.runInNewContext('('+definition[0]+')',{crypto,assert});
+  const records={};
+  for(const file of ['index.html','js/model.js','js/view.js','js/engine.js','css/style.css']){
+    const bytes=Buffer.from('source bytes for '+file+'\n');
+    assert.strictEqual(record(records,file,bytes),bytes);
+    const expected=require('child_process').execFileSync('git',['hash-object','--stdin'],{input:bytes,encoding:'utf8'}).trim();
+    assert.strictEqual(records[file].sha,expected);
+    assert.strictEqual(record(records,file,bytes),bytes);
+    assert.throws(()=>record(records,file,Buffer.from('changed bytes')),/Source changed during browser run/);
+  }
+  assert.strictEqual(Object.keys(records).length,5);
+});
 // Probe the actual browser bootstrap with isolated DOM/controller doubles; neither
 // an old, completed review nor a missing due assignment may restart a fixture.
 // The native Chromium/WebKit UI gate remains independently mandatory.

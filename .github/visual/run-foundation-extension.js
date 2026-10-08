@@ -17,21 +17,29 @@ const explanationRequirements={
 const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT,file))).digest('hex');
 const git=(...args)=>cp.execFileSync('git',args,{cwd:ROOT,encoding:'utf8'}).trim();
 // HEAD^{tree} is the committed baseline, not proof of an uncommitted candidate.
-// Hash the actual files loaded by this runner so pre-commit evidence is attributable.
+// Seed runner inputs, then record every actual local HTTP response body below.
 const sourceFiles={
   browserRunner:'.github/visual/run-foundation-extension.js',
   adapter:'tests/helpers/foundation-extension-adapter.js',
   contract:'tests/foundation-extension-contract.test.js',
   fixtures:'tests/fixtures/foundation-extension-cases.js',
   controller:'js/controller.js',
-  calculator:'js/calculator.js'
+  calculator:'js/calculator.js',
+  entrypoint:'index.html'
 };
+function recordSourceBlob(records,file,bytes){
+  const sha=crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+  const previous=Object.values(records).find(source=>source.path===file);
+  if(previous)assert.strictEqual(sha,previous.sha,'Source changed during browser run: '+file);
+  else records[file]={path:file,sha};
+  return bytes;
+}
 const evidence={
   status:'RUNNING',
   testedHead:git('rev-parse','HEAD'),
   testedTree:git('rev-parse','HEAD^{tree}'),
-  testedTreeMeaning:'HEAD committed baseline; for uncommitted candidates use testedSourceBlobs',
-  testedSourceBlobs:Object.fromEntries(Object.entries(sourceFiles).map(([label,file])=>[label,{path:file,sha:git('hash-object',file)}])),
+  testedTreeMeaning:'HEAD committed baseline; testedSourceBlobs records runner inputs and every served local dependency from actual bytes',
+  testedSourceBlobs:Object.fromEntries(Object.entries(sourceFiles).map(([label,file])=>[label,{path:file,sha:git('hash-object','--no-filters',file)}])),
   fixtureSha256:hash('tests/fixtures/foundation-extension-cases.js'),
   adapterSha256:hash('tests/helpers/foundation-extension-adapter.js'),
   reports:[]
@@ -62,15 +70,20 @@ if(extensionController.model.state.mode==='review'){
 }
 if(startId)extensionController.start(startId);
 </script>`;
-const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8').replace(/<script src="js\/app\.js[^"]*"><\/script>/u,'').replace('</body>',bootstrap+'</body>');
+const html=recordSourceBlob(evidence.testedSourceBlobs,'index.html',fs.readFileSync(path.join(ROOT,'index.html'))).toString('utf8').replace(/<script src="js\/app\.js[^"]*"><\/script>/u,'').replace('</body>',bootstrap+'</body>');
+evidence.servedHtmlSha256=crypto.createHash('sha256').update(html).digest('hex');
 assert(!html.includes('src="js/app.js'),'Original application must not also bootstrap');
 const mime={'.js':'text/javascript','.css':'text/css','.html':'text/html','.json':'application/json','.svg':'image/svg+xml'};
+let sourceError=null;
 const server=http.createServer((req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname;
   if(pathname==='/foundation-extension.html'){res.setHeader('content-type','text/html');return res.end(html);}
   const file=path.resolve(ROOT,pathname.slice(1));
   if(!/^\/(?:js|data|css|icons|tests\/fixtures|tests\/helpers)\//u.test(pathname)||!file.startsWith(ROOT+path.sep)||!fs.existsSync(file)||fs.statSync(file).isDirectory()){res.writeHead(404);return res.end();}
-  res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file));
+  try{
+    const bytes=recordSourceBlob(evidence.testedSourceBlobs,path.relative(ROOT,file),fs.readFileSync(file));
+    res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.end(bytes);
+  }catch(error){sourceError=error;res.writeHead(500);res.end('Source changed during browser run');}
 });
 async function amount(page,selector,expression){
   const field=page.locator(selector);if(page.viewportSize().width<500)await field.tap();else await field.click();
@@ -127,6 +140,9 @@ async function run(){
           }));
           assert.deepStrictEqual(exactProbe,{large:'115308668.01',division:'1200.005',signed:'-5870',grouped:'5.35'});
           if(key==='cost'){
+            await amount(page,'[data-cell-id="unitCost"]','1.＋2.');
+            assert.strictEqual(await page.locator('[data-cell-id="unitCost"]').inputValue(),'3.00','Trailing decimal keys must remain usable across operators and equals');
+            await page.evaluate(id=>extensionController.start(id,{fresh:true}),q.id);
             await amount(page,'[data-cell-id="unitCost"]','115308668＋0.005');
             assert.strictEqual(await page.locator('[data-cell-id="unitCost"]').inputValue(),'115,308,668.01');
             await page.evaluate(id=>extensionController.start(id,{fresh:true}),q.id);
@@ -196,11 +212,13 @@ async function run(){
           assert.strictEqual(end.stored.questionStats[q.id].correctCount,2);assert.strictEqual(end.stored.questionStats[q.id].incorrectCount,1);
           assert.deepStrictEqual(end.due,[]);assert.strictEqual(end.currentId,null);assert.strictEqual(end.reviewSourceId,null);assert(end.reviewViewActive);assert.strictEqual(end.reviewEntryCount,0);
           assert.deepStrictEqual(end.originals,keys.map(key=>'sentinel:'+key));assert.deepStrictEqual(errors,[]);
-          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,reviewReloadDue:true,ordinaryCalculatorChecked:key==='equipment',canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
+          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,reviewReloadDue:true,ordinaryCalculatorChecked:key==='equipment',trailingDecimalChecked:key==='cost',canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
         }finally{await context.close();}
       }}finally{await browser.close();}
     }
     assert.strictEqual(evidence.reports.length,Object.keys(engines).length*widths.length*Object.keys(fixtures).length);
+    assert.ifError(sourceError);
+    for(const source of Object.values(evidence.testedSourceBlobs))recordSourceBlob(evidence.testedSourceBlobs,source.path,fs.readFileSync(path.join(ROOT,source.path)));
     evidence.status='PASS';write();console.log('FOUNDATION_EXTENSION_BROWSER '+evidence.reports.length+' PASS');
   }catch(error){evidence.status='FAIL';evidence.error=String(error.stack||error);write();throw error;}
   finally{await new Promise(resolve=>server.close(resolve));}

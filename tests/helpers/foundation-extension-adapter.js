@@ -46,7 +46,10 @@
     return reduced;
   };
   const decimalFraction = value => {
-    const raw = normalize(value);
+    // Calculator keys can leave a trailing point before an operator or equals.
+    // Normalize that complete numeric token without joining separate operands.
+    const token = normalize(value);
+    const raw = token.endsWith('.') ? token + '0' : token;
     const normalized = raw.startsWith('.') ? '0' + raw : raw.startsWith('-.') ? '-0' + raw.slice(1) : raw.startsWith('+.') ? '0' + raw.slice(1) : raw.replace(/^\+/, '');
     const parsed = parseDecimal(normalized);
     const digits = parsed.whole + parsed.fraction;
