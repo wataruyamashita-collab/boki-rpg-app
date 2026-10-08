@@ -474,9 +474,9 @@ for (let number = 1; number <= 20; number += 1) {
 const correction = browserSandbox.window.QuestionData.E001;
 assert.strictEqual(Engine.grade(correction, { cells: { debitAccount: '広告宣伝費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } }).correct, true, 'E001の科目・金額を入力して正解にできる');
 assert.strictEqual(Engine.grade(correction, { cells: { debitAccount: '消耗品費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } }).correct, false, 'E001の誤った科目は不正解にする');
-const correctionProgress = new ProgressModel({ E001: correction }, storage);
+const correctionProgress = new ProgressModel({ E001: correction }, storage, 'correction-draft-test');
 correctionProgress.setDraft('E001', { cells: { debitAccount: '広告宣伝費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } });
-assert.deepStrictEqual(new ProgressModel({ E001: correction }, storage).state.drafts.E001.cells, correctionProgress.state.drafts.E001.cells, '記帳訂正の文字列と金額の下書きを再表示用に復元する');
+assert.deepStrictEqual(new ProgressModel({ E001: correction }, storage, 'correction-draft-test').state.drafts.E001.cells, correctionProgress.state.drafts.E001.cells, '記帳訂正の文字列と金額の下書きを再表示用に復元する');
 Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal').forEach(question => {
   [...question.answer.debit, ...question.answer.credit].forEach(item => {
     const choices = browserSandbox.window.AppController.accountChoices(question, item.account);

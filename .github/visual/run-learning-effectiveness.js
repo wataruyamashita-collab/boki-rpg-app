@@ -57,10 +57,16 @@ async function run(){
             assert(persisted.valid);assert.deepStrictEqual(persisted.metric,beforeReload.metric);assert.strictEqual(persisted.character,beforeReload.character);
             await page.evaluate(()=>{
               const c=window.App.controller,progress=JSON.parse(JSON.stringify(c.model.state)),character=JSON.parse(JSON.stringify(c.rpg.state));
-              const expected=progress.learningEffectiveness;delete progress.learningEffectiveness;
-              const legacy=window.ProgressModel.prepareBackupState(progress,c.questions);
+              const legacyInput=JSON.parse(JSON.stringify(progress));delete legacyInput.learningEffectiveness;
+              for(const row of legacyInput.attempts){delete row.mode;delete row.support;delete row.observationNumber;}
+              const legacy=window.ProgressModel.prepareBackupState(legacyInput,c.questions);
               if(legacy.learningEffectiveness.initialHistory!=='unknown')throw Error('legacy coverage');
-              progress.learningEffectiveness=expected;progress.currentQuestionId='J003';
+              const missing=JSON.parse(JSON.stringify(progress));delete missing.learningEffectiveness.questions.J001;
+              if(window.ProgressModel.prepareBackupState(missing,c.questions)!==null)throw Error('missing complete evidence accepted');
+              const wrongRevision=JSON.parse(JSON.stringify(progress));wrongRevision.contentRevision=3;
+              delete wrongRevision.questionContentVersions;delete wrongRevision.contentMigrationArchive;delete wrongRevision.contentRecheckIds;
+              if(window.ProgressModel.prepareBackupState(wrongRevision,c.questions)!==null)throw Error('pre-identity evidence accepted');
+              progress.currentQuestionId='J003';
               window.evidenceBackup={format:'boki-rpg-backup',version:1,progress,character};
             });
             // Import intentionally reloads. Wait for that navigation rather than

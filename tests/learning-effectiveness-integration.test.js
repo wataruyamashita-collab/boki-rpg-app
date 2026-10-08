@@ -82,6 +82,17 @@ for(const id of ['J051','L031'])for(const kind of ['old','new','mixed'])test(`Ac
   assert.strictEqual(model.learningEffectivenessForQuestion(id).observedAttempts,1);assert(model.state.learningContinuityState.activeDayKeys.length>=continuity.activeDayKeys.length);
   assert(Model.validateBackupState(model.state,canonical));
 });
+test('revision 1–3 cannot attach current evidence to pre-identity content',()=>{
+  const current=new Model(canonical,legacyStorage(),'p');assert(current.recordAttempt('J051',false,10,'journal-entry',false,Date.now()));
+  for(const revision of [1,2,3])for(const initialHistory of ['complete','unknown']){
+    const mixed=fixture('old','J051');mixed.contentRevision=revision;
+    mixed.learningEffectiveness=clone(current.state.learningEffectiveness);mixed.learningEffectiveness.initialHistory=initialHistory;
+    if(initialHistory==='unknown')mixed.learningEffectiveness.questions.J051.firstAttempt=null;
+    assert.strictEqual(Model.validateBackupState(mixed,canonical),false);assert.strictEqual(Model.prepareBackupState(mixed,canonical),null);
+    const bytes=JSON.stringify(mixed),store=legacyStorage(bytes),loaded=new Model(canonical,store,'p');
+    assert.strictEqual(loaded.save(),false);assert.strictEqual(store.value,bytes);
+  }
+});
 async function backupTests(){
   const {ctx,model,rpg,store}=context();ctx.view.readAnswer=()=>({correct:false});ctx.submit();
   const payload={format:'boki-rpg-backup',version:1,progress:clone(model.state),character:clone(rpg.state)};

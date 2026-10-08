@@ -139,7 +139,9 @@ test('legacy migration save failure preserves old bytes and can retry safely',()
 test('backup preparation round-trips current and old states without mutation',()=>{
   const {model}=fresh();answer(model,'Q',false,1000);model.recordAssistedRecovery('Q',1,1100);schedule(model);answer(model,'R',true,2000,{mode:'review',reviewSourceId:'Q'});
   const before=JSON.stringify(model.state);assert(Model.validateBackupState(model.state,questions));const result=Model.prepareBackupState(model.state,questions);assert.deepStrictEqual(result,model.state);assert.strictEqual(JSON.stringify(model.state),before);
-  const legacy=clone(model.state);delete legacy.learningEffectiveness;assert(Model.validateBackupState(legacy,questions));const migrated=Model.prepareBackupState(legacy,questions);assert.strictEqual(migrated.learningEffectiveness.initialHistory,'unknown');assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
+  const legacy=clone(model.state);delete legacy.learningEffectiveness;
+  for(const row of legacy.attempts){delete row.mode;delete row.support;delete row.observationNumber;}
+  assert(Model.validateBackupState(legacy,questions));const migrated=Model.prepareBackupState(legacy,questions);assert.strictEqual(migrated.learningEffectiveness.initialHistory,'unknown');assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
 });
 test('present corrupt/future evidence rejects import and blocks destructive load/save',()=>{
   const {model}=fresh();answer(model,'Q',false,1000);const valid=clone(model.state);
@@ -170,6 +172,44 @@ test('contradictory first-result and error-recovery aggregates reject a backup',
     v=>v.learningEffectiveness.questions.Q.firstAttempt.mode='exam',
     v=>{const e=v.learningEffectiveness.questions.Q.misconceptionStats['journal-entry'];e.recoveredCount=1;e.lastRecoveredAt=1001;e.pending=false;}
   ]){const value=clone(original);mutate(value);assert.strictEqual(Model.validateBackupState(value,questions),false);}
+});
+test('missing or reset complete-history entries cannot fabricate a new first answer',()=>{
+  const {model}=fresh();answer(model,'Q',false,1000);model.record('Q',false,1000);answer(model,'R',true,1100);
+  for(let i=0;i<205;i++)answer(model,'R',true,1200+i);
+  const original=clone(model.state);
+  for(const mutate of [
+    v=>delete v.learningEffectiveness.questions.Q,
+    v=>v.learningEffectiveness.questions={},
+    v=>delete v.questionStats.Q,
+    v=>{v.questionStats.Q.correctCount=1;},
+    v=>{delete v.learningEffectiveness.questions.Q;delete v.questionStats.Q;}
+  ]){
+    const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+    const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert.strictEqual(loaded.model.save(),false);assert.strictEqual(loaded.store.value,bytes);
+    assert.strictEqual(answer(loaded.model,'Q',true,2000),false);
+  }
+});
+test('legacy observed evidence cannot lose its receipt while retaining a tagged detail',()=>{
+  const legacy=clone(fresh().model.state);delete legacy.learningEffectiveness;const {model}=fresh(JSON.stringify(legacy));answer(model,'Q',false,1000);
+  const bad=clone(model.state);delete bad.learningEffectiveness.questions.Q;assert.strictEqual(Model.validateBackupState(bad,questions),false);
+});
+test('a missing evidence root with new observation receipts is corruption, not a legacy save',()=>{
+  const {model}=fresh();answer(model,'Q',false,1000);const bad=clone(model.state);delete bad.learningEffectiveness;
+  assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+  const loaded=fresh(JSON.stringify(bad));assert.strictEqual(loaded.model.save(),false);
+});
+test('source finalization alone survives reload without becoming a graded first answer',()=>{
+  let {model,store}=fresh();assert(model.record('Q',true,1000));model=new Model(questions,store,'test');
+  assert.strictEqual(model.state.answeredIds[0],'Q');assert(Model.validateBackupState(model.state,questions));
+  assert.strictEqual(evidence(model).observedAttempts,0);assert.strictEqual(evidence(model).firstAttempt,null);
+});
+test('modern evidence cannot invoke legacy aggregation or continuity reconstruction',()=>{
+  const {model}=fresh();for(let i=0;i<250;i++)answer(model,'Q',true,1000+i);const original=clone(model.state);
+  for(const mutate of [v=>delete v.learningSchemaVersion,v=>v.learningSchemaVersion=1,v=>v.learningSchemaVersion=0,
+    v=>delete v.learningContinuityState,v=>v.learningContinuityState={activeDayKeys:[],today:{}},v=>delete v.lastLearningAt]){
+    const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+    const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert.strictEqual(loaded.model.save(),false);assert.strictEqual(loaded.store.value,bytes);
+  }
 });
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;

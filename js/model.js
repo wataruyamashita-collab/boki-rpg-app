@@ -77,7 +77,7 @@
       const knownId = id => typeof id === 'string' && Boolean(questions[id]);
       const idList = item => Array.isArray(item) && item.every(knownId);
       if (!plain(value) || !safeValue(value) || !ProgressModel.validContentMetadata(value, questions)) return false;
-      if (value.learningEffectiveness !== undefined && !ProgressModel.validLearningEffectiveness(value.learningEffectiveness, questions)) return false;
+      if (!ProgressModel.validEffectivenessState(value, questions)) return false;
       const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
       if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
       if (value.contentRevision !== undefined && !(Number.isSafeInteger(value.contentRevision) && value.contentRevision >= 1 && value.contentRevision <= CONTENT_REVISION)) return false;
@@ -127,6 +127,40 @@
     static evidenceTags(question) {
       if (question.type === 'journal') return ['journal-entry'];
       return ['table-cell', ...new Set((question.table?.inputCells || []).map(cell => `cell:${typeof cell === 'string' ? cell : cell.key}`))];
+    }
+    static validEffectivenessState(state, questions = {}) {
+      const evidence = state.learningEffectiveness;
+      if (evidence === undefined) {
+        // Old releases never issued observation receipts. Their presence proves
+        // that missing aggregates are corruption, rather than an old schema.
+        return !Array.isArray(state.attempts) || !state.attempts.some(row => row && Object.hasOwn(row, 'observationNumber'));
+      }
+      if (state.contentRevision !== CONTENT_REVISION || state.learningSchemaVersion !== LEARNING_SCHEMA_VERSION ||
+          !ProgressModel.validLearningEffectiveness(evidence, questions) || !Number.isFinite(state.lastLearningAt) || state.lastLearningAt < 0 ||
+          !state.questionStats || typeof state.questionStats !== 'object' || Array.isArray(state.questionStats) || !Array.isArray(state.attempts)) return false;
+      const complete = evidence.initialHistory === 'complete';
+      const probe = Object.create(ProgressModel.prototype);
+      probe.questions = questions;
+      if (!probe.validLearningContinuityState(state.learningContinuityState)) return false;
+      for (const [id, stats] of Object.entries(state.questionStats)) {
+        if (!Object.hasOwn(questions, id) || !probe.validQuestionStats(stats)) return false;
+        const item = evidence.questions[id];
+        if (complete && (stats.correctCount !== (item?.correctCount || 0) || stats.incorrectCount !== (item?.incorrectCount || 0))) return false;
+      }
+      for (const [id, item] of Object.entries(evidence.questions)) {
+        const stats = state.questionStats[id];
+        if (item.observedAttempts && (!stats || stats.correctCount < item.correctCount || stats.incorrectCount < item.incorrectCount)) return false;
+      }
+      for (const row of state.attempts) {
+        const id = row?.questionId || row?.id, item = evidence.questions[id];
+        if (!Object.hasOwn(questions, id) || (complete && !item?.observedAttempts)) return false;
+        if (row.observationNumber !== undefined && (!Number.isSafeInteger(row.observationNumber) || row.observationNumber < 1 ||
+            !item || row.observationNumber > item.observedAttempts)) return false;
+      }
+      // record()/review-source finalization can set a flag without an assessment;
+      // such entries exist with zero observations and no invented first answer.
+      return ['answeredIds','correctIds','incorrectIds'].every(key => Array.isArray(state[key]) &&
+        (!complete || state[key].every(id => Object.hasOwn(evidence.questions, id))));
     }
     static validLearningEffectiveness(value, questions = {}) {
       const plain = item => item && typeof item === 'object' && !Array.isArray(item);
@@ -195,7 +229,7 @@
           // Never overwrite a future or malformed versioned state with defaults.
           if ((Number.isSafeInteger(saved.contentRevision) && saved.contentRevision > CONTENT_REVISION) ||
               !ProgressModel.validContentMetadata(saved, this.questions) ||
-              (saved.learningEffectiveness !== undefined && !ProgressModel.validLearningEffectiveness(saved.learningEffectiveness, this.questions))) {
+              !ProgressModel.validEffectivenessState(saved, this.questions)) {
             this.storageWriteBlocked = true; return;
           }
           const savedContentRevision = Number.isSafeInteger(saved.contentRevision) ? saved.contentRevision : 1;
@@ -568,6 +602,7 @@
     clearDrafts(ids) { if (!Array.isArray(ids)) return false; ids.filter(id => this.questions[id]).forEach(id => { delete this.state.drafts[id]; }); return this.save(); }
     record(id, correct, now = Date.now()) {
       if (!this.questions[id]) return false;
+      if (this.state.learningEffectiveness) this.state.learningEffectiveness.questions[id] ||= emptyEvidence();
       if (!this.state.answeredIds.includes(id)) this.state.answeredIds.push(id);
       if (correct && !this.state.correctIds.includes(id)) this.state.correctIds.push(id);
       const intervals = [20 * 60 * 1000, 24 * 60 * 60 * 1000, 3 * 24 * 60 * 60 * 1000, 7 * 24 * 60 * 60 * 1000];
