@@ -64,6 +64,25 @@ test('extension calculator accepts a trailing decimal when changing operators',(
   for(const [expression,expected] of [['1.+2.','3'],['0.+.5','0.5'],['-1.+2.','1']])assert.strictEqual(api.evaluateDecimalExpression(expression),expected);
   for(const invalid of ['1..+2','.','1. 2'])assert.throws(()=>api.evaluateDecimalExpression(invalid));
 });
+test('extension calculator trailing decimal equals and direct insertion preserve every precision',()=>{
+  const field=fields[1],before={value:field.value,dataset:{...field.dataset}};
+  const saved=store.getItem('foundation-ext:node:'+controller.model.key);
+  const previousState=clone(controller.model.state);
+  for(const precision of [0,1,2])for(const signed of [false,true])for(const equals of [false,true]){
+    field.dataset.extensionPrecision=String(precision);field.dataset.extensionSigned=String(signed);
+    controller.calculatorTarget=field;controller.clearCalculator();controller.expression=signed?'-1.':'1.';
+    if(equals){controller.calculateEquals();assert.strictEqual(controller.expression,signed?'-1':'1');}
+    assert.strictEqual(controller.insertCalculatorResult(false),true);
+    assert.strictEqual(field.value,(signed?'-1':'1')+(precision?'.'+'0'.repeat(precision):''));
+  }
+  for(const invalid of ['.','1..','1. 2']){
+    controller.expression=invalid;const value=field.value;
+    assert.strictEqual(controller.insertCalculatorResult(false),false);assert.strictEqual(field.value,value);
+  }
+  controller.clearCalculator();field.value=before.value;field.dataset=before.dataset;
+  controller.model.state=previousState;
+  if(saved===null)store.removeItem('foundation-ext:node:'+controller.model.key);else store.setItem('foundation-ext:node:'+controller.model.key,saved);
+});
 test('ordinary calculator division retains superclass behavior',()=>{
   const original=fields[0].dataset;fields[0].dataset={cellId:'totalCost'};
   controller.calculatorTarget=fields[0];controller.clearCalculator();

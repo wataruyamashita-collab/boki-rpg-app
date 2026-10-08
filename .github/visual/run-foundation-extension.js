@@ -85,11 +85,11 @@ const server=http.createServer((req,res)=>{
     res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.end(bytes);
   }catch(error){sourceError=error;res.writeHead(500);res.end('Source changed during browser run');}
 });
-async function amount(page,selector,expression){
+async function amount(page,selector,expression,equals=true){
   const field=page.locator(selector);if(page.viewportSize().width<500)await field.tap();else await field.click();
   assert(await field.evaluate(el=>window.extensionController.calculatorTarget===el),'Wrong calculator target');
   if(!await page.locator('.calculator').evaluate(el=>el.open))await page.locator('.calculator > summary').click();
-  for(const key of ['AC',...String(expression),'＝'])await page.locator(`[data-action="calc"][data-calc="${key}"]`).click();
+  for(const key of ['AC',...String(expression),...(equals?['＝']:[])])await page.locator(`[data-action="calc"][data-calc="${key}"]`).click();
   await page.locator('[data-action="calc-insert"]').click();
   assert(await field.evaluate(el=>el.checkValidity()),'Invalid inserted amount');
 }
@@ -139,6 +139,16 @@ async function run(){
             grouped:FoundationExtensionAdapter.evaluateDecimalExpression('(1.005+1.67)*2')
           }));
           assert.deepStrictEqual(exactProbe,{large:'115308668.01',division:'1200.005',signed:'-5870',grouped:'5.35'});
+          const decimalSelector=key==='cost'?'[data-cell-id="unitCost"]':key.startsWith('npv')?'[data-cell-id="npv"]':null;
+          if(decimalSelector){
+            for(const equals of [true,false]){
+              await amount(page,decimalSelector,'1.',equals);
+              if(equals)assert.strictEqual(await page.evaluate(()=>extensionController.expression),'1','Operator-free equals must normalize a trailing decimal');
+              assert.strictEqual(await page.locator(decimalSelector).inputValue(),key==='cost'?'1.00':'1','Trailing decimal must insert with or without equals');
+              await page.evaluate(id=>extensionController.start(id,{fresh:true}),q.id);
+              assert.strictEqual(await page.locator(decimalSelector).inputValue(),'','Trailing-decimal probe must not affect the graded answer');
+            }
+          }
           if(key==='cost'){
             await amount(page,'[data-cell-id="unitCost"]','1.＋2.');
             assert.strictEqual(await page.locator('[data-cell-id="unitCost"]').inputValue(),'3.00','Trailing decimal keys must remain usable across operators and equals');
@@ -212,7 +222,7 @@ async function run(){
           assert.strictEqual(end.stored.questionStats[q.id].correctCount,2);assert.strictEqual(end.stored.questionStats[q.id].incorrectCount,1);
           assert.deepStrictEqual(end.due,[]);assert.strictEqual(end.currentId,null);assert.strictEqual(end.reviewSourceId,null);assert(end.reviewViewActive);assert.strictEqual(end.reviewEntryCount,0);
           assert.deepStrictEqual(end.originals,keys.map(key=>'sentinel:'+key));assert.deepStrictEqual(errors,[]);
-          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,reviewReloadDue:true,ordinaryCalculatorChecked:key==='equipment',trailingDecimalChecked:key==='cost',canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
+          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,reviewReloadDue:true,ordinaryCalculatorChecked:key==='equipment',trailingDecimalChecked:key==='cost',trailingDecimalEqualsAndDirectInsertChecked:Boolean(decimalSelector),canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
         }finally{await context.close();}
       }}finally{await browser.close();}
     }

@@ -244,9 +244,12 @@
       let operand = this.expression;
       const repeating = !operator && this.calculator.lastOperator;
       if (repeating) { operator = this.calculator.lastOperator; operand = this.calculator.lastOperand; }
-      if (!operator || this.calculator.accumulator === null) return;
-      if (this.calculator.waitingForOperand && !repeating) operand = this.calculator.accumulator;
       try {
+        if (!operator || this.calculator.accumulator === null) {
+          this.expression = evaluateDecimalExpression(this.expression);
+          return;
+        }
+        if (this.calculator.waitingForOperand && !repeating) operand = this.calculator.accumulator;
         const result = this.operate(this.calculator.accumulator, operator, operand);
         this.expression = String(result);
         this.calculator.accumulator = String(result);
@@ -267,7 +270,8 @@
       if (!spec) return super.insertCalculatorResult(shouldCalculate);
       if (!target || target.disabled || !this.document.body.contains(target) || target.dataset.extensionQuestion !== this.currentId) return false;
       try {
-        const value = shouldCalculate ? evaluateDecimalExpression(this.expression) : this.expression;
+        const expression = normalize(this.expression);
+        const value = shouldCalculate ? evaluateDecimalExpression(expression) : expression.endsWith('.') ? expression + '0' : expression;
         const parsed = parseDecimal(value);
         if (parsed.negative && !spec.signed) throw new RangeError('This field is unsigned');
         const rounded = roundHalfUp(value, spec.precision);
@@ -275,6 +279,7 @@
         target.setSelectionRange?.(rounded.length, rounded.length);
         if (!this.formatAmount(target)) return false;
         const saved = this.saveDraft(false);
+        this.expression = value;
         this.calculatorTarget = target; this.updateCalculatorDisplay();
         this.document.getElementById('calculator-target').textContent = `${target.getAttribute('aria-label')}へ${target.value}を入力しました`;
         return saved;
