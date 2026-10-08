@@ -994,7 +994,7 @@
         onConfirm:() => this.start(id)
       });
     }
-    start(id, options = {}) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; if (options.fresh === true) this.model.clearDraft?.(id); this.resetCalculator(); this.submitting = false; this.learningFlow = this.model.state.mode === 'exam' ? null : { questionId:id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false }; this.currentId = id; this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.resetLearningSurfaces?.(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.setAnswerMode?.('initial'); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; this.document.getElementById?.('q-text')?.focus(); }
+    start(id, options = {}) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; if (options.fresh === true) this.model.clearDraft?.(id); this.resetCalculator(); this.submitting = false; this.learningFlow = this.model.state.mode === 'exam' ? null : { questionId:id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false }; this.currentId = id; this.learningObservationNumber = this.model.nextLearningObservation?.(id); this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.resetLearningSurfaces?.(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.setAnswerMode?.('initial'); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; this.document.getElementById?.('q-text')?.focus(); }
     saveDraft(message) {
       if (!this.currentId) return false;
       if (this.model.state.mode !== 'exam' && ['W','R'].includes(this.learningFlow?.phase)) {
@@ -1018,10 +1018,21 @@
       const beforePriority = !this.reviewSourceId ? this.model.studyPriority?.(question.id, answeredAt) : null;
       const wrongType = score.correct ? '' : (score.details?.find(detail => !detail.correct)?.cellId || (question.type === 'journal' ? 'journal-entry' : 'table-cell'));
       const confidence = this.document.querySelector('input[name="confidence"]:checked')?.value || 'unsure';
-      this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, Boolean(this.reviewSourceId && score.correct), answeredAt, reviewStage, confidence);
+      // Check the post-grading deadline before any answer evidence is persisted.
+      // A timed-out, unscored item must not become a durable submitted answer.
+      if (this.model.state.mode === 'exam' && this.isExamExpired(Date.now(), this.model.state.examSession)) {
+        this.model.state.examSession.status = 'EXPIRED'; this.finishExam(true); return;
+      }
+      const support = this.learningFlow?.hintStage ? `hint-${this.learningFlow.hintStage}` : 'none';
+      const recorded = this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, Boolean(this.reviewSourceId && score.correct), answeredAt, reviewStage, confidence,
+        { mode:this.model.state.mode, support, observationNumber:this.learningObservationNumber, reviewSourceId:this.reviewSourceId });
+      if (recorded === false) {
+        this.submitting = false;
+        this.view.showNotice?.('回答記録を保存できませんでした。入力はこの画面に残っています。保存状態を確認してから再度お試しください。', { title:'回答を記録できません' });
+        return false;
+      }
       if (this.model.state.mode === 'exam') {
         const session = this.model.state.examSession;
-        if (this.isExamExpired(Date.now(), session)) { session.status = 'EXPIRED'; this.finishExam(true); return; }
         session.scores[question.id] = { correct: score.correct, earned: score.earned, possible: score.possible, ratio: score.ratio, answer };
         this.model.setDraft(question.id, answer); this.model.save(); this.updateExamStatus();
         const unanswered = this.unansweredExamIds(); const ids = this.modeIds(); const following = ids.slice(ids.indexOf(this.currentId) + 1).find(id => unanswered.includes(id));
@@ -1101,6 +1112,10 @@
       if (!score.correct) {
         flow.coachingAnswer = question.type === 'journal' ? Controller.journalRetryDraft(answer, question.answer) : Controller.tableRetryDraft(answer, score.details);
         flow.phase = 'W'; this.view.result(question, flow.authoritativeScore, flow.authoritativeAnswer, flow.confidence, flow.achievement, true); Controller.prototype.renderNarrativeResolution.call(this, question, false); this.view.show('view-result'); this.document?.getElementById?.('result-status')?.focus(); return false;
+      }
+      if (this.model?.recordAssistedRecovery?.(question.id, this.learningObservationNumber, Date.now()) === false) {
+        this.view.showNotice?.('練習での修正を保存できませんでした。入力はこの画面に残っています。', { title:'修正を記録できません' });
+        return false;
       }
       flow.phase = 'D';
       this.view.hideProtectedResult?.();

@@ -80,7 +80,7 @@ try{
     if(committed){
       test(
         'committed Generation 12 current integrity passes',
-        ()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true)
+        ()=>assert.strictEqual(core.currentIntegrityCheck().ok,true)
       );
     }else{
       test(

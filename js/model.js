@@ -10,6 +10,16 @@
   const cloneContent = value => JSON.parse(JSON.stringify(value));
   const emptyContentArchive = () => ({ schemaVersion:1, questions:{}, reviewAssignments:{}, completed:null });
   const LEARNING_SCHEMA_VERSION = 2;
+  const EVIDENCE_MODES = ['story','training','review','exam','desk'];
+  const EVIDENCE_SUPPORT = ['none','hint-1','hint-2','unknown'];
+  const emptyEffectiveness = (initialHistory = 'complete') => ({ schemaVersion:1, initialHistory, questions:{} });
+  const emptyEvidence = () => ({
+    observedAttempts:0, correctCount:0, incorrectCount:0, firstObservedAt:null, lastObservedAt:null, firstAttempt:null,
+    modes:Object.fromEntries(EVIDENCE_MODES.map(mode => [mode, { attempts:0, successes:0 }])),
+    delayedReview:{ attempts:0, successes:0, lastAt:null, highestConfirmedStage:null,
+      stages:Array.from({ length:5 }, () => ({ attempts:0, successes:0 })) },
+    misconceptionStats:{}
+  });
   const FIXED_ASSET_SCHEMA_REVISION_2_IDS = new Set(['L005','L010','L015','L020','L025','L030','L033','L040']);
   class ProgressModel {
     static currentContentVersions(questions = {}) {
@@ -67,6 +77,7 @@
       const knownId = id => typeof id === 'string' && Boolean(questions[id]);
       const idList = item => Array.isArray(item) && item.every(knownId);
       if (!plain(value) || !safeValue(value) || !ProgressModel.validContentMetadata(value, questions)) return false;
+      if (value.learningEffectiveness !== undefined && !ProgressModel.validLearningEffectiveness(value.learningEffectiveness, questions)) return false;
       const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
       if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
       if (value.contentRevision !== undefined && !(Number.isSafeInteger(value.contentRevision) && value.contentRevision >= 1 && value.contentRevision <= CONTENT_REVISION)) return false;
@@ -101,6 +112,9 @@
       if (value.reviewSchedule !== undefined && (!plain(value.reviewSchedule) || Object.entries(value.reviewSchedule).some(([id, item]) => !knownId(id) || !plain(item) || !Number.isSafeInteger(item.stage) || item.stage < 0 || item.stage > 4 || !finite(item.dueAt) || item.dueAt < 0))) return false;
       if (value.reviewAssignments !== undefined && (!plain(value.reviewAssignments) || Object.entries(value.reviewAssignments).some(([id, item]) => !knownId(id) || !plain(item) || item.sourceQuestionId !== id || !knownId(item.reviewQuestionId) || typeof item.conceptId !== 'string' || !Number.isSafeInteger(item.stage) || item.stage < 0 || item.stage > 4 || !finite(item.dueAt) || !finite(item.assignedAt) || !['assigned', 'completed'].includes(item.status)))) return false;
       if (value.attempts !== undefined && (!Array.isArray(value.attempts) || value.attempts.some(item => !plain(item) || !knownId(item.questionId || item.id) || typeof item.correct !== 'boolean' || !finite(item.responseMs) || item.responseMs < 0))) return false;
+      if (value.attempts?.some(item => (item.mode !== undefined && !EVIDENCE_MODES.includes(item.mode)) ||
+          (item.support !== undefined && !EVIDENCE_SUPPORT.includes(item.support)) ||
+          (item.observationNumber !== undefined && !(Number.isSafeInteger(item.observationNumber) && item.observationNumber > 0)))) return false;
       if (value.placement !== undefined && value.placement !== null && (!plain(value.placement) || value.placement.completed !== true || !knownId(value.placement.startQuestionId) || !finite(value.placement.foundation) || !finite(value.placement.closing))) return false;
       if (value.examSession !== undefined && value.examSession !== null) {
         const probe = Object.create(ProgressModel.prototype); probe.questions = questions;
@@ -110,18 +124,78 @@
       if (value.lastExamReview !== undefined && value.lastExamReview !== null && !plain(value.lastExamReview)) return false;
       return true;
     }
+    static evidenceTags(question) {
+      if (question.type === 'journal') return ['journal-entry'];
+      return ['table-cell', ...new Set((question.table?.inputCells || []).map(cell => `cell:${typeof cell === 'string' ? cell : cell.key}`))];
+    }
+    static validLearningEffectiveness(value, questions = {}) {
+      const plain = item => item && typeof item === 'object' && !Array.isArray(item);
+      const exact = (item, keys) => plain(item) && Object.keys(item).length === keys.length && keys.every(key => Object.hasOwn(item, key));
+      const count = n => Number.isSafeInteger(n) && n >= 0;
+      const time = n => typeof n === 'number' && Number.isFinite(n) && n >= 0;
+      const pair = item => exact(item, ['attempts','successes']) && count(item.attempts) && count(item.successes) && item.successes <= item.attempts;
+      if (!exact(value, ['schemaVersion','initialHistory','questions']) || value.schemaVersion !== 1 ||
+          !['complete','unknown'].includes(value.initialHistory) || !plain(value.questions)) return false;
+      for (const [id, item] of Object.entries(value.questions)) {
+        if (!Object.hasOwn(questions, id) || !exact(item, Object.keys(emptyEvidence())) ||
+            !['observedAttempts','correctCount','incorrectCount'].every(key => count(item[key])) ||
+            item.correctCount + item.incorrectCount !== item.observedAttempts ||
+            !(item.observedAttempts ? time(item.firstObservedAt) && time(item.lastObservedAt) && item.lastObservedAt >= item.firstObservedAt
+              : item.firstObservedAt === null && item.lastObservedAt === null)) return false;
+        const first = item.firstAttempt;
+        if (value.initialHistory === 'complete' && item.observedAttempts) {
+          if (!exact(first, ['correct','at','mode','support']) || typeof first.correct !== 'boolean' || first.at !== item.firstObservedAt ||
+              !EVIDENCE_MODES.includes(first.mode) || !EVIDENCE_SUPPORT.includes(first.support)) return false;
+        } else if (first !== null) return false;
+        if (!exact(item.modes, EVIDENCE_MODES) || !Object.values(item.modes).every(pair) ||
+            Object.values(item.modes).reduce((sum, mode) => sum + mode.attempts, 0) !== item.observedAttempts ||
+            Object.values(item.modes).reduce((sum, mode) => sum + mode.successes, 0) !== item.correctCount) return false;
+        if (first && (item[first.correct ? 'correctCount' : 'incorrectCount'] < 1 || item.modes[first.mode].attempts < 1 ||
+            (first.correct ? item.modes[first.mode].successes < 1 : item.modes[first.mode].successes === item.modes[first.mode].attempts))) return false;
+        const delayed = item.delayedReview;
+        if (!exact(delayed, ['attempts','successes','lastAt','highestConfirmedStage','stages']) || !count(delayed.attempts) ||
+            !count(delayed.successes) || delayed.successes > delayed.attempts ||
+            !(delayed.attempts ? time(delayed.lastAt) : delayed.lastAt === null) ||
+            !Array.isArray(delayed.stages) || delayed.stages.length !== 5 || !delayed.stages.every(pair) ||
+            delayed.stages.reduce((sum, stage) => sum + stage.attempts, 0) !== delayed.attempts ||
+            delayed.stages.reduce((sum, stage) => sum + stage.successes, 0) !== delayed.successes) return false;
+        const confirmed = delayed.stages.flatMap((stage, index) => stage.successes ? [Math.min(index + 1, 4)] : []);
+        if (delayed.highestConfirmedStage !== (confirmed.length ? Math.max(...confirmed) : null)) return false;
+        const tags = ProgressModel.evidenceTags(questions[id]);
+        if (!plain(item.misconceptionStats)) return false;
+        for (const [tag, error] of Object.entries(item.misconceptionStats)) {
+          if (!tags.includes(tag) || !exact(error, ['occurrences','recoveredCount','assistedRecoveredCount','lastOccurredAt','lastRecoveredAt','lastAssistedRecoveredAt','pending','assisted']) ||
+              !count(error.occurrences) || error.occurrences < 1 || error.occurrences > item.incorrectCount ||
+              !count(error.recoveredCount) || error.recoveredCount > error.occurrences || error.recoveredCount > item.correctCount ||
+              !count(error.assistedRecoveredCount) || error.assistedRecoveredCount > error.occurrences ||
+              !time(error.lastOccurredAt) || !(error.recoveredCount ? time(error.lastRecoveredAt) : error.lastRecoveredAt === null) ||
+              !(error.assistedRecoveredCount ? time(error.lastAssistedRecoveredAt) : error.lastAssistedRecoveredAt === null) ||
+              typeof error.pending !== 'boolean' || typeof error.assisted !== 'boolean' ||
+              (error.pending && error.recoveredCount === error.occurrences) || (error.assisted && !error.assistedRecoveredCount)) return false;
+        }
+        if (Object.values(item.misconceptionStats).reduce((sum, error) => sum + error.occurrences, 0) !== item.incorrectCount) return false;
+      }
+      return true;
+    }
     constructor(questions, storage, key = 'boki-rpg-progress-v2') {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
       this.state = { contentRevision:CONTENT_REVISION, questionContentVersions:ProgressModel.currentContentVersions(this.questions), contentMigrationArchive:emptyContentArchive(), contentRecheckIds:[], learningSchemaVersion:LEARNING_SCHEMA_VERSION, lastLearningAt:0, learningContinuityState:{ activeDayKeys:[], today:null }, questionStats:{}, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
+      this.state.learningEffectiveness = emptyEffectiveness();
       this.load();
     }
     load() {
       try {
-        const saved = JSON.parse(this.storage?.getItem?.(this.key));
+        const read = typeof this.storage?.readItem === 'function' ? this.storage.readItem(this.key)
+          : { ok:typeof this.storage?.getItem === 'function', value:this.storage?.getItem?.(this.key) };
+        if (!read?.ok) { this.storageWriteBlocked = true; return; }
+        if (read.value === null) return;
+        const saved = JSON.parse(read.value);
+        if (!saved || typeof saved !== 'object' || Array.isArray(saved)) { this.storageWriteBlocked = true; return; }
         if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
           // Never overwrite a future or malformed versioned state with defaults.
           if ((Number.isSafeInteger(saved.contentRevision) && saved.contentRevision > CONTENT_REVISION) ||
-              !ProgressModel.validContentMetadata(saved, this.questions)) {
+              !ProgressModel.validContentMetadata(saved, this.questions) ||
+              (saved.learningEffectiveness !== undefined && !ProgressModel.validLearningEffectiveness(saved.learningEffectiveness, this.questions))) {
             this.storageWriteBlocked = true; return;
           }
           const savedContentRevision = Number.isSafeInteger(saved.contentRevision) ? saved.contentRevision : 1;
@@ -184,9 +258,12 @@
           });
           if (incompatibleExam && this.state.mode === 'exam') this.state.mode = 'story';
           if (savedContentRevision < 4) this.migrateContentIdentity(savedContentRevision, hasLearningSchemaV1 ? saved.questionStats : null);
-          if (needsContentMigration || needsLearningMigration) this.save();
+          // A missing row/flag in an old save cannot prove a never-attempted question.
+          const needsEvidenceMigration = saved.learningEffectiveness === undefined;
+          if (needsEvidenceMigration) this.state.learningEffectiveness = emptyEffectiveness('unknown');
+          if (needsContentMigration || needsLearningMigration || needsEvidenceMigration) this.save();
         }
-      } catch (_) { /* An unavailable/corrupt store starts a clean session. */ }
+      } catch (_) { this.storageWriteBlocked = true; }
     }
     migrateContentIdentity(fromRevision, savedQuestionStats) {
       const state = this.state, versions = ProgressModel.currentContentVersions(this.questions);
@@ -485,7 +562,7 @@
         typeof score.correct === 'boolean' && Number.isFinite(score.earned) && Number.isFinite(score.possible) &&
         Number.isFinite(score.ratio) && score.earned >= 0 && score.possible > 0 && score.earned <= score.possible && score.ratio >= 0 && score.ratio <= 1);
     }
-    save() { if (this.storageWriteBlocked) return false; try { return this.storage?.setItem?.(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
+    save() { if (this.storageWriteBlocked || typeof this.storage?.setItem !== 'function') return false; try { return this.storage.setItem(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
     setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; return this.save(); }
     clearDraft(id) { if (!this.questions[id]) return false; delete this.state.drafts[id]; return this.save(); }
     clearDrafts(ids) { if (!Array.isArray(ids)) return false; ids.filter(id => this.questions[id]).forEach(id => { delete this.state.drafts[id]; }); return this.save(); }
@@ -536,14 +613,97 @@
       }
       return recorded;
     }
-    recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now(), reviewStage = null, confidence = 'unsure') {
-      if (!this.questions[id] || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0 || !Number.isFinite(now) || now < 0) return false;
-      this.state.attempts.push({ questionId:id, id, ...(this.state.questionContentVersions[id] ? { contentIdentity:this.state.questionContentVersions[id] } : {}), concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now });
+    learningEffectivenessForQuestion(id) {
+      if (!Object.hasOwn(this.questions, id)) return null;
+      const evidence = this.state.learningEffectiveness;
+      const item = cloneContent(evidence.questions[id] || emptyEvidence());
+      item.initialStatus = evidence.initialHistory === 'unknown' || this.storageWriteBlocked ? 'unknown' : item.firstAttempt ? 'observed' : 'unanswered';
+      return item;
+    }
+    nextLearningObservation(id) {
+      if (!Object.hasOwn(this.questions, id)) return null;
+      const next = (this.state.learningEffectiveness.questions[id]?.observedAttempts || 0) + 1;
+      return Number.isSafeInteger(next) ? next : null;
+    }
+    qualifiedDelayedReview(id, sourceId, now, mode) {
+      if (mode !== 'review' || !Object.hasOwn(this.questions, sourceId)) return null;
+      const assignment = this.state.reviewAssignments[sourceId], schedule = this.state.reviewSchedule[sourceId];
+      if (!assignment || !schedule || assignment.status !== 'assigned' || assignment.sourceQuestionId !== sourceId ||
+          assignment.reviewQuestionId !== id || assignment.stage !== schedule.stage || assignment.dueAt !== schedule.dueAt ||
+          assignment.conceptId !== (this.questions[sourceId].category || '') || this.questions[id].category !== this.questions[sourceId].category ||
+          !Number.isSafeInteger(schedule.stage) || schedule.stage < 0 || schedule.stage > 4 ||
+          !Number.isFinite(schedule.dueAt) || schedule.dueAt < 0 || !Number.isFinite(assignment.assignedAt) || assignment.assignedAt < 0 ||
+          now < schedule.dueAt || now < assignment.assignedAt) return null;
+      return { sourceId, stage:schedule.stage };
+    }
+    applyRecovery(item, support, now) {
+      let changed = false;
+      for (const error of Object.values(item.misconceptionStats)) {
+        if (!error.pending) continue;
+        if (support === 'none') {
+          error.recoveredCount += 1; error.lastRecoveredAt = now; error.pending = false; changed = true;
+        } else if (['hint-1','hint-2','coaching'].includes(support) && !error.assisted) {
+          error.assistedRecoveredCount += 1; error.lastAssistedRecoveredAt = now; error.assisted = true; changed = true;
+        }
+      }
+      return changed;
+    }
+    recordAssistedRecovery(id, observationNumber, now = Date.now()) {
+      const item = this.state.learningEffectiveness.questions[id];
+      if (this.storageWriteBlocked || !Object.hasOwn(this.questions, id) || !item || !Number.isSafeInteger(observationNumber) ||
+          observationNumber < 1 || observationNumber !== item.observedAttempts || this.statsForQuestion(id).lastResult !== false ||
+          !Number.isFinite(now) || now < item.lastObservedAt) return false;
+      const before = cloneContent(this.state);
+      if (!this.applyRecovery(item, 'coaching', now) || !ProgressModel.validLearningEffectiveness(this.state.learningEffectiveness, this.questions) || !this.save()) {
+        this.state = before; return false;
+      }
+      return true;
+    }
+    recordAttempt(id, correct, responseMs, wrongType = '', delayedSuccess = false, now = Date.now(), reviewStage = null, confidence = 'unsure', context = {}) {
+      if (this.storageWriteBlocked || !Object.hasOwn(this.questions, id) || typeof correct !== 'boolean' || !Number.isFinite(responseMs) || responseMs < 0 ||
+          !Number.isFinite(now) || now < 0 || !context || typeof context !== 'object') return false;
+      const mode = context.mode ?? this.state.mode, support = context.support ?? 'unknown';
+      const observationNumber = context.observationNumber ?? this.nextLearningObservation(id);
+      if (!EVIDENCE_MODES.includes(mode) || mode !== this.state.mode || !EVIDENCE_SUPPORT.includes(support) ||
+          !Number.isSafeInteger(observationNumber) || observationNumber < 1 || observationNumber !== this.nextLearningObservation(id)) return false;
+      const before = cloneContent(this.state);
+      const evidence = this.state.learningEffectiveness;
+      const item = evidence.questions[id] ||= emptyEvidence();
+      const delayed = this.qualifiedDelayedReview(id, context.reviewSourceId, now, mode);
+      if (item.observedAttempts === 0) {
+        item.firstObservedAt = now;
+        if (evidence.initialHistory === 'complete') item.firstAttempt = { correct, at:now, mode, support };
+      }
+      item.observedAttempts += 1; item[correct ? 'correctCount' : 'incorrectCount'] += 1;
+      item.lastObservedAt = Math.max(item.lastObservedAt ?? 0, now);
+      item.modes[mode].attempts += 1; if (correct) item.modes[mode].successes += 1;
+      if (correct) this.applyRecovery(item, support, now);
+      else {
+        const tags = ProgressModel.evidenceTags(this.questions[id]);
+        const tag = tags.includes(`cell:${wrongType}`) ? `cell:${wrongType}` : tags[0];
+        const error = item.misconceptionStats[tag] ||= { occurrences:0, recoveredCount:0, assistedRecoveredCount:0,
+          lastOccurredAt:null, lastRecoveredAt:null, lastAssistedRecoveredAt:null, pending:false, assisted:false };
+        error.occurrences += 1; error.lastOccurredAt = now; error.pending = true; error.assisted = false;
+      }
+      if (delayed) {
+        const retention = (evidence.questions[delayed.sourceId] ||= emptyEvidence()).delayedReview;
+        retention.attempts += 1; retention.lastAt = Math.max(retention.lastAt ?? 0, now); retention.stages[delayed.stage].attempts += 1;
+        if (correct) {
+          retention.successes += 1; retention.stages[delayed.stage].successes += 1;
+          retention.highestConfirmedStage = Math.max(retention.highestConfirmedStage ?? 0, Math.min(delayed.stage + 1, 4));
+        }
+      }
+      this.state.attempts.push({ questionId:id, id, ...(this.state.questionContentVersions[id] ? { contentIdentity:this.state.questionContentVersions[id] } : {}), concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:Number.isSafeInteger(reviewStage) ? reviewStage : null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now, mode, support, observationNumber });
       this.state.attempts = this.state.attempts.slice(-200);
       this.recordLearningContinuity(id, correct, delayedSuccess === true, now);
-      this.applyQuestionStat(this.state.questionStats, id, correct, now);
+      const stats = this.applyQuestionStat(this.state.questionStats, id, correct, now);
       this.state.lastLearningAt = Math.max(this.state.lastLearningAt || 0, now);
-      this.save(); return true;
+      if (!this.validQuestionStats(stats) || !Number.isSafeInteger(stats.correctCount + stats.incorrectCount) ||
+          !this.validLearningContinuityState(this.state.learningContinuityState) ||
+          !ProgressModel.validLearningEffectiveness(evidence, this.questions) || !this.save()) {
+        this.state = before; return false;
+      }
+      return true;
     }
     adaptiveDifficulty(concept, fallback = 2) {
       const recent = this.state.attempts.filter(item => item.concept === concept).slice(-6);

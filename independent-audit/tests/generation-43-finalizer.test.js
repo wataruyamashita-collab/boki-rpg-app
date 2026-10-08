@@ -6,7 +6,7 @@ const authorities=lifecycle.generationAuthorities(),g42=authorities.find(x=>x.do
 test('Generation 43 is discoverable',()=>assert(g43));
 test('Generation 43 predecessor is exact Generation 42',()=>assert.deepStrictEqual(g43.document.predecessor,lifecycle.identity(g42.document)));
 test('Generation 43 production identity changes for voucher source presentation',()=>assert.notStrictEqual(g43.document.baselineIdentity,g42.document.baselineIdentity));
-test('committed Generation 43 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+test('committed Generation 43 current integrity passes',()=>assert.strictEqual(core.currentIntegrityCheck().ok,true));
 test('duplicate Generation 43 issuance fails',()=>assert.notStrictEqual(childProcess.spawnSync(process.execPath,['scripts/qa/finalize-phase-b-generation-43.js'],{cwd:core.ROOT,encoding:'utf8'}).status,0));
 test('historical authority raw SHA values are pinned',()=>assert.deepStrictEqual(finalizer.authorityPaths.map(f=>digest(fs.readFileSync(f))),finalizer.expectedAuthoritySha256));
 console.log(`Generation 43 finalizer regressions: ${count}/${count}`);
