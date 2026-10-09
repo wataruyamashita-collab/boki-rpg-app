@@ -23,7 +23,7 @@ for index in range(1200):
 driver = r"""
 const fs=require('fs'),Model=require('./js/model');
 const events=JSON.parse(fs.readFileSync(0,'utf8'));
-const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState,state.reviewSchedule,state.reviewAssignments,state.examHistory];
+const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState,state.reviewSchedule,state.reviewAssignments,state.examHistory,state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds];
 const questions={Q:{type:'journal',category:'x'},R:{type:'journal',category:'x'},T:{type:'ledger',category:'x',table:{inputCells:['a','b']}}};
 const run=legacy=>{
  let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};
@@ -57,7 +57,7 @@ const examRuns=legacy=>{
   model.state.examAttempt=attempt;model.state.examSession={ids:Object.keys(catalog),startedAt:session.startedAt,endAt:session.endAt,status:'RUNNING',evidenceVersion:1,scores:{}};model.state.mode='exam';
   for(const [id,correct,at] of session.answers){
    const number=model.nextLearningObservation(id);if(!model.recordAttempt(id,correct,20,'journal-entry',false,at,null,'unsure',{mode:'exam',support:'none',observationNumber:number}))throw Error('exam recording');
-   model.state.examSession.scores[id]={correct,earned:Number(correct),possible:1,ratio:Number(correct),observationNumber:number};model.save();
+   model.state.examSession.scores[id]={correct,earned:Number(correct),possible:1,ratio:Number(correct),observationNumber:number};model.refreshEvidenceIntegrity();model.save();
   }
   model.state.mode='training';for(let i=0;i<201;i++)if(!model.recordAttempt('E14',true,20,'',false,session.endAt+i,null,'unsure',{mode:'training',support:'none'}))throw Error('exam eviction');
   model=new Model(catalog,store);if(model.storageWriteBlocked||!Model.validateBackupState(model.state,catalog))throw Error('exam restore');
@@ -77,7 +77,7 @@ for result in [*actual.values(), *exam_actual.values()]:
         unit = int.from_bytes(encoded[index:index+2], 'little')
         fingerprint = ((fingerprint ^ unit) * 16777619) & 0xffffffff
     assert result['schema'] == 3
-    assert result['integrity'] == {'schemaVersion': 5, 'signature': f'{fingerprint:08x}'}
+    assert result['integrity'] == {'schemaVersion': 6, 'signature': f'{fingerprint:08x}'}
     integrity_checked += 1
 exam_checked = 0
 exam_sessions = [(10000, 20000, [('E0', True, 10010), ('E1', False, 10020)]),

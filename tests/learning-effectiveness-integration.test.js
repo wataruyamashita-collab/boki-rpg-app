@@ -17,7 +17,7 @@ function context(mode='training') {
     document:{getElementById:()=>node(),createElement:()=>node(),querySelector:()=>null,querySelectorAll:()=>[]},
     view:{readAnswer:()=>({correct:true,debit:[],credit:[]}),result(){},updateRpg(){},renderQuestion(){},show(){},showNotice(text){notices.push(text);}},
     resetCalculator(){},renderModes(){},showMode(){},updateExamStatus(){},isExamExpired:()=>false,modeIds:()=>['Q','R'],unansweredExamIds:()=>[]});
-  model.state.mode=mode;if(mode==='exam')model.state.examSession={ids:Object.keys(questions),startedAt:Date.now()-1000,endAt:Date.now()+60000,status:'RUNNING',scores:{}};ctx.start('Q');return {ctx,store,model,rpg,notices};
+  model.state.mode=mode;if(mode==='exam'){ctx.buildExamIds=()=>Object.keys(questions);ctx.ensureExamSession();}ctx.start('Q');return {ctx,store,model,rpg,notices};
 }
 let passed=0,failed=0;
 function test(name,fn){try{fn();passed++;console.log('PASS '+name);}catch(error){failed++;console.error('FAIL '+name+'\n'+error.stack);}}
@@ -89,7 +89,7 @@ test('exam finalization commits history, mastery and rewards once after a failed
   model.state.mode='exam';model.state.examSession={ids,startedAt:now-1000,endAt:now+100000,status:'RUNNING',scores:{}};
   assert(model.recordAttempt(ids[0],true,10,'',false,now,null,'unsure',{mode:'exam',support:'none'}));
   model.state.examSession.scores[ids[0]]={correct:true,earned:1,possible:1,ratio:1,answer:{correct:true},observationNumber:1};
-  ctx.unansweredExamIds=()=>ids.slice(1);model.save();rpg.save();const progress=clone(model.state),character=clone(rpg.state),saved=clone(model.storage.data),set=model.storage.setItem;let calls=0;
+  ctx.unansweredExamIds=()=>ids.slice(1);model.refreshEvidenceIntegrity();model.save();rpg.save();const progress=clone(model.state),character=clone(rpg.state),saved=clone(model.storage.data),set=model.storage.setItem;let calls=0;
   model.storage.setItem=function(k,v){if(++calls===3)return false;return set.call(this,k,v);};
   assert.strictEqual(ctx.finishExam(true,now),false);assert.deepStrictEqual(clone(model.state),progress);assert.deepStrictEqual(clone(rpg.state),character);assert.deepStrictEqual(model.storage.data,saved);assert.strictEqual(results,0);
   model.storage.setItem=set;assert.strictEqual(ctx.finishExam(true,now),true);assert.strictEqual(model.state.examAttempt,1);assert.strictEqual(model.state.examHistory.length,1);
@@ -210,12 +210,40 @@ test('a completed exam cannot lose its history or passed set in an issued backup
     const observationNumber=model.nextLearningObservation(id);assert(model.recordAttempt(id,true,10,'',false,Date.now(),null,'unsure',{mode:'exam',support:'none',observationNumber}));
     model.state.examSession.scores[id]={correct:true,earned:1,possible:1,ratio:1,answer:{correct:true},observationNumber};
   }
-  assert(ctx.finishExam(true));assert.strictEqual(model.state.examHistory.length,1);assert.strictEqual(model.state.examHistory[0].points,100);assert(model.state.examHistory[0].setSignature);
+  model.refreshEvidenceIntegrity();assert(ctx.finishExam(true));assert.strictEqual(model.state.examHistory.length,1);assert.strictEqual(model.state.examHistory[0].points,100);assert(model.state.examHistory[0].setSignature);
   const original=clone(model.state);assert(Model.validateBackupState(original,questions));
   for(const mutate of [v=>v.examHistory=[],v=>v.examHistory[0].points=69,v=>delete v.examHistory[0].setSignature,v=>v.examHistory[0].finishedAt++]){
     const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);
     assert.strictEqual(Model.prepareBackupState(bad,questions),null);const store=values(),bytes=JSON.stringify(bad);store.data.p=bytes;
     assert(new Model(questions,store,'p').storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
+  }
+});
+test('an issued active exam rejects replacing an unanswered member',()=>{
+  const {ctx}=context('exam'),store=values();ctx.questions=canonical;ctx.model=new Model(canonical,store,'p');ctx.rpg=new RPG(store,'r');
+  const ids=Object.keys(canonical).filter(id=>canonical[id].learningRole==='transfer').slice(0,15);assert.strictEqual(ids.length,15);
+  ctx.buildExamIds=()=>ids;ctx.model.state.mode='exam';ctx.ensureExamSession();ctx.start(ids[0]);ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});assert.notStrictEqual(ctx.submit(),false);
+  const original=clone(ctx.model.state);assert(Model.validateBackupState(original,canonical));
+  const bad=clone(original);assert(!ids.includes('J001'));bad.examSession.ids[1]='J001';
+  assert.strictEqual(Model.validateBackupState(bad,canonical),false);assert.strictEqual(Model.prepareBackupState(bad,canonical),null);
+  const bytes=JSON.stringify(bad);store.data.p=bytes;assert(new Model(canonical,store,'p').storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
+});
+test('an issued incorrect exam answer cannot acquire full points or altered mastery totals',()=>{
+  const {ctx,model,store}=context('exam');ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});assert.notStrictEqual(ctx.submit(),false);
+  const original=clone(model.state);assert.strictEqual(original.examSession.scores.Q.correct,false);assert(Model.validateBackupState(original,questions));
+  for(const patch of [{earned:1,possible:1,ratio:1},{earned:0,possible:1000,ratio:0},{answer:{correct:true}}]){
+    const bad=clone(original);Object.assign(bad.examSession.scores.Q,patch);
+    assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+    const bytes=JSON.stringify(bad);store.data.p=bytes;assert(new Model(questions,store,'p').storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
+  }
+});
+test('issued Accepted migration archives and pending rechecks cannot silently disappear',()=>{
+  for(const id of ['J051','L031']){
+    const store=legacyStorage(JSON.stringify(fixture('old',id))),model=new Model(canonical,store,'p'),original=clone(model.state);
+    assert(original.contentMigrationArchive.questions[id]);assert(original.contentRecheckIds.includes(id));assert(Model.validateBackupState(original,canonical));
+    for(const mutate of [v=>{v.contentMigrationArchive={schemaVersion:1,questions:{},reviewAssignments:{},completed:null};v.contentRecheckIds=[];},v=>v.contentRecheckIds=[]]){
+      const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,canonical),false);assert.strictEqual(Model.prepareBackupState(bad,canonical),null);
+      const bytes=JSON.stringify(bad),saved=legacyStorage(bytes);assert(new Model(canonical,saved,'p').storageWriteBlocked);assert.strictEqual(saved.value,bytes);
+    }
   }
 });
 test('finite signed transaction totals survive reload and remain valid backups',()=>{

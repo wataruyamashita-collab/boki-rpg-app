@@ -1,5 +1,5 @@
 /* The release id is shared by every cache key in this deployment. */
-const RELEASE = '20260924-192';
+const RELEASE = '20260924-193';
 const CACHE_PREFIX = 'boki-rpg-';
 const CACHE_NAME = `${CACHE_PREFIX}${RELEASE}`;
 const VERSIONED_ASSETS = [

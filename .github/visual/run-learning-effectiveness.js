@@ -180,6 +180,44 @@ async function run(){
               return {rpgOverflowRollback:true,clockRollbackQualified:true};
             });
             assert.deepStrictEqual(numericalBoundaries,{rpgOverflowRollback:true,clockRollbackQualified:true});
+            // Complete the preceding failure/restore notice through its normal UI
+            // before beginning the separate active-exam scenario.
+            if(await page.locator('#app-notice-dialog').evaluate(el=>el.open)){
+              const cancel=page.locator('#app-notice-cancel');
+              await (await cancel.isVisible()?cancel:page.locator('#app-notice-confirm')).click();
+            }
+            await page.evaluate(()=>{
+              const c=window.App.controller;c.model.state.mode='exam';const session=c.ensureExamSession();
+              if(session.ids.length!==15||session.ids.some(id=>!c.examCandidateIds().includes(id)))throw Error('authored exam pool fixture');
+              c.start(session.ids[0],{fresh:true});
+            });
+            await page.locator('.confirm-button').click();
+            const activeExam=await page.evaluate(async()=>{
+              const c=window.App.controller,progress=JSON.parse(JSON.stringify(c.model.state)),character=JSON.parse(JSON.stringify(c.rpg.state)),first=progress.examSession.ids[0];
+              if(progress.examSession.scores[first]?.correct!==false||!ProgressModel.validateBackupState(progress,c.questions))throw Error('blank exam observation missing');
+              const member=JSON.parse(JSON.stringify(progress));member.examSession.ids[1]='J001';
+              const grading=JSON.parse(JSON.stringify(progress)),score=grading.examSession.scores[first];score.earned=score.possible;score.ratio=1;
+              const attempt=JSON.parse(JSON.stringify(progress));attempt.examAttempt++;
+              const pair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
+              for(const bad of [member,grading,attempt]){
+                if(await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress:bad,character})})!==false)throw Error('corrupt active exam imported');
+                if(localStorage.getItem(c.model.key)!==pair[0]||localStorage.getItem(c.rpg.key)!==pair[1])throw Error('bad active exam changed saved pair');
+              }
+              return {session:progress.examSession,attempt:progress.examAttempt,character,first};
+            });
+            await page.reload({waitUntil:'load'});await page.waitForFunction(()=>Boolean(window.App?.controller));
+            const resumed=await page.evaluate(()=>({session:App.controller.model.state.examSession,character:App.controller.rpg.state}));
+            assert.deepStrictEqual(resumed.session,activeExam.session);assert.deepStrictEqual(resumed.character,activeExam.character);
+            const retriedExam=await page.evaluate(({attempt,first,xp})=>{
+              const c=window.App.controller;c.updateExamStatus(c.model.state.examSession.endAt);
+              if(c.model.state.examSession!==null||c.model.state.examAttempt!==attempt+1||c.model.state.examHistory.at(-1)?.points!==0||c.rpg.state.xp!==xp)throw Error('expired wrong/unanswered exam did not finalize once');
+              if(c.model.learningEffectivenessForQuestion(first).observedAttempts!==1||!ProgressModel.validateBackupState(c.model.state,c.questions))throw Error('expiry changed observation or invalidated saved state');
+              const session=c.retryExam();if(Object.keys(session.scores).length||session.ids.some(id=>!c.examCandidateIds().includes(id)))throw Error('retry did not create a fresh authored exam');
+              if(!ProgressModel.validateBackupState(c.model.state,c.questions))throw Error('retry saved an invalid marker');
+              return {session,attempt:c.model.state.examAttempt,history:c.model.state.examHistory};
+            },{attempt:activeExam.attempt,first:activeExam.first,xp:activeExam.character.xp});
+            await page.reload({waitUntil:'load'});await page.waitForFunction(()=>Boolean(window.App?.controller));
+            assert.deepStrictEqual(await page.evaluate(()=>({session:App.controller.model.state.examSession,attempt:App.controller.model.state.examAttempt,history:App.controller.model.state.examHistory})),retriedExam);
             const corruptBefore=await page.evaluate(()=>{
               const c=window.App.controller,values=Object.fromEntries([c.model.key,c.rpg.key].map(key=>[key,localStorage.getItem(key)]));
               localStorage.setItem(`${c.model.key}:pending-answer-v1`,'{bad');return values;
@@ -190,7 +228,7 @@ async function run(){
               values:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)])),journal:localStorage.getItem(`${window.App.controller.model.key}:pending-answer-v1`)}),Object.keys(corruptBefore));
             assert.strictEqual(corruptAfter.blocked,true);assert.deepStrictEqual(corruptAfter.values,corruptBefore);assert.strictEqual(corruptAfter.journal,'{bad');
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,examHistoryImportRejected:true,...numericalBoundaries,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,examHistoryImportRejected:true,activeExamImportRejected:true,activeExamResume:true,expiredExamAndRetry:true,...numericalBoundaries,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

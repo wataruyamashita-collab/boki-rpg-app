@@ -49,6 +49,17 @@ async function run(){
             assert.deepStrictEqual([first.stats.correctCount,first.stats.incorrectCount],kind==='old'?[0,0]:kind==='mixed'?[1,1]:[3,0]);
             assert.deepStrictEqual(first.archive.questions[id].questionStats,progress.questionStats[id]);
             if(kind==='old'||id==='J051')assert.strictEqual(first.draft,null);
+            const archiveImportRejected=await page.evaluate(async id=>{
+              const c=window.App.controller,original=JSON.parse(JSON.stringify(c.model.state)),character=c.rpg.state;
+              const pair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
+              const erased=JSON.parse(JSON.stringify(original));erased.contentMigrationArchive={schemaVersion:1,questions:{},reviewAssignments:{},completed:null};erased.contentRecheckIds=[];
+              const recheck=JSON.parse(JSON.stringify(original));recheck.contentRecheckIds=recheck.contentRecheckIds.includes(id)?recheck.contentRecheckIds.filter(x=>x!==id):[...recheck.contentRecheckIds,id];
+              for(const progress of [erased,recheck]){
+                if(await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress,character})})!==false)throw Error('changed migration authority imported');
+                if(localStorage.getItem(c.model.key)!==pair[0]||localStorage.getItem(c.rpg.key)!==pair[1])throw Error('bad migration backup changed saved pair');
+              }
+              return true;
+            },id);assert(archiveImportRejected);
             await page.reload({waitUntil:'load'});
             await page.waitForFunction(()=>Boolean(window.App?.controller));
             const second=await inspect();assert.deepStrictEqual(second.stats,first.stats);assert.deepStrictEqual(second.archive,first.archive);
@@ -73,7 +84,7 @@ async function run(){
             assert(display.text.includes('バックアップ内に保管'));assert(!display.hidden);assert(!display.pageOverflow);assert(!display.panelOverflow);assert.deepStrictEqual(errors,[]);
             const name=`${engine}-${width}-${id}-${kind}`;
             if(kind==='old')await page.screenshot({path:path.join(OUTPUT,name+'.png'),fullPage:true});
-            evidence.reports.push({name,stats:[first.stats.correctCount,first.stats.incorrectCount],reloadStable:true,archivePreserved:true,reviewTarget:review.actual,display,pageErrors:errors});write();
+            evidence.reports.push({name,stats:[first.stats.correctCount,first.stats.incorrectCount],reloadStable:true,archivePreserved:true,archiveImportRejected,recheckImportRejected:true,reviewTarget:review.actual,display,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

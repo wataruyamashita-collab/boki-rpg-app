@@ -133,14 +133,17 @@ try{
   const generation128Committed=committed(128);
   const generation129Committed=committed(129);
   const generation130Committed=committed(130);
+  const generation133Committed=committed(133);
   const generation132Committed=committed(132);
   const generation131Committed=committed(131);
 
   test(
-    'authority sequence tracks committed Generations through 132',
+    'authority sequence tracks committed Generations through 133',
     ()=>assert.deepStrictEqual(
       generations,
-      generation132Committed
+      generation133Committed
+        ? Array.from({length:132},(_,index)=>index+2)
+        :generation132Committed
         ? Array.from({length:131},(_,index)=>index+2)
         :generation131Committed
         ? Array.from({length:130},(_,index)=>index+2)
@@ -455,6 +458,7 @@ try{
     }
   );
 
+  const generation133Pending=fs.existsSync(authorityPath(133))&&!generation133Committed;
   const generation132Pending=fs.existsSync(authorityPath(132))&&!generation132Committed;
   const generation131Pending=fs.existsSync(authorityPath(131))&&!generation131Committed;
   const generation130Pending=fs.existsSync(authorityPath(130))&&!generation130Committed;
@@ -572,7 +576,12 @@ try{
   const generation68Pending=
     fs.existsSync(authorityPath(68))&&!generation68Committed;
 
-  if(generation132Committed){
+  if(generation133Committed){
+    test('committed Generation 133 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation133Pending){
+    const generation133Candidate=JSON.parse(fs.readFileSync(authorityPath(133),'utf8'));
+    test('pending Generation 133 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation133Candidate).ok,true));
+  }else if(generation132Committed){
     test('committed Generation 132 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
   }else if(generation132Pending){
     const generation132Candidate=JSON.parse(fs.readFileSync(authorityPath(132),'utf8'));

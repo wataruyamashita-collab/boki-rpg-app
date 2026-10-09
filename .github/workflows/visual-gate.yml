@@ -12,6 +12,7 @@ on:
       - 'data/**'
       - 'js/**'
       - 'index.html'
+      - 'service-worker.js'
 jobs:
   physical-recovery-strict-gate:
     runs-on: ubuntu-latest

@@ -631,7 +631,7 @@
     ensureExamSession(now = Date.now()) {
       if (this.model.validExamSession(this.model.state.examSession)) return this.model.state.examSession;
       this.model.state.examSession = { ids: this.buildExamIds(), startedAt: now, endAt: now + EXAM_DURATION_MS, status: 'RUNNING', evidenceVersion:1, scores: {} };
-      this.model.save(); return this.model.state.examSession;
+      this.model.refreshEvidenceIntegrity?.(); this.model.save(); return this.model.state.examSession;
     }
     isExamExpired(now = Date.now(), session = this.model.state.examSession) {
       return !session || (session.status || 'RUNNING') !== 'RUNNING' || now >= session.endAt;
@@ -652,7 +652,7 @@
       }
       const position = Math.max(0, session.ids.indexOf(this.currentId)) + 1;
       if (progress) progress.textContent = `第${position}問 / ${session.ids.length}問｜回答済み ${session.ids.length - this.unansweredExamIds().length}問`;
-      if (remaining === 0) { session.status = 'EXPIRED'; this.finishExam(true, now); }
+      if (remaining === 0) { session.status = 'EXPIRED'; this.model.refreshEvidenceIntegrity?.(); this.finishExam(true, now); }
     }
     startExamTimer() { this.stopExamTimer(); this.updateExamStatus(); this.examTimerId = root.setInterval?.(() => this.updateExamStatus(), 1000) || null; }
     stopExamTimer() { if (this.examTimerId !== null) root.clearInterval?.(this.examTimerId); this.examTimerId = null; }
@@ -684,7 +684,7 @@
       const setSignature = [...session.ids].sort().join('|');
       session.status = 'FINISHED'; this.model.state.lastExamReview = review; this.model.state.examHistory = [...(this.model.state.examHistory || []), { finishedAt: review.finishedAt, points, passed: correct, durationMs: review.durationMs, topicScores: review.topicScores, unansweredCount: review.unansweredCount, setSignature }].slice(-10);
       this.rpg.progressCompleted = this.model.updateCompletion?.(this.rpg) === true;
-      this.model.state.examAttempt += 1; this.model.state.examSession = null; this.model.save();
+      this.model.state.examAttempt += 1; this.model.state.examSession = null; this.model.refreshEvidenceIntegrity?.(); this.model.save();
         return true;
       });
       if (!saved) { this.submitting=false; this.view.showNotice?.('模試結果を保存できませんでした。回答を保持しています。保存状態を確認してから再度お試しください。',{title:'模試を記録できません'}); return false; }
@@ -1142,11 +1142,11 @@
     }
     submit() {
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
-      if (this.model.state.mode === 'exam' && this.isExamExpired()) { const session = this.model.state.examSession; if (session) session.status = 'EXPIRED'; this.finishExam(true); return; }
+      if (this.model.state.mode === 'exam' && this.isExamExpired()) { const session = this.model.state.examSession; if (session) session.status = 'EXPIRED'; this.model.refreshEvidenceIntegrity?.(); this.finishExam(true); return; }
       if (this.model.state.mode !== 'exam' && !['I','R'].includes(this.learningFlow?.phase)) return false;
       this.submitting = true;
       const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question);
-      if (this.model.state.mode === 'exam' && this.isExamExpired()) { this.model.state.examSession.status = 'EXPIRED'; this.finishExam(true); return; }
+      if (this.model.state.mode === 'exam' && this.isExamExpired()) { this.model.state.examSession.status = 'EXPIRED'; this.model.refreshEvidenceIntegrity?.(); this.finishExam(true); return; }
       const score = root.GradingEngine.grade(question, answer);
       if (this.model.state.mode !== 'exam' && this.learningFlow?.phase === 'R') return this.finishCoachingRetry(question, answer, score);
       const answeredAt = Date.now(); const responseMs = Math.max(0, answeredAt - (Number.isFinite(this.questionStartedAt) ? this.questionStartedAt : answeredAt));
@@ -1157,7 +1157,7 @@
       // Check the post-grading deadline before any answer evidence is persisted.
       // A timed-out, unscored item must not become a durable submitted answer.
       if (this.model.state.mode === 'exam' && this.isExamExpired(Date.now(), this.model.state.examSession)) {
-        this.model.state.examSession.status = 'EXPIRED'; this.finishExam(true); return;
+        this.model.state.examSession.status = 'EXPIRED'; this.model.refreshEvidenceIntegrity?.(); this.finishExam(true); return;
       }
       const support = this.learningFlow?.hintStage ? `hint-${this.learningFlow.hintStage}` : 'none';
       const previousProgress = { level:this.rpg.level, role:this.rpg.role };
@@ -1172,7 +1172,7 @@
           const observationNumber = this.model.state.learningEffectiveness?.questions[question.id]?.observedAttempts;
           this.model.state.examSession.scores[question.id] = { correct:score.correct, earned:score.earned, possible:score.possible, ratio:score.ratio, answer,
             ...(Number.isSafeInteger(observationNumber) ? {observationNumber} : {}) };
-          this.model.setDraft(question.id,answer); this.model.save();
+          this.model.refreshEvidenceIntegrity?.(); this.model.setDraft(question.id,answer); this.model.save();
           return true;
         }
         const reviewCompleted = this.reviewSourceId ? this.model.completeReview(this.reviewSourceId,score.correct,answeredAt,question.id) : false;
