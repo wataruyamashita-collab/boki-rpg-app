@@ -83,8 +83,10 @@ async function run(){
               for(const key of ['answeredIds','correctIds'])lostFlags[key]=lostFlags[key].filter(id=>id!=='J001');
               const changedLatest=JSON.parse(JSON.stringify(isolated.state));changedLatest.questionStats.J002.lastResult=true;changedLatest.questionStats.J002.lastAnsweredAt++;
               const changedContinuity=JSON.parse(JSON.stringify(progress));changedContinuity.learningContinuityState.today.attempts++;
+              if(!Object.keys(progress.reviewSchedule).length)throw Error('pending review fixture missing');
+              const lostReview=JSON.parse(JSON.stringify(progress));lostReview.reviewSchedule={};lostReview.reviewAssignments={};
               const beforePair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
-              for(const bad of [missing,downgraded,unmarked,lostUnknown,lostFlags,changedLatest,changedContinuity]){
+              for(const bad of [missing,downgraded,unmarked,lostUnknown,lostFlags,changedLatest,changedContinuity,lostReview]){
                 const result=await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress:bad,character})});
                 if(result!==false||localStorage.getItem(c.model.key)!==beforePair[0]||localStorage.getItem(c.rpg.key)!==beforePair[1])throw Error('bad evidence changed native saved state');
               }
@@ -152,6 +154,29 @@ async function run(){
               return {observations:c.model.learningEffectivenessForQuestion('J003').observedAttempts,replayUnchanged:once===JSON.stringify({progress:c.model.state,character:c.rpg.state})};
             });
             assert.strictEqual(retried.observations,1);assert(retried.replayUnchanged);
+            const numericalBoundaries=await page.evaluate(()=>{
+              const c=window.App.controller,copy=value=>JSON.parse(JSON.stringify(value)),originalCharacter=copy(c.rpg.state);
+              c.model.state.mode='training';c.start('J004',{fresh:true});c.view.applyRetryDraft(c.questions.J004,c.questions.J004.answer);
+              c.rpg.state.xp=Number.MAX_SAFE_INTEGER;if(!window.RPGModel.validateBackupState(c.rpg.state))throw Error('max-safe fixture invalid');c.rpg.save();
+              const before=JSON.stringify({progress:c.model.state,character:c.rpg.state}),raw=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
+              if(c.submit()!==false||JSON.stringify({progress:c.model.state,character:c.rpg.state})!==before||localStorage.getItem(c.model.key)!==raw[0]||localStorage.getItem(c.rpg.key)!==raw[1])throw Error('RPG overflow was not atomic');
+              if(new window.RPGModel(c.rpg.storage,c.rpg.key).state.xp!==Number.MAX_SAFE_INTEGER)throw Error('RPG boundary lost on reload');
+              c.rpg.state=originalCharacter;c.rpg.save();
+              const due=Date.now()+1000,at=due-20*60*1000;
+              c.model.state.mode='training';if(!c.model.recordAttempt('J004',false,10,'journal-entry',false,at))throw Error('clock fixture observation');
+              c.model.record('J004',false,at);c.model.assignReview('J004','J004',due);c.model.state.mode='review';c.reviewMappings.set('J004',{sourceQuestionId:'J004'});
+              const originalNow=Date.now;let clock=due;Date.now=()=>clock;
+              try{
+                c.start('J004',{fresh:true});c.view.applyRetryDraft(c.questions.J004,c.questions.J004.answer);
+                const count=c.model.state.learningContinuityState.today.reviewSuccessCount;clock=due-1;
+                if(c.submit()===false||c.model.state.attempts.at(-1).delayedSuccess||c.model.state.learningContinuityState.today.reviewSuccessCount!==count||c.model.learningEffectivenessForQuestion('J004').delayedReview.successes!==0||c.model.state.reviewSchedule.J004.stage!==0)throw Error('unqualified clock review counted');
+                if(c.rpg.state.rewardedIds.some(id=>id.startsWith('@event:review-success:J004:')))throw Error('unqualified review bonus');
+                clock=due;c.start('J004',{fresh:true});c.view.applyRetryDraft(c.questions.J004,c.questions.J004.answer);
+                if(c.submit()===false||c.model.state.learningContinuityState.today.reviewSuccessCount!==count+1||c.model.learningEffectivenessForQuestion('J004').delayedReview.successes!==1||c.model.state.reviewSchedule.J004.stage!==1)throw Error('due review did not count exactly once');
+              }finally{Date.now=originalNow;}
+              return {rpgOverflowRollback:true,clockRollbackQualified:true};
+            });
+            assert.deepStrictEqual(numericalBoundaries,{rpgOverflowRollback:true,clockRollbackQualified:true});
             const corruptBefore=await page.evaluate(()=>{
               const c=window.App.controller,values=Object.fromEntries([c.model.key,c.rpg.key].map(key=>[key,localStorage.getItem(key)]));
               localStorage.setItem(`${c.model.key}:pending-answer-v1`,'{bad');return values;
@@ -162,7 +187,7 @@ async function run(){
               values:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)])),journal:localStorage.getItem(`${window.App.controller.model.key}:pending-answer-v1`)}),Object.keys(corruptBefore));
             assert.strictEqual(corruptAfter.blocked,true);assert.deepStrictEqual(corruptAfter.values,corruptBefore);assert.strictEqual(corruptAfter.journal,'{bad');
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,...numericalBoundaries,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

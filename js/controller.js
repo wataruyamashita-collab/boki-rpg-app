@@ -456,7 +456,13 @@
       let staged = false;
       try {
         model.save = rpg.save = () => true;
-        staged = operation() !== false && root.ProgressModel.validateBackupState(model.state,this.questions);
+        staged = operation() !== false && root.ProgressModel.validateBackupState(model.state,this.questions) &&
+          // Runtime amounts include signed metrics (the Accepted negative NPV).
+          // Keep that behavior while checking the existing RPG reward/mastery
+          // bounds before either half of the saved pair can be committed.
+          Number.isFinite(rpg.state.totalTransactionAmount) && root.RPGModel.validateBackupState({
+            ...rpg.state, totalTransactionAmount:Math.abs(rpg.state.totalTransactionAmount)
+          });
       } catch (_) { staged = false; }
       finally { for (const item of saves) { if(item.own)item.object.save=item.save;else delete item.object.save; } }
       if (!staged) { restoreMemory(); return false; }
@@ -1162,7 +1168,9 @@
       const previousProgress = { level:this.rpg.level, role:this.rpg.role };
       let rewardOutcome;
       const saved = Controller.prototype.learningTransaction.call(this, () => {
-        const recorded = this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, Boolean(this.reviewSourceId && score.correct), answeredAt, reviewStage, confidence,
+        const delayedSuccess = Boolean(score.correct && this.reviewSourceId &&
+          this.model.qualifiedDelayedReview?.(question.id,this.reviewSourceId,answeredAt,this.model.state.mode));
+        const recorded = this.model.recordAttempt?.(question.id, score.correct, responseMs, wrongType, delayedSuccess, answeredAt, reviewStage, confidence,
           { mode:this.model.state.mode, support, observationNumber:this.learningObservationNumber, reviewSourceId:this.reviewSourceId });
         if (recorded === false) return false;
         if (this.model.state.mode === 'exam') {

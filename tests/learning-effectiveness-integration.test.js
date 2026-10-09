@@ -165,6 +165,43 @@ test('revision 1–3 cannot attach current evidence to pre-identity content',()=
     assert.strictEqual(loaded.save(),false);assert.strictEqual(store.value,bytes);
   }
 });
+for(const key of ['xp','sureCorrect','sureWrong','unsureCorrect','unsureWrong'])test(`accepted safe-integer ${key} boundary cannot overflow on answer`,()=>{
+    const {ctx,model,rpg,store}=context();const correct=!key.endsWith('Wrong'),sure=key.startsWith('sure');
+    if(key==='xp')rpg.state.xp=Number.MAX_SAFE_INTEGER;else rpg.state.confidenceOutcomes[key]=Number.MAX_SAFE_INTEGER;
+    assert(RPG.validateBackupState(rpg.state),'the starting character is a valid backup');
+    model.save();rpg.save();ctx.rpg=new RPG(store,'r');assert.deepStrictEqual(ctx.rpg.state,rpg.state);
+    ctx.view.readAnswer=()=>({correct,debit:[],credit:[]});ctx.document.querySelector=()=>({value:sure?'sure':'unsure'});
+    const before=clone(model.state),character=clone(ctx.rpg.state),bytes=clone(store.data);
+    assert.strictEqual(ctx.submit(),false,key);assert.deepStrictEqual(clone(model.state),before);assert.deepStrictEqual(clone(ctx.rpg.state),character);
+    assert.deepStrictEqual(store.data,bytes);assert.deepStrictEqual(new RPG(store,'r').state,character);assert.strictEqual(ctx.learningFlow.phase,'I');
+});
+test('the last safe XP and confidence increments still commit exactly once',()=>{
+  const {ctx,model,rpg,store}=context();rpg.state.xp=Number.MAX_SAFE_INTEGER-20;rpg.state.confidenceOutcomes.unsureCorrect=Number.MAX_SAFE_INTEGER-1;
+  model.save();rpg.save();assert.notStrictEqual(ctx.submit(),false);assert.strictEqual(rpg.state.xp,Number.MAX_SAFE_INTEGER);assert.strictEqual(rpg.state.confidenceOutcomes.unsureCorrect,Number.MAX_SAFE_INTEGER);
+  assert.deepStrictEqual(new RPG(store,'r').state,rpg.state);const bytes=clone(store.data);ctx.learningFlow.phase='I';ctx.submitting=false;
+  assert.strictEqual(ctx.submit(),false);assert.deepStrictEqual(store.data,bytes);
+});
+test('finite imported mastery cannot become an infinite staged total',()=>{
+  const {ctx,model,rpg,store}=context();rpg.state.mastery['仕訳']={earned:1e308,possible:1e308};model.save();rpg.save();assert(RPG.validateBackupState(rpg.state));
+  const progress=clone(model.state),character=clone(rpg.state),bytes=clone(store.data);
+  assert.strictEqual(ctx.learningTransaction(()=>{rpg.recordMastery(questions.Q,{earned:1e308,possible:1e308});return true;}),false);
+  assert.deepStrictEqual(clone(model.state),progress);assert.deepStrictEqual(clone(rpg.state),character);assert.deepStrictEqual(store.data,bytes);
+});
+test('clock rollback before the review due time records an answer without a review success',()=>{
+  const {ctx,model,rpg,store}=context('review'),due=Date.now()+1000;let clock=due;
+  model.state.reviewSchedule.Q={stage:1,dueAt:due};model.assignReview('Q','R',due);ctx.reviewMappings.set('R',{sourceQuestionId:'Q'});
+  sandbox.Date=class extends Date{static now(){return clock;}};
+  try{
+    ctx.start('R');const schedule=clone(model.state.reviewSchedule),assignment=clone(model.state.reviewAssignments),xp=rpg.state.xp;
+    clock=due-1;assert.notStrictEqual(ctx.submit(),false);assert.strictEqual(model.state.attempts.at(-1).delayedSuccess,false);
+    assert.strictEqual(model.state.learningContinuityState.today.reviewSuccessCount,0);assert.strictEqual(model.learningEffectivenessForQuestion('Q').delayedReview.successes,0);
+    assert.deepStrictEqual(model.state.reviewSchedule,schedule);assert.deepStrictEqual(model.state.reviewAssignments,assignment);assert.strictEqual(rpg.state.xp,xp+20,'ordinary first-answer XP is unchanged');
+    assert(!rpg.state.rewardedIds.some(id=>id.startsWith('@event:review-success:')),'no unqualified review bonus');
+    const reloaded=new Model(questions,store,'p');assert.strictEqual(reloaded.state.learningContinuityState.today.reviewSuccessCount,0);
+    clock=due;ctx.start('R');assert.notStrictEqual(ctx.submit(),false);assert.strictEqual(model.state.learningContinuityState.today.reviewSuccessCount,1);
+    assert.strictEqual(model.learningEffectivenessForQuestion('Q').delayedReview.successes,1);assert.strictEqual(model.state.reviewSchedule.Q.stage,2);assert.strictEqual(rpg.state.xp,xp+22,'qualified review adds its existing bonus once');
+  }finally{delete sandbox.Date;}
+});
 async function backupTests(){
   const {ctx,model,rpg,store}=context();ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});ctx.submit();
   const payload={format:'boki-rpg-backup',version:1,progress:clone(model.state),character:clone(rpg.state)};

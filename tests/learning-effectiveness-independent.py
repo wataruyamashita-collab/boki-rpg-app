@@ -23,7 +23,7 @@ for index in range(1200):
 driver = r"""
 const fs=require('fs'),Model=require('./js/model');
 const events=JSON.parse(fs.readFileSync(0,'utf8'));
-const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState];
+const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState,state.reviewSchedule,state.reviewAssignments];
 const questions={Q:{type:'journal',category:'x'},R:{type:'journal',category:'x'},T:{type:'ledger',category:'x',table:{inputCells:['a','b']}}};
 const run=legacy=>{
  let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};
@@ -77,7 +77,7 @@ for result in [*actual.values(), *exam_actual.values()]:
         unit = int.from_bytes(encoded[index:index+2], 'little')
         fingerprint = ((fingerprint ^ unit) * 16777619) & 0xffffffff
     assert result['schema'] == 3
-    assert result['integrity'] == {'schemaVersion': 3, 'signature': f'{fingerprint:08x}'}
+    assert result['integrity'] == {'schemaVersion': 4, 'signature': f'{fingerprint:08x}'}
     integrity_checked += 1
 exam_checked = 0
 exam_sessions = [(10000, 20000, [('E0', True, 10010), ('E1', False, 10020)]),
@@ -185,14 +185,14 @@ expected_continuity = continuity_from_ledger(events)
 assert len(expected_continuity['activeDayKeys']) == 30
 continuity_checked = 0
 for result in actual.values():
-    assert result['integrityInput'][-1] == expected_continuity
+    assert result['integrityInput'][6] == expected_continuity
     continuity_checked += 1
 exam_ledger = []
 for start, end, answers in exam_sessions:
     exam_ledger.extend(dict(id=qid, correct=correct, at=at) for qid, correct, at in answers)
     exam_ledger.extend(dict(id='E14', correct=True, at=end+i) for i in range(201))
 for result in exam_actual.values():
-    assert result['integrityInput'][-1] == continuity_from_ledger(exam_ledger)
+    assert result['integrityInput'][6] == continuity_from_ledger(exam_ledger)
     continuity_checked += 1
 print(json.dumps(dict(status='PASS', events_per_origin=len(events), origins=list(actual), question_aggregates_checked=checks,
                       replay_rejections=2*len(events), outer_integrity_records_checked=integrity_checked, continuity_records_checked=continuity_checked,
