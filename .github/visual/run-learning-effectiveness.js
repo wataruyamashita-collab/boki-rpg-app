@@ -16,6 +16,16 @@ const legacyExam=(()=>{
   const nonPoolTransfer=Object.values(questions).find(q=>q.learningRole==='transfer'&&!pool.includes(q.id));assert(nonPoolTransfer);
   return {progress:JSON.parse(JSON.stringify(model.state)),outside:['J001',nonPoolTransfer.id]};
 })();
+const legacyMistakes=(()=>{
+  const old={window:{}};vm.runInNewContext(fs.readFileSync(path.join(ROOT,'data/questions.js'),'utf8'),old);
+  vm.runInNewContext(cp.execFileSync('git',['show','86135e34047c7356aa2a020d5221ca14f205c4d9:js/model.js'],{cwd:ROOT,encoding:'utf8'}),old);
+  const model=new old.window.ProgressModel(old.window.QuestionData,{getItem:()=>null,setItem:()=>true});
+  assert(model.recordAttempt('J001',false,10,'journal-entry',false,1000));model.record('J001',false,1000);
+  for(let i=0;i<201;i++)assert(model.recordAttempt('J002',true,10,'',false,2000+i));
+  assert.strictEqual(model.state.learningEvidenceIntegrity.schemaVersion,7);assert.strictEqual(model.state.mistakeCounts.J001,1);
+  assert(!model.state.attempts.some(row=>row.questionId==='J001'));assert(old.window.ProgressModel.validateBackupState(model.state,old.window.QuestionData));
+  return JSON.parse(JSON.stringify(model.state));
+})();
 const evidence={status:'RUNNING',head:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),reports:[]};
 const write=()=>{fs.mkdirSync(OUTPUT,{recursive:true});fs.writeFileSync(path.join(OUTPUT,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');};
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
@@ -44,14 +54,18 @@ async function run(){
               const pair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
               const badPlacement=JSON.parse(JSON.stringify(progress));badPlacement.placement=null;
               const badExams=legacy.outside.map(id=>{const bad=JSON.parse(JSON.stringify(legacy.progress));bad.examSession.ids[1]=id;return bad;});
-              for(const bad of [badPlacement,...badExams]){
+              const inflatedMistakes=JSON.parse(JSON.stringify(legacy.mistakes));inflatedMistakes.mistakeCounts.J001=999;
+              const missingMistakes=JSON.parse(JSON.stringify(legacy.mistakes));delete missingMistakes.mistakeCounts.J001;
+              for(const bad of [badPlacement,...badExams,inflatedMistakes,missingMistakes]){
                 if(await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress:bad,character})})!==false)throw Error('incomplete placement or legacy exam accepted');
                 if(localStorage.getItem(c.model.key)!==pair[0]||localStorage.getItem(c.rpg.key)!==pair[1])throw Error('rejected legacy import changed saved pair');
               }
               const migrated=ProgressModel.prepareBackupState(legacy.progress,c.questions);
               if(!migrated||JSON.stringify(migrated.examSession)!==JSON.stringify(legacy.progress.examSession))throw Error('valid legacy exam migration lost session');
+              const migratedMistakes=ProgressModel.prepareBackupState(legacy.mistakes,c.questions);
+              if(!migratedMistakes||migratedMistakes.mistakeCounts.J001!==1||JSON.stringify(migratedMistakes.learningEffectiveness)!==JSON.stringify(legacy.mistakes.learningEffectiveness))throw Error('valid legacy mistake migration changed evidence');
               return progress.placement;
-            },legacyExam);
+            },{...legacyExam,mistakes:legacyMistakes});
             await page.reload({waitUntil:'load'});await page.waitForFunction(()=>Boolean(window.App?.controller));
             assert.deepStrictEqual(await page.evaluate(()=>App.controller.model.state.placement),placement);
             assert.strictEqual(await page.evaluate(()=>App.controller.model.state.attempts.length),0);
@@ -271,7 +285,7 @@ async function run(){
               values:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)])),journal:localStorage.getItem(`${window.App.controller.model.key}:pending-answer-v1`)}),Object.keys(corruptBefore));
             assert.strictEqual(corruptAfter.blocked,true);assert.deepStrictEqual(corruptAfter.values,corruptBefore);assert.strictEqual(corruptAfter.journal,'{bad');
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,examHistoryImportRejected:true,activeExamImportRejected:true,legacyExamPoolImportRejected:true,legacyExamMigration:true,initialPlacementPreserved:true,initialPlacementImportRejected:true,mistakeTotalsImportRejected:true,mistakeBadgesAndFiltersPreserved:true,activeExamResume:true,expiredExamAndRetry:true,...numericalBoundaries,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,examHistoryImportRejected:true,activeExamImportRejected:true,legacyExamPoolImportRejected:true,legacyExamMigration:true,initialPlacementPreserved:true,initialPlacementImportRejected:true,mistakeTotalsImportRejected:true,legacyMistakeBoundsImportRejected:true,legacyMistakeMigration:true,mistakeBadgesAndFiltersPreserved:true,activeExamResume:true,expiredExamAndRetry:true,...numericalBoundaries,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

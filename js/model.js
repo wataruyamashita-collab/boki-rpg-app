@@ -240,6 +240,20 @@
         if (!exam || exam.observationNumber !== score?.observationNumber || exam.correct !== score.correct ||
             !sameExamIdentity(exam.session,examIdentity(state))) return false;
       }
+      if (integrity && integrity.schemaVersion < 8 && complete) {
+        // Old markers did not bind finalized mistake totals. Reject contradictions
+        // to their protected observations, without inventing a completion count.
+        // A failed review is counted on its source, not necessarily its answer ID.
+        const mistakes = state.mistakeCounts;
+        if (!mistakes || typeof mistakes !== 'object' || Array.isArray(mistakes)) return false;
+        for (const [id,count] of Object.entries(mistakes)) {
+          const item = evidence.questions[id], wrong = item?.incorrectCount || 0;
+          const reviewFailures = item ? item.delayedReview.attempts - item.delayedReview.successes : 0;
+          if (!Object.hasOwn(questions,id) || !Number.isSafeInteger(count) || count <= 0 ||
+              (count > wrong && count - wrong > reviewFailures)) return false;
+        }
+        if (Array.isArray(state.incorrectIds) && state.incorrectIds.some(id => !(mistakes[id] > 0))) return false;
+      }
       return ['answeredIds','correctIds','incorrectIds'].every(key => Array.isArray(state[key]) && (!complete || state[key].every(id => {
         const item = evidence.questions[id];
         if (!item) return false;

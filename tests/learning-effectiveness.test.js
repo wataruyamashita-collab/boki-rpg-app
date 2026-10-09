@@ -532,5 +532,36 @@ test('real v7 evicted mistake totals migrate, reload and increment without infer
   assert(answer(model,'Q',true,4000));model.record('Q',true,4000);model=new Model(questions,store,'test');assert.strictEqual(model.state.mistakeCounts.Q,4);
   assert(Model.validateBackupState(model.state,questions));assert.deepStrictEqual(Model.prepareBackupState(model.state,questions),model.state);
 });
+test('unsigned v7 mistake totals cannot contradict protected complete-history evidence',()=>{
+  const vm=require('vm'),module={exports:{}};vm.runInNewContext(require('child_process').execFileSync('git',['show','86135e34047c7356aa2a020d5221ca14f205c4d9:js/model.js'],{encoding:'utf8'}),{module,console});
+  const old=new module.exports(questions,storage(),'test');assert(old.recordAttempt('Q',false,10,'journal-entry',false,1000));old.record('Q',false,1000);
+  for(let i=0;i<201;i++)assert(old.recordAttempt('T',true,10,'',false,2000+i));
+  const original=clone(old.state);assert.strictEqual(original.learningEvidenceIntegrity.schemaVersion,7);assert(Model.validateBackupState(original,questions));
+  for(const mutate of [v=>v.mistakeCounts.Q=999,v=>v.mistakeCounts.Q=2,v=>delete v.mistakeCounts.Q]){
+    const bad=clone(original);mutate(bad);assert(module.exports.validateBackupState(bad,questions),'the original v7 format does not bind this total');
+    assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+    const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert(loaded.model.storageWriteBlocked);assert.strictEqual(loaded.store.value,bytes);
+  }
+});
+test('legacy mistake bounds preserve review sources, unfinished answers and unknown history',()=>{
+  const vm=require('vm'),module={exports:{}};vm.runInNewContext(require('child_process').execFileSync('git',['show','86135e34047c7356aa2a020d5221ca14f205c4d9:js/model.js'],{encoding:'utf8'}),{module,console});
+  const old=new module.exports(questions,storage(),'test');assert(old.recordAttempt('Q',false,10,'journal-entry',false,1000));old.record('Q',false,1000);
+  const due=old.state.reviewSchedule.Q.dueAt;old.assignReview('Q','R',due-1);old.state.mode='review';
+  assert(old.recordAttempt('R',false,10,'journal-entry',false,due,0,'unsure',{mode:'review',support:'none',reviewSourceId:'Q'}));assert(old.completeReview('Q',false,due,'R'));
+  assert.strictEqual(old.state.mistakeCounts.Q,2);assert.strictEqual(old.state.questionStats.Q.incorrectCount,1);assert.strictEqual(old.state.learningEffectiveness.questions.Q.delayedReview.attempts,1);
+  const original=clone(old.state),migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.deepStrictEqual(migrated.mistakeCounts,{Q:2});
+  const excess=clone(original);excess.mistakeCounts.Q=3;assert.strictEqual(Model.prepareBackupState(excess,questions),null);
+  const catalog={...questions,...Object.fromEntries(Array.from({length:12},(_,i)=>['E'+i,{...questions.Q,id:'E'+i}]))},pool=Object.keys(catalog);
+  const pending=new module.exports(catalog,storage(),'test',pool);pending.state.mode='exam';pending.state.examSession={ids:pool,startedAt:100,endAt:3000,status:'RUNNING',evidenceVersion:1,scores:{}};
+  assert(pending.recordAttempt('Q',false,10,'journal-entry',false,2000,null,'unsure',{mode:'exam',support:'none'}));
+  pending.state.examSession.scores.Q={correct:false,earned:0,possible:1,ratio:0,observationNumber:1};pending.refreshEvidenceIntegrity();
+  assert.deepStrictEqual(clone(pending.state.mistakeCounts),{});const pendingPrepared=Model.prepareBackupState(clone(pending.state),catalog,pool);assert(pendingPrepared);assert.deepStrictEqual(pendingPrepared.mistakeCounts,{});assert.deepStrictEqual(pendingPrepared.answeredIds,[]);
+  assert.deepStrictEqual(pendingPrepared.examSession,clone(pending.state.examSession));
+  const legacy=clone(new module.exports(questions,storage(),'test').state);delete legacy.learningEvidenceIntegrity;delete legacy.learningEffectiveness;legacy.learningSchemaVersion=2;
+  legacy.mistakeCounts={Q:999};legacy.answeredIds=['Q'];legacy.incorrectIds=['Q'];
+  const unknown=new module.exports(questions,storage(JSON.stringify(legacy)),'test');assert.strictEqual(unknown.state.learningEffectiveness.initialHistory,'unknown');
+  const unknownPrepared=Model.prepareBackupState(clone(unknown.state),questions);assert(unknownPrepared);assert.deepStrictEqual(unknownPrepared.mistakeCounts,{Q:999});
+  const restored=fresh(JSON.stringify(unknownPrepared)).model;assert.strictEqual(restored.state.mistakeCounts.Q,999);assert.strictEqual(restored.learningEffectivenessForQuestion('Q').firstAttempt,null);
+});
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;
