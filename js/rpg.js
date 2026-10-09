@@ -13,7 +13,7 @@
       const nonnegativeInteger = item => Number.isSafeInteger(item) && item >= 0;
       if (!plain(value) || !nonnegativeInteger(value.xp) || !Array.isArray(value.rewardedIds) || value.rewardedIds.some(id => typeof id !== 'string') || !plain(value.mastery)) return false;
       if (Object.values(value.mastery).some(item => !plain(item) || !Number.isFinite(item.earned) || item.earned < 0 || !Number.isFinite(item.possible) || item.possible < item.earned)) return false;
-      if (!Number.isFinite(value.companyHP) || value.companyHP < 0 || value.companyHP > 100 || !Number.isFinite(value.totalTransactionAmount) || value.totalTransactionAmount < 0) return false;
+      if (!Number.isFinite(value.companyHP) || value.companyHP < 0 || value.companyHP > 100 || !Number.isFinite(value.totalTransactionAmount)) return false;
       if (value.confidenceOutcomes !== undefined) {
         if (!plain(value.confidenceOutcomes)) return false;
         for (const key of ['sureCorrect', 'sureWrong', 'unsureCorrect', 'unsureWrong']) if (!nonnegativeInteger(value.confidenceOutcomes[key])) return false;
@@ -36,7 +36,7 @@
             ? Object.fromEntries(Object.entries(saved.mastery).filter(([, value]) => value &&
               Number.isFinite(value.earned) && value.earned >= 0 && Number.isFinite(value.possible) && value.possible >= value.earned)) : {},
           companyHP: Number.isFinite(saved.companyHP) ? Math.max(0, Math.min(100, saved.companyHP)) : 100,
-          totalTransactionAmount: Number.isFinite(saved.totalTransactionAmount) && saved.totalTransactionAmount >= 0 ? saved.totalTransactionAmount : 0,
+          totalTransactionAmount: Number.isFinite(saved.totalTransactionAmount) ? saved.totalTransactionAmount : 0,
           confidenceOutcomes: this.validConfidenceOutcomes(saved.confidenceOutcomes)
         };
       } catch (_) { /* An unavailable/corrupt store starts a clean character. */ }

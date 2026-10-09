@@ -85,8 +85,11 @@ async function run(){
               const changedContinuity=JSON.parse(JSON.stringify(progress));changedContinuity.learningContinuityState.today.attempts++;
               if(!Object.keys(progress.reviewSchedule).length)throw Error('pending review fixture missing');
               const lostReview=JSON.parse(JSON.stringify(progress));lostReview.reviewSchedule={};lostReview.reviewAssignments={};
+              isolated.state.examHistory=[{finishedAt:3000,points:80,setSignature:'native-set-a'}];isolated.updateCompletion(c.rpg);
+              if(!window.ProgressModel.validateBackupState(isolated.state,c.questions))throw Error('issued exam history fixture invalid');
+              const lostExamHistory=JSON.parse(JSON.stringify(isolated.state));lostExamHistory.examHistory=[];
               const beforePair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
-              for(const bad of [missing,downgraded,unmarked,lostUnknown,lostFlags,changedLatest,changedContinuity,lostReview]){
+              for(const bad of [missing,downgraded,unmarked,lostUnknown,lostFlags,changedLatest,changedContinuity,lostReview,lostExamHistory]){
                 const result=await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress:bad,character})});
                 if(result!==false||localStorage.getItem(c.model.key)!==beforePair[0]||localStorage.getItem(c.rpg.key)!==beforePair[1])throw Error('bad evidence changed native saved state');
               }
@@ -187,7 +190,7 @@ async function run(){
               values:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)])),journal:localStorage.getItem(`${window.App.controller.model.key}:pending-answer-v1`)}),Object.keys(corruptBefore));
             assert.strictEqual(corruptAfter.blocked,true);assert.deepStrictEqual(corruptAfter.values,corruptBefore);assert.strictEqual(corruptAfter.journal,'{bad');
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,...numericalBoundaries,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,examHistoryImportRejected:true,...numericalBoundaries,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

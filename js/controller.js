@@ -457,12 +457,7 @@
       try {
         model.save = rpg.save = () => true;
         staged = operation() !== false && root.ProgressModel.validateBackupState(model.state,this.questions) &&
-          // Runtime amounts include signed metrics (the Accepted negative NPV).
-          // Keep that behavior while checking the existing RPG reward/mastery
-          // bounds before either half of the saved pair can be committed.
-          Number.isFinite(rpg.state.totalTransactionAmount) && root.RPGModel.validateBackupState({
-            ...rpg.state, totalTransactionAmount:Math.abs(rpg.state.totalTransactionAmount)
-          });
+          root.RPGModel.validateBackupState(rpg.state);
       } catch (_) { staged = false; }
       finally { for (const item of saves) { if(item.own)item.object.save=item.save;else delete item.object.save; } }
       if (!staged) { restoreMemory(); return false; }

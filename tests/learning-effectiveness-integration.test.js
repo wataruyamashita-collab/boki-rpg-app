@@ -103,6 +103,8 @@ test('Accepted isolated negative NPV keeps its existing reward behavior when pro
   assert.notStrictEqual(ctx.submit(),false);assert.strictEqual(ctx.model.learningEffectivenessForQuestion(q.id).correctCount,1);
   assert.strictEqual(ctx.rpg.state.totalTransactionAmount,-5870);assert(ctx.rpg.state.rewardedIds.includes(q.id));
   assert(Model.validateBackupState(ctx.model.state,catalog));
+  assert(RPG.validateBackupState(ctx.rpg.state),'the actual signed reward result must be restorable');
+  assert.deepStrictEqual(new RPG(store,'r').state,ctx.rpg.state,'reload retains signed totals and every earned reward');
 });
 test('a staged invalid exam outcome cannot commit progress or RPG side effects',()=>{
   const {ctx}=context('exam'),ids=Object.keys(canonical).slice(0,15),store=values(),model=new Model(canonical,store,'p'),rpg=new RPG(store,'r'),now=Date.now();
@@ -202,6 +204,43 @@ test('clock rollback before the review due time records an answer without a revi
     assert.strictEqual(model.learningEffectivenessForQuestion('Q').delayedReview.successes,1);assert.strictEqual(model.state.reviewSchedule.Q.stage,2);assert.strictEqual(rpg.state.xp,xp+22,'qualified review adds its existing bonus once');
   }finally{delete sandbox.Date;}
 });
+test('a completed exam cannot lose its history or passed set in an issued backup',()=>{
+  const {ctx,model}=context('exam');ctx.stopExamTimer=()=>{};ctx.view.examResult=()=>{};ctx.unansweredExamIds=()=>[];
+  for(const id of Object.keys(questions)){
+    const observationNumber=model.nextLearningObservation(id);assert(model.recordAttempt(id,true,10,'',false,Date.now(),null,'unsure',{mode:'exam',support:'none',observationNumber}));
+    model.state.examSession.scores[id]={correct:true,earned:1,possible:1,ratio:1,answer:{correct:true},observationNumber};
+  }
+  assert(ctx.finishExam(true));assert.strictEqual(model.state.examHistory.length,1);assert.strictEqual(model.state.examHistory[0].points,100);assert(model.state.examHistory[0].setSignature);
+  const original=clone(model.state);assert(Model.validateBackupState(original,questions));
+  for(const mutate of [v=>v.examHistory=[],v=>v.examHistory[0].points=69,v=>delete v.examHistory[0].setSignature,v=>v.examHistory[0].finishedAt++]){
+    const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);
+    assert.strictEqual(Model.prepareBackupState(bad,questions),null);const store=values(),bytes=JSON.stringify(bad);store.data.p=bytes;
+    assert(new Model(questions,store,'p').storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
+  }
+});
+test('finite signed transaction totals survive reload and remain valid backups',()=>{
+  for(const amount of [-5870,-0.5,0,4130,Number.MAX_VALUE]){
+    const store=values(),rpg=new RPG(store,'r');rpg.state.totalTransactionAmount=amount;rpg.save();
+    assert(RPG.validateBackupState(rpg.state));assert.deepStrictEqual(new RPG(store,'r').state,rpg.state);
+  }
+});
+test('nonfinite and nonnumeric transaction totals remain rejected and normalize safely',()=>{
+  for(const amount of [NaN,Infinity,-Infinity,'-5870',null]){
+    const store=values(),rpg=new RPG(store,'r');rpg.state.totalTransactionAmount=amount;
+    assert.strictEqual(RPG.validateBackupState(rpg.state),false);rpg.save();assert.strictEqual(new RPG(store,'r').state.totalTransactionAmount,0);
+  }
+});
+async function signedBackupTests(){
+  const {ctx}=context(),q=require('./fixtures/foundation-extension-cases').npvNegative,catalog={[q.id]:q},store=values();
+  ctx.questions=catalog;ctx.model=new Model(catalog,store,'p');ctx.rpg=new RPG(store,'r');ctx.model.state.mode='training';
+  ctx.view.readAnswer=()=>({...clone(q.answer),correct:true});ctx.start(q.id);assert.notStrictEqual(ctx.submit(),false);
+  const payload={format:'boki-rpg-backup',version:1,progress:clone(ctx.model.state),character:clone(ctx.rpg.state)},beforeReloads=reloads;
+  assert.strictEqual(payload.character.totalTransactionAmount,-5870);
+  assert.strictEqual(await ctx.importBackup({text:async()=>JSON.stringify(payload)}),true);assert.strictEqual(reloads,beforeReloads+1);
+  assert.deepStrictEqual(new RPG(store,'r').state,payload.character);
+  assert.deepStrictEqual(new Model(catalog,store,'p').state.learningEffectiveness,payload.progress.learningEffectiveness);
+  passed++;console.log('PASS actual signed NPV backup imports and reloads without losing rewards');
+}
 async function backupTests(){
   const {ctx,model,rpg,store}=context();ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});ctx.submit();
   const payload={format:'boki-rpg-backup',version:1,progress:clone(model.state),character:clone(rpg.state)};
@@ -213,7 +252,7 @@ async function backupTests(){
   payload.progress.learningEffectiveness.schemaVersion=99;const saved=JSON.stringify(store.data);assert.strictEqual(await ctx.importBackup(file),false);assert.strictEqual(JSON.stringify(store.data),saved);assert.strictEqual(reloads,1);
   passed++;console.log('PASS real two-key backup transaction preserves evidence and rolls back failures');
 }
-backupTests().catch(error=>{failed++;console.error(error.stack);}).finally(()=>{test('a transplanted active exam score cannot add a second history or mastery result',()=>{
+backupTests().then(signedBackupTests).catch(error=>{failed++;console.error(error.stack);}).finally(()=>{test('a transplanted active exam score cannot add a second history or mastery result',()=>{
   const {ctx,model,rpg,store}=context('exam');ctx.stopExamTimer=()=>{};ctx.view.examResult=()=>{};ctx.submit();
   const priorSession=clone(model.state.examSession);assert(ctx.finishExam(true));
   model.state.examSession={...priorSession,startedAt:priorSession.startedAt+100000,endAt:priorSession.endAt+100000};

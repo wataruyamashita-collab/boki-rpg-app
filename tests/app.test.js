@@ -74,7 +74,7 @@ const corruptStorage = { getItem(key) { return corruptValues[key] || null; }, se
 const recoveredProgress = new ProgressModel({ J1: {} }, corruptStorage);
 assert.deepStrictEqual([recoveredProgress.state.mode, recoveredProgress.state.answeredIds.length, recoveredProgress.state.completed], ['story', 0, false], '破損した進捗の各フィールドを安全な初期値へ戻す');
 const recoveredRpg = new RPGModel(corruptStorage);
-assert.deepStrictEqual([recoveredRpg.state.xp, recoveredRpg.state.rewardedIds.length, recoveredRpg.state.companyHP, recoveredRpg.state.totalTransactionAmount], [0, 0, 0, 0], '破損したRPG状態を型検証し範囲内へ補正する');
+assert.deepStrictEqual([recoveredRpg.state.xp, recoveredRpg.state.rewardedIds.length, recoveredRpg.state.companyHP, recoveredRpg.state.totalTransactionAmount], [0, 0, 0, -1], '不正なXP・報酬・HPを補正し、有限な符号付き累計金額は保持する');
 const graduationQuestions = { J1:{ type:'journal' } };
 for (const [prefix, type] of Object.entries({ L:'ledger', W:'worksheet', F:'financial_statement', C:'comprehensive' })) {
   for (let index = 1; index <= 3; index += 1) graduationQuestions[`${prefix}${index}`] = {
