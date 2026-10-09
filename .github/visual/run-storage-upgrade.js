@@ -8,12 +8,13 @@ const evidence={status:'RUNNING',head:cp.execFileSync('git',['rev-parse','HEAD']
 const write=()=>{fs.mkdirSync(OUT,{recursive:true});fs.writeFileSync(path.join(OUT,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');};
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
 const server=http.createServer((req,res)=>{
-  const relative=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html',file=path.resolve(ROOT,relative);
+  const request=new URL(req.url,'http://localhost'),oldRequest=legacy||request.pathname==='/legacy.html'||request.searchParams.get('v')==='20260924-179';
+  const relative=request.pathname==='/legacy.html'?'index.html':request.pathname.slice(1)||'index.html',file=path.resolve(ROOT,relative);
   if(!file.startsWith(ROOT+path.sep)||!fs.existsSync(file)||fs.statSync(file).isDirectory()){res.writeHead(404);return res.end();}
   try{
-    if(legacy&&!legacyFiles.has(relative))legacyFiles.set(relative,cp.execFileSync('git',['show',BASE+':'+relative],{cwd:ROOT}));
+    if(oldRequest&&!legacyFiles.has(relative))legacyFiles.set(relative,cp.execFileSync('git',['show',BASE+':'+relative],{cwd:ROOT}));
     res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.setHeader('cache-control','no-store');
-    res.end(legacy?legacyFiles.get(relative):fs.readFileSync(file));
+    res.end(oldRequest?legacyFiles.get(relative):fs.readFileSync(file));
   }catch(error){res.writeHead(500);res.end(String(error));}
 });
 async function run(){
@@ -52,6 +53,26 @@ async function run(){
           assert.strictEqual(migrated.metric.initialStatus,'unknown');assert.strictEqual(migrated.metric.firstAttempt,null);
           await current.evaluate(()=>{const c=window.App.controller;c.model.state.mode='training';c.start('J002',{fresh:true});c.view.applyRetryDraft(c.questions.J002,c.questions.J002.answer);c.submit();});
           const saved=await current.evaluate(()=>{const c=window.App.controller;return {metric:c.model.learningEffectivenessForQuestion('J002'),character:c.rpg.state};});assert.strictEqual(saved.metric.observedAttempts,1);
+          const protectedPair=await current.evaluate(()=>{const c=window.App.controller;return {progress:localStorage.getItem(c.model.key),character:localStorage.getItem(c.rpg.key),keys:[c.model.key,c.rpg.key]};});
+          assert.deepStrictEqual(protectedPair.keys,['boki-rpg-progress-v3','boki-rpg-character-v2']);
+          // Execute the unchanged old release after migration. This models a
+          // late old writer without claiming that Playwright restored BFCache.
+          const late=await context.newPage();late.on('pageerror',error=>errors.push(String(error)));
+          await late.goto(url+'legacy.html',{waitUntil:'load'});await late.waitForFunction(()=>Boolean(window.App?.controller));
+          const lateSaved=await late.evaluate(()=>{
+            const c=window.App.controller;c.model.state.mode='training';c.start('J003',{fresh:true});c.view.applyRetryDraft(c.questions.J003,c.questions.J003.answer);c.submit();
+            return {release:document.querySelector('script[src*="js/app.js"]').getAttribute('src'),keys:[c.model.key,c.rpg.key],observations:c.model.state.questionStats.J003.correctCount,
+              source:localStorage.getItem(c.model.key),lockHeld:Boolean(window.App.storageOwnership)};
+          });
+          assert(lateSaved.release.includes('20260924-179'));assert.strictEqual(lateSaved.lockHeld,false);
+          assert.deepStrictEqual(lateSaved.keys,['boki-rpg-progress-v2','boki-rpg-character-v1']);assert.strictEqual(lateSaved.observations,1);
+          await current.waitForFunction(()=>!document.getElementById('storage-warning').hidden&&document.getElementById('storage-warning').textContent.includes('以前の版'));
+          const afterLate=await current.evaluate(()=>{const c=window.App.controller;return {progress:localStorage.getItem(c.model.key),character:localStorage.getItem(c.rpg.key),keys:[c.model.key,c.rpg.key]};});
+          assert.deepStrictEqual(afterLate,protectedPair);await late.close();
+          await current.reload({waitUntil:'load'});await current.waitForFunction(()=>Boolean(window.App?.controller));
+          const isolated=await current.evaluate(()=>{const c=window.App.controller;return {metric:c.model.learningEffectivenessForQuestion('J002'),character:c.rpg.state,
+            oldAnswerMerged:Boolean(c.model.state.questionStats.J003),legacy:localStorage.getItem('boki-rpg-progress-v2')};});
+          assert.deepStrictEqual({metric:isolated.metric,character:isolated.character},saved);assert.strictEqual(isolated.oldAnswerMerged,false);assert.strictEqual(isolated.legacy,lateSaved.source);
           // Remove the real origin, including existing connections. This tests
           // cache fallback without relying on a browser-driver offline flag.
           const port=server.address().port,stopped=new Promise(resolve=>server.close(resolve));server.closeAllConnections();await stopped;
@@ -61,7 +82,7 @@ async function run(){
           const offline=await current.evaluate(()=>{const c=window.App.controller;return {metric:c.model.learningEffectivenessForQuestion('J002'),character:c.rpg.state};});
           assert.deepStrictEqual(offline,saved);assert.deepStrictEqual(errors,[]);
           await new Promise(resolve=>server.listen(port,'127.0.0.1',resolve));
-          evidence.reports.push({engine,priorRelease:'20260924-179',partialWriteProtected:true,legacyStatsPreserved:true,rewardsPreserved:true,firstRemainsUnknown:true,networkUnavailableReload:true,networkFailure,browserOfflineFlagUsed:false,pageErrors:errors});write();
+          evidence.reports.push({engine,priorRelease:'20260924-179',partialWriteProtected:true,legacyStatsPreserved:true,rewardsPreserved:true,firstRemainsUnknown:true,lateLegacyWriterIsolated:true,legacyForkPreserved:true,legacyChangeNotice:true,bfcacheRestorationTested:false,networkUnavailableReload:true,networkFailure,browserOfflineFlagUsed:false,pageErrors:errors});write();
         }finally{await context.close();}
       }finally{await browser.close();}
     }

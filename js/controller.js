@@ -4,12 +4,16 @@
     .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
     .replace(/，/g, ',');
   const validAmountText = value => value === '' || /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(value);
-  const transactionSignature = value => {
+  const textSignature = text => {
     let hash = 2166136261;
-    const text = JSON.stringify([value.schemaVersion,value.progressKey,value.characterKey,value.progress,value.character]);
     for (let index=0; index<text.length; index++) hash = Math.imul(hash ^ text.charCodeAt(index),16777619) >>> 0;
     return hash.toString(16).padStart(8,'0');
   };
+  const transactionSignature = value => textSignature(JSON.stringify([value.schemaVersion,value.progressKey,value.characterKey,value.progress,value.character]));
+  const progressKey='boki-rpg-progress-v3',characterKey='boki-rpg-character-v2';
+  const legacyKeys=['boki-rpg-progress-v2','boki-rpg-character-v1','boki-rpg-progress-v2:pending-answer-v1'];
+  const legacySignatureKey=progressKey+':legacy-source-v1';
+  const primaryKey=key=>key===progressKey||key===characterKey;
   const getStorage = () => {
     const reportFailure = () => root.dispatchEvent?.(new Event('boki-storage-error'));
     try {
@@ -17,21 +21,35 @@
       if (!storage) { queueMicrotask(reportFailure); return null; }
       const ownership = root.App?.storageOwnership;
       const owned = () => !ownership || ownership.active;
-      let writable = true;
+      let writable = true,namespaceReady=false;
       const adapter = {
-        getItem(key) { if (!owned()) return null; try { return storage.getItem(key); } catch (_) { return null; } },
-        readItem(key) { if (!owned()) return {ok:false,value:null}; try { return { ok:true, value:storage.getItem(key) }; } catch (_) { return { ok:false, value:null }; } },
+        progressKey,characterKey,resetKeys:[progressKey,characterKey,...legacyKeys,legacySignatureKey],
+        getItem(key) { const result=this.readItem(key);return result.ok?result.value:null; },
+        hasItem(key) { return owned()&&storage.getItem(key)!==null; },
+        readItem(key) {
+          if (!owned()) return {ok:false,value:null};
+          try {
+            const value=storage.getItem(key);
+            if(namespaceReady&&primaryKey(key)&&value===null)return {ok:false,value:null};
+            return {ok:true,value:primaryKey(key)&&value==='null'?null:value};
+          } catch (_) { return {ok:false,value:null}; }
+        },
         setItem(key, value) {
           if (!writable || !owned()) return false;
           try { storage.setItem(key, value); return true; }
           catch (_) { writable = false; reportFailure(); return false; }
         },
-        removeItem(key) { if (!owned()) return false; try { storage.removeItem(key); return true; } catch (_) { return false; } },
-        restoreItem(key, value) { if (!owned()) return false; try { if (value === null) storage.removeItem(key); else storage.setItem(key, value); return true; } catch (_) { reportFailure(); return false; } }
+        removeItem(key) { if (!owned()) return false; try { if(primaryKey(key))storage.setItem(key,'null');else storage.removeItem(key);return true; } catch (_) { return false; } },
+        restoreItem(key, value) { if (!owned()) return false; try { if(value===null&&primaryKey(key))storage.setItem(key,'null');else if(value===null)storage.removeItem(key);else storage.setItem(key,value);return true; } catch (_) { reportFailure(); return false; } },
+        legacyChanged() {
+          if(!owned()||!writable||!namespaceReady)return false;
+          try { const values=legacyKeys.map(key=>storage.getItem(key));return values.some(value=>value!==null)&&storage.getItem(legacySignatureKey)!==textSignature(JSON.stringify(values)); }
+          catch(_){return false;}
+        }
       };
-      if (!Controller.recoverAnswerTransaction(adapter)) {
+      if (!Controller.initializeStorageNamespace(adapter,root.App?.storageMigrationSnapshot||Controller.captureStorageNamespace())) {
         writable = false; adapter.readItem = () => ({ok:false,value:null}); adapter.getItem = () => null; queueMicrotask(reportFailure);
-      }
+      } else { namespaceReady=true;queueMicrotask(()=>{if(adapter.legacyChanged())root.dispatchEvent?.(new Event('boki-legacy-storage-conflict'));}); }
       return adapter;
     } catch (_) { queueMicrotask(reportFailure); return null; }
   };
@@ -51,7 +69,7 @@
     constructor(document, questions) {
       this.document = document; this.questions = questions; this.ids = Object.keys(questions); this.view = new root.AppView(document);
       const storage = getStorage();
-      this.model = new root.ProgressModel(questions, storage); this.rpg = new root.RPGModel(storage); this.currentId = null; this.questionStartedAt = null; this.reviewSourceId = null; this.reviewMappings = new Map(); this.expression = '0'; this.calculatorTarget = null; this.examTimerId = null;
+      this.model = new root.ProgressModel(questions, storage,storage?.progressKey); this.rpg = new root.RPGModel(storage,storage?.characterKey); this.currentId = null; this.questionStartedAt = null; this.reviewSourceId = null; this.reviewMappings = new Map(); this.expression = '0'; this.calculatorTarget = null; this.examTimerId = null;
       this.calculator = { accumulator: null, operator: null, waitingForOperand: false, lastOperator: null, lastOperand: null };
       this.calculatorPositionFrame = null;
       this.filters = { query: '', account: '', mistakes: 'all' };
@@ -59,6 +77,36 @@
       this.learningFlow = null;
       // 問題データは起動中不変なので、300問の監査は初期化時に一度だけ行う。
       this.semanticAudit = root.validateSemanticQuestionData(this.questions);
+    }
+    static captureStorageNamespace() {
+      const storage=root.localStorage;
+      if([progressKey,characterKey,progressKey+':pending-answer-v1'].some(key=>storage.getItem(key)!==null))return {kind:'current'};
+      return {kind:'legacy',values:legacyKeys.map(key=>storage.getItem(key))};
+    }
+    static initializeStorageNamespace(storage,snapshot) {
+      const io=Controller.prototype;
+      if(!Controller.recoverAnswerTransaction(storage,progressKey,characterKey))return false;
+      const present=[progressKey,characterKey].map(key=>storage.hasItem(key));
+      if(present.some(Boolean)){
+        const pair=[progressKey,characterKey].map(key=>io.storageRead(storage,key));
+        return present.every(Boolean)&&pair.every(item=>item.ok)&&!(pair[0].value===null&&pair[1].value!==null);
+      }
+      if(snapshot?.kind!=='legacy'||snapshot.values.length!==legacyKeys.length)return false;
+      const raw=legacyKeys.map(key=>io.storageRead(storage,key));
+      if(raw.some((item,index)=>!item.ok||item.value!==snapshot.values[index]))return false;
+      // Recover old before-images in memory. The old release's physical keys
+      // remain untouched, even if a suspended old heap later resumes writing.
+      const values=Object.fromEntries(legacyKeys.map((key,index)=>[key,snapshot.values[index]]));
+      const memory={getItem:key=>values[key]??null,setItem(key,value){values[key]=value;},removeItem(key){delete values[key];}};
+      if(!Controller.recoverAnswerTransaction(memory,legacyKeys[0],legacyKeys[1]))return false;
+      const progress=values[legacyKeys[0]]??null,character=values[legacyKeys[1]]??null;
+      if(progress===null&&character!==null)return false;
+      try { for(const rawValue of [progress,character])if(rawValue!==null){const value=JSON.parse(rawValue);if(!value||typeof value!=='object'||Array.isArray(value))return false;} }
+      catch(_){return false;}
+      const pending={schemaVersion:1,progressKey,characterKey,progress,character};
+      if(!io.storageWrite(storage,legacySignatureKey,textSignature(JSON.stringify(snapshot.values)))||
+          !io.storageWrite(storage,progressKey+':pending-answer-v1',JSON.stringify({...pending,signature:transactionSignature(pending)})))return false;
+      return Controller.recoverAnswerTransaction(storage,progressKey,characterKey)&&[progressKey,characterKey].every(key=>storage.hasItem(key));
     }
     narrativeScenesForQuestion(question) {
       if (this.model?.state?.mode !== 'story' || !question) return [];
@@ -178,6 +226,13 @@
       this.document.getElementById('placement-form').addEventListener('submit', event => { event.preventDefault(); this.finishPlacement(); });
       this.document.getElementById('backup-import')?.addEventListener('change', event => this.importBackup(event.target.files?.[0]));
       root.addEventListener?.('boki-storage-error', () => { const warning = this.document.getElementById('storage-warning'); if (warning) warning.hidden = false; });
+      const legacyNotice=()=>{
+        if(!this.model.storage?.legacyChanged?.())return;
+        const warning=this.document.getElementById('storage-warning');
+        if(warning){warning.textContent='以前の版の保存データに変更が見つかりました。この画面の記録は保護されています。古い画面を閉じ、必要なら古い画面でもバックアップを保存してください。';warning.hidden=false;}
+      };
+      root.addEventListener?.('boki-legacy-storage-conflict',legacyNotice);
+      root.addEventListener?.('storage',event=>{if(event.key===null||legacyKeys.includes(event.key))legacyNotice();});
     }
     openSettings() {
       const migration = this.document.getElementById('content-migration-status');
@@ -205,19 +260,27 @@
     resetLearningData() {
       const status = this.document.getElementById('backup-status');
       const recovered = this.model.storage !== this.rpg.storage || Controller.recoverAnswerTransaction(this.model.storage,this.model.key,this.rpg.key);
-      const progressSnapshot = this.storageRead(this.model.storage, this.model.key);
-      const characterSnapshot = this.storageRead(this.rpg.storage, this.rpg.key);
-      if (!recovered || !progressSnapshot.ok || !characterSnapshot.ok) {
+      const targets=this.model.storage===this.rpg.storage&&this.model.storage?.resetKeys
+        ? this.model.storage.resetKeys.map(key=>({storage:this.model.storage,key}))
+        : [{storage:this.model.storage,key:this.model.key},{storage:this.rpg.storage,key:this.rpg.key}];
+      const snapshots=targets.map(item=>({...item,...this.storageRead(item.storage,item.key)}));
+      if (!recovered || snapshots.some(item=>!item.ok)) {
         if (status) { status.textContent = '保存データを安全に確認できないため、初期化しませんでした。'; status.classList.add('storage-error'); }
         this.openSettings(); return false;
       }
-      const progressRemoved = this.storageRemove(this.model.storage, this.model.key);
-      const characterRemoved = progressRemoved && this.storageRemove(this.rpg.storage, this.rpg.key);
-      if (!progressRemoved || !characterRemoved) {
-        const progressRolledBack = this.storageRestore(this.model.storage, this.model.key, progressSnapshot.value);
-        const characterRolledBack = this.storageRestore(this.rpg.storage, this.rpg.key, characterSnapshot.value);
+      // Keep the current pair recoverable if the document closes during reset.
+      // Legacy cleanup is rolled back on an observed failure; old writers still
+      // cannot alter either current key after a completed reset.
+      const journalKey=this.model.storage===this.rpg.storage&&this.model.storage?.resetKeys?this.model.key+':pending-answer-v1':null;
+      const pending={schemaVersion:1,progressKey:this.model.key,characterKey:this.rpg.key,
+        progress:snapshots[0].value,character:snapshots[1].value};
+      const prepared=!journalKey||this.storageWrite(this.model.storage,journalKey,JSON.stringify({...pending,signature:transactionSignature(pending)}));
+      if (!prepared || !snapshots.every(item=>this.storageRemove(item.storage,item.key)) ||
+          (journalKey&&!this.storageRemove(this.model.storage,journalKey))) {
+        const restored=snapshots.map(item=>this.storageRestore(item.storage,item.key,item.value)).every(Boolean);
+        if(restored&&journalKey)this.storageRemove(this.model.storage,journalKey);
         if (status) {
-          status.textContent = progressRolledBack && characterRolledBack
+          status.textContent = restored
             ? '初期化できなかったため、元の学習データへ戻しました。'
             : '初期化に失敗し、元の保存状態も完全には戻せませんでした。JSONバックアップがある場合は復元してください。';
           status.classList.add('storage-error');
@@ -371,7 +434,7 @@
         // rollback therefore remains recoverable on the next launch.
         for (const [name, target] of [['progress',progressKey],['character',characterKey]]) {
           const current = io.storageRead(storage, target);
-          if (!current.ok || (current.value !== value[name] && !io.storageRestore(storage, target, value[name]))) return false;
+          if (!current.ok || ((current.value !== value[name] || (storage.hasItem&&!storage.hasItem(target))) && !io.storageRestore(storage, target, value[name]))) return false;
         }
         return typeof storage?.removeItem === 'function' ? io.storageRemove(storage,key) : io.storageWrite(storage,key,'');
       } catch (_) { return false; }

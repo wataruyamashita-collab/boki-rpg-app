@@ -40,8 +40,8 @@ async function run(){
               const c=window.App.controller,s=c.model.state;
               return {revision:s.contentRevision,stats:c.model.statsForQuestion(id),draft:s.drafts[id]||null,
                 archive:s.contentMigrationArchive,continuity:s.learningContinuityState,recheck:s.contentRecheckIds,
-                valid:window.ProgressModel.validateBackupState(s,window.QuestionData),stored:JSON.parse(localStorage.getItem('boki-rpg-progress-v2')),
-                character:JSON.parse(localStorage.getItem('boki-rpg-character-v1'))};
+                valid:window.ProgressModel.validateBackupState(s,window.QuestionData),stored:JSON.parse(localStorage.getItem(c.model.key)),
+                character:JSON.parse(localStorage.getItem(c.rpg.key))};
             },id);
             const first=await inspect();assert.strictEqual(first.revision,4);assert(first.valid);
             assert.deepStrictEqual(first.continuity,progress.learningContinuityState);

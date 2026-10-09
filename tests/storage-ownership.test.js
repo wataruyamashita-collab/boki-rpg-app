@@ -3,7 +3,15 @@ const assert = require('assert'), fs = require('fs'), vm = require('vm');
 const {MessageChannel} = require('worker_threads');
 const Model = require('../js/model'), RPG = require('../js/rpg');
 const questions = {Q:{id:'Q',type:'journal',category:'仕訳',difficulty:1}};
-const progressKey = 'boki-rpg-progress-v2', characterKey = 'boki-rpg-character-v1';
+const legacyProgressKey='boki-rpg-progress-v2',legacyCharacterKey='boki-rpg-character-v1';
+const progressKey='boki-rpg-progress-v3',characterKey='boki-rpg-character-v2';
+const isolatedProgressKey='boki-rpg-progress-v3',isolatedCharacterKey='boki-rpg-character-v2';
+function legacyFixture(f) {
+  const load=file=>{const module={exports:{}};vm.runInNewContext(require('child_process').execFileSync('git',['show','81088e2ad3bc96a6ff5bd995e6dfcfb58a4fd62f:'+file],{encoding:'utf8'}),{module,console});return module.exports;};
+  const LegacyModel=load('js/model.js'),LegacyRPG=load('js/rpg.js');
+  const model=new LegacyModel(questions,f.storage),rpg=new LegacyRPG(f.storage);
+  model.recordAttempt('Q',false,10,'journal-entry',false,Date.now());model.save();rpg.save();return {model,rpg};
+}
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function fixture() {
   const data = {}, storage = {reads:0,getItem(k){this.reads++;return data[k]??null;},setItem(k,v){data[k]=v;},removeItem(k){delete data[k];}};
@@ -93,6 +101,132 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS '+name);}
     await a.app.init();await tick();
     try{assert.strictEqual(a.app.controller,undefined);assert.strictEqual(f.storage.reads,0);assert.deepStrictEqual(f.data,{[progressKey]:'original'});assert.strictEqual(a.warning.hidden,false);}
     finally{a.fire('pagehide');}
+  });
+  await test('a preserved Release179 heap cannot overwrite the current learning store when it resumes',async()=>{
+    const loadLegacy=file=>{
+      const source=require('child_process').execFileSync('git',['show','81088e2ad3bc96a6ff5bd995e6dfcfb58a4fd62f:'+file],{encoding:'utf8'});
+      const module={exports:{}};vm.runInNewContext(source,{module,console});return module.exports;
+    };
+    const LegacyModel=loadLegacy('js/model.js'),LegacyRPG=loadLegacy('js/rpg.js');
+    const f=fixture(),legacyModel=new LegacyModel(questions,f.storage),legacyRpg=new LegacyRPG(f.storage);
+    legacyModel.recordAttempt('Q',false,10,'journal-entry',false,Date.now());legacyModel.save();legacyRpg.save();
+    // Hold the actual old models in memory while no legacy WindowClient is
+    // visible, then resume their unchanged save methods after the new answer.
+    const a=tab(f),b=tab(f);await a.app.init();const current=a.app.controller;
+    try{
+      assert(current.learningTransaction(()=>{assert(current.model.recordAttempt('Q',true,10,'',false,Date.now()));current.rpg.state.xp+=20;return true;}));
+      assert.strictEqual(current.model.learningEffectivenessForQuestion('Q').observedAttempts,1);
+      legacyModel.save();legacyRpg.save();
+      a.fire('pagehide');await b.app.init();
+      assert.strictEqual(b.app.controller.model.learningEffectivenessForQuestion('Q').observedAttempts,1,'the resumed old heap must not erase the new observation');
+      assert.strictEqual(b.app.controller.rpg.state.xp,20,'the resumed old heap must not erase the new reward');
+    }finally{a.fire('pagehide');b.fire('pagehide');}
+  });
+  await test('a legacy source changed during startup is preserved and cannot become an assumed stable baseline',async()=>{
+    const f=fixture();legacyFixture(f);const original=f.data[legacyProgressKey],changed=JSON.stringify({...JSON.parse(original),mode:'training'}),get=f.storage.getItem;
+    let changedOnce=false;f.storage.getItem=function(key){const value=get.call(this,key);if(key===legacyCharacterKey&&!changedOnce){changedOnce=true;f.data[legacyProgressKey]=changed;}return value;};
+    const a=tab(f);await a.app.init();await tick();
+    try{assert(changedOnce);assert(a.app.controller.model.storageWriteBlocked);assert.strictEqual(f.data[legacyProgressKey],changed);assert.strictEqual(f.data[isolatedProgressKey],undefined);assert.strictEqual(f.data[isolatedCharacterKey],undefined);}
+    finally{a.fire('pagehide');}
+  });
+  await test('an interrupted legacy copy recovers its original baseline without changing legacy bytes',async()=>{
+    const f=fixture();legacyFixture(f);const before={progress:f.data[legacyProgressKey],character:f.data[legacyCharacterKey]},set=f.storage.setItem;let fail=true;
+    f.storage.setItem=function(key,value){if(fail&&key===isolatedCharacterKey)throw Error('copy interrupted');set.call(this,key,value);};
+    const a=tab(f),b=tab(f);await a.app.init();await tick();
+    try{
+      assert(a.app.controller.model.storageWriteBlocked);assert(f.data[isolatedProgressKey+':pending-answer-v1']);
+      assert.strictEqual(f.data[legacyProgressKey],before.progress);assert.strictEqual(f.data[legacyCharacterKey],before.character);
+      a.fire('pagehide');fail=false;await b.app.init();assert(!b.app.controller.model.storageWriteBlocked);
+      assert.strictEqual(b.app.controller.model.state.questionStats.Q.incorrectCount,1);assert.strictEqual(b.app.controller.model.learningEffectivenessForQuestion('Q').initialStatus,'unknown');
+      assert.strictEqual(f.data[isolatedProgressKey+':pending-answer-v1'],undefined);assert.strictEqual(f.data[legacyProgressKey],before.progress);assert.strictEqual(f.data[legacyCharacterKey],before.character);
+    }finally{a.fire('pagehide');b.fire('pagehide');}
+  });
+  await test('a missing new-store half never silently falls back to the legacy store',async()=>{
+    const f=fixture();legacyFixture(f);const a=tab(f),b=tab(f);await a.app.init();a.app.controller.model.save();a.app.controller.rpg.save();a.fire('pagehide');
+    delete f.data[isolatedCharacterKey];const before=JSON.stringify(f.data);await b.app.init();await tick();
+    try{assert(b.app.controller.model.storageWriteBlocked);assert.strictEqual(JSON.stringify(f.data),before);}
+    finally{b.fire('pagehide');}
+  });
+  await test('reset clears both generations and a later legacy save cannot resurrect reset learning',async()=>{
+    const f=fixture(),old=legacyFixture(f),a=tab(f),b=tab(f);await a.app.init();
+    try{
+      assert(a.app.controller.resetLearningData());assert.strictEqual(f.data[legacyProgressKey],undefined);assert.strictEqual(f.data[legacyCharacterKey],undefined);
+      a.fire('pagehide');old.model.save();old.rpg.save();await b.app.init();
+      assert.deepStrictEqual(Object.keys(b.app.controller.model.state.questionStats),[]);assert.strictEqual(b.app.controller.rpg.state.xp,0);
+      assert(!b.app.controller.model.storageWriteBlocked);
+    }finally{a.fire('pagehide');b.fire('pagehide');}
+  });
+  await test('an orphaned legacy character does not invent a fresh initial-performance history',async()=>{
+    const f=fixture();legacyFixture(f);delete f.data[legacyProgressKey];const before=JSON.stringify(f.data),a=tab(f);await a.app.init();await tick();
+    try{assert(a.app.controller.model.storageWriteBlocked);assert.strictEqual(JSON.stringify(f.data),before);}
+    finally{a.fire('pagehide');}
+  });
+  await test('reset failure at every physical key restores both generations byte for byte',async()=>{
+    for(let boundary=0;boundary<6;boundary++){
+      const f=fixture();legacyFixture(f);const a=tab(f);await a.app.init();const c=a.app.controller;
+      try{
+        c.model.save();c.rpg.save();const before={...f.data},keys=c.model.storage.resetKeys;assert.strictEqual(keys.length,6);
+        const set=f.storage.setItem,remove=f.storage.removeItem;let failed=false;
+        const fail=key=>{if(key===keys[boundary]&&!failed){failed=true;throw Error('reset boundary '+boundary);}};
+        f.storage.setItem=function(key,value){fail(key);return set.call(this,key,value);};
+        f.storage.removeItem=function(key){fail(key);return remove.call(this,key);};
+        c.openSettings=()=>{};
+        assert.strictEqual(c.resetLearningData(),false);assert(failed);assert.deepStrictEqual(f.data,before);assert.strictEqual(a.reloads,0);
+      }finally{a.fire('pagehide');}
+    }
+  });
+  await test('corrupt legacy journal blocks migration and preserves every source byte',async()=>{
+    const f=fixture();legacyFixture(f);f.data[legacyProgressKey+':pending-answer-v1']='{bad';const before={...f.data},a=tab(f);await a.app.init();await tick();
+    try{assert(a.app.controller.model.storageWriteBlocked);assert.deepStrictEqual(f.data,before);}
+    finally{a.fire('pagehide');}
+  });
+  await test('valid interrupted legacy journal is recovered into the new namespace only',async()=>{
+    const f=fixture(),old=legacyFixture(f),baseline={progress:f.data[legacyProgressKey],character:f.data[legacyCharacterKey]};
+    const pending={schemaVersion:1,progressKey:legacyProgressKey,characterKey:legacyCharacterKey,...baseline};
+    const text=JSON.stringify([1,legacyProgressKey,legacyCharacterKey,baseline.progress,baseline.character]);let hash=2166136261;
+    for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619)>>>0;
+    f.data[legacyProgressKey+':pending-answer-v1']=JSON.stringify({...pending,signature:hash.toString(16).padStart(8,'0')});
+    old.model.recordAttempt('Q',true,10,'',false,Date.now());old.model.save();const source={...f.data},a=tab(f);await a.app.init();
+    try{
+      assert.strictEqual(a.app.controller.model.state.questionStats.Q.correctCount,0);assert.strictEqual(a.app.controller.model.state.questionStats.Q.incorrectCount,1);
+      assert.strictEqual(a.app.controller.model.learningEffectivenessForQuestion('Q').initialStatus,'unknown');
+      for(const [key,value] of Object.entries(source))assert.strictEqual(f.data[key],value);
+      assert(!f.data[progressKey+':pending-answer-v1']);
+    }finally{a.fire('pagehide');}
+  });
+  await test('fresh-store copy interrupted before its second tombstone cannot import later legacy data',async()=>{
+    const f=fixture(),set=f.storage.setItem;let fail=true;
+    f.storage.setItem=function(key,value){if(fail&&key===characterKey)throw Error('new store interrupted');return set.call(this,key,value);};
+    const a=tab(f),b=tab(f);await a.app.init();
+    try{
+      assert(a.app.controller.model.storageWriteBlocked);assert(f.data[progressKey+':pending-answer-v1']);a.fire('pagehide');fail=false;legacyFixture(f);
+      await b.app.init();assert(!b.app.controller.model.storageWriteBlocked);assert.deepStrictEqual(b.app.controller.model.state.questionStats,{});
+      assert.strictEqual(b.app.controller.model.learningEffectivenessForQuestion('Q').initialStatus,'unanswered');assert(!f.data[progressKey+':pending-answer-v1']);
+    }finally{a.fire('pagehide');b.fire('pagehide');}
+  });
+  await test('unreadable legacy data prevents startup and all namespace writes',async()=>{
+    const f=fixture();legacyFixture(f);const before={...f.data},get=f.storage.getItem;
+    f.storage.getItem=function(key){if(key===legacyProgressKey)throw Error('read denied');return get.call(this,key);};
+    const a=tab(f);await a.app.init();
+    try{assert.strictEqual(a.app.controller,undefined);assert.strictEqual(a.warning.hidden,false);assert.deepStrictEqual(f.data,before);}
+    finally{a.fire('pagehide');}
+  });
+  await test('owner loss between reset writes recovers the previous learning and reward pair',async()=>{
+    const f=fixture(),a=tab(f),b=tab(f);await a.app.init();const c=a.app.controller;
+    assert(c.learningTransaction(()=>{c.model.recordAttempt('Q',true,10,'',false,Date.now());c.rpg.state.xp+=20;return true;}));
+    const before={progress:JSON.parse(f.data[progressKey]),character:JSON.parse(f.data[characterKey])},set=f.storage.setItem;let interrupted=false;
+    f.storage.setItem=function(key,value){set.call(this,key,value);if(key===progressKey&&value==='null'&&!interrupted){interrupted=true;a.fire('pagehide');}};
+    c.openSettings=()=>{};assert.strictEqual(c.resetLearningData(),false);await b.app.init();
+    try{
+      assert(interrupted);assert.strictEqual(b.app.controller.model.learningEffectivenessForQuestion('Q').observedAttempts,1);
+      assert.strictEqual(b.app.controller.model.learningEffectivenessForQuestion('Q').initialStatus,'observed');assert.strictEqual(b.app.controller.rpg.state.xp,20);
+      assert.deepStrictEqual(JSON.parse(f.data[progressKey]),before.progress);assert.deepStrictEqual(JSON.parse(f.data[characterKey]),before.character);assert(!f.data[progressKey+':pending-answer-v1']);
+    }finally{a.fire('pagehide');b.fire('pagehide');}
+  });
+  await test('a new-store empty progress marker with a remaining character fails closed',async()=>{
+    const f=fixture(),a=tab(f),b=tab(f);await a.app.init();a.app.controller.rpg.save();a.fire('pagehide');const before={...f.data};await b.app.init();
+    try{assert(b.app.controller.model.storageWriteBlocked);assert.deepStrictEqual(f.data,before);}
+    finally{b.fire('pagehide');}
   });
   console.log(`STORAGE_OWNERSHIP ${passed}/${passed+failed} PASS; ${failed} FAIL`);if(failed)process.exitCode=1;
 })();

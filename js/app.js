@@ -93,6 +93,9 @@
           if (ownership.closed) return;
           await this.waitForStorageClients(notice);
           if (ownership.closed) return;
+          this.storageMigrationSnapshot=root.AppController.captureStorageNamespace();
+          if(this.storageMigrationSnapshot.kind==='legacy')await this.waitForStorageClients(notice);
+          if (ownership.closed) return;
           ownership.active=true;
           if (warning) { warning.textContent=originalWarning; warning.hidden=true; }
           try { this.start(); finish(true); await lifetime; }
