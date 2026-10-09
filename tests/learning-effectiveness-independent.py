@@ -24,7 +24,7 @@ const questions={Q:{type:'journal',category:'x'},R:{type:'journal',category:'x'}
 const run=legacy=>{
  let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};
  let model=new Model(questions,store);
- if(legacy){const old=JSON.parse(JSON.stringify(model.state));delete old.learningEffectiveness;bytes=JSON.stringify(old);model=new Model(questions,store);}
+ if(legacy){const old=JSON.parse(JSON.stringify(model.state));delete old.learningEffectiveness;delete old.learningEvidenceIntegrity;old.learningSchemaVersion=2;bytes=JSON.stringify(old);model=new Model(questions,store);}
  for(const [i,e] of events.entries()){
   model.state.mode=e.mode;
   model.state.reviewSchedule.R={stage:e.stage,dueAt:e.due?e.at:e.at+1};
@@ -40,12 +40,12 @@ const run=legacy=>{
  }
  model=new Model(questions,store);
  if(!Model.validateBackupState(model.state,questions))throw Error('invalid final backup');
- return {evidence:model.state.learningEffectiveness,stats:model.state.questionStats,retained:model.state.attempts.length};
+ return {evidence:model.state.learningEffectiveness,integrity:model.state.learningEvidenceIntegrity,schema:model.state.learningSchemaVersion,stats:model.state.questionStats,retained:model.state.attempts.length};
 };
 const examRuns=legacy=>{
  const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{type:'journal',category:'x'}]));
  let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};let model=new Model(catalog,store);
- if(legacy){const old=JSON.parse(JSON.stringify(model.state));delete old.learningEffectiveness;bytes=JSON.stringify(old);model=new Model(catalog,store);}
+ if(legacy){const old=JSON.parse(JSON.stringify(model.state));delete old.learningEffectiveness;delete old.learningEvidenceIntegrity;old.learningSchemaVersion=2;bytes=JSON.stringify(old);model=new Model(catalog,store);}
  const sessions=[{startedAt:10000,endAt:20000,answers:[['E0',true,10010],['E1',false,10020]]},
    {startedAt:20000,endAt:30000,answers:[['E0',false,9000],['E2',true,20020]]},
    {startedAt:30000,endAt:40000,answers:[['E0',true,30010],['E1',true,30020]]}];
@@ -58,12 +58,22 @@ const examRuns=legacy=>{
   model.state.mode='training';for(let i=0;i<201;i++)if(!model.recordAttempt('E14',true,20,'',false,session.endAt+i,null,'unsure',{mode:'training',support:'none'}))throw Error('exam eviction');
   model=new Model(catalog,store);if(model.storageWriteBlocked||!Model.validateBackupState(model.state,catalog))throw Error('exam restore');
  }
- return {evidence:model.state.learningEffectiveness,retainedOnlyTraining:model.state.attempts.length===200&&model.state.attempts.every(row=>row.questionId==='E14')};
+ return {evidence:model.state.learningEffectiveness,integrity:model.state.learningEvidenceIntegrity,schema:model.state.learningSchemaVersion,retainedOnlyTraining:model.state.attempts.length===200&&model.state.attempts.every(row=>row.questionId==='E14')};
 };
 console.log(JSON.stringify({fresh:run(false),legacy:run(true),exams:{fresh:examRuns(false),legacy:examRuns(true)}}));
 """
 actual = json.loads(subprocess.check_output(['node', '-e', driver], cwd=ROOT, input=json.dumps(events), text=True))
 exam_actual = actual.pop('exams')
+integrity_checked = 0
+for result in [*actual.values(), *exam_actual.values()]:
+    encoded = json.dumps(result['evidence'], ensure_ascii=False, separators=(',', ':')).encode('utf-16-le')
+    fingerprint = 2166136261
+    for index in range(0, len(encoded), 2):
+        unit = int.from_bytes(encoded[index:index+2], 'little')
+        fingerprint = ((fingerprint ^ unit) * 16777619) & 0xffffffff
+    assert result['schema'] == 3
+    assert result['integrity'] == {'schemaVersion': 1, 'signature': f'{fingerprint:08x}'}
+    integrity_checked += 1
 exam_checked = 0
 exam_sessions = [(10000, 20000, [('E0', True, 10010), ('E1', False, 10020)]),
                  (20000, 30000, [('E0', False, 9000), ('E2', True, 20020)]),
@@ -155,4 +165,4 @@ for origin, result in actual.items():
         assert value['misconceptionStats'] == patterns, (origin, qid, value['misconceptionStats'], patterns)
         checks += 1
 print(json.dumps(dict(status='PASS', events_per_origin=len(events), origins=list(actual), question_aggregates_checked=checks,
-                      replay_rejections=2*len(events), exam_session_receipts_checked=exam_checked, retention_successes=sum(e['due'] and e['correct'] for e in events))))
+                      replay_rejections=2*len(events), outer_integrity_records_checked=integrity_checked, exam_session_receipts_checked=exam_checked, retention_successes=sum(e['due'] and e['correct'] for e in events))))

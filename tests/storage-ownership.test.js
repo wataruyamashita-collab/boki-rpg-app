@@ -147,10 +147,11 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS '+name);}
     try{assert(b.app.controller.model.storageWriteBlocked);assert.strictEqual(JSON.stringify(f.data),before);}
     finally{b.fire('pagehide');}
   });
-  await test('reset clears both generations and a later legacy save cannot resurrect reset learning',async()=>{
+  await test('reset preserves the old fork and a later legacy save cannot resurrect reset learning',async()=>{
     const f=fixture(),old=legacyFixture(f),a=tab(f),b=tab(f);await a.app.init();
     try{
-      assert(a.app.controller.resetLearningData());assert.strictEqual(f.data[legacyProgressKey],undefined);assert.strictEqual(f.data[legacyCharacterKey],undefined);
+      const legacy={progress:f.data[legacyProgressKey],character:f.data[legacyCharacterKey]};
+      assert(a.app.controller.resetLearningData());assert.strictEqual(f.data[legacyProgressKey],legacy.progress);assert.strictEqual(f.data[legacyCharacterKey],legacy.character);
       a.fire('pagehide');old.model.save();old.rpg.save();await b.app.init();
       assert.deepStrictEqual(Object.keys(b.app.controller.model.state.questionStats),[]);assert.strictEqual(b.app.controller.rpg.state.xp,0);
       assert(!b.app.controller.model.storageWriteBlocked);
@@ -161,17 +162,19 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS '+name);}
     try{assert(a.app.controller.model.storageWriteBlocked);assert.strictEqual(JSON.stringify(f.data),before);}
     finally{a.fire('pagehide');}
   });
-  await test('reset failure at every physical key restores both generations byte for byte',async()=>{
+  await test('reset rolls back each current write and never mutates any of the four legacy keys',async()=>{
     for(let boundary=0;boundary<6;boundary++){
       const f=fixture();legacyFixture(f);const a=tab(f);await a.app.init();const c=a.app.controller;
       try{
-        c.model.save();c.rpg.save();const before={...f.data},keys=c.model.storage.resetKeys;assert.strictEqual(keys.length,6);
+        c.model.save();c.rpg.save();const before={...f.data},keys=[progressKey,characterKey,legacyProgressKey,legacyCharacterKey,legacyProgressKey+':pending-answer-v1',progressKey+':legacy-source-v1'];assert.deepStrictEqual(Array.from(c.model.storage.resetKeys),keys.slice(0,2));
         const set=f.storage.setItem,remove=f.storage.removeItem;let failed=false;
         const fail=key=>{if(key===keys[boundary]&&!failed){failed=true;throw Error('reset boundary '+boundary);}};
         f.storage.setItem=function(key,value){fail(key);return set.call(this,key,value);};
         f.storage.removeItem=function(key){fail(key);return remove.call(this,key);};
         c.openSettings=()=>{};
-        assert.strictEqual(c.resetLearningData(),false);assert(failed);assert.deepStrictEqual(f.data,before);assert.strictEqual(a.reloads,0);
+        const reset=c.resetLearningData();
+        if(boundary<2){assert.strictEqual(reset,false);assert(failed);assert.deepStrictEqual(f.data,before);assert.strictEqual(a.reloads,0);}
+        else {assert.strictEqual(reset,true);assert.strictEqual(failed,false);for(const key of keys.slice(2))assert.strictEqual(f.data[key],before[key]);assert.strictEqual(f.data[progressKey],'null');assert.strictEqual(f.data[characterKey],'null');}
       }finally{a.fire('pagehide');}
     }
   });
@@ -227,6 +230,24 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS '+name);}
     const f=fixture(),a=tab(f),b=tab(f);await a.app.init();a.app.controller.rpg.save();a.fire('pagehide');const before={...f.data};await b.app.init();
     try{assert(b.app.controller.model.storageWriteBlocked);assert.deepStrictEqual(f.data,before);}
     finally{b.fire('pagehide');}
+  });
+  await test('failed reset cannot overwrite a later save from the actual old heap',async()=>{
+    const f=fixture(),old=legacyFixture(f),a=tab(f);await a.app.init();const c=a.app.controller;c.model.save();c.rpg.save();
+    const current={progress:f.data[progressKey],character:f.data[characterKey]},set=f.storage.setItem;let resumed=false,failed=false,later;
+    f.storage.setItem=function(key,value){
+      if(key===characterKey&&value==='null'&&!failed){failed=true;throw Error('reset write failure');}
+      set.call(this,key,value);
+      if(key===progressKey&&value==='null'&&!resumed){
+        resumed=true;old.model.recordAttempt('Q',true,10,'',false,Date.now());old.model.save();old.rpg.state.xp+=20;old.rpg.save();
+        later={progress:f.data[legacyProgressKey],character:f.data[legacyCharacterKey]};
+      }
+    };
+    c.openSettings=()=>{};
+    try{
+      assert.strictEqual(c.resetLearningData(),false);assert(resumed&&failed);
+      assert.strictEqual(f.data[legacyProgressKey],later.progress);assert.strictEqual(f.data[legacyCharacterKey],later.character);
+      assert.strictEqual(f.data[progressKey],current.progress);assert.strictEqual(f.data[characterKey],current.character);
+    }finally{a.fire('pagehide');}
   });
   console.log(`STORAGE_OWNERSHIP ${passed}/${passed+failed} PASS; ${failed} FAIL`);if(failed)process.exitCode=1;
 })();

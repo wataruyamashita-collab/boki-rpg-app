@@ -58,9 +58,9 @@ async function run(){
             await page.waitForFunction(()=>Boolean(window.App?.controller));
             const persisted=await page.evaluate(()=>{const c=window.App.controller;return {metric:c.model.learningEffectivenessForQuestion('J001'),rows:c.model.state.attempts.length,character:localStorage.getItem(c.rpg.key),valid:window.ProgressModel.validateBackupState(c.model.state,c.questions)};});
             assert(persisted.valid);assert.deepStrictEqual(persisted.metric,beforeReload.metric);assert.strictEqual(persisted.character,beforeReload.character);
-            await page.evaluate(()=>{
+            await page.evaluate(async()=>{
               const c=window.App.controller,progress=JSON.parse(JSON.stringify(c.model.state)),character=JSON.parse(JSON.stringify(c.rpg.state));
-              const legacyInput=JSON.parse(JSON.stringify(progress));delete legacyInput.learningEffectiveness;
+              const legacyInput=JSON.parse(JSON.stringify(progress));delete legacyInput.learningEffectiveness;delete legacyInput.learningEvidenceIntegrity;legacyInput.learningSchemaVersion=2;
               for(const row of legacyInput.attempts){delete row.mode;delete row.support;delete row.observationNumber;}
               const legacy=window.ProgressModel.prepareBackupState(legacyInput,c.questions);
               if(legacy.learningEffectiveness.initialHistory!=='unknown')throw Error('legacy coverage');
@@ -69,6 +69,21 @@ async function run(){
               const wrongRevision=JSON.parse(JSON.stringify(progress));wrongRevision.contentRevision=3;
               delete wrongRevision.questionContentVersions;delete wrongRevision.contentMigrationArchive;delete wrongRevision.contentRecheckIds;
               if(window.ProgressModel.prepareBackupState(wrongRevision,c.questions)!==null)throw Error('pre-identity evidence accepted');
+              const downgraded=JSON.parse(JSON.stringify(progress));delete downgraded.learningEffectiveness;
+              for(const row of downgraded.attempts){delete row.mode;delete row.support;delete row.observationNumber;}
+              const unmarked=JSON.parse(JSON.stringify(progress));delete unmarked.learningEvidenceIntegrity;
+              let isolatedBytes=JSON.stringify(legacy);
+              const isolated=new window.ProgressModel(c.questions,{getItem:()=>isolatedBytes,setItem:(_key,value)=>{isolatedBytes=value;return true;}},'isolated');
+              isolated.state.mode='training';
+              if(!isolated.recordAttempt('J002',false,10,'journal-entry',false,1000))throw Error('unknown observation');
+              for(let i=0;i<201;i++)if(!isolated.recordAttempt('J003',true,10,'',false,2000+i))throw Error('unknown eviction');
+              if(isolated.state.attempts.some(row=>row.questionId==='J002'))throw Error('row not evicted');
+              const lostUnknown=JSON.parse(JSON.stringify(isolated.state));delete lostUnknown.learningEffectiveness.questions.J002;
+              const beforePair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
+              for(const bad of [missing,downgraded,unmarked,lostUnknown]){
+                const result=await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress:bad,character})});
+                if(result!==false||localStorage.getItem(c.model.key)!==beforePair[0]||localStorage.getItem(c.rpg.key)!==beforePair[1])throw Error('bad evidence changed native saved state');
+              }
               progress.currentQuestionId='J003';
               window.evidenceBackup={format:'boki-rpg-backup',version:1,progress,character};
             });
@@ -143,7 +158,7 @@ async function run(){
               values:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)])),journal:localStorage.getItem(`${window.App.controller.model.key}:pending-answer-v1`)}),Object.keys(corruptBefore));
             assert.strictEqual(corruptAfter.blocked,true);assert.deepStrictEqual(corruptAfter.values,corruptBefore);assert.strictEqual(corruptAfter.journal,'{bad');
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

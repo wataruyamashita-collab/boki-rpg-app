@@ -23,7 +23,7 @@
       const owned = () => !ownership || ownership.active;
       let writable = true,namespaceReady=false;
       const adapter = {
-        progressKey,characterKey,resetKeys:[progressKey,characterKey,...legacyKeys,legacySignatureKey],
+        progressKey,characterKey,resetKeys:[progressKey,characterKey],
         getItem(key) { const result=this.readItem(key);return result.ok?result.value:null; },
         hasItem(key) { return owned()&&storage.getItem(key)!==null; },
         readItem(key) {
@@ -250,7 +250,7 @@
     }
     requestFullReset() {
       this.closeSettings();
-      return this.view.showNotice('端末に保存した学習進捗・回答履歴・復習予定・経験値・役職をすべて初期化します。元に戻せません。必要な場合は先にJSONバックアップを書き出してください。', {
+      return this.view.showNotice('この画面の学習進捗・回答履歴・復習予定・経験値・役職を初期化します。元に戻せません。旧版の画面に残る記録は削除しません。必要な場合は先にJSONバックアップを書き出してください。', {
         title:'学習データを初期化しますか？',
         cancelLabel:'戻る',
         confirmLabel:'初期化する',
@@ -269,8 +269,8 @@
         this.openSettings(); return false;
       }
       // Keep the current pair recoverable if the document closes during reset.
-      // Legacy cleanup is rolled back on an observed failure; old writers still
-      // cannot alter either current key after a completed reset.
+      // The legacy namespace is read-only: its uncooperative writers cannot be
+      // protected by a snapshot rollback or a non-atomic compare-and-restore.
       const journalKey=this.model.storage===this.rpg.storage&&this.model.storage?.resetKeys?this.model.key+':pending-answer-v1':null;
       const pending={schemaVersion:1,progressKey:this.model.key,characterKey:this.rpg.key,
         progress:snapshots[0].value,character:snapshots[1].value};

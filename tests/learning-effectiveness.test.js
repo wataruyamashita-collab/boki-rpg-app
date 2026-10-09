@@ -125,7 +125,7 @@ test('failed assisted save is retryable without duplicate recovery',()=>{
 });
 test('legacy migration preserves old aggregates without inventing a first observation',()=>{
   const {model:old}=fresh();answer(old,'Q',false,1000);for(let i=0;i<250;i++)answer(old,'Q',true,2000+i);
-  const legacy=clone(old.state);delete legacy.learningEffectiveness;for(const row of legacy.attempts){delete row.mode;delete row.support;delete row.observationNumber;}
+  const legacy=clone(old.state);delete legacy.learningEffectiveness;delete legacy.learningEvidenceIntegrity;legacy.learningSchemaVersion=2;for(const row of legacy.attempts){delete row.mode;delete row.support;delete row.observationNumber;}
   const oldStats=clone(legacy.questionStats);let {model,store}=fresh(JSON.stringify(legacy));
   assert.strictEqual(model.state.learningEffectiveness.initialHistory,'unknown');assert.strictEqual(evidence(model).initialStatus,'unknown');assert.strictEqual(evidence(model).firstAttempt,null);assert.strictEqual(evidence(model).observedAttempts,0);assert.deepStrictEqual(model.state.questionStats,oldStats);
   assert(answer(model,'Q',true,5000));assert.strictEqual(evidence(model).firstAttempt,null);assert.strictEqual(evidence(model).observedAttempts,1);
@@ -133,13 +133,13 @@ test('legacy migration preserves old aggregates without inventing a first observ
   const before=JSON.stringify(model.state);model=new Model(questions,store,'test');assert.strictEqual(JSON.stringify(model.state),before);
 });
 test('legacy migration save failure preserves old bytes and can retry safely',()=>{
-  const old=clone(fresh().model.state);delete old.learningEffectiveness;const bytes=JSON.stringify(old),store=storage(bytes),set=store.setItem;store.setItem=()=>false;
+  const old=clone(fresh().model.state);delete old.learningEffectiveness;delete old.learningEvidenceIntegrity;old.learningSchemaVersion=2;const bytes=JSON.stringify(old),store=storage(bytes),set=store.setItem;store.setItem=()=>false;
   const model=new Model(questions,store,'test');assert.strictEqual(store.value,bytes);assert.strictEqual(model.state.learningEffectiveness.initialHistory,'unknown');store.setItem=set;assert(model.save());assert.strictEqual(JSON.parse(store.value).learningEffectiveness.initialHistory,'unknown');
 });
 test('backup preparation round-trips current and old states without mutation',()=>{
   const {model}=fresh();answer(model,'Q',false,1000);model.recordAssistedRecovery('Q',1,1100);schedule(model);answer(model,'R',true,2000,{mode:'review',reviewSourceId:'Q'});
   const before=JSON.stringify(model.state);assert(Model.validateBackupState(model.state,questions));const result=Model.prepareBackupState(model.state,questions);assert.deepStrictEqual(result,model.state);assert.strictEqual(JSON.stringify(model.state),before);
-  const legacy=clone(model.state);delete legacy.learningEffectiveness;
+  const legacy=clone(model.state);delete legacy.learningEffectiveness;delete legacy.learningEvidenceIntegrity;legacy.learningSchemaVersion=2;
   for(const row of legacy.attempts){delete row.mode;delete row.support;delete row.observationNumber;}
   assert(Model.validateBackupState(legacy,questions));const migrated=Model.prepareBackupState(legacy,questions);assert.strictEqual(migrated.learningEffectiveness.initialHistory,'unknown');assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
 });
@@ -190,7 +190,7 @@ test('missing or reset complete-history entries cannot fabricate a new first ans
   }
 });
 test('legacy observed evidence cannot lose its receipt while retaining a tagged detail',()=>{
-  const legacy=clone(fresh().model.state);delete legacy.learningEffectiveness;const {model}=fresh(JSON.stringify(legacy));answer(model,'Q',false,1000);
+  const legacy=clone(fresh().model.state);delete legacy.learningEffectiveness;delete legacy.learningEvidenceIntegrity;legacy.learningSchemaVersion=2;const {model}=fresh(JSON.stringify(legacy));answer(model,'Q',false,1000);
   const bad=clone(model.state);delete bad.learningEffectiveness.questions.Q;assert.strictEqual(Model.validateBackupState(bad,questions),false);
 });
 test('a missing evidence root with new observation receipts is corruption, not a legacy save',()=>{
@@ -205,7 +205,7 @@ test('source finalization alone survives reload without becoming a graded first 
 });
 test('modern evidence cannot invoke legacy aggregation or continuity reconstruction',()=>{
   const {model}=fresh();for(let i=0;i<250;i++)answer(model,'Q',true,1000+i);const original=clone(model.state);
-  for(const mutate of [v=>delete v.learningSchemaVersion,v=>v.learningSchemaVersion=1,v=>v.learningSchemaVersion=0,
+  for(const mutate of [v=>delete v.learningSchemaVersion,v=>v.learningSchemaVersion=1,v=>v.learningSchemaVersion=2,v=>v.learningSchemaVersion=0,
     v=>delete v.learningContinuityState,v=>v.learningContinuityState={activeDayKeys:[],today:{}},v=>delete v.lastLearningAt]){
     const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
     const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert.strictEqual(loaded.model.save(),false);assert.strictEqual(loaded.store.value,bytes);
@@ -298,7 +298,7 @@ test('reverse review bindings remain bounded when latest receipts switch targets
 });
 test('legacy unfinished exam remains unknown while a new session requires its own receipt',()=>{
   const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{...questions.Q,id:'E'+i}]));
-  const old=new Model(catalog,storage(),'test').state;delete old.learningEffectiveness;old.mode='exam';
+  const old=new Model(catalog,storage(),'test').state;delete old.learningEffectiveness;delete old.learningEvidenceIntegrity;old.learningSchemaVersion=2;old.mode='exam';
   old.examSession={ids:Object.keys(catalog),startedAt:100,endAt:2000,status:'RUNNING',scores:{E0:{correct:true,earned:1,possible:1,ratio:1}}};
   const model=new Model(catalog,storage(JSON.stringify(old)),'test');assert(Model.validateBackupState(model.state,catalog));assert.strictEqual(model.learningEffectivenessForQuestion('E0').initialStatus,'unknown');
   model.state.examSession={...model.state.examSession,startedAt:3000,endAt:4000,evidenceVersion:1};assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
@@ -315,13 +315,45 @@ test('an active exam receipt survives eviction and clock rollback without invent
 });
 test('new answers in an unfinished legacy exam cannot lose their observation number',()=>{
   const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{...questions.Q,id:'E'+i}]));
-  const old=new Model(catalog,storage(),'test').state;delete old.learningEffectiveness;old.mode='exam';
+  const old=new Model(catalog,storage(),'test').state;delete old.learningEffectiveness;delete old.learningEvidenceIntegrity;old.learningSchemaVersion=2;old.mode='exam';
   old.examSession={ids:Object.keys(catalog),startedAt:100,endAt:2000,status:'RUNNING',scores:{E1:{correct:false,earned:0,possible:1,ratio:0}}};
   const model=new Model(catalog,storage(JSON.stringify(old)),'test');assert(answer(model,'E0',true,500,{mode:'exam'}));
   model.state.examSession.scores.E0={correct:true,earned:1,possible:1,ratio:1,observationNumber:1};assert(Model.validateBackupState(model.state,catalog));
   delete model.state.examSession.scores.E0.observationNumber;assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
   model.state.learningEffectiveness.questions.E0.lastExamObservation=null;assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
   assert.strictEqual(model.learningEffectivenessForQuestion('E1').initialStatus,'unknown');
+});
+test('unknown-history evidence survives eviction and rejects a missing observed aggregate',()=>{
+  const module={exports:{}};require('vm').runInNewContext(require('child_process').execFileSync('git',['show','81088e2ad3bc96a6ff5bd995e6dfcfb58a4fd62f:js/model.js'],{encoding:'utf8'}),{module});
+  const store=storage(),old=new module.exports(questions,store,'test');old.recordAttempt('Q',false,10,'journal-entry',false,100);
+  const model=new Model(questions,store,'test');assert(answer(model,'Q',true,1000));
+  for(let i=0;i<201;i++)assert(answer(model,'T',true,2000+i,{mode:'training'}));
+  assert(model.state.attempts.every(row=>row.questionId==='T'));assert(Model.validateBackupState(model.state,questions));
+  const bad=clone(model.state);delete bad.learningEffectiveness.questions.Q;
+  assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+  const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert(loaded.model.storageWriteBlocked);assert.strictEqual(loaded.store.value,bytes);
+});
+test('issued current backups cannot lose their entire evidence and masquerade as legacy',()=>{
+  const {model}=fresh();assert(answer(model,'Q',false,1000));for(let i=0;i<201;i++)assert(answer(model,'T',true,2000+i));
+  const bad=clone(model.state);delete bad.learningEffectiveness;
+  for(const row of bad.attempts){delete row.observationNumber;delete row.mode;delete row.support;}
+  assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+  const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert(loaded.model.storageWriteBlocked);assert.strictEqual(loaded.store.value,bytes);
+});
+test('issued evidence cannot lose or corrupt its outer integrity marker',()=>{
+  const {model}=fresh();assert(answer(model,'Q',false,1000));const original=clone(model.state);
+  for(const mutate of [v=>delete v.learningEvidenceIntegrity,v=>v.learningEvidenceIntegrity=null,v=>v.learningEvidenceIntegrity.schemaVersion=2,v=>v.learningEvidenceIntegrity.signature='deadbeef']){
+    const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+    const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert(loaded.model.storageWriteBlocked);assert.strictEqual(loaded.store.value,bytes);
+  }
+});
+test('an unmarked schema2 preview preserves all existing evidence when issued as schema3',()=>{
+  const {model}=fresh();assert(answer(model,'Q',false,1000));assert(model.recordAssistedRecovery('Q',1,1100));
+  const old=clone(model.state);delete old.learningEvidenceIntegrity;old.learningSchemaVersion=2;
+  assert(Model.validateBackupState(old,questions));const migrated=Model.prepareBackupState(old,questions);
+  assert.strictEqual(migrated.learningSchemaVersion,3);assert.deepStrictEqual(migrated.learningEffectiveness,old.learningEffectiveness);
+  assert.deepStrictEqual(migrated.questionStats,old.questionStats);assert.deepStrictEqual(migrated.learningContinuityState,old.learningContinuityState);assert(migrated.learningEvidenceIntegrity);
+  assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
 });
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;

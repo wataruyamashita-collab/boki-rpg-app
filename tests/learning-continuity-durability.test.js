@@ -36,7 +36,7 @@ model = new ProgressModel(questions, longStore, 'long-streak');
 summary = model.learningContinuity(at(29, 20));
 assert.strictEqual(summary.currentStreak, 30, '30-day streak must survive save/load, not only one in-memory session');
 assert.strictEqual(model.state.attempts.length, 200, 'reload keeps the rolling detail log capped at 200');
-assert.strictEqual(model.state.learningSchemaVersion, 2, 'durable continuity uses schema v2');
+assert.strictEqual(model.state.learningSchemaVersion, 3, 'durable continuity uses schema v3');
 
 model = new ProgressModel(questions, storage(), 'busy-day');
 for (let attempt = 0; attempt < 201; attempt += 1) {
@@ -82,23 +82,23 @@ const v1State = {
 };
 const v1Store = storage({ legacy:JSON.stringify(v1State) });
 const migrated = new ProgressModel(questions, v1Store, 'legacy');
-assert.strictEqual(migrated.state.learningSchemaVersion, 2, 'v1 state migrates explicitly to schema v2');
+assert.strictEqual(migrated.state.learningSchemaVersion, 3, 'v1 state migrates explicitly to schema v3');
 assert.strictEqual(migrated.state.questionStats.Q1.correctCount, 500, 'v1 durable lifetime questionStats must not be rebuilt from the rolling attempt subset');
 assert.strictEqual(migrated.state.questionStats.Q1.incorrectCount, 20, 'v1 lifetime incorrect count survives migration');
 assert.deepStrictEqual(migrated.state.learningContinuityState.activeDayKeys.length, 3, 'v1 migration seeds only continuity evidence recoverable from retained attempts');
 assert.strictEqual(migrated.learningContinuity(at(2, 20)).currentStreak, 3, 'migrated retained days drive continuity without inventing lost history');
-assert.strictEqual(JSON.parse(v1Store.values.legacy).learningSchemaVersion, 2, 'successful v1 migration is persisted immediately');
+assert.strictEqual(JSON.parse(v1Store.values.legacy).learningSchemaVersion, 3, 'successful v1 migration is persisted immediately');
 
 assert.strictEqual(ProgressModel.validateBackupState(v1State, questions), true, 'explicit schema v1 backup remains importable');
-assert.strictEqual(ProgressModel.validateBackupState(migrated.state, questions), true, 'canonical schema v2 backup remains importable');
+assert.strictEqual(ProgressModel.validateBackupState(migrated.state, questions), true, 'canonical schema v3 backup remains importable');
 const corruptContinuity = JSON.parse(JSON.stringify(migrated.state));
 corruptContinuity.learningContinuityState.activeDayKeys = ['2026-01-02','2026-01-01'];
-assert.strictEqual(ProgressModel.validateBackupState(corruptContinuity, questions), false, 'schema v2 backup rejects unsorted/ambiguous historical day keys');
+assert.strictEqual(ProgressModel.validateBackupState(corruptContinuity, questions), false, 'schema v3 backup rejects unsorted/ambiguous historical day keys');
 const duplicateContinuity = JSON.parse(JSON.stringify(migrated.state));
 duplicateContinuity.learningContinuityState.activeDayKeys.push(duplicateContinuity.learningContinuityState.activeDayKeys[0]);
-assert.strictEqual(ProgressModel.validateBackupState(duplicateContinuity, questions), false, 'schema v2 backup rejects duplicate historical day keys');
+assert.strictEqual(ProgressModel.validateBackupState(duplicateContinuity, questions), false, 'schema v3 backup rejects duplicate historical day keys');
 const missingContinuity = JSON.parse(JSON.stringify(migrated.state));
 delete missingContinuity.learningContinuityState;
-assert.strictEqual(ProgressModel.validateBackupState(missingContinuity, questions), false, 'schema v2 backup requires continuity evidence');
+assert.strictEqual(ProgressModel.validateBackupState(missingContinuity, questions), false, 'schema v3 backup requires continuity evidence');
 
 console.log('LEARNING_CONTINUITY_DURABILITY_ISSUE175_PASS');
