@@ -29,12 +29,13 @@
   };
   // Completion and observation are separate operations (notably in an active
   // exam). Bind the issued values without deriving completion from an answer.
-  const evidenceStateSignature = (state, version = 6) => valueSignature([state.learningEffectiveness, state.questionStats,
+  const evidenceStateSignature = (state, version = 7) => valueSignature([state.learningEffectiveness, state.questionStats,
     state.lastLearningAt, state.answeredIds, state.correctIds, state.incorrectIds,
     ...(version >= 3 ? [state.learningContinuityState] : []),
     ...(version >= 4 ? [state.reviewSchedule, state.reviewAssignments] : []),
     ...(version >= 5 ? [state.examHistory] : []),
-    ...(version >= 6 ? [state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds] : [])]);
+    ...(version >= 6 ? [state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds] : []),
+    ...(version >= 7 ? [state.placement] : [])]);
   const emptyEffectiveness = (initialHistory = 'complete', attempts = []) => ({ schemaVersion:1, initialHistory, retainedAttemptsSignature:valueSignature(attempts), questions:{} });
   const emptyEvidence = () => ({
     observedAttempts:0, correctCount:0, incorrectCount:0, firstObservedAt:null, lastObservedAt:null, firstAttempt:null,
@@ -82,16 +83,16 @@
       })) return false;
       return true;
     }
-    static prepareBackupState(value, questions = {}) {
-      if (!ProgressModel.validateBackupState(value, questions)) return null;
+    static prepareBackupState(value, questions = {}, examPool = root.ExamPoolDefinition) {
+      if (!ProgressModel.validateBackupState(value, questions, examPool)) return null;
       // Run migration before either real storage key is touched. The controller's
       // existing two-key transaction retains rollback ownership.
       let bytes = JSON.stringify(value);
       const isolated = { getItem:() => bytes, setItem:(_key, next) => { bytes = next; return true; } };
-      const model = new ProgressModel(questions, isolated, 'backup-migration');
-      return !model.storageWriteBlocked && ProgressModel.validateBackupState(model.state, questions) ? cloneContent(model.state) : null;
+      const model = new ProgressModel(questions, isolated, 'backup-migration', examPool);
+      return !model.storageWriteBlocked && ProgressModel.validateBackupState(model.state, questions, examPool) ? cloneContent(model.state) : null;
     }
-    static validateBackupState(value, questions = {}) {
+    static validateBackupState(value, questions = {}, examPool = root.ExamPoolDefinition) {
       const plain = item => item && typeof item === 'object' && !Array.isArray(item);
       const finite = number => typeof number === 'number' && Number.isFinite(number);
       const dangerousKeys = new Set(['__proto__', 'prototype', 'constructor']);
@@ -140,7 +141,7 @@
           (item.observationNumber !== undefined && !(Number.isSafeInteger(item.observationNumber) && item.observationNumber > 0)))) return false;
       if (value.placement !== undefined && value.placement !== null && (!plain(value.placement) || value.placement.completed !== true || !knownId(value.placement.startQuestionId) || !finite(value.placement.foundation) || !finite(value.placement.closing))) return false;
       if (value.examSession !== undefined && value.examSession !== null) {
-        const probe = Object.create(ProgressModel.prototype); probe.questions = questions;
+        const probe = Object.create(ProgressModel.prototype); probe.questions = questions; probe.examPool = examPool;
         if (!probe.validExamSession(value.examSession)) return false;
       }
       if (value.examHistory !== undefined && (!Array.isArray(value.examHistory) || value.examHistory.some(item => !plain(item) || !finite(item.finishedAt) || !finite(item.points)))) return false;
@@ -155,7 +156,7 @@
       const evidence = state.learningEffectiveness, integrity = state.learningEvidenceIntegrity;
       if (state.learningSchemaVersion >= 3 && integrity === undefined) return false;
       if (integrity !== undefined && (state.learningSchemaVersion !== LEARNING_SCHEMA_VERSION || !integrity || typeof integrity !== 'object' || Array.isArray(integrity) ||
-          Object.keys(integrity).length !== 2 || ![1,2,3,4,5,6].includes(integrity.schemaVersion) || evidence === undefined ||
+          Object.keys(integrity).length !== 2 || ![1,2,3,4,5,6,7].includes(integrity.schemaVersion) || evidence === undefined ||
           integrity.signature !== (integrity.schemaVersion === 1 ? valueSignature(evidence) : evidenceStateSignature(state,integrity.schemaVersion)))) return false;
       if (evidence === undefined) {
         // Old releases never issued observation receipts. Their presence proves
@@ -319,8 +320,10 @@
       }
       return true;
     }
-    constructor(questions, storage, key = 'boki-rpg-progress-v2') {
+    constructor(questions, storage, key = 'boki-rpg-progress-v2', examPool = root.ExamPoolDefinition) {
       this.questions = questions && typeof questions === 'object' ? questions : {}; this.storage = storage; this.key = key;
+      // Authored assessment membership comes from trusted catalog configuration, never a save.
+      this.examPool = Array.isArray(examPool) ? [...examPool] : null;
       this.state = { contentRevision:CONTENT_REVISION, questionContentVersions:ProgressModel.currentContentVersions(this.questions), contentMigrationArchive:emptyContentArchive(), contentRecheckIds:[], learningSchemaVersion:LEARNING_SCHEMA_VERSION, lastLearningAt:0, learningContinuityState:{ activeDayKeys:[], today:null }, questionStats:{}, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.state.learningEffectiveness = emptyEffectiveness();
       this.refreshEvidenceIntegrity();
@@ -338,7 +341,8 @@
           // Never overwrite a future or malformed versioned state with defaults.
           if ((Number.isSafeInteger(saved.contentRevision) && saved.contentRevision > CONTENT_REVISION) ||
               !ProgressModel.validContentMetadata(saved, this.questions) ||
-              !ProgressModel.validEffectivenessState(saved, this.questions)) {
+              !ProgressModel.validEffectivenessState(saved, this.questions) ||
+              (saved.examSession != null && !this.validExamSession(saved.examSession))) {
             this.storageWriteBlocked = true; return;
           }
           const savedContentRevision = Number.isSafeInteger(saved.contentRevision) ? saved.contentRevision : 1;
@@ -393,7 +397,7 @@
           completed: saved.completed === true,
           placement: saved.placement && saved.placement.completed === true && this.questions[saved.placement.startQuestionId] &&
             Number.isFinite(saved.placement.foundation) && Number.isFinite(saved.placement.closing)
-            ? { completed:true, foundation:Math.max(0, Math.min(100, saved.placement.foundation)), closing:Math.max(0, Math.min(100, saved.placement.closing)), startQuestionId:saved.placement.startQuestionId, completedAt:Number(saved.placement.completedAt) || 0 } : null,
+            ? { completed:true, foundation:Math.max(0, Math.min(100, saved.placement.foundation)), closing:Math.max(0, Math.min(100, saved.placement.closing)), startQuestionId:saved.placement.startQuestionId, completedAt:Number(saved.placement.completedAt) || 0, ...(saved.placement.migrated === true ? {migrated:true} : {}) } : null,
           examAttempt: Number.isSafeInteger(saved.examAttempt) && saved.examAttempt >= 0 ? saved.examAttempt : 0,
           examSession: !incompatibleExam && this.validExamSession(saved.examSession) ? saved.examSession : null,
           examHistory: Array.isArray(saved.examHistory) ? saved.examHistory.filter(item => item && Number.isFinite(item.finishedAt) && Number.isFinite(item.points)).slice(-10) : [],
@@ -404,7 +408,7 @@
           // A missing row/flag in an old save cannot prove a never-attempted question.
           const needsEvidenceMigration = saved.learningEffectiveness === undefined;
           if (needsEvidenceMigration) this.state.learningEffectiveness = emptyEffectiveness('unknown', this.state.attempts);
-          const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 6;
+          const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 7;
           if (needsEvidenceMigration || needsIntegrityMigration) this.refreshEvidenceIntegrity();
           if (needsContentMigration || needsLearningMigration || needsEvidenceMigration || needsIntegrityMigration) this.save();
         }
@@ -699,7 +703,7 @@
     }
     validExamSession(session) {
       if (!(session && typeof session === 'object' && Array.isArray(session.ids) && session.ids.length === 15 &&
-        session.ids.every(id => this.questions[id]) && new Set(session.ids).size === session.ids.length &&
+        Array.isArray(this.examPool) && session.ids.every(id => this.questions[id] && this.examPool.includes(id)) && new Set(session.ids).size === session.ids.length &&
         Number.isFinite(session.startedAt) && Number.isFinite(session.endAt) && session.endAt > session.startedAt &&
         ['RUNNING', 'EXPIRED', 'FINISHING'].includes(session.status || 'RUNNING') &&
         (session.evidenceVersion === undefined || session.evidenceVersion === 1) &&
@@ -708,7 +712,7 @@
         typeof score.correct === 'boolean' && Number.isFinite(score.earned) && Number.isFinite(score.possible) &&
         Number.isFinite(score.ratio) && score.earned >= 0 && score.possible > 0 && score.earned <= score.possible && score.ratio >= 0 && score.ratio <= 1);
     }
-    refreshEvidenceIntegrity() { this.state.learningEvidenceIntegrity = {schemaVersion:6,signature:evidenceStateSignature(this.state)}; }
+    refreshEvidenceIntegrity() { this.state.learningEvidenceIntegrity = {schemaVersion:7,signature:evidenceStateSignature(this.state)}; }
     save() { if (this.storageWriteBlocked || typeof this.storage?.setItem !== 'function') return false; try { return this.storage.setItem(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
     setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; return this.save(); }
     clearDraft(id) { if (!this.questions[id]) return false; delete this.state.drafts[id]; return this.save(); }
@@ -977,7 +981,7 @@
       const startQuestionId = this.placementStart({ foundation, closing });
       if (!startQuestionId) return null;
       this.state.placement = { completed:true, foundation, closing, startQuestionId, completedAt:now };
-      this.state.currentQuestionId = startQuestionId; this.state.mode = 'story'; this.save();
+      this.state.currentQuestionId = startQuestionId; this.state.mode = 'story'; this.refreshEvidenceIntegrity(); this.save();
       return startQuestionId;
     }
     migrateLegacyPlacement(now = Date.now()) {
@@ -985,9 +989,9 @@
       const startQuestionId = this.state.currentQuestionId || this.state.answeredIds.at(-1) || Object.keys(this.questions)[0] || null;
       if (!startQuestionId) return false;
       this.state.placement = { completed:true, foundation:0, closing:0, startQuestionId, completedAt:now, migrated:true };
-      this.save(); return true;
+      this.refreshEvidenceIntegrity(); this.save(); return true;
     }
-    resetPlacement() { this.state.placement = null; this.save(); }
+    resetPlacement() { this.state.placement = null; this.refreshEvidenceIntegrity(); this.save(); }
     practicalEvidencePassed() {
       const practicalTypes = ['ledger','worksheet','financial_statement','comprehensive'];
       // Graduation represents repeatable competence, not one lucky answer in each

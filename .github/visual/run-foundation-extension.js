@@ -53,7 +53,10 @@ if(!Object.hasOwn(FoundationExtensionCases,requested))throw new Error('Unknown f
 const rawFixtureStorage=window.localStorage;
 const extensionController=new FoundationExtensionAdapter.ExtensionController(document,FoundationExtensionAdapter.catalog(FoundationExtensionCases),rawFixtureStorage,'${prefix}');
 window.extensionController=extensionController;
-extensionController.model.state.placement ||= {completed:true,foundation:0,closing:0,startQuestionId:FoundationExtensionCases[requested].id,completedAt:1};
+if(!extensionController.model.state.placement){
+  extensionController.model.state.placement={completed:true,foundation:0,closing:0,startQuestionId:FoundationExtensionCases[requested].id,completedAt:1};
+  extensionController.model.refreshEvidenceIntegrity();
+}
 extensionController.model.state.mode=reviewRoute?'review':'training';
 extensionController.bindEvents();extensionController.view.updateRpg(extensionController.rpg);
 let startId=FoundationExtensionCases[requested].id;

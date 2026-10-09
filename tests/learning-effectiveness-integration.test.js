@@ -3,6 +3,7 @@ const assert = require('assert'), fs = require('fs'), vm = require('vm');
 const Model = require('../js/model'), RPG = require('../js/rpg');
 const {fixture, questions:canonical, storage:legacyStorage} = require('./helpers/issue207-fixtures');
 const clone = value => JSON.parse(JSON.stringify(value));
+const canonicalPool=(()=>{const s={window:{}};vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),s);return Array.from(s.window.ExamPoolDefinition);})();
 const questions = { ...Object.fromEntries(Array.from({length:13},(_,i)=>['E'+i,{id:'E'+i,type:'journal',category:'仕訳',difficulty:1}])), Q:{id:'Q',type:'journal',category:'仕訳',difficulty:1}, R:{id:'R',type:'journal',category:'仕訳',difficulty:1} };
 const values = () => ({data:{},getItem(key){return this.data[key] ?? null;},setItem(key,value){this.data[key]=value;return true;},removeItem(key){delete this.data[key];return true;}});
 let reloads=0;
@@ -10,7 +11,7 @@ const sandbox={window:{ProgressModel:Model,RPGModel:RPG,GradingEngine:{grade:(_q
 vm.runInNewContext(fs.readFileSync('js/controller.js','utf8'),sandbox);
 const Controller=sandbox.window.AppController;
 function context(mode='training') {
-  const store=values(),model=new Model(questions,store,'p'),rpg=new RPG(store,'r'),notices=[];
+  const store=values(),model=new Model(questions,store,'p',Object.keys(questions)),rpg=new RPG(store,'r'),notices=[];
   const node=()=>({hidden:false,focus(){},append(){},replaceChildren(){},classList:{add(){},remove(){}}});
   const ctx=Object.create(Controller.prototype);
   Object.assign(ctx,{questions,ids:Object.keys(questions),model,rpg,reviewMappings:new Map(),
@@ -68,7 +69,7 @@ test('persistent rollback failure is recovered before the next launch loads prog
   assert.strictEqual(ctx.submit(),false);assert.strictEqual(model.storageWriteBlocked,true);assert(store.data['p:pending-answer-v1']);
   assert.strictEqual(JSON.parse(store.data.p).learningEffectiveness.questions.Q.observedAttempts,1,'partial physical write exists only behind the pending journal');
   store.setItem=set;assert(Controller.recoverAnswerTransaction(store,'p','r'));assert.deepStrictEqual(store.data,bytes);
-  ctx.model=new Model(questions,store,'p');ctx.rpg=new RPG(store,'r');ctx.start('Q');ctx.submit();
+  ctx.model=new Model(questions,store,'p',Object.keys(questions));ctx.rpg=new RPG(store,'r');ctx.start('Q');ctx.submit();
   assert.strictEqual(ctx.model.learningEffectivenessForQuestion('Q').observedAttempts,1);assert.strictEqual(ctx.rpg.state.mastery['仕訳'].possible,1);
   assert.strictEqual(store.data['p:pending-answer-v1'],undefined);
 });
@@ -84,7 +85,7 @@ test('invalid or unreadable transaction journals cannot overwrite saved data',()
   assert.strictEqual(Controller.recoverAnswerTransaction({getItem(){throw Error('unreadable');},setItem(){throw Error('must not write');}},'p','r'),false);
 });
 test('exam finalization commits history, mastery and rewards once after a failed write',()=>{
-  const {ctx,store}=context('exam'),model=new Model(canonical,values(),'p'),ids=Object.keys(canonical).slice(0,15),now=Date.now(),rpg=new RPG(model.storage,'r');
+  const {ctx,store}=context('exam'),model=new Model(canonical,values(),'p',canonicalPool),ids=canonicalPool.slice(0,15),now=Date.now(),rpg=new RPG(model.storage,'r');
   ctx.model=model;ctx.rpg=rpg;ctx.questions=canonical;ctx.stopExamTimer=()=>{};let results=0;ctx.view.examResult=()=>{results++;};
   model.state.mode='exam';model.state.examSession={ids,startedAt:now-1000,endAt:now+100000,status:'RUNNING',scores:{}};
   assert(model.recordAttempt(ids[0],true,10,'',false,now,null,'unsure',{mode:'exam',support:'none'}));
@@ -94,7 +95,7 @@ test('exam finalization commits history, mastery and rewards once after a failed
   assert.strictEqual(ctx.finishExam(true,now),false);assert.deepStrictEqual(clone(model.state),progress);assert.deepStrictEqual(clone(rpg.state),character);assert.deepStrictEqual(model.storage.data,saved);assert.strictEqual(results,0);
   model.storage.setItem=set;assert.strictEqual(ctx.finishExam(true,now),true);assert.strictEqual(model.state.examAttempt,1);assert.strictEqual(model.state.examHistory.length,1);
   assert.strictEqual(model.learningEffectivenessForQuestion(ids[0]).observedAttempts,1);assert.strictEqual(rpg.state.mastery[canonical[ids[0]].category].possible,1);assert.strictEqual(rpg.state.xp,20*canonical[ids[0]].difficulty);
-  assert.strictEqual(ctx.finishExam(true,now),false);assert.strictEqual(results,1);assert(Model.validateBackupState(model.state,canonical));
+  assert.strictEqual(ctx.finishExam(true,now),false);assert.strictEqual(results,1);assert(Model.validateBackupState(model.state,canonical,canonicalPool));
 });
 test('Accepted isolated negative NPV keeps its existing reward behavior when progress commits',()=>{
   const {ctx}=context(),q=require('./fixtures/foundation-extension-cases').npvNegative, catalog={[q.id]:q},store=values();
@@ -107,7 +108,7 @@ test('Accepted isolated negative NPV keeps its existing reward behavior when pro
   assert.deepStrictEqual(new RPG(store,'r').state,ctx.rpg.state,'reload retains signed totals and every earned reward');
 });
 test('a staged invalid exam outcome cannot commit progress or RPG side effects',()=>{
-  const {ctx}=context('exam'),ids=Object.keys(canonical).slice(0,15),store=values(),model=new Model(canonical,store,'p'),rpg=new RPG(store,'r'),now=Date.now();
+  const {ctx}=context('exam'),ids=canonicalPool.slice(0,15),store=values(),model=new Model(canonical,store,'p',canonicalPool),rpg=new RPG(store,'r'),now=Date.now();
   ctx.model=model;ctx.rpg=rpg;ctx.questions=canonical;ctx.stopExamTimer=()=>{};ctx.view.examResult=()=>{throw Error('must not display an invalid result');};ctx.unansweredExamIds=()=>ids.slice(1);
   model.state.mode='exam';model.state.examSession={ids,startedAt:now-1000,endAt:now+1000,status:'RUNNING',scores:{[ids[0]]:{correct:true,earned:1,possible:1,ratio:1}}};
   model.save();rpg.save();const progress=clone(model.state),character=clone(rpg.state),bytes=clone(store.data);
@@ -148,13 +149,13 @@ test('deadline reached during grading cannot leave a recorded unanswered exam it
   assert.strictEqual(model.state.attempts.length,0);assert.deepStrictEqual(model.state.examSession.scores,{});
 });
 for(const id of ['J051','L031'])for(const kind of ['old','new','mixed'])test(`Accepted #207 ${id}/${kind} keeps archived history and unknown initial coverage`,()=>{
-  const initial=fixture(kind,id),store=legacyStorage(JSON.stringify(initial));let model=new Model(canonical,store,'p');
+  const initial=fixture(kind,id),store=legacyStorage(JSON.stringify(initial));let model=new Model(canonical,store,'p',canonicalPool);
   const archive=clone(model.state.contentMigrationArchive),continuity=clone(model.state.learningContinuityState);
   assert.strictEqual(model.learningEffectivenessForQuestion(id).initialStatus,'unknown');assert.strictEqual(model.learningEffectivenessForQuestion(id).observedAttempts,0);
   assert(model.recordAttempt(id,true,10,'',false,Date.now(),null,'unsure',{support:'none'}));
-  model=new Model(canonical,store,'p');assert.deepStrictEqual(model.state.contentMigrationArchive,archive);assert.strictEqual(model.learningEffectivenessForQuestion(id).firstAttempt,null);
+  model=new Model(canonical,store,'p',canonicalPool);assert.deepStrictEqual(model.state.contentMigrationArchive,archive);assert.strictEqual(model.learningEffectivenessForQuestion(id).firstAttempt,null);
   assert.strictEqual(model.learningEffectivenessForQuestion(id).observedAttempts,1);assert(model.state.learningContinuityState.activeDayKeys.length>=continuity.activeDayKeys.length);
-  assert(Model.validateBackupState(model.state,canonical));
+  assert(Model.validateBackupState(model.state,canonical,canonicalPool));
 });
 test('revision 1–3 cannot attach current evidence to pre-identity content',()=>{
   const current=new Model(canonical,legacyStorage(),'p');assert(current.recordAttempt('J051',false,10,'journal-entry',false,Date.now()));
@@ -162,8 +163,8 @@ test('revision 1–3 cannot attach current evidence to pre-identity content',()=
     const mixed=fixture('old','J051');mixed.contentRevision=revision;
     mixed.learningEffectiveness=clone(current.state.learningEffectiveness);mixed.learningEffectiveness.initialHistory=initialHistory;
     if(initialHistory==='unknown')mixed.learningEffectiveness.questions.J051.firstAttempt=null;
-    assert.strictEqual(Model.validateBackupState(mixed,canonical),false);assert.strictEqual(Model.prepareBackupState(mixed,canonical),null);
-    const bytes=JSON.stringify(mixed),store=legacyStorage(bytes),loaded=new Model(canonical,store,'p');
+    assert.strictEqual(Model.validateBackupState(mixed,canonical,canonicalPool),false);assert.strictEqual(Model.prepareBackupState(mixed,canonical,canonicalPool),null);
+    const bytes=JSON.stringify(mixed),store=legacyStorage(bytes),loaded=new Model(canonical,store,'p',canonicalPool);
     assert.strictEqual(loaded.save(),false);assert.strictEqual(store.value,bytes);
   }
 });
@@ -199,7 +200,7 @@ test('clock rollback before the review due time records an answer without a revi
     assert.strictEqual(model.state.learningContinuityState.today.reviewSuccessCount,0);assert.strictEqual(model.learningEffectivenessForQuestion('Q').delayedReview.successes,0);
     assert.deepStrictEqual(model.state.reviewSchedule,schedule);assert.deepStrictEqual(model.state.reviewAssignments,assignment);assert.strictEqual(rpg.state.xp,xp+20,'ordinary first-answer XP is unchanged');
     assert(!rpg.state.rewardedIds.some(id=>id.startsWith('@event:review-success:')),'no unqualified review bonus');
-    const reloaded=new Model(questions,store,'p');assert.strictEqual(reloaded.state.learningContinuityState.today.reviewSuccessCount,0);
+    const reloaded=new Model(questions,store,'p',Object.keys(questions));assert.strictEqual(reloaded.state.learningContinuityState.today.reviewSuccessCount,0);
     clock=due;ctx.start('R');assert.notStrictEqual(ctx.submit(),false);assert.strictEqual(model.state.learningContinuityState.today.reviewSuccessCount,1);
     assert.strictEqual(model.learningEffectivenessForQuestion('Q').delayedReview.successes,1);assert.strictEqual(model.state.reviewSchedule.Q.stage,2);assert.strictEqual(rpg.state.xp,xp+22,'qualified review adds its existing bonus once');
   }finally{delete sandbox.Date;}
@@ -211,38 +212,38 @@ test('a completed exam cannot lose its history or passed set in an issued backup
     model.state.examSession.scores[id]={correct:true,earned:1,possible:1,ratio:1,answer:{correct:true},observationNumber};
   }
   model.refreshEvidenceIntegrity();assert(ctx.finishExam(true));assert.strictEqual(model.state.examHistory.length,1);assert.strictEqual(model.state.examHistory[0].points,100);assert(model.state.examHistory[0].setSignature);
-  const original=clone(model.state);assert(Model.validateBackupState(original,questions));
+  const original=clone(model.state);assert(Model.validateBackupState(original,questions,Object.keys(questions)));
   for(const mutate of [v=>v.examHistory=[],v=>v.examHistory[0].points=69,v=>delete v.examHistory[0].setSignature,v=>v.examHistory[0].finishedAt++]){
-    const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);
-    assert.strictEqual(Model.prepareBackupState(bad,questions),null);const store=values(),bytes=JSON.stringify(bad);store.data.p=bytes;
-    assert(new Model(questions,store,'p').storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
+    const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions,Object.keys(questions)),false);
+    assert.strictEqual(Model.prepareBackupState(bad,questions,Object.keys(questions)),null);const store=values(),bytes=JSON.stringify(bad);store.data.p=bytes;
+    assert(new Model(questions,store,'p',Object.keys(questions)).storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
   }
 });
 test('an issued active exam rejects replacing an unanswered member',()=>{
-  const {ctx}=context('exam'),store=values();ctx.questions=canonical;ctx.model=new Model(canonical,store,'p');ctx.rpg=new RPG(store,'r');
-  const ids=Object.keys(canonical).filter(id=>canonical[id].learningRole==='transfer').slice(0,15);assert.strictEqual(ids.length,15);
+  const {ctx}=context('exam'),store=values();ctx.questions=canonical;ctx.model=new Model(canonical,store,'p',canonicalPool);ctx.rpg=new RPG(store,'r');
+  const ids=canonicalPool.slice(0,15);assert.strictEqual(ids.length,15);
   ctx.buildExamIds=()=>ids;ctx.model.state.mode='exam';ctx.ensureExamSession();ctx.start(ids[0]);ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});assert.notStrictEqual(ctx.submit(),false);
-  const original=clone(ctx.model.state);assert(Model.validateBackupState(original,canonical));
+  const original=clone(ctx.model.state);assert(Model.validateBackupState(original,canonical,canonicalPool));
   const bad=clone(original);assert(!ids.includes('J001'));bad.examSession.ids[1]='J001';
-  assert.strictEqual(Model.validateBackupState(bad,canonical),false);assert.strictEqual(Model.prepareBackupState(bad,canonical),null);
-  const bytes=JSON.stringify(bad);store.data.p=bytes;assert(new Model(canonical,store,'p').storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
+  assert.strictEqual(Model.validateBackupState(bad,canonical,canonicalPool),false);assert.strictEqual(Model.prepareBackupState(bad,canonical,canonicalPool),null);
+  const bytes=JSON.stringify(bad);store.data.p=bytes;assert(new Model(canonical,store,'p',canonicalPool).storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
 });
 test('an issued incorrect exam answer cannot acquire full points or altered mastery totals',()=>{
   const {ctx,model,store}=context('exam');ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});assert.notStrictEqual(ctx.submit(),false);
-  const original=clone(model.state);assert.strictEqual(original.examSession.scores.Q.correct,false);assert(Model.validateBackupState(original,questions));
+  const original=clone(model.state);assert.strictEqual(original.examSession.scores.Q.correct,false);assert(Model.validateBackupState(original,questions,Object.keys(questions)));
   for(const patch of [{earned:1,possible:1,ratio:1},{earned:0,possible:1000,ratio:0},{answer:{correct:true}}]){
     const bad=clone(original);Object.assign(bad.examSession.scores.Q,patch);
-    assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
-    const bytes=JSON.stringify(bad);store.data.p=bytes;assert(new Model(questions,store,'p').storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
+    assert.strictEqual(Model.validateBackupState(bad,questions,Object.keys(questions)),false);assert.strictEqual(Model.prepareBackupState(bad,questions,Object.keys(questions)),null);
+    const bytes=JSON.stringify(bad);store.data.p=bytes;assert(new Model(questions,store,'p',Object.keys(questions)).storageWriteBlocked);assert.strictEqual(store.data.p,bytes);
   }
 });
 test('issued Accepted migration archives and pending rechecks cannot silently disappear',()=>{
   for(const id of ['J051','L031']){
-    const store=legacyStorage(JSON.stringify(fixture('old',id))),model=new Model(canonical,store,'p'),original=clone(model.state);
-    assert(original.contentMigrationArchive.questions[id]);assert(original.contentRecheckIds.includes(id));assert(Model.validateBackupState(original,canonical));
+    const store=legacyStorage(JSON.stringify(fixture('old',id))),model=new Model(canonical,store,'p',canonicalPool),original=clone(model.state);
+    assert(original.contentMigrationArchive.questions[id]);assert(original.contentRecheckIds.includes(id));assert(Model.validateBackupState(original,canonical,canonicalPool));
     for(const mutate of [v=>{v.contentMigrationArchive={schemaVersion:1,questions:{},reviewAssignments:{},completed:null};v.contentRecheckIds=[];},v=>v.contentRecheckIds=[]]){
-      const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,canonical),false);assert.strictEqual(Model.prepareBackupState(bad,canonical),null);
-      const bytes=JSON.stringify(bad),saved=legacyStorage(bytes);assert(new Model(canonical,saved,'p').storageWriteBlocked);assert.strictEqual(saved.value,bytes);
+      const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,canonical,canonicalPool),false);assert.strictEqual(Model.prepareBackupState(bad,canonical,canonicalPool),null);
+      const bytes=JSON.stringify(bad),saved=legacyStorage(bytes);assert(new Model(canonical,saved,'p',canonicalPool).storageWriteBlocked);assert.strictEqual(saved.value,bytes);
     }
   }
 });

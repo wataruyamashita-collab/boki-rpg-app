@@ -23,7 +23,7 @@ for index in range(1200):
 driver = r"""
 const fs=require('fs'),Model=require('./js/model');
 const events=JSON.parse(fs.readFileSync(0,'utf8'));
-const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState,state.reviewSchedule,state.reviewAssignments,state.examHistory,state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds];
+const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState,state.reviewSchedule,state.reviewAssignments,state.examHistory,state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds,state.placement];
 const questions={Q:{type:'journal',category:'x'},R:{type:'journal',category:'x'},T:{type:'ledger',category:'x',table:{inputCells:['a','b']}}};
 const run=legacy=>{
  let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};
@@ -48,8 +48,8 @@ const run=legacy=>{
 };
 const examRuns=legacy=>{
  const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{type:'journal',category:'x'}]));
- let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};let model=new Model(catalog,store);
- if(legacy){const old=JSON.parse(JSON.stringify(model.state));delete old.learningEffectiveness;delete old.learningEvidenceIntegrity;old.learningSchemaVersion=2;bytes=JSON.stringify(old);model=new Model(catalog,store);}
+ let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};let model=new Model(catalog,store,undefined,Object.keys(catalog));
+ if(legacy){const old=JSON.parse(JSON.stringify(model.state));delete old.learningEffectiveness;delete old.learningEvidenceIntegrity;old.learningSchemaVersion=2;bytes=JSON.stringify(old);model=new Model(catalog,store,undefined,Object.keys(catalog));}
  const sessions=[{startedAt:10000,endAt:20000,answers:[['E0',true,10010],['E1',false,10020]]},
    {startedAt:20000,endAt:30000,answers:[['E0',false,9000],['E2',true,20020]]},
    {startedAt:30000,endAt:40000,answers:[['E0',true,30010],['E1',true,30020]]}];
@@ -60,7 +60,7 @@ const examRuns=legacy=>{
    model.state.examSession.scores[id]={correct,earned:Number(correct),possible:1,ratio:Number(correct),observationNumber:number};model.refreshEvidenceIntegrity();model.save();
   }
   model.state.mode='training';for(let i=0;i<201;i++)if(!model.recordAttempt('E14',true,20,'',false,session.endAt+i,null,'unsure',{mode:'training',support:'none'}))throw Error('exam eviction');
-  model=new Model(catalog,store);if(model.storageWriteBlocked||!Model.validateBackupState(model.state,catalog))throw Error('exam restore');
+  model=new Model(catalog,store,undefined,Object.keys(catalog));if(model.storageWriteBlocked||!Model.validateBackupState(model.state,catalog,Object.keys(catalog)))throw Error('exam restore');
  }
  return {evidence:model.state.learningEffectiveness,integrity:model.state.learningEvidenceIntegrity,integrityInput:integrityInput(model.state),schema:model.state.learningSchemaVersion,retainedOnlyTraining:model.state.attempts.length===200&&model.state.attempts.every(row=>row.questionId==='E14')};
 };
@@ -77,7 +77,7 @@ for result in [*actual.values(), *exam_actual.values()]:
         unit = int.from_bytes(encoded[index:index+2], 'little')
         fingerprint = ((fingerprint ^ unit) * 16777619) & 0xffffffff
     assert result['schema'] == 3
-    assert result['integrity'] == {'schemaVersion': 6, 'signature': f'{fingerprint:08x}'}
+    assert result['integrity'] == {'schemaVersion': 7, 'signature': f'{fingerprint:08x}'}
     integrity_checked += 1
 exam_checked = 0
 exam_sessions = [(10000, 20000, [('E0', True, 10010), ('E1', False, 10020)]),

@@ -402,9 +402,9 @@
       const status = this.document.getElementById('backup-status');
       try {
         const payload = JSON.parse(await file.text());
-        if (payload?.format !== 'boki-rpg-backup' || payload.version !== 1 || !root.ProgressModel.validateBackupState(payload.progress, this.questions) || !root.RPGModel.validateBackupState(payload.character)) throw new Error('invalid');
+        if (payload?.format !== 'boki-rpg-backup' || payload.version !== 1 || !root.ProgressModel.validateBackupState(payload.progress, this.questions, this.model.examPool) || !root.RPGModel.validateBackupState(payload.character)) throw new Error('invalid');
         if (this.model.storage === this.rpg.storage && !Controller.recoverAnswerTransaction(this.model.storage,this.model.key,this.rpg.key)) throw new Error('pending-answer');
-        const prepared = root.ProgressModel.prepareBackupState(payload.progress, this.questions);
+        const prepared = root.ProgressModel.prepareBackupState(payload.progress, this.questions, this.model.examPool);
         if (!prepared) throw new Error('invalid-progress-migration');
         const progressValue = JSON.stringify(prepared); const characterValue = JSON.stringify(payload.character);
         const progressSnapshot = this.storageRead(this.model.storage, this.model.key); const characterSnapshot = this.storageRead(this.rpg.storage, this.rpg.key);
@@ -445,7 +445,7 @@
       // The application always supplies both concrete model keys and one store.
       if (!model.key || !rpg.key) return operation() !== false;
       const storage = model.storage;
-      if (!root.ProgressModel.validateBackupState(model.state,this.questions)) return false;
+      if (!root.ProgressModel.validateBackupState(model.state,this.questions,model.examPool)) return false;
       if (!storage || storage !== rpg.storage || model.storageWriteBlocked ||
           !Controller.recoverAnswerTransaction(storage,model.key,rpg.key)) return false;
       const progress = io.storageRead(storage,model.key), character = io.storageRead(storage,rpg.key);
@@ -456,7 +456,7 @@
       let staged = false;
       try {
         model.save = rpg.save = () => true;
-        staged = operation() !== false && root.ProgressModel.validateBackupState(model.state,this.questions) &&
+        staged = operation() !== false && root.ProgressModel.validateBackupState(model.state,this.questions,model.examPool) &&
           root.RPGModel.validateBackupState(rpg.state);
       } catch (_) { staged = false; }
       finally { for (const item of saves) { if(item.own)item.object.save=item.save;else delete item.object.save; } }

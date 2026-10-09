@@ -133,15 +133,18 @@ try{
   const generation128Committed=committed(128);
   const generation129Committed=committed(129);
   const generation130Committed=committed(130);
+  const generation134Committed=committed(134);
   const generation133Committed=committed(133);
   const generation132Committed=committed(132);
   const generation131Committed=committed(131);
 
   test(
-    'authority sequence tracks committed Generations through 133',
+    'authority sequence tracks committed Generations through 134',
     ()=>assert.deepStrictEqual(
       generations,
-      generation133Committed
+      generation134Committed
+        ? Array.from({length:133},(_,index)=>index+2)
+        :generation133Committed
         ? Array.from({length:132},(_,index)=>index+2)
         :generation132Committed
         ? Array.from({length:131},(_,index)=>index+2)
@@ -458,6 +461,7 @@ try{
     }
   );
 
+  const generation134Pending=fs.existsSync(authorityPath(134))&&!generation134Committed;
   const generation133Pending=fs.existsSync(authorityPath(133))&&!generation133Committed;
   const generation132Pending=fs.existsSync(authorityPath(132))&&!generation132Committed;
   const generation131Pending=fs.existsSync(authorityPath(131))&&!generation131Committed;
@@ -576,7 +580,12 @@ try{
   const generation68Pending=
     fs.existsSync(authorityPath(68))&&!generation68Committed;
 
-  if(generation133Committed){
+  if(generation134Committed){
+    test('committed Generation 134 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation134Pending){
+    const generation134Candidate=JSON.parse(fs.readFileSync(authorityPath(134),'utf8'));
+    test('pending Generation 134 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation134Candidate).ok,true));
+  }else if(generation133Committed){
     test('committed Generation 133 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
   }else if(generation133Pending){
     const generation133Candidate=JSON.parse(fs.readFileSync(authorityPath(133),'utf8'));
