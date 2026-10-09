@@ -79,8 +79,11 @@ async function run(){
               for(let i=0;i<201;i++)if(!isolated.recordAttempt('J003',true,10,'',false,2000+i))throw Error('unknown eviction');
               if(isolated.state.attempts.some(row=>row.questionId==='J002'))throw Error('row not evicted');
               const lostUnknown=JSON.parse(JSON.stringify(isolated.state));delete lostUnknown.learningEffectiveness.questions.J002;
+              const lostFlags=JSON.parse(JSON.stringify(progress));
+              for(const key of ['answeredIds','correctIds'])lostFlags[key]=lostFlags[key].filter(id=>id!=='J001');
+              const changedLatest=JSON.parse(JSON.stringify(isolated.state));changedLatest.questionStats.J002.lastResult=true;changedLatest.questionStats.J002.lastAnsweredAt++;
               const beforePair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
-              for(const bad of [missing,downgraded,unmarked,lostUnknown]){
+              for(const bad of [missing,downgraded,unmarked,lostUnknown,lostFlags,changedLatest]){
                 const result=await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress:bad,character})});
                 if(result!==false||localStorage.getItem(c.model.key)!==beforePair[0]||localStorage.getItem(c.rpg.key)!==beforePair[1])throw Error('bad evidence changed native saved state');
               }
@@ -158,7 +161,7 @@ async function run(){
               values:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)])),journal:localStorage.getItem(`${window.App.controller.model.key}:pending-answer-v1`)}),Object.keys(corruptBefore));
             assert.strictEqual(corruptAfter.blocked,true);assert.deepStrictEqual(corruptAfter.values,corruptBefore);assert.strictEqual(corruptAfter.journal,'{bad');
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

@@ -1,5 +1,6 @@
 (function (root) {
   'use strict';
+  const shellRelease = (() => { try { return new URL(document.currentScript.src).searchParams.get('v'); } catch (_) { return null; } })();
   const App = {
     initialRoute(search = root.location?.search || '') {
       try {
@@ -7,7 +8,12 @@
         return { mode: params.get('mode'), questionId: params.get('question') };
       } catch (_) { return {}; }
     },
-    storageClients(worker) {
+    newerRelease(release) {
+      const current=shellRelease?.match(/^(\d{8})-(\d+)$/),offered=release?.match(/^(\d{8})-(\d+)$/);
+      return Boolean(current&&offered&&Number.isSafeInteger(Number(offered[2]))&&
+        (offered[1]>current[1]||(offered[1]===current[1]&&Number(offered[2])>Number(current[2]))));
+    },
+    storageClients(worker, allowOtherRelease=false) {
       return new Promise((resolve,reject) => {
         if (!worker || worker.state==='redundant') { reject(new Error('storage-client-worker')); return; }
         const channel=new MessageChannel();
@@ -15,7 +21,7 @@
         const timer=setTimeout(()=>finish(new Error('storage-client-timeout')),5000);
         channel.port1.onmessage=event => {
           const value=event.data;
-          if (value?.protocol!==1 || typeof value.release!=='string' || typeof value.requester!=='string' ||
+          if (value?.protocol!==1 || typeof value.release!=='string' || (!allowOtherRelease&&value.release!==shellRelease) || typeof value.requester!=='string' ||
               !Array.isArray(value.clients) || !value.clients.every(id=>typeof id==='string'&&id.length>0) ||
               new Set(value.clients).size!==value.clients.length || !value.clients.includes(value.requester)) {
             finish(new Error('storage-client-proof')); return;
@@ -40,15 +46,25 @@
         throw new Error('storage-worker-state');
       };
       this.storageClientStatus='checking';
-      let registration=await manager.getRegistration(),worker=registration?.waiting||registration?.active,proof;
-      if(worker)try{proof=await this.storageClients(worker);}catch(_){}
-      if(!proof) {
+      const rejected=new Set();
+      const matchingWorker=async registration => {
+        for(const worker of [registration?.active,registration?.waiting,registration?.installing]) {
+          if(!worker||rejected.has(worker))continue;
+          try {
+            await waitState(worker,['installed','activated']);
+            return {worker,proof:await this.storageClients(worker)};
+          } catch (_) { rejected.add(worker); }
+        }
+        return null;
+      };
+      let registration=await manager.getRegistration(),match=await matchingWorker(registration);
+      if(!match) {
         registration=await manager.register('./service-worker.js',{updateViaCache:'none'});
-        if(registration.active&&!registration.waiting&&!registration.installing)await registration.update();
-        worker=registration.waiting||registration.installing||registration.active;
-        await waitState(worker,['installed','activated']);
-        proof=await this.storageClients(worker);
+        if(!registration.installing)await registration.update();
+        match=await matchingWorker(registration);
+        if(!match)throw new Error('storage-worker-release');
       }
+      let {worker,proof}=match;
       while(open()) {
         if(proof.clients.length!==1) {
           this.storageClientStatus='waiting';
@@ -109,8 +125,20 @@
       this.setupInstallPrompt();
       if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' }).then(registration => {
         let updateAccepted = false;
-        const offerUpdate = worker => { if (!worker || !navigator.serviceWorker.controller) return; this.showToast('新しいバージョンが利用可能です。', '更新', () => { updateAccepted = true; worker.postMessage({ type:'SKIP_WAITING' }); }); };
-        offerUpdate(registration.waiting); registration.addEventListener('updatefound', () => registration.installing?.addEventListener('statechange', () => { if (registration.installing?.state === 'installed') offerUpdate(registration.installing); }));
+        const offerUpdate = worker => {
+          if (!worker || !navigator.serviceWorker.controller) return;
+          this.storageClients(worker,true).then(proof => {
+            if(!this.newerRelease(proof.release))return;
+            this.showToast('新しいバージョンが利用可能です。', '更新', () => {
+              if(worker.state!=='installed')return;
+              updateAccepted = true; worker.postMessage({ type:'SKIP_WAITING' });
+            });
+          }).catch(()=>{});
+        };
+        offerUpdate(registration.waiting); registration.addEventListener('updatefound', () => {
+          const worker=registration.installing;
+          worker?.addEventListener('statechange', () => { if (worker.state === 'installed') offerUpdate(worker); });
+        });
         navigator.serviceWorker.addEventListener('controllerchange', () => { if (updateAccepted) root.location.reload(); });
       }).catch(() => {
         if (!this.storageOwnership.closed) this.showToast('オフライン利用の準備ができませんでした。オンラインで学習を続け、後でページを開き直してください。');

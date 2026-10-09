@@ -6,6 +6,7 @@ const questions = {Q:{id:'Q',type:'journal',category:'仕訳',difficulty:1}};
 const legacyProgressKey='boki-rpg-progress-v2',legacyCharacterKey='boki-rpg-character-v1';
 const progressKey='boki-rpg-progress-v3',characterKey='boki-rpg-character-v2';
 const isolatedProgressKey='boki-rpg-progress-v3',isolatedCharacterKey='boki-rpg-character-v2';
+const currentRelease=fs.readFileSync('index.html','utf8').match(/js\/app\.js\?v=([^"']+)/)[1];
 function legacyFixture(f) {
   const load=file=>{const module={exports:{}};vm.runInNewContext(require('child_process').execFileSync('git',['show','81088e2ad3bc96a6ff5bd995e6dfcfb58a4fd62f:'+file],{encoding:'utf8'}),{module,console});return module.exports;};
   const LegacyModel=load('js/model.js'),LegacyRPG=load('js/rpg.js');
@@ -20,19 +21,19 @@ function fixture() {
   return {data,storage,locks,clients:new Set(),nextClient:0};
 }
 function tab(f, locks=f.locks) {
-  const events = {}, warning = {hidden:true,textContent:'original warning'}, document = {addEventListener(){},getElementById:id=>id==='storage-warning'?warning:null};
+  const events = {}, warning = {hidden:true,textContent:'original warning'}, document = {currentScript:{src:'https://boki.test/js/app.js?v='+currentRelease},addEventListener(){},getElementById:id=>id==='storage-warning'?warning:null};
   const clientId='client-'+(++f.nextClient);
-  const worker={state:'activated',postMessage(message,ports){if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:'test',requester:clientId,clients:[...f.clients]});}};
+  const worker={state:'activated',postMessage(message,ports){if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:currentRelease,requester:clientId,clients:[...f.clients]});}};
   const registration={active:worker,waiting:null,installing:null,addEventListener(){},async update(){return this;}};
   const serviceWorker={controller:worker,async getRegistration(){f.clients.add(clientId);return registration;},async register(){f.clients.add(clientId);return registration;},addEventListener(){}};
   let reloads=0;
   const root = {localStorage:f.storage,navigator:{locks,serviceWorker},location:{protocol:'file:',reload(){reloads++;}},QuestionData:questions,ProgressModel:Model,RPGModel:RPG,
     AppView:class{},validateSemanticQuestionData:()=>({}),addEventListener(name,fn){(events[name] ||= []).push(fn);},dispatchEvent(event){for(const fn of events[event.type]||[])fn(event);}};
-  const sandbox = {window:root,document,navigator:root.navigator,location:root.location,console,URLSearchParams,queueMicrotask,Event,MessageChannel,setTimeout,clearTimeout};
+  const sandbox = {window:root,document,navigator:root.navigator,location:root.location,console,URL,URLSearchParams,queueMicrotask,Event,MessageChannel,setTimeout,clearTimeout};
   vm.runInNewContext(fs.readFileSync('js/controller.js','utf8'),sandbox);
   root.AppController.prototype.init=function(){};
   vm.runInNewContext(fs.readFileSync('js/app.js','utf8'),sandbox);
-  return {app:root.App,root,warning,fire(name,event={}){if(name==='pagehide')f.clients.delete(clientId);for(const fn of events[name]||[])fn(event);},get reloads(){return reloads;}};
+  return {app:root.App,root,warning,registration,worker,clientId,fire(name,event={}){if(name==='pagehide')f.clients.delete(clientId);for(const fn of events[name]||[])fn(event);},get reloads(){return reloads;}};
 }
 let passed=0,failed=0;
 async function test(name,fn){try{await fn();passed++;console.log('PASS '+name);}catch(e){failed++;console.error('FAIL '+name+'\n'+e.stack);}}
@@ -247,6 +248,70 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS '+name);}
       assert.strictEqual(c.resetLearningData(),false);assert(resumed&&failed);
       assert.strictEqual(f.data[legacyProgressKey],later.progress);assert.strictEqual(f.data[legacyCharacterKey],later.character);
       assert.strictEqual(f.data[progressKey],current.progress);assert.strictEqual(f.data[characterKey],current.character);
+    }finally{a.fire('pagehide');}
+  });
+  await test('a stale waiting coordinator cannot activate over a current active shell',async()=>{
+    const f=fixture(),a=tab(f);let activated=0;
+    const stale={state:'installed',postMessage(message,ports){
+      if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:'20260924-187',requester:a.clientId,clients:[...f.clients]});
+      if(message.type==='SKIP_WAITING'){activated++;this.state='activated';}
+    }};
+    a.registration.waiting=stale;
+    try{await a.app.init();assert(a.app.controller);assert.strictEqual(activated,0,'stale cache must not replace the matching active shell');}
+    finally{a.fire('pagehide');}
+  });
+  await test('a stale-only coordinator updates to the expected release before reading saved data',async()=>{
+    const f=fixture(),a=tab(f);let staleActivated=0,updated=0;
+    const stale={state:'installed',postMessage(message,ports){
+      if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:'20260924-187',requester:a.clientId,clients:[...f.clients]});
+      if(message.type==='SKIP_WAITING'){staleActivated++;this.state='activated';}
+    }};
+    a.registration.active=null;a.registration.waiting=stale;
+    a.registration.update=async()=>{updated++;assert.strictEqual(f.storage.reads,0);a.registration.waiting=null;a.registration.active=a.worker;};
+    try{await a.app.init();assert(a.app.controller);assert.strictEqual(staleActivated,0);assert.strictEqual(updated,1);}
+    finally{a.fire('pagehide');}
+  });
+  await test('a stale-only offline coordinator blocks without activating or touching saved data',async()=>{
+    const f=fixture(),a=tab(f);let activated=0;f.data[progressKey]='original';const before={...f.data};
+    const stale={state:'installed',postMessage(message,ports){
+      if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:'20260924-187',requester:a.clientId,clients:[...f.clients]});
+      if(message.type==='SKIP_WAITING'){activated++;this.state='activated';}
+    }};
+    a.registration.active=null;a.registration.waiting=stale;a.registration.update=async()=>{throw Error('origin unavailable');};
+    try{await a.app.init();assert.strictEqual(a.app.controller,undefined);assert.strictEqual(activated,0);assert.strictEqual(f.storage.reads,0);assert.deepStrictEqual(f.data,before);assert.strictEqual(a.warning.hidden,false);}
+    finally{a.fire('pagehide');}
+  });
+  for(const kind of ['older','same','newer'])await test(kind+' waiting release is offered only when it is a proven newer manual update',async()=>{
+    const f=fixture(),a=tab(f),notices=[],proofs=[];a.root.location.protocol='https:';let activated=0;
+    const [date,number]=currentRelease.split('-'),release=kind==='older'?'20260924-187':kind==='same'?currentRelease:date+'-'+(Number(number)+1);
+    a.registration.waiting={state:'installed',postMessage(message,ports){
+      if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release,requester:a.clientId,clients:[...f.clients]});
+      if(message.type==='SKIP_WAITING')activated++;
+    }};
+    const clients=a.app.storageClients.bind(a.app);
+    a.app.storageClients=(...args)=>{const result=clients(...args);proofs.push(result.catch(()=>null));return result;};
+    a.app.showToast=(...args)=>notices.push(args);
+    try{
+      await a.app.init();await tick();await Promise.all(proofs);await tick();assert(a.app.controller);
+      assert.strictEqual(notices.length,kind==='newer'?1:0,'only an actually newer release is an update');
+      assert.strictEqual(activated,0);
+      if(kind==='newer'){assert.strictEqual(notices[0][1],'更新');notices[0][2]();assert.strictEqual(activated,1);}
+    }finally{a.fire('pagehide');}
+  });
+  await test('a newly installed future worker remains offered after installing moves to waiting',async()=>{
+    const f=fixture(),a=tab(f),notices=[],proofs=[],events={};a.root.location.protocol='https:';
+    a.registration.addEventListener=(name,fn)=>{events[name]=fn;};a.app.showToast=(...args)=>notices.push(args);
+    const clients=a.app.storageClients.bind(a.app);a.app.storageClients=(...args)=>{const result=clients(...args);proofs.push(result.catch(()=>null));return result;};
+    const [date,number]=currentRelease.split('-');let stateChanged,activated=0;
+    const future={state:'installing',addEventListener(name,fn){assert.strictEqual(name,'statechange');stateChanged=fn;},postMessage(message,ports){
+      if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:date+'-'+(Number(number)+1),requester:a.clientId,clients:[...f.clients]});
+      if(message.type==='SKIP_WAITING')activated++;
+    }};
+    try{
+      await a.app.init();await tick();a.registration.installing=future;events.updatefound();
+      future.state='installed';a.registration.installing=null;a.registration.waiting=future;stateChanged();
+      await Promise.all(proofs);await tick();assert.strictEqual(notices.length,1);assert.strictEqual(activated,0);
+      notices[0][2]();assert.strictEqual(activated,1);
     }finally{a.fire('pagehide');}
   });
   console.log(`STORAGE_OWNERSHIP ${passed}/${passed+failed} PASS; ${failed} FAIL`);if(failed)process.exitCode=1;

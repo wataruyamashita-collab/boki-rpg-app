@@ -20,6 +20,7 @@ for index in range(1200):
 driver = r"""
 const fs=require('fs'),Model=require('./js/model');
 const events=JSON.parse(fs.readFileSync(0,'utf8'));
+const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds];
 const questions={Q:{type:'journal',category:'x'},R:{type:'journal',category:'x'},T:{type:'ledger',category:'x',table:{inputCells:['a','b']}}};
 const run=legacy=>{
  let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};
@@ -40,7 +41,7 @@ const run=legacy=>{
  }
  model=new Model(questions,store);
  if(!Model.validateBackupState(model.state,questions))throw Error('invalid final backup');
- return {evidence:model.state.learningEffectiveness,integrity:model.state.learningEvidenceIntegrity,schema:model.state.learningSchemaVersion,stats:model.state.questionStats,retained:model.state.attempts.length};
+ return {evidence:model.state.learningEffectiveness,integrity:model.state.learningEvidenceIntegrity,integrityInput:integrityInput(model.state),schema:model.state.learningSchemaVersion,stats:model.state.questionStats,retained:model.state.attempts.length};
 };
 const examRuns=legacy=>{
  const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{type:'journal',category:'x'}]));
@@ -58,7 +59,7 @@ const examRuns=legacy=>{
   model.state.mode='training';for(let i=0;i<201;i++)if(!model.recordAttempt('E14',true,20,'',false,session.endAt+i,null,'unsure',{mode:'training',support:'none'}))throw Error('exam eviction');
   model=new Model(catalog,store);if(model.storageWriteBlocked||!Model.validateBackupState(model.state,catalog))throw Error('exam restore');
  }
- return {evidence:model.state.learningEffectiveness,integrity:model.state.learningEvidenceIntegrity,schema:model.state.learningSchemaVersion,retainedOnlyTraining:model.state.attempts.length===200&&model.state.attempts.every(row=>row.questionId==='E14')};
+ return {evidence:model.state.learningEffectiveness,integrity:model.state.learningEvidenceIntegrity,integrityInput:integrityInput(model.state),schema:model.state.learningSchemaVersion,retainedOnlyTraining:model.state.attempts.length===200&&model.state.attempts.every(row=>row.questionId==='E14')};
 };
 console.log(JSON.stringify({fresh:run(false),legacy:run(true),exams:{fresh:examRuns(false),legacy:examRuns(true)}}));
 """
@@ -66,13 +67,14 @@ actual = json.loads(subprocess.check_output(['node', '-e', driver], cwd=ROOT, in
 exam_actual = actual.pop('exams')
 integrity_checked = 0
 for result in [*actual.values(), *exam_actual.values()]:
-    encoded = json.dumps(result['evidence'], ensure_ascii=False, separators=(',', ':')).encode('utf-16-le')
+    assert result['integrityInput'][0] == result['evidence']
+    encoded = json.dumps(result['integrityInput'], ensure_ascii=False, separators=(',', ':')).encode('utf-16-le')
     fingerprint = 2166136261
     for index in range(0, len(encoded), 2):
         unit = int.from_bytes(encoded[index:index+2], 'little')
         fingerprint = ((fingerprint ^ unit) * 16777619) & 0xffffffff
     assert result['schema'] == 3
-    assert result['integrity'] == {'schemaVersion': 1, 'signature': f'{fingerprint:08x}'}
+    assert result['integrity'] == {'schemaVersion': 2, 'signature': f'{fingerprint:08x}'}
     integrity_checked += 1
 exam_checked = 0
 exam_sessions = [(10000, 20000, [('E0', True, 10010), ('E1', False, 10020)]),
