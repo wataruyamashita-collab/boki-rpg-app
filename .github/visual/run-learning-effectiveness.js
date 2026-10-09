@@ -24,7 +24,14 @@ const legacyMistakes=(()=>{
   for(let i=0;i<201;i++)assert(model.recordAttempt('J002',true,10,'',false,2000+i));
   assert.strictEqual(model.state.learningEvidenceIntegrity.schemaVersion,7);assert.strictEqual(model.state.mistakeCounts.J001,1);
   assert(!model.state.attempts.some(row=>row.questionId==='J001'));assert(old.window.ProgressModel.validateBackupState(model.state,old.window.QuestionData));
-  return JSON.parse(JSON.stringify(model.state));
+  const unresolved=JSON.parse(JSON.stringify(model.state));
+  for(let stage=0;stage<4;stage++){
+    const due=model.state.reviewSchedule.J001.dueAt;model.assignReview('J001','J001',due-1);model.state.mode='review';
+    assert(model.recordAttempt('J001',true,10,'',true,due,stage,'unsure',{mode:'review',support:'none',reviewSourceId:'J001'}));assert(model.completeReview('J001',true,due,'J001'));
+  }
+  model.state.mode='training';for(let i=0;i<201;i++)assert(model.recordAttempt('J002',true,10,'',false,model.state.lastLearningAt+1));
+  assert(!model.state.incorrectIds.includes('J001'));assert(!model.state.attempts.some(row=>row.questionId==='J001'));
+  return {unresolved,resolved:JSON.parse(JSON.stringify(model.state))};
 })();
 const evidence={status:'RUNNING',head:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),reports:[]};
 const write=()=>{fs.mkdirSync(OUTPUT,{recursive:true});fs.writeFileSync(path.join(OUTPUT,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');};
@@ -54,16 +61,21 @@ async function run(){
               const pair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
               const badPlacement=JSON.parse(JSON.stringify(progress));badPlacement.placement=null;
               const badExams=legacy.outside.map(id=>{const bad=JSON.parse(JSON.stringify(legacy.progress));bad.examSession.ids[1]=id;return bad;});
-              const inflatedMistakes=JSON.parse(JSON.stringify(legacy.mistakes));inflatedMistakes.mistakeCounts.J001=999;
-              const missingMistakes=JSON.parse(JSON.stringify(legacy.mistakes));delete missingMistakes.mistakeCounts.J001;
-              for(const bad of [badPlacement,...badExams,inflatedMistakes,missingMistakes]){
+              const inflatedMistakes=JSON.parse(JSON.stringify(legacy.mistakes.unresolved));inflatedMistakes.mistakeCounts.J001=999;
+              const missingMistakes=JSON.parse(JSON.stringify(legacy.mistakes.unresolved));delete missingMistakes.mistakeCounts.J001;
+              const badGrades=[{earned:1,ratio:1},{ratio:0.5}].map(fields=>{const bad=JSON.parse(JSON.stringify(legacy.progress));Object.assign(bad.examSession.scores[bad.examSession.ids[0]],fields);return bad;});
+              const resolvedMissing=JSON.parse(JSON.stringify(legacy.mistakes.resolved));delete resolvedMissing.mistakeCounts.J001;
+              const resolvedZero=JSON.parse(JSON.stringify(legacy.mistakes.resolved));resolvedZero.mistakeCounts.J001=0;
+              for(const bad of [badPlacement,...badExams,inflatedMistakes,missingMistakes,...badGrades,resolvedMissing,resolvedZero]){
                 if(await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress:bad,character})})!==false)throw Error('incomplete placement or legacy exam accepted');
                 if(localStorage.getItem(c.model.key)!==pair[0]||localStorage.getItem(c.rpg.key)!==pair[1])throw Error('rejected legacy import changed saved pair');
               }
               const migrated=ProgressModel.prepareBackupState(legacy.progress,c.questions);
               if(!migrated||JSON.stringify(migrated.examSession)!==JSON.stringify(legacy.progress.examSession))throw Error('valid legacy exam migration lost session');
-              const migratedMistakes=ProgressModel.prepareBackupState(legacy.mistakes,c.questions);
-              if(!migratedMistakes||migratedMistakes.mistakeCounts.J001!==1||JSON.stringify(migratedMistakes.learningEffectiveness)!==JSON.stringify(legacy.mistakes.learningEffectiveness))throw Error('valid legacy mistake migration changed evidence');
+              const migratedMistakes=ProgressModel.prepareBackupState(legacy.mistakes.unresolved,c.questions);
+              if(!migratedMistakes||migratedMistakes.mistakeCounts.J001!==1||JSON.stringify(migratedMistakes.learningEffectiveness)!==JSON.stringify(legacy.mistakes.unresolved.learningEffectiveness))throw Error('valid legacy mistake migration changed evidence');
+              const resolved=ProgressModel.prepareBackupState(legacy.mistakes.resolved,c.questions);
+              if(!resolved||resolved.mistakeCounts.J001!==1||JSON.stringify(resolved.learningEffectiveness)!==JSON.stringify(legacy.mistakes.resolved.learningEffectiveness))throw Error('resolved old mistake migration lost evidence');
               return progress.placement;
             },{...legacyExam,mistakes:legacyMistakes});
             await page.reload({waitUntil:'load'});await page.waitForFunction(()=>Boolean(window.App?.controller));
@@ -74,7 +86,30 @@ async function run(){
               const cancel=page.locator('#app-notice-cancel');
               await (await cancel.isVisible()?cancel:page.locator('#app-notice-confirm')).click();
             }
-            await page.evaluate(()=>{const c=window.App.controller;c.model.state.mode='training';c.start('J001',{fresh:true});});
+            await page.evaluate(()=>{const c=window.App.controller;c.model.state.mode='training';c.start('J003',{fresh:true});});
+            await page.locator('#question-form .debit-amount').first().fill('123');
+            const partial=await page.evaluate(async()=>{
+              const c=window.App.controller;if(!c.saveDraft(true))throw Error('partial journal save failed');
+              const tableId='L001',cells=Object.fromEntries(c.questions[tableId].table.inputCells.map((id,i)=>[id,i===0?'12':'']));
+              if(!c.model.setDraft(tableId,{cells}))throw Error('partial table save failed');
+              c.model.state.currentQuestionId='J003';c.model.save();
+              const progress=JSON.parse(JSON.stringify(c.model.state)),character=JSON.parse(JSON.stringify(c.rpg.state)),pair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
+              const mutations=[v=>delete v.drafts.J003,v=>v.drafts.J003.debit[0].amount=999,v=>delete v.drafts[tableId],v=>v.drafts[tableId].cells[Object.keys(cells)[0]]='99'];
+              for(const mutate of mutations){const bad=JSON.parse(JSON.stringify(progress));mutate(bad);
+                if(await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress:bad,character})})!==false)throw Error('changed partial draft accepted');
+                if(localStorage.getItem(c.model.key)!==pair[0]||localStorage.getItem(c.rpg.key)!==pair[1])throw Error('draft rejection changed saved pair');
+              }
+              return progress.drafts;
+            });
+            await page.reload({waitUntil:'load'});await page.waitForFunction(()=>Boolean(window.App?.controller));
+            assert.deepStrictEqual(await page.evaluate(()=>App.controller.model.state.drafts),partial);
+            assert.strictEqual(await page.evaluate(()=>App.controller.model.state.attempts.length),0);
+            if(await page.locator('#app-notice-dialog').evaluate(el=>el.open)){
+              const cancel=page.locator('#app-notice-cancel');await (await cancel.isVisible()?cancel:page.locator('#app-notice-confirm')).click();
+            }
+            const restoredPartial=await page.evaluate(()=>{const c=window.App.controller;c.start('J003');return c.view.readAnswer(c.questions.J003);});
+            assert.deepStrictEqual(restoredPartial,partial.J003);
+            await page.evaluate(()=>{const c=window.App.controller;c.model.clearDrafts(['J003','L001']);c.model.state.mode='training';c.start('J001',{fresh:true});});
             // Submit a real blank form; coaching corrects it without changing the
             // first score, mastery, or reward ledger.
             await page.click('#question-form .confirm-button');
@@ -285,7 +320,7 @@ async function run(){
               values:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)])),journal:localStorage.getItem(`${window.App.controller.model.key}:pending-answer-v1`)}),Object.keys(corruptBefore));
             assert.strictEqual(corruptAfter.blocked,true);assert.deepStrictEqual(corruptAfter.values,corruptBefore);assert.strictEqual(corruptAfter.journal,'{bad');
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,examHistoryImportRejected:true,activeExamImportRejected:true,legacyExamPoolImportRejected:true,legacyExamMigration:true,initialPlacementPreserved:true,initialPlacementImportRejected:true,mistakeTotalsImportRejected:true,legacyMistakeBoundsImportRejected:true,legacyMistakeMigration:true,mistakeBadgesAndFiltersPreserved:true,activeExamResume:true,expiredExamAndRetry:true,...numericalBoundaries,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,examHistoryImportRejected:true,activeExamImportRejected:true,legacyExamPoolImportRejected:true,legacyExamMigration:true,initialPlacementPreserved:true,initialPlacementImportRejected:true,mistakeTotalsImportRejected:true,legacyMistakeBoundsImportRejected:true,legacyMistakeMigration:true,legacyResolvedMistakeImportRejected:true,legacyExamArithmeticImportRejected:true,partialDraftImportRejected:true,partialDraftReload:true,badBackupImports:27,mistakeBadgesAndFiltersPreserved:true,activeExamResume:true,expiredExamAndRetry:true,...numericalBoundaries,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

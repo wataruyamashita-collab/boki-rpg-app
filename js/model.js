@@ -29,14 +29,15 @@
   };
   // Completion and observation are separate operations (notably in an active
   // exam). Bind the issued values without deriving completion from an answer.
-  const evidenceStateSignature = (state, version = 8) => valueSignature([state.learningEffectiveness, state.questionStats,
+  const evidenceStateSignature = (state, version = 9) => valueSignature([state.learningEffectiveness, state.questionStats,
     state.lastLearningAt, state.answeredIds, state.correctIds, state.incorrectIds,
     ...(version >= 3 ? [state.learningContinuityState] : []),
     ...(version >= 4 ? [state.reviewSchedule, state.reviewAssignments] : []),
     ...(version >= 5 ? [state.examHistory] : []),
     ...(version >= 6 ? [state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds] : []),
     ...(version >= 7 ? [state.placement] : []),
-    ...(version >= 8 ? [state.mistakeCounts] : [])]);
+    ...(version >= 8 ? [state.mistakeCounts] : []),
+    ...(version >= 9 ? [state.drafts] : [])]);
   const emptyEffectiveness = (initialHistory = 'complete', attempts = []) => ({ schemaVersion:1, initialHistory, retainedAttemptsSignature:valueSignature(attempts), questions:{} });
   const emptyEvidence = () => ({
     observedAttempts:0, correctCount:0, incorrectCount:0, firstObservedAt:null, lastObservedAt:null, firstAttempt:null,
@@ -157,7 +158,7 @@
       const evidence = state.learningEffectiveness, integrity = state.learningEvidenceIntegrity;
       if (state.learningSchemaVersion >= 3 && integrity === undefined) return false;
       if (integrity !== undefined && (state.learningSchemaVersion !== LEARNING_SCHEMA_VERSION || !integrity || typeof integrity !== 'object' || Array.isArray(integrity) ||
-          Object.keys(integrity).length !== 2 || ![1,2,3,4,5,6,7,8].includes(integrity.schemaVersion) || evidence === undefined ||
+          Object.keys(integrity).length !== 2 || ![1,2,3,4,5,6,7,8,9].includes(integrity.schemaVersion) || evidence === undefined ||
           integrity.signature !== (integrity.schemaVersion === 1 ? valueSignature(evidence) : evidenceStateSignature(state,integrity.schemaVersion)))) return false;
       if (evidence === undefined) {
         // Old releases never issued observation receipts. Their presence proves
@@ -251,6 +252,13 @@
           const reviewFailures = item ? item.delayedReview.attempts - item.delayedReview.successes : 0;
           if (!Object.hasOwn(questions,id) || !Number.isSafeInteger(count) || count <= 0 ||
               (count > wrong && count - wrong > reviewFailures)) return false;
+        }
+        for (const [id,item] of Object.entries(evidence.questions)) {
+          // Ordinary answers and due-review completions were saved atomically by
+          // the legacy controller. An unfinished exam observation is not completion.
+          const ordinaryWrong = ['story','training','desk'].reduce((sum,mode) => sum + (item.modes[mode].attempts - item.modes[mode].successes),0);
+          const reviewFailures = item.delayedReview.attempts - item.delayedReview.successes, count = mistakes[id] || 0;
+          if (count < ordinaryWrong || count - ordinaryWrong < reviewFailures) return false;
         }
         if (Array.isArray(state.incorrectIds) && state.incorrectIds.some(id => !(mistakes[id] > 0))) return false;
       }
@@ -423,7 +431,7 @@
           // A missing row/flag in an old save cannot prove a never-attempted question.
           const needsEvidenceMigration = saved.learningEffectiveness === undefined;
           if (needsEvidenceMigration) this.state.learningEffectiveness = emptyEffectiveness('unknown', this.state.attempts);
-          const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 8;
+          const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 9;
           if (needsEvidenceMigration || needsIntegrityMigration) this.refreshEvidenceIntegrity();
           if (needsContentMigration || needsLearningMigration || needsEvidenceMigration || needsIntegrityMigration) this.save();
         }
@@ -723,15 +731,20 @@
         ['RUNNING', 'EXPIRED', 'FINISHING'].includes(session.status || 'RUNNING') &&
         (session.evidenceVersion === undefined || session.evidenceVersion === 1) &&
         session.scores && typeof session.scores === 'object' && !Array.isArray(session.scores))) return false;
-      return Object.entries(session.scores).every(([id, score]) => session.ids.includes(id) && score &&
-        typeof score.correct === 'boolean' && Number.isFinite(score.earned) && Number.isFinite(score.possible) &&
-        Number.isFinite(score.ratio) && score.earned >= 0 && score.possible > 0 && score.earned <= score.possible && score.ratio >= 0 && score.ratio <= 1);
+      return Object.entries(session.scores).every(([id, score]) => {
+        if (!session.ids.includes(id) || !score || typeof score.correct !== 'boolean' ||
+            !Number.isSafeInteger(score.earned) || !Number.isSafeInteger(score.possible) || score.earned < 0 || score.possible <= 0 ||
+            score.earned > score.possible || score.correct !== (score.earned === score.possible) || score.ratio !== score.earned / score.possible) return false;
+        const question = this.questions[id], cells = question.answer?.cells;
+        const possible = question.type === 'journal' ? 1 : cells && typeof cells === 'object' ? Object.keys(cells).length : null;
+        return possible === null || score.possible === possible;
+      });
     }
-    refreshEvidenceIntegrity() { this.state.learningEvidenceIntegrity = {schemaVersion:8,signature:evidenceStateSignature(this.state)}; }
+    refreshEvidenceIntegrity() { this.state.learningEvidenceIntegrity = {schemaVersion:9,signature:evidenceStateSignature(this.state)}; }
     save() { if (this.storageWriteBlocked || typeof this.storage?.setItem !== 'function') return false; try { return this.storage.setItem(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
-    setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; return this.save(); }
-    clearDraft(id) { if (!this.questions[id]) return false; delete this.state.drafts[id]; return this.save(); }
-    clearDrafts(ids) { if (!Array.isArray(ids)) return false; ids.filter(id => this.questions[id]).forEach(id => { delete this.state.drafts[id]; }); return this.save(); }
+    setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; this.refreshEvidenceIntegrity(); return this.save(); }
+    clearDraft(id) { if (!this.questions[id]) return false; delete this.state.drafts[id]; this.refreshEvidenceIntegrity(); return this.save(); }
+    clearDrafts(ids) { if (!Array.isArray(ids)) return false; ids.filter(id => this.questions[id]).forEach(id => { delete this.state.drafts[id]; }); this.refreshEvidenceIntegrity(); return this.save(); }
     record(id, correct, now = Date.now()) {
       if (!this.questions[id]) return false;
       if (this.state.learningEffectiveness && !this.state.learningEffectiveness.questions[id]) {
