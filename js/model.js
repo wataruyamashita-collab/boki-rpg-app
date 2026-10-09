@@ -8,6 +8,13 @@
     L031: Object.freeze({ category:'勘定記入法則', type:'ledger', identity:'L031:account-entry-rules-v1' })
   });
   const cloneContent = value => JSON.parse(JSON.stringify(value));
+  const validExamIdentity = value => value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === 3 && ['startedAt','endAt','attempt'].every(key => Object.hasOwn(value,key)) &&
+    Number.isFinite(value.startedAt) && value.startedAt >= 0 && Number.isFinite(value.endAt) && value.endAt > value.startedAt &&
+    Number.isSafeInteger(value.attempt) && value.attempt >= 0;
+  const examIdentity = state => ({startedAt:state.examSession.startedAt,endAt:state.examSession.endAt,attempt:state.examAttempt});
+  const sameExamIdentity = (left,right) => validExamIdentity(left) && validExamIdentity(right) &&
+    ['startedAt','endAt','attempt'].every(key => left[key] === right[key]);
   const emptyContentArchive = () => ({ schemaVersion:1, questions:{}, reviewAssignments:{}, completed:null });
   const LEARNING_SCHEMA_VERSION = 2;
   const EVIDENCE_MODES = ['story','training','review','exam','desk'];
@@ -26,7 +33,7 @@
     modes:Object.fromEntries(EVIDENCE_MODES.map(mode => [mode, { attempts:0, successes:0 }])),
     delayedReview:{ attempts:0, successes:0, lastAt:null, highestConfirmedStage:null, receipts:{correct:null,incorrect:null},
       stages:Array.from({ length:5 }, () => ({ attempts:0, successes:0 })) },
-    misconceptionStats:{}
+    reviewBindings:{}, lastExamObservation:null, misconceptionStats:{}
   });
   const FIXED_ASSET_SCHEMA_REVISION_2_IDS = new Set(['L005','L010','L015','L020','L025','L030','L033','L040']);
   class ProgressModel {
@@ -171,6 +178,7 @@
             row.timestamp < 0 || row.timestamp > item.lastObservedAt || !Number.isFinite(row.responseMs) || row.responseMs < 0) return false;
         if (row.reviewSourceId !== null && (!Object.hasOwn(questions,row.reviewSourceId) || row.mode !== 'review' ||
             questions[row.reviewSourceId].category !== questions[id].category || !Number.isSafeInteger(row.reviewStage) || row.reviewStage < 0 || row.reviewStage > 4)) return false;
+        if (row.examSession !== null && (row.mode !== 'exam' || !validExamIdentity(row.examSession))) return false;
         const rows = retained[id] ||= [];
         if (rows.length && row.observationNumber !== rows.at(-1).observationNumber + 1) return false;
         rows.push(row);
@@ -186,6 +194,15 @@
               (rows[0].observationNumber === 1 && (selected.length !== aggregate.attempts || successes !== aggregate.successes))) return false;
         }
       }
+      for (const [id,item] of Object.entries(evidence.questions)) {
+        const exam = item.lastExamObservation;
+        const row = exam && retained[id]?.find(row => row.observationNumber === exam.observationNumber);
+        if (row && (row.mode !== 'exam' || row.correct !== exam.correct || row.timestamp !== exam.at || !sameExamIdentity(row.examSession,exam.session))) return false;
+        for (const [sourceId,bindings] of Object.entries(item.reviewBindings)) for (const [kind,binding] of Object.entries(bindings)) {
+          const receipt = evidence.questions[sourceId]?.delayedReview.receipts[kind];
+          if (!receipt || receipt.questionId !== id || ['observationNumber','at','stage'].some(key => binding[key] !== receipt[key])) return false;
+        }
+      }
       const usedReviewReceipts = new Set();
       for (const [sourceId,item] of Object.entries(evidence.questions)) for (const [kind, receipt] of Object.entries(item.delayedReview.receipts)) {
         if (!receipt) continue;
@@ -195,12 +212,19 @@
         const target = evidence.questions[receipt.questionId], correct = kind === 'correct';
         if (!target || receipt.observationNumber > target.observedAttempts || receipt.at > target.lastObservedAt || questions[sourceId].category !== questions[receipt.questionId].category ||
             (correct ? target.modes.review.successes < 1 : target.modes.review.attempts <= target.modes.review.successes)) return false;
+        const binding = target.reviewBindings[sourceId]?.[kind];
+        if (!binding || ['observationNumber','at','stage'].some(key => binding[key] !== receipt[key])) return false;
         const row = retained[receipt.questionId]?.find(row => row.observationNumber === receipt.observationNumber);
         if (row && (row.correct !== correct || row.timestamp !== receipt.at || row.mode !== 'review' || row.reviewSourceId !== sourceId || row.reviewStage !== receipt.stage)) return false;
       }
-      if (complete && state.examSession?.scores) for (const [id,score] of Object.entries(state.examSession.scores)) {
-        const mode = evidence.questions[id]?.modes.exam;
-        if (!mode || typeof score?.correct !== 'boolean' || (score.correct ? mode.successes < 1 : mode.attempts <= mode.successes)) return false;
+      if (state.examSession?.scores) for (const [id,score] of Object.entries(state.examSession.scores)) {
+        // Uninstrumented answers in an unfinished legacy exam remain unknown.
+        // All new sessions and scored observations require a session-bound receipt.
+        if (!complete && state.examSession.evidenceVersion !== 1 && score?.observationNumber === undefined &&
+            !(evidence.questions[id]?.modes.exam.attempts > 0)) continue;
+        const exam = evidence.questions[id]?.lastExamObservation;
+        if (!exam || exam.observationNumber !== score?.observationNumber || exam.correct !== score.correct ||
+            !sameExamIdentity(exam.session,examIdentity(state))) return false;
       }
       return ['answeredIds','correctIds','incorrectIds'].every(key => Array.isArray(state[key]) && (!complete || state[key].every(id => {
         const item = evidence.questions[id];
@@ -235,6 +259,20 @@
             Object.values(item.modes).reduce((sum, mode) => sum + mode.successes, 0) !== item.correctCount) return false;
         if (first && (item[first.correct ? 'correctCount' : 'incorrectCount'] < 1 || item.modes[first.mode].attempts < 1 ||
             (first.correct ? item.modes[first.mode].successes < 1 : item.modes[first.mode].successes === item.modes[first.mode].attempts))) return false;
+        if (!plain(item.reviewBindings)) return false;
+        for (const [sourceId,bindings] of Object.entries(item.reviewBindings)) {
+          if (!Object.hasOwn(questions,sourceId) || questions[sourceId].category !== questions[id].category || !plain(bindings) ||
+              Object.keys(bindings).length < 1 || Object.keys(bindings).length > 2) return false;
+          for (const [kind,binding] of Object.entries(bindings)) if (!['correct','incorrect'].includes(kind) ||
+              !exact(binding,['observationNumber','at','stage']) || !count(binding.observationNumber) || binding.observationNumber < 1 ||
+              binding.observationNumber > item.observedAttempts || !time(binding.at) || binding.at > item.lastObservedAt ||
+              !count(binding.stage) || binding.stage > 4 || (kind === 'correct' ? item.modes.review.successes < 1 : item.modes.review.attempts <= item.modes.review.successes)) return false;
+        }
+        const exam = item.lastExamObservation;
+        if (exam !== null && (!exact(exam,['observationNumber','correct','at','session']) || !count(exam.observationNumber) ||
+            exam.observationNumber < 1 || exam.observationNumber > item.observedAttempts || typeof exam.correct !== 'boolean' ||
+            !time(exam.at) || exam.at > item.lastObservedAt || !validExamIdentity(exam.session) ||
+            (exam.correct ? item.modes.exam.successes < 1 : item.modes.exam.attempts <= item.modes.exam.successes))) return false;
         const delayed = item.delayedReview;
         if (!exact(delayed, ['attempts','successes','lastAt','highestConfirmedStage','receipts','stages']) || !count(delayed.attempts) ||
             !count(delayed.successes) || delayed.successes > delayed.attempts ||
@@ -649,6 +687,7 @@
         session.ids.every(id => this.questions[id]) && new Set(session.ids).size === session.ids.length &&
         Number.isFinite(session.startedAt) && Number.isFinite(session.endAt) && session.endAt > session.startedAt &&
         ['RUNNING', 'EXPIRED', 'FINISHING'].includes(session.status || 'RUNNING') &&
+        (session.evidenceVersion === undefined || session.evidenceVersion === 1) &&
         session.scores && typeof session.scores === 'object' && !Array.isArray(session.scores))) return false;
       return Object.entries(session.scores).every(([id, score]) => session.ids.includes(id) && score &&
         typeof score.correct === 'boolean' && Number.isFinite(score.earned) && Number.isFinite(score.possible) &&
@@ -726,7 +765,7 @@
           assignment.conceptId !== (this.questions[sourceId].category || '') || this.questions[id].category !== this.questions[sourceId].category ||
           !Number.isSafeInteger(schedule.stage) || schedule.stage < 0 || schedule.stage > 4 ||
           !Number.isFinite(schedule.dueAt) || schedule.dueAt < 0 || !Number.isFinite(assignment.assignedAt) || assignment.assignedAt < 0 ||
-          now < schedule.dueAt || now < assignment.assignedAt) return null;
+          now < schedule.dueAt) return null;
       return { sourceId, stage:schedule.stage };
     }
     applyRecovery(item, support, now) {
@@ -764,6 +803,8 @@
       const evidence = this.state.learningEffectiveness;
       const item = evidence.questions[id] ||= emptyEvidence();
       const delayed = this.qualifiedDelayedReview(id, context.reviewSourceId, now, mode);
+      const examSession = mode === 'exam' && this.validExamSession(this.state.examSession) && this.state.examSession.ids.includes(id)
+        ? examIdentity(this.state) : null;
       if (item.observedAttempts === 0) {
         item.firstObservedAt = now;
         if (evidence.initialHistory === 'complete') item.firstAttempt = { correct, at:now, mode, support };
@@ -771,6 +812,7 @@
       item.observedAttempts += 1; item[correct ? 'correctCount' : 'incorrectCount'] += 1;
       item.lastObservedAt = Math.max(item.lastObservedAt ?? 0, now);
       item.modes[mode].attempts += 1; if (correct) item.modes[mode].successes += 1;
+      if (examSession) item.lastExamObservation = {observationNumber,correct,at:now,session:examSession};
       if (correct) this.applyRecovery(item, support, now);
       else {
         const tags = ProgressModel.evidenceTags(this.questions[id]);
@@ -781,14 +823,23 @@
       }
       if (delayed) {
         const retention = (evidence.questions[delayed.sourceId] ||= emptyEvidence()).delayedReview;
-        retention.receipts[correct ? 'correct' : 'incorrect'] = { sourceId:delayed.sourceId, questionId:id, observationNumber, at:now, stage:delayed.stage };
+        const kind = correct ? 'correct' : 'incorrect', previous = retention.receipts[kind];
+        // One reverse binding per source/outcome: at most 2 * question count.
+        // Remove the previous target's binding when a newer observation replaces it.
+        if (previous) {
+          const bindings = evidence.questions[previous.questionId].reviewBindings;
+          delete bindings[delayed.sourceId][kind];
+          if (!Object.keys(bindings[delayed.sourceId]).length) delete bindings[delayed.sourceId];
+        }
+        (item.reviewBindings[delayed.sourceId] ||= {})[kind] = {observationNumber,at:now,stage:delayed.stage};
+        retention.receipts[kind] = { sourceId:delayed.sourceId, questionId:id, observationNumber, at:now, stage:delayed.stage };
         retention.attempts += 1; retention.lastAt = Math.max(retention.lastAt ?? 0, now); retention.stages[delayed.stage].attempts += 1;
         if (correct) {
           retention.successes += 1; retention.stages[delayed.stage].successes += 1;
           retention.highestConfirmedStage = Math.max(retention.highestConfirmedStage ?? 0, Math.min(delayed.stage + 1, 4));
         }
       }
-      this.state.attempts.push({ questionId:id, id, ...(this.state.questionContentVersions[id] ? { contentIdentity:this.state.questionContentVersions[id] } : {}), concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:delayed ? delayed.stage : Number.isSafeInteger(reviewStage) ? reviewStage : null, reviewSourceId:delayed?.sourceId || null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now, mode, support, observationNumber });
+      this.state.attempts.push({ questionId:id, id, ...(this.state.questionContentVersions[id] ? { contentIdentity:this.state.questionContentVersions[id] } : {}), concept:this.questions[id].category, category:this.questions[id].category, difficulty:Number(this.questions[id].difficulty || 1), correct, confidence:confidence === 'sure' ? 'sure' : 'unsure', responseMs, wrongType:String(wrongType || ''), reviewStage:delayed ? delayed.stage : Number.isSafeInteger(reviewStage) ? reviewStage : null, reviewSourceId:delayed?.sourceId || null, delayedSuccess:delayedSuccess === true, timestamp:now, at:now, mode, support, observationNumber, examSession });
       this.state.attempts = this.state.attempts.slice(-200);
       evidence.retainedAttemptsSignature = attemptsSignature(this.state.attempts);
       this.recordLearningContinuity(id, correct, delayedSuccess === true, now);

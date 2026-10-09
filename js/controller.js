@@ -380,6 +380,7 @@
       // The application always supplies both concrete model keys and one store.
       if (!model.key || !rpg.key) return operation() !== false;
       const storage = model.storage;
+      if (!root.ProgressModel.validateBackupState(model.state,this.questions)) return false;
       if (!storage || storage !== rpg.storage || model.storageWriteBlocked ||
           !Controller.recoverAnswerTransaction(storage,model.key,rpg.key)) return false;
       const progress = io.storageRead(storage,model.key), character = io.storageRead(storage,rpg.key);
@@ -563,7 +564,7 @@
     modeIds() { const mode = this.model.state.mode; if (mode === 'review') return this.reviewIds(); if (mode === 'exam') return this.model.state.examSession?.ids || this.buildExamIds(); if (mode === 'training') return this.learningIds().filter(id => this.questions[id].type !== 'journal'); return this.storyIds(); }
     ensureExamSession(now = Date.now()) {
       if (this.model.validExamSession(this.model.state.examSession)) return this.model.state.examSession;
-      this.model.state.examSession = { ids: this.buildExamIds(), startedAt: now, endAt: now + EXAM_DURATION_MS, status: 'RUNNING', scores: {} };
+      this.model.state.examSession = { ids: this.buildExamIds(), startedAt: now, endAt: now + EXAM_DURATION_MS, status: 'RUNNING', evidenceVersion:1, scores: {} };
       this.model.save(); return this.model.state.examSession;
     }
     isExamExpired(now = Date.now(), session = this.model.state.examSession) {
@@ -1100,7 +1101,9 @@
           { mode:this.model.state.mode, support, observationNumber:this.learningObservationNumber, reviewSourceId:this.reviewSourceId });
         if (recorded === false) return false;
         if (this.model.state.mode === 'exam') {
-          this.model.state.examSession.scores[question.id] = { correct:score.correct, earned:score.earned, possible:score.possible, ratio:score.ratio, answer };
+          const observationNumber = this.model.state.learningEffectiveness?.questions[question.id]?.observedAttempts;
+          this.model.state.examSession.scores[question.id] = { correct:score.correct, earned:score.earned, possible:score.possible, ratio:score.ratio, answer,
+            ...(Number.isSafeInteger(observationNumber) ? {observationNumber} : {}) };
           this.model.setDraft(question.id,answer); this.model.save();
           return true;
         }

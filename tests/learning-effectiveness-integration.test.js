@@ -88,7 +88,7 @@ test('exam finalization commits history, mastery and rewards once after a failed
   ctx.model=model;ctx.rpg=rpg;ctx.questions=canonical;ctx.stopExamTimer=()=>{};let results=0;ctx.view.examResult=()=>{results++;};
   model.state.mode='exam';model.state.examSession={ids,startedAt:now-1000,endAt:now+100000,status:'RUNNING',scores:{}};
   assert(model.recordAttempt(ids[0],true,10,'',false,now,null,'unsure',{mode:'exam',support:'none'}));
-  model.state.examSession.scores[ids[0]]={correct:true,earned:1,possible:1,ratio:1,answer:{correct:true}};
+  model.state.examSession.scores[ids[0]]={correct:true,earned:1,possible:1,ratio:1,answer:{correct:true},observationNumber:1};
   ctx.unansweredExamIds=()=>ids.slice(1);model.save();rpg.save();const progress=clone(model.state),character=clone(rpg.state),saved=clone(model.storage.data),set=model.storage.setItem;let calls=0;
   model.storage.setItem=function(k,v){if(++calls===3)return false;return set.call(this,k,v);};
   assert.strictEqual(ctx.finishExam(true,now),false);assert.deepStrictEqual(clone(model.state),progress);assert.deepStrictEqual(clone(rpg.state),character);assert.deepStrictEqual(model.storage.data,saved);assert.strictEqual(results,0);
@@ -176,4 +176,16 @@ async function backupTests(){
   payload.progress.learningEffectiveness.schemaVersion=99;const saved=JSON.stringify(store.data);assert.strictEqual(await ctx.importBackup(file),false);assert.strictEqual(JSON.stringify(store.data),saved);assert.strictEqual(reloads,1);
   passed++;console.log('PASS real two-key backup transaction preserves evidence and rolls back failures');
 }
-backupTests().catch(error=>{failed++;console.error(error.stack);}).finally(()=>{console.log(`LEARNING_EFFECTIVENESS_INTEGRATION ${passed}/${passed+failed} PASS; ${failed} FAIL`);if(failed)process.exitCode=1;});
+backupTests().catch(error=>{failed++;console.error(error.stack);}).finally(()=>{test('a transplanted active exam score cannot add a second history or mastery result',()=>{
+  const {ctx,model,rpg,store}=context('exam');ctx.stopExamTimer=()=>{};ctx.view.examResult=()=>{};ctx.submit();
+  const priorSession=clone(model.state.examSession);assert(ctx.finishExam(true));
+  model.state.examSession={...priorSession,startedAt:priorSession.startedAt+100000,endAt:priorSession.endAt+100000};
+  model.save();rpg.save();const progress=clone(model.state),character=clone(rpg.state),bytes=clone(store.data);
+  assert.strictEqual(ctx.finishExam(true),false);assert.deepStrictEqual(clone(model.state),progress);assert.deepStrictEqual(clone(rpg.state),character);assert.deepStrictEqual(store.data,bytes);
+});
+test('review clock rollback cannot commit a review bonus without retention evidence',()=>{
+  const {ctx,model,rpg}=context('training');ctx.submit();const now=Date.now();model.state.mode='review';model.state.reviewSchedule.Q={stage:1,dueAt:now-1000};model.assignReview('Q','R',now+1000);
+  ctx.reviewMappings.set('R',{sourceQuestionId:'Q'});ctx.start('R');const beforeXp=rpg.state.xp;ctx.submit();
+  assert.strictEqual(model.state.reviewSchedule.Q.stage,2);assert(rpg.state.xp>beforeXp);assert.strictEqual(model.learningEffectivenessForQuestion('Q').delayedReview.successes,1);
+});
+console.log(`LEARNING_EFFECTIVENESS_INTEGRATION ${passed}/${passed+failed} PASS; ${failed} FAIL`);if(failed)process.exitCode=1;});

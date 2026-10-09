@@ -246,8 +246,8 @@ test('complete-history active exam scores require observed answers in exam mode'
   model.state.examSession={ids:Object.keys(catalog),startedAt:100,endAt:20000,status:'RUNNING',scores:{E0:{correct:true,earned:1,possible:1,ratio:1}}};
   assert.strictEqual(Model.validateBackupState(model.state,catalog),false);assert.strictEqual(Model.prepareBackupState(model.state,catalog),null);
   assert(answer(model,'E0',true,1000,{mode:'training'}));assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
-  assert(answer(model,'E0',true,1001,{mode:'exam'}));assert(Model.validateBackupState(model.state,catalog));
-  model.state.examSession.scores.E0={correct:false,earned:0,possible:1,ratio:0};assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
+  assert(answer(model,'E0',true,1001,{mode:'exam'}));model.state.examSession.scores.E0.observationNumber=2;assert(Model.validateBackupState(model.state,catalog));
+  model.state.examSession.scores.E0={correct:false,earned:0,possible:1,ratio:0,observationNumber:2};assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
 });
 test('a backward coaching clock records assisted recovery once with a monotonic timestamp',()=>{
   const {model}=fresh();assert(answer(model,'Q',false,1000));const stats=clone(model.state.questionStats),rows=clone(model.state.attempts);
@@ -256,6 +256,72 @@ test('a backward coaching clock records assisted recovery once with a monotonic 
   assert.deepStrictEqual(model.state.questionStats,stats);assert.deepStrictEqual(model.state.attempts,rows);
   assert(answer(model,'Q',false,700));assert.strictEqual(model.recordAssistedRecovery('Q',2,600),true);
   item=evidence(model).misconceptionStats['journal-entry'];assert.strictEqual(item.assistedRecoveredCount,2);assert.strictEqual(item.lastAssistedRecoveredAt,1000);assert(Model.validateBackupState(model.state,questions));
+});
+test('an evicted review receipt cannot move its authority to another source',()=>{
+  const catalog={...questions,S:{...questions.Q,id:'S'}},model=new Model(catalog,storage(),'test');
+  schedule(model);assert(answer(model,'R',true,2000,{mode:'review',reviewSourceId:'Q',stage:1}));assert(model.completeReview('Q',true,2000,'R'));
+  for(let i=0;i<201;i++)assert(answer(model,'T',true,3000+i,{mode:'training'}));
+  const bad=clone(model.state);bad.learningEffectiveness.questions.S=bad.learningEffectiveness.questions.Q;delete bad.learningEffectiveness.questions.Q;
+  bad.learningEffectiveness.questions.S.delayedReview.receipts.correct.sourceId='S';
+  for(const key of ['answeredIds','correctIds'])bad[key]=bad[key].map(id=>id==='Q'?'S':id);
+  bad.reviewSchedule.S=bad.reviewSchedule.Q;delete bad.reviewSchedule.Q;
+  assert.strictEqual(Model.validateBackupState(bad,catalog),false);assert.strictEqual(Model.prepareBackupState(bad,catalog),null);
+});
+test('active exam cannot reuse an observed score from a different exam session after eviction',()=>{
+  const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{...questions.Q,id:'E'+i}])),model=new Model(catalog,storage(),'test');
+  model.state.examSession={ids:Object.keys(catalog),startedAt:100,endAt:2000,status:'RUNNING',evidenceVersion:1,scores:{}};
+  assert(answer(model,'E0',true,1000,{mode:'exam'}));model.state.examSession.scores.E0={correct:true,earned:1,possible:1,ratio:1,observationNumber:1};
+  for(const evict of [false,true]){
+    if(evict)for(let i=0;i<201;i++)assert(answer(model,'E1',true,3000+i,{mode:'training'}));
+    assert(Model.validateBackupState(model.state,catalog));const bad=clone(model.state);bad.examAttempt++;bad.examSession.startedAt=5000;bad.examSession.endAt=6000;
+    assert.strictEqual(Model.validateBackupState(bad,catalog),false);assert.strictEqual(Model.prepareBackupState(bad,catalog),null);
+  }
+});
+test('a review after clock rollback records the same due event that advances completion',()=>{
+  const {model}=fresh();assert(answer(model,'Q',true,500,{mode:'training'}));assert(model.record('Q',true,500));
+  schedule(model,'Q','R',1,1000);model.state.reviewAssignments.Q.assignedAt=2000;
+  assert(answer(model,'R',true,1500,{mode:'review',reviewSourceId:'Q',stage:1}));assert(model.completeReview('Q',true,1500,'R'));
+  assert.strictEqual(model.state.reviewSchedule.Q.stage,2);assert.strictEqual(evidence(model).delayedReview.successes,1);
+  assert.strictEqual(evidence(model).delayedReview.receipts.correct.at,1500);assert(Model.validateBackupState(model.state,questions));
+});
+test('reverse review bindings remain bounded when latest receipts switch targets',()=>{
+  const catalog={...questions,S:{...questions.R,id:'S'}},store=storage(),model=new Model(catalog,store,'test');
+  for(let i=0;i<220;i++){
+    const id=i%2?'R':'S';schedule(model,'Q',id,i%4,1000+i);assert(answer(model,id,i%3!==0,1000+i,{mode:'review',reviewSourceId:'Q',stage:i%4}));assert(model.completeReview('Q',i%3!==0,1000+i,id));
+    const bindings=Object.values(model.state.learningEffectiveness.questions).flatMap(item=>Object.values(item.reviewBindings)).reduce((sum,item)=>sum+Object.keys(item).length,0);
+    assert.strictEqual(bindings,i?2:1);assert(Model.validateBackupState(model.state,catalog));
+  }
+  const restored=new Model(catalog,store,'test');assert.strictEqual(restored.learningEffectivenessForQuestion('Q').delayedReview.attempts,220);
+  const receipt=restored.state.learningEffectiveness.questions.Q.delayedReview.receipts.correct;
+  const missing=clone(restored.state);delete missing.learningEffectiveness.questions[receipt.questionId].reviewBindings.Q.correct;assert.strictEqual(Model.validateBackupState(missing,catalog),false);
+  const orphan=clone(restored.state);orphan.learningEffectiveness.questions[receipt.questionId].reviewBindings.S={correct:{observationNumber:receipt.observationNumber,at:receipt.at,stage:receipt.stage}};assert.strictEqual(Model.validateBackupState(orphan,catalog),false);
+});
+test('legacy unfinished exam remains unknown while a new session requires its own receipt',()=>{
+  const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{...questions.Q,id:'E'+i}]));
+  const old=new Model(catalog,storage(),'test').state;delete old.learningEffectiveness;old.mode='exam';
+  old.examSession={ids:Object.keys(catalog),startedAt:100,endAt:2000,status:'RUNNING',scores:{E0:{correct:true,earned:1,possible:1,ratio:1}}};
+  const model=new Model(catalog,storage(JSON.stringify(old)),'test');assert(Model.validateBackupState(model.state,catalog));assert.strictEqual(model.learningEffectivenessForQuestion('E0').initialStatus,'unknown');
+  model.state.examSession={...model.state.examSession,startedAt:3000,endAt:4000,evidenceVersion:1};assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
+  assert(answer(model,'E0',true,3100,{mode:'exam'}));model.state.examSession.scores.E0.observationNumber=1;assert(Model.validateBackupState(model.state,catalog));
+  assert.strictEqual(model.learningEffectivenessForQuestion('E0').firstAttempt,null);delete model.state.examSession.scores.E0.observationNumber;assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
+});
+test('an active exam receipt survives eviction and clock rollback without inventing the first timestamp',()=>{
+  const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{...questions.Q,id:'E'+i}])),store=storage(),model=new Model(catalog,store,'test');
+  model.state.examSession={ids:Object.keys(catalog),startedAt:2000,endAt:3000,status:'RUNNING',evidenceVersion:1,scores:{}};
+  assert(answer(model,'E0',false,1500,{mode:'exam'}));model.state.examSession.scores.E0={correct:false,earned:0,possible:1,ratio:0,observationNumber:1};
+  for(let i=0;i<201;i++)assert(answer(model,'E1',true,1600+i,{mode:'training'}));
+  assert(Model.validateBackupState(model.state,catalog));const restored=new Model(catalog,store,'test');assert(Model.validateBackupState(restored.state,catalog));
+  const item=restored.learningEffectivenessForQuestion('E0');assert.strictEqual(item.firstAttempt.at,1500);assert.deepStrictEqual(item.lastExamObservation,{observationNumber:1,correct:false,at:1500,session:{startedAt:2000,endAt:3000,attempt:0}});
+});
+test('new answers in an unfinished legacy exam cannot lose their observation number',()=>{
+  const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{...questions.Q,id:'E'+i}]));
+  const old=new Model(catalog,storage(),'test').state;delete old.learningEffectiveness;old.mode='exam';
+  old.examSession={ids:Object.keys(catalog),startedAt:100,endAt:2000,status:'RUNNING',scores:{E1:{correct:false,earned:0,possible:1,ratio:0}}};
+  const model=new Model(catalog,storage(JSON.stringify(old)),'test');assert(answer(model,'E0',true,500,{mode:'exam'}));
+  model.state.examSession.scores.E0={correct:true,earned:1,possible:1,ratio:1,observationNumber:1};assert(Model.validateBackupState(model.state,catalog));
+  delete model.state.examSession.scores.E0.observationNumber;assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
+  model.state.learningEffectiveness.questions.E0.lastExamObservation=null;assert.strictEqual(Model.validateBackupState(model.state,catalog),false);
+  assert.strictEqual(model.learningEffectivenessForQuestion('E1').initialStatus,'unknown');
 });
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;

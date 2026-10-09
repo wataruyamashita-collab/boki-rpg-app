@@ -42,9 +42,48 @@ const run=legacy=>{
  if(!Model.validateBackupState(model.state,questions))throw Error('invalid final backup');
  return {evidence:model.state.learningEffectiveness,stats:model.state.questionStats,retained:model.state.attempts.length};
 };
-console.log(JSON.stringify({fresh:run(false),legacy:run(true)}));
+const examRuns=legacy=>{
+ const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{type:'journal',category:'x'}]));
+ let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};let model=new Model(catalog,store);
+ if(legacy){const old=JSON.parse(JSON.stringify(model.state));delete old.learningEffectiveness;bytes=JSON.stringify(old);model=new Model(catalog,store);}
+ const sessions=[{startedAt:10000,endAt:20000,answers:[['E0',true,10010],['E1',false,10020]]},
+   {startedAt:20000,endAt:30000,answers:[['E0',false,9000],['E2',true,20020]]},
+   {startedAt:30000,endAt:40000,answers:[['E0',true,30010],['E1',true,30020]]}];
+ for(const [attempt,session] of sessions.entries()){
+  model.state.examAttempt=attempt;model.state.examSession={ids:Object.keys(catalog),startedAt:session.startedAt,endAt:session.endAt,status:'RUNNING',evidenceVersion:1,scores:{}};model.state.mode='exam';
+  for(const [id,correct,at] of session.answers){
+   const number=model.nextLearningObservation(id);if(!model.recordAttempt(id,correct,20,'journal-entry',false,at,null,'unsure',{mode:'exam',support:'none',observationNumber:number}))throw Error('exam recording');
+   model.state.examSession.scores[id]={correct,earned:Number(correct),possible:1,ratio:Number(correct),observationNumber:number};model.save();
+  }
+  model.state.mode='training';for(let i=0;i<201;i++)if(!model.recordAttempt('E14',true,20,'',false,session.endAt+i,null,'unsure',{mode:'training',support:'none'}))throw Error('exam eviction');
+  model=new Model(catalog,store);if(model.storageWriteBlocked||!Model.validateBackupState(model.state,catalog))throw Error('exam restore');
+ }
+ return {evidence:model.state.learningEffectiveness,retainedOnlyTraining:model.state.attempts.length===200&&model.state.attempts.every(row=>row.questionId==='E14')};
+};
+console.log(JSON.stringify({fresh:run(false),legacy:run(true),exams:{fresh:examRuns(false),legacy:examRuns(true)}}));
 """
 actual = json.loads(subprocess.check_output(['node', '-e', driver], cwd=ROOT, input=json.dumps(events), text=True))
+exam_actual = actual.pop('exams')
+exam_checked = 0
+exam_sessions = [(10000, 20000, [('E0', True, 10010), ('E1', False, 10020)]),
+                 (20000, 30000, [('E0', False, 9000), ('E2', True, 20020)]),
+                 (30000, 40000, [('E0', True, 30010), ('E1', True, 30020)])]
+for origin, result in exam_actual.items():
+    assert result['retainedOnlyTraining']
+    expected, counts, successes, first = {}, {}, {}, {}
+    for attempt, (start, end, answers) in enumerate(exam_sessions):
+        for qid, correct, at in answers:
+            counts[qid] = counts.get(qid, 0) + 1
+            successes[qid] = successes.get(qid, 0) + int(correct)
+            first.setdefault(qid, dict(correct=correct, at=at, mode='exam', support='none'))
+            expected[qid] = dict(observationNumber=counts[qid], correct=correct, at=at,
+                                 session=dict(startedAt=start, endAt=end, attempt=attempt))
+    for qid, receipt in expected.items():
+        item = result['evidence']['questions'][qid]
+        assert item['lastExamObservation'] == receipt
+        assert item['firstAttempt'] == (first[qid] if origin == 'fresh' else None)
+        assert item['modes']['exam'] == dict(attempts=counts[qid], successes=successes[qid])
+        exam_checked += 1
 checks = 0
 for origin, result in actual.items():
     assert result['retained'] == 200
@@ -77,6 +116,14 @@ for origin, result in actual.items():
                 i, event = matches[-1]
                 retention['receipts'][kind] = dict(sourceId=qid, questionId=event['id'], observationNumber=sum(e['id'] == event['id'] for e in events[:i+1]), at=event['at'], stage=event['stage'])
         assert value['delayedReview'] == retention
+        bindings = {}
+        for kind, result_correct in [('correct', True), ('incorrect', False)]:
+            matches = [(i, e) for i, e in enumerate(events) if e['due'] and e['correct'] == result_correct]
+            if matches and matches[-1][1]['id'] == qid:
+                i, event = matches[-1]
+                bindings.setdefault('R', {})[kind] = dict(observationNumber=sum(e['id'] == qid for e in events[:i+1]), at=event['at'], stage=event['stage'])
+        assert value['reviewBindings'] == bindings
+        assert value['lastExamObservation'] is None  # This ledger has no active exam session.
         tags = ['journal-entry'] if qid != 'T' else ['cell:a', 'cell:b', 'table-cell']
         patterns = {}
         for tag in tags:
@@ -108,4 +155,4 @@ for origin, result in actual.items():
         assert value['misconceptionStats'] == patterns, (origin, qid, value['misconceptionStats'], patterns)
         checks += 1
 print(json.dumps(dict(status='PASS', events_per_origin=len(events), origins=list(actual), question_aggregates_checked=checks,
-                      replay_rejections=2*len(events), retention_successes=sum(e['due'] and e['correct'] for e in events))))
+                      replay_rejections=2*len(events), exam_session_receipts_checked=exam_checked, retention_successes=sum(e['due'] and e['correct'] for e in events))))
