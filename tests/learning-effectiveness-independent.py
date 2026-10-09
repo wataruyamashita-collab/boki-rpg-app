@@ -23,7 +23,7 @@ for index in range(1200):
 driver = r"""
 const fs=require('fs'),Model=require('./js/model');
 const events=JSON.parse(fs.readFileSync(0,'utf8'));
-const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState,state.reviewSchedule,state.reviewAssignments,state.examHistory,state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds,state.placement];
+const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState,state.reviewSchedule,state.reviewAssignments,state.examHistory,state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds,state.placement,state.mistakeCounts];
 const questions={Q:{type:'journal',category:'x'},R:{type:'journal',category:'x'},T:{type:'ledger',category:'x',table:{inputCells:['a','b']}}};
 const run=legacy=>{
  let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};
@@ -40,11 +40,12 @@ const run=legacy=>{
   if(model.recordAttempt(e.id,e.correct,20,e.tag,e.due&&e.correct,e.at,e.stage,'unsure',
     {mode:e.mode,support:e.support,observationNumber:n,reviewSourceId:'R'})!==false || bytes!==bytesBefore)throw Error('replay '+i);
   if(!e.correct&&e.coaching)model.recordAssistedRecovery(e.id,n,e.at+1);
+  if(e.mode!=='exam')model.record(e.id,e.correct,e.at);
   if(i%79===0)model=new Model(questions,store);
  }
  model=new Model(questions,store);
  if(!Model.validateBackupState(model.state,questions))throw Error('invalid final backup');
- return {evidence:model.state.learningEffectiveness,integrity:model.state.learningEvidenceIntegrity,integrityInput:integrityInput(model.state),schema:model.state.learningSchemaVersion,stats:model.state.questionStats,retained:model.state.attempts.length};
+ return {evidence:model.state.learningEffectiveness,integrity:model.state.learningEvidenceIntegrity,integrityInput:integrityInput(model.state),schema:model.state.learningSchemaVersion,stats:model.state.questionStats,mistakeCounts:model.state.mistakeCounts,retained:model.state.attempts.length};
 };
 const examRuns=legacy=>{
  const catalog=Object.fromEntries(Array.from({length:15},(_,i)=>['E'+i,{type:'journal',category:'x'}]));
@@ -77,7 +78,7 @@ for result in [*actual.values(), *exam_actual.values()]:
         unit = int.from_bytes(encoded[index:index+2], 'little')
         fingerprint = ((fingerprint ^ unit) * 16777619) & 0xffffffff
     assert result['schema'] == 3
-    assert result['integrity'] == {'schemaVersion': 7, 'signature': f'{fingerprint:08x}'}
+    assert result['integrity'] == {'schemaVersion': 8, 'signature': f'{fingerprint:08x}'}
     integrity_checked += 1
 exam_checked = 0
 exam_sessions = [(10000, 20000, [('E0', True, 10010), ('E1', False, 10020)]),
@@ -101,6 +102,8 @@ for origin, result in exam_actual.items():
         exam_checked += 1
 checks = 0
 for origin, result in actual.items():
+    expected_mistakes = {qid: sum(not e['correct'] and e['mode'] != 'exam' for e in events if e['id'] == qid) for qid in ['Q', 'R', 'T']}
+    assert result['mistakeCounts'] == expected_mistakes, (origin, result['mistakeCounts'], expected_mistakes)
     assert result['retained'] == 200
     assert result['evidence']['initialHistory'] == ('complete' if origin == 'fresh' else 'unknown')
     for qid in ['Q', 'R', 'T']:
@@ -194,6 +197,6 @@ for start, end, answers in exam_sessions:
 for result in exam_actual.values():
     assert result['integrityInput'][6] == continuity_from_ledger(exam_ledger)
     continuity_checked += 1
-print(json.dumps(dict(status='PASS', events_per_origin=len(events), origins=list(actual), question_aggregates_checked=checks,
+print(json.dumps(dict(status='PASS', events_per_origin=len(events), origins=list(actual), question_aggregates_checked=checks, mistake_totals_checked=6,
                       replay_rejections=2*len(events), outer_integrity_records_checked=integrity_checked, continuity_records_checked=continuity_checked,
                       learning_days_per_origin=30, exam_session_receipts_checked=exam_checked, retention_successes=sum(e['due'] and e['correct'] for e in events))))

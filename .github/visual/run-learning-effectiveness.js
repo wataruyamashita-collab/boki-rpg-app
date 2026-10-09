@@ -86,15 +86,15 @@ async function run(){
                   {mode:'review',support:'none',observationNumber:m.nextLearningObservation('J001'),reviewSourceId:'J001'}))throw Error('durability record '+i);
                 m.completeReview('J001',i%3!==0,now+i,'J001');
               }
-              m.state.mode='desk';m.save();return {metric:m.learningEffectivenessForQuestion('J001'),rows:m.state.attempts.length,character:localStorage.getItem(c.rpg.key)};
+              m.state.mode='desk';m.save();return {metric:m.learningEffectivenessForQuestion('J001'),rows:m.state.attempts.length,mistakes:m.state.mistakeCounts.J001,character:localStorage.getItem(c.rpg.key)};
             });
-            assert.strictEqual(beforeReload.rows,200);assert.strictEqual(beforeReload.metric.observedAttempts,222);
+            assert.strictEqual(beforeReload.mistakes,1+Math.ceil(220/3));assert.strictEqual(beforeReload.rows,200);assert.strictEqual(beforeReload.metric.observedAttempts,222);
             assert.strictEqual(beforeReload.metric.delayedReview.attempts,220);assert.strictEqual(beforeReload.metric.delayedReview.successes,146);
             assert.strictEqual(beforeReload.metric.delayedReview.highestConfirmedStage,4);assert.deepStrictEqual(beforeReload.metric.firstAttempt,wrong.metric.firstAttempt);
             await page.reload({waitUntil:'load'});
             await page.waitForFunction(()=>Boolean(window.App?.controller));
-            const persisted=await page.evaluate(()=>{const c=window.App.controller;return {metric:c.model.learningEffectivenessForQuestion('J001'),rows:c.model.state.attempts.length,character:localStorage.getItem(c.rpg.key),valid:window.ProgressModel.validateBackupState(c.model.state,c.questions)};});
-            assert(persisted.valid);assert.deepStrictEqual(persisted.metric,beforeReload.metric);assert.strictEqual(persisted.character,beforeReload.character);
+            const persisted=await page.evaluate(()=>{const c=window.App.controller;return {metric:c.model.learningEffectivenessForQuestion('J001'),rows:c.model.state.attempts.length,mistakes:c.model.state.mistakeCounts.J001,character:localStorage.getItem(c.rpg.key),valid:window.ProgressModel.validateBackupState(c.model.state,c.questions)};});
+            assert.strictEqual(persisted.mistakes,beforeReload.mistakes);assert(persisted.valid);assert.deepStrictEqual(persisted.metric,beforeReload.metric);assert.strictEqual(persisted.character,beforeReload.character);
             await page.evaluate(async()=>{
               const c=window.App.controller,progress=JSON.parse(JSON.stringify(c.model.state)),character=JSON.parse(JSON.stringify(c.rpg.state));
               const legacyInput=JSON.parse(JSON.stringify(progress));delete legacyInput.learningEffectiveness;delete legacyInput.learningEvidenceIntegrity;legacyInput.learningSchemaVersion=2;
@@ -125,8 +125,14 @@ async function run(){
               isolated.state.examHistory=[{finishedAt:3000,points:80,setSignature:'native-set-a'}];isolated.updateCompletion(c.rpg);
               if(!window.ProgressModel.validateBackupState(isolated.state,c.questions))throw Error('issued exam history fixture invalid');
               const lostExamHistory=JSON.parse(JSON.stringify(isolated.state));lostExamHistory.examHistory=[];
+              const lostMistakes=JSON.parse(JSON.stringify(progress));delete lostMistakes.mistakeCounts.J001;
+              const alteredMistakes=JSON.parse(JSON.stringify(progress));alteredMistakes.mistakeCounts.J001++;
+              c.renderModes();if(!Array.from(document.querySelectorAll('[data-question-id="J001"]')).some(el=>el.textContent.includes('誤答 75回')))throw Error('mistake badge changed after reload');
+              const filters={...c.filters};c.filters={query:'',account:'',mistakes:'frequent'};
+              if(!c.filteredIds(['J001','J002']).includes('J001')||c.filteredIds(['J001','J002']).includes('J002'))throw Error('mistake filter lost current totals');
+              c.filters=filters;
               const beforePair=[localStorage.getItem(c.model.key),localStorage.getItem(c.rpg.key)];
-              for(const bad of [missing,downgraded,unmarked,lostUnknown,lostFlags,changedLatest,changedContinuity,lostReview,lostExamHistory]){
+              for(const bad of [missing,downgraded,unmarked,lostUnknown,lostFlags,changedLatest,changedContinuity,lostReview,lostExamHistory,lostMistakes,alteredMistakes]){
                 const result=await c.importBackup({text:async()=>JSON.stringify({format:'boki-rpg-backup',version:1,progress:bad,character})});
                 if(result!==false||localStorage.getItem(c.model.key)!==beforePair[0]||localStorage.getItem(c.rpg.key)!==beforePair[1])throw Error('bad evidence changed native saved state');
               }
@@ -265,7 +271,7 @@ async function run(){
               values:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)])),journal:localStorage.getItem(`${window.App.controller.model.key}:pending-answer-v1`)}),Object.keys(corruptBefore));
             assert.strictEqual(corruptAfter.blocked,true);assert.deepStrictEqual(corruptAfter.values,corruptBefore);assert.strictEqual(corruptAfter.journal,'{bad');
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,examHistoryImportRejected:true,activeExamImportRejected:true,legacyExamPoolImportRejected:true,legacyExamMigration:true,initialPlacementPreserved:true,initialPlacementImportRejected:true,activeExamResume:true,expiredExamAndRetry:true,...numericalBoundaries,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,missingEvidenceImportRejected:true,evictedUnknownAggregateImportRejected:true,missingCompletionImportRejected:true,evictedLatestStatsImportRejected:true,continuityImportRejected:true,pendingReviewImportRejected:true,examHistoryImportRejected:true,activeExamImportRejected:true,legacyExamPoolImportRejected:true,legacyExamMigration:true,initialPlacementPreserved:true,initialPlacementImportRejected:true,mistakeTotalsImportRejected:true,mistakeBadgesAndFiltersPreserved:true,activeExamResume:true,expiredExamAndRetry:true,...numericalBoundaries,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

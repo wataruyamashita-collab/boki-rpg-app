@@ -343,7 +343,7 @@ test('issued current backups cannot lose their entire evidence and masquerade as
 });
 test('issued evidence cannot lose or corrupt its outer integrity marker',()=>{
   const {model}=fresh();assert(answer(model,'Q',false,1000));const original=clone(model.state);
-  for(const mutate of [v=>delete v.learningEvidenceIntegrity,v=>v.learningEvidenceIntegrity=null,v=>v.learningEvidenceIntegrity.schemaVersion=8,v=>v.learningEvidenceIntegrity.signature='deadbeef']){
+  for(const mutate of [v=>delete v.learningEvidenceIntegrity,v=>v.learningEvidenceIntegrity=null,v=>v.learningEvidenceIntegrity.schemaVersion=9,v=>v.learningEvidenceIntegrity.signature='deadbeef']){
     const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
     const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert(loaded.model.storageWriteBlocked);assert.strictEqual(loaded.store.value,bytes);
   }
@@ -385,7 +385,7 @@ test('the real prior schema3 preview retains its evidence, flags and statistics 
   const store=storage(),old=new module.exports(questions,store,'test');old.recordAttempt('Q',true,10,'',false,100);old.record('Q',true,100);
   const original=clone(old.state);assert.strictEqual(original.learningEvidenceIntegrity.schemaVersion,1);
   assert(Model.validateBackupState(original,questions));const migrated=Model.prepareBackupState(original,questions);
-  assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,7);
+  assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,8);
   const withoutMarker=value=>{const copy=clone(value);delete copy.learningEvidenceIntegrity;return copy;};
   assert.deepStrictEqual(withoutMarker(migrated),withoutMarker(original));
   assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
@@ -409,7 +409,7 @@ test('the real v2-marker preview preserves thirty-day continuity when upgraded',
   const store=storage(),old=new module.exports(questions,store,'test');
   for(let day=0;day<30;day++)for(let n=0;n<10;n++)assert(old.recordAttempt('Q',true,10,'',false,new Date(2026,0,1+day,12,0,n).getTime()));
   const original=clone(old.state);assert.strictEqual(original.learningEvidenceIntegrity.schemaVersion,2);assert.strictEqual(original.learningContinuityState.activeDayKeys.length,30);
-  const migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,7);
+  const migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,8);
   const withoutMarker=value=>{const copy=clone(value);delete copy.learningEvidenceIntegrity;return copy;};
   assert.deepStrictEqual(withoutMarker(migrated),withoutMarker(original));assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
 });
@@ -428,7 +428,7 @@ test('the real v3-marker preview preserves pending review authority on migration
   vm.runInNewContext(require('child_process').execFileSync('git',['show','bd558e21b3aa68ddccde3216d5ba89da105884cf:js/model.js'],{encoding:'utf8'}),{module,console});
   const store=storage(),old=new module.exports(questions,store,'test');assert(old.recordAttempt('Q',false,10,'journal-entry',false,1000));old.record('Q',false,1000);old.assignReview('Q','R',1001);
   const original=clone(old.state);assert.strictEqual(original.learningEvidenceIntegrity.schemaVersion,3);
-  const migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,7);
+  const migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,8);
   const withoutMarker=value=>{const copy=clone(value);delete copy.learningEvidenceIntegrity;return copy;};
   assert.deepStrictEqual(withoutMarker(migrated),withoutMarker(original));assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
   const restored=fresh(JSON.stringify(migrated)).model;assert.deepStrictEqual(restored.dueReviewIds(original.reviewSchedule.Q.dueAt),['Q']);
@@ -439,7 +439,7 @@ test('the real v4-marker preview preserves completed exam history on migration',
   const store=storage(),old=new module.exports(questions,store,'test');assert(old.recordAttempt('Q',true,10,'',false,1000));
   old.state.examHistory=[{finishedAt:2000,points:80,setSignature:'set-a'},{finishedAt:3000,points:75,setSignature:'set-b'}];old.updateCompletion({});
   const original=clone(old.state);assert.strictEqual(original.learningEvidenceIntegrity.schemaVersion,4);
-  const migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,7);
+  const migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,8);
   const withoutMarker=value=>{const copy=clone(value);delete copy.learningEvidenceIntegrity;return copy;};
   assert.deepStrictEqual(withoutMarker(migrated),withoutMarker(original));assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
   assert.deepStrictEqual(fresh(JSON.stringify(migrated)).model.state.examHistory,original.examHistory);
@@ -454,7 +454,7 @@ test('the real v5 marker preserves migrated archives and active exam grades on u
     assert(old.recordAttempt(qid,false,10,'journal-entry',false,1000,null,'unsure',{mode:'exam',support:'none',observationNumber:1}));
     old.state.examSession.scores[qid]={correct:false,earned:0,possible:1,ratio:0,observationNumber:1,answer:{debit:[],credit:[]}};old.save();
     const original=clone(old.state);assert.strictEqual(original.learningEvidenceIntegrity.schemaVersion,5);assert(original.contentMigrationArchive.questions[id]);assert(original.contentRecheckIds.includes(id));
-    const migrated=Model.prepareBackupState(original,legacy.questions,canonicalPool);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,7);
+    const migrated=Model.prepareBackupState(original,legacy.questions,canonicalPool);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,8);
     const withoutMarker=value=>{const copy=clone(value);delete copy.learningEvidenceIntegrity;return copy;};
     assert.deepStrictEqual(withoutMarker(migrated),withoutMarker(original));assert.deepStrictEqual(Model.prepareBackupState(migrated,legacy.questions,canonicalPool),migrated);
     const restored=new Model(legacy.questions,legacy.storage(JSON.stringify(migrated)),'test',canonicalPool);assert.deepStrictEqual(restored.state.examSession,original.examSession);assert.deepStrictEqual(restored.state.contentMigrationArchive,original.contentMigrationArchive);
@@ -500,7 +500,7 @@ test('real v6 placement upgrades without inventing an initial answer',()=>{
   const vm=require('vm'),module={exports:{}};vm.runInNewContext(require('child_process').execFileSync('git',['show','8fd91a400b9f80502bc16e40e2701ce8e1e04669:js/model.js'],{encoding:'utf8'}),{module,console});
   const old=new module.exports(questions,storage(),'test');old.completePlacement({foundation:80,closing:70},1000);
   const original=clone(old.state);assert.strictEqual(original.learningEvidenceIntegrity.schemaVersion,6);
-  const migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,7);
+  const migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,8);
   const withoutMarker=value=>{const copy=clone(value);delete copy.learningEvidenceIntegrity;return copy;};assert.deepStrictEqual(withoutMarker(migrated),withoutMarker(original));
   assert.deepStrictEqual(migrated.learningEffectiveness.questions,{});assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
 });
@@ -508,6 +508,29 @@ test('placement save failure keeps original bytes and cannot create answer evide
   const {model,store}=fresh();model.save();const original=store.value;store.setItem=()=>false;model.completePlacement({foundation:80,closing:70},1000);
   assert.strictEqual(store.value,original);const loaded=new Model(questions,store,'test');assert.strictEqual(loaded.state.placement,null);
   assert.deepStrictEqual(loaded.state.learningEffectiveness.questions,{});assert.strictEqual(loaded.state.attempts.length,0);
+});
+test('issued finalized mistake totals cannot disappear or change after detail eviction',()=>{
+  const {model}=fresh();assert(answer(model,'Q',false,1000));model.record('Q',false,1000);
+  for(let i=0;i<201;i++)assert(answer(model,'T',true,2000+i));
+  assert(!model.state.attempts.some(row=>row.questionId==='Q'));assert.strictEqual(model.state.mistakeCounts.Q,1);
+  const original=clone(model.state);assert(Model.validateBackupState(original,questions));
+  for(const mutate of [v=>delete v.mistakeCounts.Q,v=>v.mistakeCounts.Q=2,v=>v.mistakeCounts={}]){
+    const bad=clone(original);mutate(bad);assert.strictEqual(Model.validateBackupState(bad,questions),false);assert.strictEqual(Model.prepareBackupState(bad,questions),null);
+    const bytes=JSON.stringify(bad),loaded=fresh(bytes);assert(loaded.model.storageWriteBlocked);assert.strictEqual(loaded.store.value,bytes);
+  }
+});
+test('real v7 evicted mistake totals migrate, reload and increment without inferred history',()=>{
+  const vm=require('vm'),module={exports:{}};vm.runInNewContext(require('child_process').execFileSync('git',['show','86135e34047c7356aa2a020d5221ca14f205c4d9:js/model.js'],{encoding:'utf8'}),{module,console});
+  const old=new module.exports(questions,storage(),'test');
+  for(let i=0;i<3;i++){assert(old.recordAttempt('Q',false,10,'journal-entry',false,1000+i));old.record('Q',false,1000+i);}
+  for(let i=0;i<201;i++)assert(old.recordAttempt('T',true,10,'',false,2000+i));
+  const original=clone(old.state);assert.strictEqual(original.learningEvidenceIntegrity.schemaVersion,7);assert.strictEqual(original.mistakeCounts.Q,3);
+  const migrated=Model.prepareBackupState(original,questions);assert(migrated);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,8);
+  const withoutMarker=value=>{const copy=clone(value);delete copy.learningEvidenceIntegrity;return copy;};assert.deepStrictEqual(withoutMarker(migrated),withoutMarker(original));
+  const store=storage(JSON.stringify(migrated));let model=new Model(questions,store,'test');assert.strictEqual(model.state.mistakeCounts.Q,3);
+  assert(answer(model,'Q',false,3000));model.record('Q',false,3000);assert.strictEqual(model.state.mistakeCounts.Q,4);
+  assert(answer(model,'Q',true,4000));model.record('Q',true,4000);model=new Model(questions,store,'test');assert.strictEqual(model.state.mistakeCounts.Q,4);
+  assert(Model.validateBackupState(model.state,questions));assert.deepStrictEqual(Model.prepareBackupState(model.state,questions),model.state);
 });
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;

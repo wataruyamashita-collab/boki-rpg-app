@@ -133,16 +133,19 @@ try{
   const generation128Committed=committed(128);
   const generation129Committed=committed(129);
   const generation130Committed=committed(130);
+  const generation135Committed=committed(135);
   const generation134Committed=committed(134);
   const generation133Committed=committed(133);
   const generation132Committed=committed(132);
   const generation131Committed=committed(131);
 
   test(
-    'authority sequence tracks committed Generations through 134',
+    'authority sequence tracks committed Generations through 135',
     ()=>assert.deepStrictEqual(
       generations,
-      generation134Committed
+      generation135Committed
+        ? Array.from({length:134},(_,index)=>index+2)
+        :generation134Committed
         ? Array.from({length:133},(_,index)=>index+2)
         :generation133Committed
         ? Array.from({length:132},(_,index)=>index+2)
@@ -461,6 +464,7 @@ try{
     }
   );
 
+  const generation135Pending=fs.existsSync(authorityPath(135))&&!generation135Committed;
   const generation134Pending=fs.existsSync(authorityPath(134))&&!generation134Committed;
   const generation133Pending=fs.existsSync(authorityPath(133))&&!generation133Committed;
   const generation132Pending=fs.existsSync(authorityPath(132))&&!generation132Committed;
@@ -580,7 +584,12 @@ try{
   const generation68Pending=
     fs.existsSync(authorityPath(68))&&!generation68Committed;
 
-  if(generation134Committed){
+  if(generation135Committed){
+    test('committed Generation 135 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation135Pending){
+    const generation135Candidate=JSON.parse(fs.readFileSync(authorityPath(135),'utf8'));
+    test('pending Generation 135 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation135Candidate).ok,true));
+  }else if(generation134Committed){
     test('committed Generation 134 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
   }else if(generation134Pending){
     const generation134Candidate=JSON.parse(fs.readFileSync(authorityPath(134),'utf8'));
