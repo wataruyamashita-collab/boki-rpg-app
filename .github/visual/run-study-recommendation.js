@@ -69,6 +69,7 @@ async function run(){
                 localStorage.setItem('boki-rpg-character-v1',JSON.stringify(characterState));
               },{progress,characterState});
               await page.goto(url,{waitUntil:'load'});
+              await page.waitForFunction(()=>Boolean(window.App?.controller));
               const noticeDialog=page.locator('#app-notice-dialog[open]');
               if(await noticeDialog.count()) await page.click('#app-notice-confirm');
               await page.click('[data-mode="story"]');

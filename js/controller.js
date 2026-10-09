@@ -30,7 +30,7 @@
         restoreItem(key, value) { if (!owned()) return false; try { if (value === null) storage.removeItem(key); else storage.setItem(key, value); return true; } catch (_) { reportFailure(); return false; } }
       };
       if (!Controller.recoverAnswerTransaction(adapter)) {
-        writable = false; adapter.readItem = () => ({ok:false,value:null}); adapter.getItem = () => null; reportFailure();
+        writable = false; adapter.readItem = () => ({ok:false,value:null}); adapter.getItem = () => null; queueMicrotask(reportFailure);
       }
       return adapter;
     } catch (_) { queueMicrotask(reportFailure); return null; }

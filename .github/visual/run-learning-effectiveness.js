@@ -133,8 +133,17 @@ async function run(){
               return {observations:c.model.learningEffectivenessForQuestion('J003').observedAttempts,replayUnchanged:once===JSON.stringify({progress:c.model.state,character:c.rpg.state})};
             });
             assert.strictEqual(retried.observations,1);assert(retried.replayUnchanged);
+            const corruptBefore=await page.evaluate(()=>{
+              const c=window.App.controller,values=Object.fromEntries([c.model.key,c.rpg.key].map(key=>[key,localStorage.getItem(key)]));
+              localStorage.setItem(`${c.model.key}:pending-answer-v1`,'{bad');return values;
+            });
+            await page.reload({waitUntil:'load'});await page.waitForFunction(()=>Boolean(window.App?.controller));
+            await page.waitForFunction(()=>document.getElementById('storage-warning').hidden===false);
+            const corruptAfter=await page.evaluate(keys=>({blocked:window.App.controller.model.storageWriteBlocked,
+              values:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)])),journal:localStorage.getItem('boki-rpg-progress-v2:pending-answer-v1')}),Object.keys(corruptBefore));
+            assert.strictEqual(corruptAfter.blocked,true);assert.deepStrictEqual(corruptAfter.values,corruptBefore);assert.strictEqual(corruptAfter.journal,'{bad');
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,corruptJournalWarning:true,corruptBytesPreserved:true,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

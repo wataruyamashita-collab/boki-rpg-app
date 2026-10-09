@@ -1,5 +1,5 @@
 /* The release id is shared by every cache key in this deployment. */
-const RELEASE = '20260924-185';
+const RELEASE = '20260924-186';
 const CACHE_PREFIX = 'boki-rpg-';
 const CACHE_NAME = `${CACHE_PREFIX}${RELEASE}`;
 const VERSIONED_ASSETS = [
@@ -14,7 +14,16 @@ self.addEventListener('install', event => {
   // Installation only succeeds when one coherent release has been downloaded.
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
 });
-self.addEventListener('message', event => { if (event.data?.type === 'SKIP_WAITING') self.skipWaiting(); });
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data?.type === 'BOKI_STORAGE_CLIENTS' && event.source?.id && event.ports?.[0]) {
+    const port=event.ports[0];
+    // includeUncontrolled is essential: Release179 clients have no Web Lock.
+    event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(clients =>
+      port.postMessage({protocol:1,release:RELEASE,requester:event.source.id,clients:clients.map(client=>client.id)})
+    ).catch(()=>port.postMessage({protocol:1,error:true})));
+  }
+});
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {

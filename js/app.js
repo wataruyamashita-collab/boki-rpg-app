@@ -7,6 +7,64 @@
         return { mode: params.get('mode'), questionId: params.get('question') };
       } catch (_) { return {}; }
     },
+    storageClients(worker) {
+      return new Promise((resolve,reject) => {
+        if (!worker || worker.state==='redundant') { reject(new Error('storage-client-worker')); return; }
+        const channel=new MessageChannel();
+        const finish=(error,value) => { clearTimeout(timer); channel.port1.close(); channel.port2.close(); error?reject(error):resolve(value); };
+        const timer=setTimeout(()=>finish(new Error('storage-client-timeout')),5000);
+        channel.port1.onmessage=event => {
+          const value=event.data;
+          if (value?.protocol!==1 || typeof value.release!=='string' || typeof value.requester!=='string' ||
+              !Array.isArray(value.clients) || !value.clients.every(id=>typeof id==='string'&&id.length>0) ||
+              new Set(value.clients).size!==value.clients.length || !value.clients.includes(value.requester)) {
+            finish(new Error('storage-client-proof')); return;
+          }
+          finish(null,value);
+        };
+        try { worker.postMessage({type:'BOKI_STORAGE_CLIENTS'},[channel.port2]); }
+        catch (error) { finish(error); }
+      });
+    },
+    async waitForStorageClients(notice) {
+      const manager=root.navigator?.serviceWorker;
+      if (!manager?.getRegistration || !manager.register) throw new Error('storage-client-unavailable');
+      const pause=()=>new Promise(resolve=>setTimeout(resolve,250));
+      const open=()=>!this.storageOwnership.closed;
+      const waitState=async (worker,states) => {
+        for(let attempt=0;attempt<120&&open();attempt++) {
+          if(states.includes(worker?.state))return;
+          if(!worker||worker.state==='redundant')break;
+          await pause();
+        }
+        throw new Error('storage-worker-state');
+      };
+      this.storageClientStatus='checking';
+      let registration=await manager.getRegistration(),worker=registration?.waiting||registration?.active,proof;
+      if(worker)try{proof=await this.storageClients(worker);}catch(_){}
+      if(!proof) {
+        registration=await manager.register('./service-worker.js',{updateViaCache:'none'});
+        if(registration.active&&!registration.waiting&&!registration.installing)await registration.update();
+        worker=registration.waiting||registration.installing||registration.active;
+        await waitState(worker,['installed','activated']);
+        proof=await this.storageClients(worker);
+      }
+      while(open()) {
+        if(proof.clients.length!==1) {
+          this.storageClientStatus='waiting';
+          notice('以前の画面が残っています。このサイトのほかのタブを閉じてください。保存データを引き継いで開始します。');
+          await pause();proof=await this.storageClients(worker);continue;
+        }
+        if(worker.state!=='activated') {
+          // Only this not-yet-started document remains. Activate the new shell
+          // before loading saves, then recheck clients after activation/claim.
+          worker.postMessage({type:'SKIP_WAITING'});
+          await waitState(worker,['activated']);proof=await this.storageClients(worker);continue;
+        }
+        this.storageClientStatus='ready';return;
+      }
+      throw new Error('storage-client-closed');
+    },
     init() {
       if (this.ready) return this.ready;
       const ownership = this.storageOwnership = { active:false, closed:false };
@@ -25,13 +83,15 @@
       root.addEventListener('pageshow', event => { if (event.persisted) root.location.reload(); });
       const unavailable = () => {
         ownership.active=false;
-        notice('保存データを安全に開けません。このブラウザを更新し、HTTPSの学習ページを開き直してください。');
+        notice('保存データを安全に確認できません。このサイトのほかのタブを閉じ、オンラインで開き直してください。対応するブラウザとHTTPSの学習ページが必要です。');
         finish(false);
       };
       if (!root.navigator?.locks?.request) { unavailable(); return this.ready; }
       notice('別のタブで学習中の場合は、そのタブを閉じてください。保存データを引き継いで開始します。');
       try {
         this.storageLock = root.navigator.locks.request('boki-rpg-saved-learning', {mode:'exclusive'}, async () => {
+          if (ownership.closed) return;
+          await this.waitForStorageClients(notice);
           if (ownership.closed) return;
           ownership.active=true;
           if (warning) { warning.textContent=originalWarning; warning.hidden=true; }
