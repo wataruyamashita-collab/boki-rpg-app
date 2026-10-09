@@ -17,10 +17,12 @@ async function run(){
       const browser=await launcher.launch();
       try{
         for(const width of [320,390,768]){
-          const context=await browser.newContext({viewport:{width,height:900}}),page=await context.newPage(),errors=[];
+          const context=await browser.newContext({viewport:{width,height:900}}),errors=[];
+          let page=await context.newPage();
           page.on('pageerror',error=>errors.push(error.stack||String(error)));
           try{
             await page.goto(url,{waitUntil:'load'});
+            await page.waitForFunction(()=>Boolean(window.App?.controller));
             await page.evaluate(()=>{const c=window.App.controller;c.skipPlacement();c.model.state.mode='training';c.start('J001',{fresh:true});});
             // Submit a real blank form; coaching corrects it without changing the
             // first score, mastery, or reward ledger.
@@ -53,6 +55,7 @@ async function run(){
             assert.strictEqual(beforeReload.metric.delayedReview.attempts,220);assert.strictEqual(beforeReload.metric.delayedReview.successes,146);
             assert.strictEqual(beforeReload.metric.delayedReview.highestConfirmedStage,4);assert.deepStrictEqual(beforeReload.metric.firstAttempt,wrong.metric.firstAttempt);
             await page.reload({waitUntil:'load'});
+            await page.waitForFunction(()=>Boolean(window.App?.controller));
             const persisted=await page.evaluate(()=>{const c=window.App.controller;return {metric:c.model.learningEffectivenessForQuestion('J001'),rows:c.model.state.attempts.length,character:localStorage.getItem(c.rpg.key),valid:window.ProgressModel.validateBackupState(c.model.state,c.questions)};});
             assert(persisted.valid);assert.deepStrictEqual(persisted.metric,beforeReload.metric);assert.strictEqual(persisted.character,beforeReload.character);
             await page.evaluate(()=>{
@@ -94,14 +97,44 @@ async function run(){
             });
             assert(interrupted.rejected&&interrupted.blocked&&interrupted.pending);
             await page.reload({waitUntil:'load'});
+            await page.waitForFunction(()=>Boolean(window.App?.controller));
             const recovered=await page.evaluate(()=>{const c=window.App.controller;return {progress:c.model.state,character:c.rpg.state,pending:localStorage.getItem(`${c.model.key}:pending-answer-v1`),blocked:Boolean(c.model.storageWriteBlocked)};});
             assert.strictEqual(recovered.pending,null);assert.strictEqual(recovered.blocked,false);
             for(const field of ['learningEffectiveness','questionStats','answeredIds','correctIds','incorrectIds','reviewSchedule'])assert.deepStrictEqual(recovered.progress[field],interrupted.before.progress[field]);
             assert.deepStrictEqual(recovered.character,interrupted.before.character);
             await page.evaluate(()=>{const c=window.App.controller;c.model.state.mode='training';c.start('J002');c.view.applyRetryDraft(c.questions.J002,c.questions.J002.answer);c.submit();});
             assert.strictEqual(await page.evaluate(()=>window.App.controller.model.learningEffectivenessForQuestion('J002').observedAttempts),1);
+            // Keep a real partial journal in the owner while a second tab loads.
+            // The standby must not touch either key until the owner closes.
+            const livePending=await page.evaluate(()=>{
+              const c=window.App.controller;c.start('J003',{fresh:true});c.view.applyRetryDraft(c.questions.J003,c.questions.J003.answer);
+              const before={progress:JSON.parse(localStorage.getItem(c.model.key)),character:JSON.parse(localStorage.getItem(c.rpg.key))};
+              const set=Storage.prototype.setItem;let writes=0;
+              Storage.prototype.setItem=function(key,value){if(++writes>=3)throw Error('interrupted owner');return set.call(this,key,value);};
+              let result;try{result=c.submit();}finally{Storage.prototype.setItem=set;}
+              const raw=Object.fromEntries([c.model.key,c.rpg.key,`${c.model.key}:pending-answer-v1`].map(key=>[key,localStorage.getItem(key)]));
+              return {before,raw,rejected:result===false,pending:Boolean(raw[`${c.model.key}:pending-answer-v1`])};
+            });
+            assert(livePending.rejected&&livePending.pending);
+            const standby=await context.newPage();standby.on('pageerror',error=>errors.push(error.stack||String(error)));
+            await standby.goto(url,{waitUntil:'load'});
+            await standby.waitForFunction(async()=>Boolean(window.App?.storageOwnership)&&
+              (await navigator.locks.query()).pending.some(lock=>lock.name==='boki-rpg-saved-learning'));
+            const waiting=await standby.evaluate(keys=>({uninitialized:!window.App.controller,notice:!document.getElementById('storage-warning').hidden,
+              raw:Object.fromEntries(keys.map(key=>[key,localStorage.getItem(key)]))}),Object.keys(livePending.raw));
+            assert(waiting.uninitialized&&waiting.notice);assert.deepStrictEqual(waiting.raw,livePending.raw);
+            await page.close();page=standby;await page.waitForFunction(()=>Boolean(window.App?.controller));
+            const takeover=await page.evaluate(()=>{const c=window.App.controller;return {progress:c.model.state,character:c.rpg.state,pending:localStorage.getItem(`${c.model.key}:pending-answer-v1`)};});
+            assert.strictEqual(takeover.pending,null);assert.deepStrictEqual(takeover.character,livePending.before.character);
+            for(const field of ['learningEffectiveness','questionStats','answeredIds','correctIds','incorrectIds','reviewSchedule'])assert.deepStrictEqual(takeover.progress[field],livePending.before.progress[field]);
+            const retried=await page.evaluate(()=>{
+              const c=window.App.controller;c.model.state.mode='training';c.start('J003',{fresh:true});c.view.applyRetryDraft(c.questions.J003,c.questions.J003.answer);c.submit();
+              const once=JSON.stringify({progress:c.model.state,character:c.rpg.state});c.submit();
+              return {observations:c.model.learningEffectivenessForQuestion('J003').observedAttempts,replayUnchanged:once===JSON.stringify({progress:c.model.state,character:c.rpg.state})};
+            });
+            assert.strictEqual(retried.observations,1);assert(retried.replayUnchanged);
             assert.deepStrictEqual(errors,[]);
-            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,pageErrors:errors});write();
+            evidence.reports.push({engine,width,observedAttempts:222,retained:200,delayedAttempts:220,delayedSuccesses:146,initialPreserved:true,assistedSeparated:true,reload:true,backup:true,saveFailure:failure,interruptedWriteRecovery:true,liveOwnerProtected:true,closedOwnerRecovery:true,retryExactlyOnce:retried,pageErrors:errors});write();
           }finally{await context.close();}
         }
       }finally{await browser.close();}

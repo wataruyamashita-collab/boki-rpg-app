@@ -35,6 +35,7 @@ async function run(){
               localStorage.setItem('migration-seeded','1');
             },{progress,character});
             await page.goto(url,{waitUntil:'load'});
+            await page.waitForFunction(()=>Boolean(window.App?.controller));
             const inspect=()=>page.evaluate(id=>{
               const c=window.App.controller,s=c.model.state;
               return {revision:s.contentRevision,stats:c.model.statsForQuestion(id),draft:s.drafts[id]||null,
@@ -49,6 +50,7 @@ async function run(){
             assert.deepStrictEqual(first.archive.questions[id].questionStats,progress.questionStats[id]);
             if(kind==='old'||id==='J051')assert.strictEqual(first.draft,null);
             await page.reload({waitUntil:'load'});
+            await page.waitForFunction(()=>Boolean(window.App?.controller));
             const second=await inspect();assert.deepStrictEqual(second.stats,first.stats);assert.deepStrictEqual(second.archive,first.archive);
             const review=await page.evaluate(()=>{
               const c=window.App.controller;

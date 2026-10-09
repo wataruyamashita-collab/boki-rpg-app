@@ -15,17 +15,19 @@
     try {
       const storage = root.localStorage;
       if (!storage) { queueMicrotask(reportFailure); return null; }
+      const ownership = root.App?.storageOwnership;
+      const owned = () => !ownership || ownership.active;
       let writable = true;
       const adapter = {
-        getItem(key) { try { return storage.getItem(key); } catch (_) { return null; } },
-        readItem(key) { try { return { ok:true, value:storage.getItem(key) }; } catch (_) { return { ok:false, value:null }; } },
+        getItem(key) { if (!owned()) return null; try { return storage.getItem(key); } catch (_) { return null; } },
+        readItem(key) { if (!owned()) return {ok:false,value:null}; try { return { ok:true, value:storage.getItem(key) }; } catch (_) { return { ok:false, value:null }; } },
         setItem(key, value) {
-          if (!writable) return false;
+          if (!writable || !owned()) return false;
           try { storage.setItem(key, value); return true; }
           catch (_) { writable = false; reportFailure(); return false; }
         },
-        removeItem(key) { try { storage.removeItem(key); return true; } catch (_) { return false; } },
-        restoreItem(key, value) { try { if (value === null) storage.removeItem(key); else storage.setItem(key, value); return true; } catch (_) { reportFailure(); return false; } }
+        removeItem(key) { if (!owned()) return false; try { storage.removeItem(key); return true; } catch (_) { return false; } },
+        restoreItem(key, value) { if (!owned()) return false; try { if (value === null) storage.removeItem(key); else storage.setItem(key, value); return true; } catch (_) { reportFailure(); return false; } }
       };
       if (!Controller.recoverAnswerTransaction(adapter)) {
         writable = false; adapter.readItem = () => ({ok:false,value:null}); adapter.getItem = () => null; reportFailure();
