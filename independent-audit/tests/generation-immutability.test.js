@@ -132,12 +132,15 @@ try{
   const generation127Committed=committed(127);
   const generation128Committed=committed(128);
   const generation129Committed=committed(129);
+  const generation130Committed=committed(130);
 
   test(
-    'authority sequence tracks committed Generations through 129',
+    'authority sequence tracks committed Generations through 130',
     ()=>assert.deepStrictEqual(
       generations,
-      generation129Committed
+      generation130Committed
+        ? Array.from({length:129},(_,index)=>index+2)
+        :generation129Committed
         ? Array.from({length:128},(_,index)=>index+2)
         :generation128Committed
         ? Array.from({length:127},(_,index)=>index+2)
@@ -446,6 +449,7 @@ try{
     }
   );
 
+  const generation130Pending=fs.existsSync(authorityPath(130))&&!generation130Committed;
   const generation129Pending=fs.existsSync(authorityPath(129))&&!generation129Committed;
   const generation128Pending=fs.existsSync(authorityPath(128))&&!generation128Committed;
   const generation127Pending=fs.existsSync(authorityPath(127))&&!generation127Committed;
@@ -560,7 +564,12 @@ try{
   const generation68Pending=
     fs.existsSync(authorityPath(68))&&!generation68Committed;
 
-  if(generation129Committed){
+  if(generation130Committed){
+    test('committed Generation 130 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation130Pending){
+    const generation130Candidate=JSON.parse(fs.readFileSync(authorityPath(130),'utf8'));
+    test('pending Generation 130 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation130Candidate).ok,true));
+  }else if(generation129Committed){
     test('committed Generation 129 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
   }else if(generation129Pending){
     const generation129Candidate=JSON.parse(fs.readFileSync(authorityPath(129),'utf8'));

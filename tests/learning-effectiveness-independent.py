@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Recompute durable evidence from a seeded event ledger without model helpers."""
 import json
+import os
+from datetime import datetime, timezone
 from pathlib import Path
 import random
 import subprocess
@@ -9,18 +11,19 @@ ROOT = Path(__file__).resolve().parents[1]
 MODES = ['story', 'training', 'review', 'exam', 'desk']
 rng = random.Random(200)
 events = []
+start_ms = int(datetime(2026, 1, 1, 12, tzinfo=timezone.utc).timestamp() * 1000)
 for index in range(1200):
     mode = MODES[index % 5]
     events.append(dict(id=rng.choice(['Q', 'R', 'T']), correct=rng.randrange(3) != 0,
                        mode=mode, support=rng.choice(['none', 'hint-1', 'hint-2', 'unknown']),
-                       tag=rng.choice(['a', 'b', 'foreign']), at=100000 + index * 1000,
+                       tag=rng.choice(['a', 'b', 'foreign']), at=start_ms + (index // 40) * 86400000 + (index % 40) * 1000,
                        stage=index % 5, due=mode == 'review' and index % 7 != 0,
                        coaching=index % 4 == 0))
 
 driver = r"""
 const fs=require('fs'),Model=require('./js/model');
 const events=JSON.parse(fs.readFileSync(0,'utf8'));
-const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds];
+const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState];
 const questions={Q:{type:'journal',category:'x'},R:{type:'journal',category:'x'},T:{type:'ledger',category:'x',table:{inputCells:['a','b']}}};
 const run=legacy=>{
  let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};
@@ -63,7 +66,7 @@ const examRuns=legacy=>{
 };
 console.log(JSON.stringify({fresh:run(false),legacy:run(true),exams:{fresh:examRuns(false),legacy:examRuns(true)}}));
 """
-actual = json.loads(subprocess.check_output(['node', '-e', driver], cwd=ROOT, input=json.dumps(events), text=True))
+actual = json.loads(subprocess.check_output(['node', '-e', driver], cwd=ROOT, input=json.dumps(events), text=True, env={**os.environ, 'TZ': 'UTC'}))
 exam_actual = actual.pop('exams')
 integrity_checked = 0
 for result in [*actual.values(), *exam_actual.values()]:
@@ -74,7 +77,7 @@ for result in [*actual.values(), *exam_actual.values()]:
         unit = int.from_bytes(encoded[index:index+2], 'little')
         fingerprint = ((fingerprint ^ unit) * 16777619) & 0xffffffff
     assert result['schema'] == 3
-    assert result['integrity'] == {'schemaVersion': 2, 'signature': f'{fingerprint:08x}'}
+    assert result['integrity'] == {'schemaVersion': 3, 'signature': f'{fingerprint:08x}'}
     integrity_checked += 1
 exam_checked = 0
 exam_sessions = [(10000, 20000, [('E0', True, 10010), ('E1', False, 10020)]),
@@ -166,5 +169,31 @@ for origin, result in actual.items():
                                  pending=unassisted is None, assisted=bool(assisted_times))
         assert value['misconceptionStats'] == patterns, (origin, qid, value['misconceptionStats'], patterns)
         checks += 1
+def continuity_from_ledger(ledger):
+    days = {}
+    for event in ledger:
+        key = datetime.fromtimestamp(event['at'] / 1000, timezone.utc).strftime('%Y-%m-%d')
+        day = days.setdefault(key, dict(dayKey=key, attempts=0, correctCount=0, questionIds=[], reviewSuccessCount=0))
+        day['attempts'] += 1
+        day['correctCount'] += int(event['correct'])
+        day['reviewSuccessCount'] += int(event['correct'] and event.get('due', False))
+        if event['id'] not in day['questionIds']:
+            day['questionIds'].append(event['id'])
+    return dict(activeDayKeys=sorted(days), today=days[key])
+
+expected_continuity = continuity_from_ledger(events)
+assert len(expected_continuity['activeDayKeys']) == 30
+continuity_checked = 0
+for result in actual.values():
+    assert result['integrityInput'][-1] == expected_continuity
+    continuity_checked += 1
+exam_ledger = []
+for start, end, answers in exam_sessions:
+    exam_ledger.extend(dict(id=qid, correct=correct, at=at) for qid, correct, at in answers)
+    exam_ledger.extend(dict(id='E14', correct=True, at=end+i) for i in range(201))
+for result in exam_actual.values():
+    assert result['integrityInput'][-1] == continuity_from_ledger(exam_ledger)
+    continuity_checked += 1
 print(json.dumps(dict(status='PASS', events_per_origin=len(events), origins=list(actual), question_aggregates_checked=checks,
-                      replay_rejections=2*len(events), outer_integrity_records_checked=integrity_checked, exam_session_receipts_checked=exam_checked, retention_successes=sum(e['due'] and e['correct'] for e in events))))
+                      replay_rejections=2*len(events), outer_integrity_records_checked=integrity_checked, continuity_records_checked=continuity_checked,
+                      learning_days_per_origin=30, exam_session_receipts_checked=exam_checked, retention_successes=sum(e['due'] and e['correct'] for e in events))))

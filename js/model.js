@@ -29,8 +29,9 @@
   };
   // Completion and observation are separate operations (notably in an active
   // exam). Bind the issued values without deriving completion from an answer.
-  const evidenceStateSignature = state => valueSignature([state.learningEffectiveness, state.questionStats,
-    state.lastLearningAt, state.answeredIds, state.correctIds, state.incorrectIds]);
+  const evidenceStateSignature = (state, version = 3) => valueSignature([state.learningEffectiveness, state.questionStats,
+    state.lastLearningAt, state.answeredIds, state.correctIds, state.incorrectIds,
+    ...(version >= 3 ? [state.learningContinuityState] : [])]);
   const emptyEffectiveness = (initialHistory = 'complete', attempts = []) => ({ schemaVersion:1, initialHistory, retainedAttemptsSignature:valueSignature(attempts), questions:{} });
   const emptyEvidence = () => ({
     observedAttempts:0, correctCount:0, incorrectCount:0, firstObservedAt:null, lastObservedAt:null, firstAttempt:null,
@@ -151,8 +152,8 @@
       const evidence = state.learningEffectiveness, integrity = state.learningEvidenceIntegrity;
       if (state.learningSchemaVersion >= 3 && integrity === undefined) return false;
       if (integrity !== undefined && (state.learningSchemaVersion !== LEARNING_SCHEMA_VERSION || !integrity || typeof integrity !== 'object' || Array.isArray(integrity) ||
-          Object.keys(integrity).length !== 2 || ![1,2].includes(integrity.schemaVersion) || evidence === undefined ||
-          integrity.signature !== (integrity.schemaVersion === 1 ? valueSignature(evidence) : evidenceStateSignature(state)))) return false;
+          Object.keys(integrity).length !== 2 || ![1,2,3].includes(integrity.schemaVersion) || evidence === undefined ||
+          integrity.signature !== (integrity.schemaVersion === 1 ? valueSignature(evidence) : evidenceStateSignature(state,integrity.schemaVersion)))) return false;
       if (evidence === undefined) {
         // Old releases never issued observation receipts. Their presence proves
         // that missing aggregates are corruption, rather than an old schema.
@@ -400,7 +401,7 @@
           // A missing row/flag in an old save cannot prove a never-attempted question.
           const needsEvidenceMigration = saved.learningEffectiveness === undefined;
           if (needsEvidenceMigration) this.state.learningEffectiveness = emptyEffectiveness('unknown', this.state.attempts);
-          const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 2;
+          const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 3;
           if (needsEvidenceMigration || needsIntegrityMigration) this.refreshEvidenceIntegrity();
           if (needsContentMigration || needsLearningMigration || needsEvidenceMigration || needsIntegrityMigration) this.save();
         }
@@ -704,7 +705,7 @@
         typeof score.correct === 'boolean' && Number.isFinite(score.earned) && Number.isFinite(score.possible) &&
         Number.isFinite(score.ratio) && score.earned >= 0 && score.possible > 0 && score.earned <= score.possible && score.ratio >= 0 && score.ratio <= 1);
     }
-    refreshEvidenceIntegrity() { this.state.learningEvidenceIntegrity = {schemaVersion:2,signature:evidenceStateSignature(this.state)}; }
+    refreshEvidenceIntegrity() { this.state.learningEvidenceIntegrity = {schemaVersion:3,signature:evidenceStateSignature(this.state)}; }
     save() { if (this.storageWriteBlocked || typeof this.storage?.setItem !== 'function') return false; try { return this.storage.setItem(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
     setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; return this.save(); }
     clearDraft(id) { if (!this.questions[id]) return false; delete this.state.drafts[id]; return this.save(); }
