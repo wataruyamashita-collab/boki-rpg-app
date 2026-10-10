@@ -32,6 +32,8 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
       - name: Run durable learning evidence and persistence gate
         run: node .github/visual/run-learning-effectiveness.js
+      - name: Run PR 212 legacy provenance and input confirmation gate
+        run: node .github/visual/run-pr212-migration.js
       - name: Run prior-release storage ownership and unavailable-origin gate
         run: node .github/visual/run-storage-upgrade.js
       - name: Run content-progress migration and reload gate
