@@ -259,6 +259,98 @@ test('nonfinite and nonnumeric transaction totals remain rejected and normalize 
     assert.strictEqual(RPG.validateBackupState(rpg.state),false);rpg.save();assert.strictEqual(new RPG(store,'r').state.totalTransactionAmount,0);
   }
 });
+// Real predecessor objects exercise the boundary between preserved bytes and
+// authority. Confirmation is current consent, never historical authentication.
+const predecessor = version => {
+  const refs={v3:'bd558e21b3aa68ddccde3216d5ba89da105884cf',v4:'f7b86ac51be1b25ca32b50ac28d5efaa6ff26fa3',v5:'2cf70526f3cdc18560f151d4d32134a49aef79cb',v8:'d6da732f57e8a46717f67620b5a2761caa685872'};
+  const module={exports:{}};vm.runInNewContext(require('child_process').execFileSync('git',['show',refs[version]+':js/model.js'],{encoding:'utf8'}),{module,console});return module.exports;
+};
+function oldDraftContext(){
+  const c=context(),Old=predecessor('v8'),old=new Old(questions,values(),'p');
+  old.setDraft('Q',{correct:true,debit:[],credit:[]});c.store.setItem('p',JSON.stringify(old.state,null,2));
+  const original=c.store.data.p;c.ctx.model=c.model=new Model(questions,c.store,'p');c.ctx.start('Q');
+  c.ctx.view.showNotice=(text,options)=>c.notices.push({text,...options});return {...c,original};
+}
+test('unverified draft is editable; submit/cancel makes no observation or RPG mutation',()=>{
+  const {ctx,model,rpg,store,notices,original}=oldDraftContext();
+  assert(model.isUnverified('drafts','Q'));ctx.saveDraft(false);assert(model.isUnverified('drafts','Q'));
+  const before=JSON.stringify(store.data),character=clone(rpg.state);
+  assert.strictEqual(ctx.submit(),false);assert.strictEqual(model.learningEffectivenessForQuestion('Q').observedAttempts,0);
+  assert.strictEqual(JSON.stringify(store.data),before);assert.deepStrictEqual(rpg.state,character);
+  assert.strictEqual(model.state.legacyProvenance.original,original);assert(notices.at(-1).onConfirm);
+  notices.at(-1).onConfirm();assert.strictEqual(model.learningEffectivenessForQuestion('Q').observedAttempts,1);
+  assert(!model.isUnverified('drafts','Q'));assert.strictEqual(model.state.legacyProvenance.original,original);
+  const earned=clone(rpg.state);ctx.submitting=false;ctx.learningFlow.phase='I';assert.strictEqual(ctx.submit(),false);assert.deepStrictEqual(clone(rpg.state),earned);
+});
+test('failed current-input approval preserves original bytes and pending status',()=>{
+  const {ctx,model,store,rpg,notices}=oldDraftContext();const before=JSON.stringify(store.data),state=clone(model.state),character=clone(rpg.state);
+  ctx.submit();store.setItem=()=>false;notices.at(-1).onConfirm();
+  assert.strictEqual(JSON.stringify(store.data),before);assert.deepStrictEqual(model.state,state);assert.deepStrictEqual(rpg.state,character);
+  assert(model.isUnverified('drafts','Q'));assert.strictEqual(model.learningEffectivenessForQuestion('Q').observedAttempts,0);
+});
+test('an open approval cannot authorize a changed input or another question',()=>{
+  const {ctx,model,notices}=oldDraftContext();ctx.submit();const confirm=notices.at(-1).onConfirm;
+  ctx.view.readAnswer=()=>({correct:false,debit:[],credit:[]});confirm();assert(model.isUnverified('drafts','Q'));
+  ctx.currentId='R';confirm();assert.strictEqual(model.learningEffectivenessForQuestion('Q').observedAttempts,0);
+});
+test('unsigned review plan is preserved but cannot award delayed success or old stage',()=>{
+  const Old=predecessor('v3'),old=new Old(questions,values(),'p');old.state.mode='training';old.recordAttempt('Q',false,10,'',false,1000);old.record('Q',false,1000);
+  old.state.reviewSchedule.Q.stage=3;old.assignReview('Q','R',1001);const original=JSON.stringify(old.state),store=values();store.setItem('p',original);
+  const model=new Model(questions,store,'p'),due=model.state.reviewSchedule.Q.dueAt;model.state.mode='review';model.assignReview('Q','R',due);
+  assert.strictEqual(model.qualifiedDelayedReview('R','Q',due,'review'),null);
+  assert(model.recordAttempt('R',true,10,'',true,due,3,'unsure',{mode:'review',support:'none',reviewSourceId:'Q'}));
+  assert.strictEqual(model.completeReview('Q',true,due,'R'),false);
+  assert.strictEqual(model.state.reviewSchedule.Q.stage,0);assert.strictEqual(model.state.reviewSchedule.Q.dueAt,due+1200000);
+  assert.strictEqual(model.learningEffectivenessForQuestion('Q').delayedReview.successes,0);
+  assert.strictEqual(model.state.legacyProvenance.original,original);assert(!model.isUnverified('reviewSchedule','Q'));
+});
+test('signed old review schedule remains usable without a blanket re-evaluation',()=>{
+  const Old=predecessor('v4'),old=new Old(questions,values(),'p');old.recordAttempt('Q',false,10,'',false,1000);old.record('Q',false,1000);
+  const store=values();store.setItem('p',JSON.stringify(old.state));const model=new Model(questions,store,'p'),due=model.state.reviewSchedule.Q.dueAt;
+  model.state.mode='review';model.assignReview('Q','R',due);assert(!model.isUnverified('reviewSchedule','Q'));
+  assert(model.qualifiedDelayedReview('R','Q',due,'review'));
+});
+test('unregradable old exam cannot finalize score, mastery or rewards',()=>{
+  const c=context('exam'),Old=predecessor('v5'),old=new Old(questions,values(),'p',Object.keys(questions));
+  old.state.mode='exam';old.state.examSession=clone(c.model.state.examSession);old.recordAttempt('Q',false,10,'',false,Date.now(),null,'unsure',{mode:'exam'});
+  old.state.examSession.scores.Q={correct:false,earned:0,possible:1,ratio:0,observationNumber:1};old.save();
+  c.store.setItem('p',JSON.stringify(old.state));c.ctx.model=c.model=new Model(questions,c.store,'p',Object.keys(questions));c.ctx.stopExamTimer=()=>{};
+  c.ctx.view.showNotice=(text,options)=>c.notices.push({text,...options});const character=clone(c.rpg.state),original=c.model.state.legacyProvenance.original;
+  c.ctx.start('R');c.ctx.submit();const currentSession=clone(c.model.state.examSession);
+  assert.strictEqual(c.ctx.finishExam(true),false);assert.strictEqual(c.model.state.examHistory.length,0);assert.deepStrictEqual(c.rpg.state,character);
+  c.notices.at(-1).onConfirm();assert.strictEqual(c.model.state.examSession,null);assert.strictEqual(c.model.state.examHistory.length,0);
+  assert.deepStrictEqual(c.rpg.state,character);assert.strictEqual(c.model.state.legacyProvenance.original,original);
+  assert.deepStrictEqual(clone(c.model.state.legacyProvenance.archivedExams[0].session),currentSession);
+  assert.deepStrictEqual(new Model(questions,c.store,'p',Object.keys(questions)).state.legacyProvenance.archivedExams[0].session,currentSession);
+});
+test('a currently reanswered legacy exam score can finalize without blanket retest',()=>{
+  const c=context('exam'),Old=predecessor('v5'),old=new Old(questions,values(),'p',Object.keys(questions));
+  old.state.mode='exam';old.state.examSession=clone(c.model.state.examSession);old.recordAttempt('Q',false,10,'',false,Date.now(),null,'unsure',{mode:'exam'});
+  old.state.examSession.scores.Q={correct:false,earned:0,possible:1,ratio:0,observationNumber:1};old.save();
+  c.store.setItem('p',JSON.stringify(old.state));c.ctx.model=c.model=new Model(questions,c.store,'p',Object.keys(questions));c.ctx.stopExamTimer=()=>{};c.ctx.view.examResult=()=>{};
+  const original=c.model.state.legacyProvenance.original;c.ctx.start('Q');c.ctx.submit();assert(!c.model.isUnverified('examScores','Q'));
+  assert(c.ctx.finishExam(true));assert.strictEqual(c.model.state.examHistory.length,1);assert(c.rpg.state.rewardedIds.includes('Q'));
+  assert.strictEqual(c.model.state.legacyProvenance.original,original);const rewarded=clone(c.rpg.state);assert.strictEqual(c.ctx.finishExam(true),false);assert.deepStrictEqual(clone(c.rpg.state),rewarded);
+});
+test('an unsigned old result list cannot delete a subsequently saved draft on retry',()=>{
+  const {ctx,model,original}=oldDraftContext();model.state.lastExamReview={items:[{id:'Q'}]};model.refreshEvidenceIntegrity();model.save();
+  ctx.buildExamIds=()=>Object.keys(questions);const draft=clone(model.state.drafts.Q);ctx.retryExam();
+  assert.deepStrictEqual(model.state.drafts.Q,draft);assert.strictEqual(model.state.legacyProvenance.original,original);
+});
+async function provenanceBackupTests(){
+  const {ctx,model,rpg,store,original}=oldDraftContext();rpg.reward(questions.Q,{correct:true},1);rpg.save();
+  const payload={format:'boki-rpg-backup',version:1,progress:clone(model.state),character:clone(rpg.state)};
+  for(let i=0;i<2;i++){
+    assert(await ctx.importBackup({text:async()=>JSON.stringify(payload)}));
+    const restored=new Model(questions,store,'p');assert.strictEqual(restored.state.legacyProvenance.original,original);
+    assert(restored.isUnverified('drafts','Q'));assert.deepStrictEqual(new RPG(store,'r').state,payload.character);
+  }
+  for(const mutate of [v=>delete v.legacyProvenance,v=>v.legacyProvenance.pending.drafts=[],v=>v.legacyProvenance.original='{}',v=>delete v.learningDayHistory]){
+    const bad=clone(payload);mutate(bad.progress);const before=JSON.stringify(store.data);
+    assert.strictEqual(await ctx.importBackup({text:async()=>JSON.stringify(bad)}),false);assert.strictEqual(JSON.stringify(store.data),before);
+  }
+  passed++;console.log('PASS repeated imports preserve unverified originals and rewards; altered provenance is atomic rejection');
+}
 async function signedBackupTests(){
   const {ctx}=context(),q=require('./fixtures/foundation-extension-cases').npvNegative,catalog={[q.id]:q},store=values();
   ctx.questions=catalog;ctx.model=new Model(catalog,store,'p');ctx.rpg=new RPG(store,'r');ctx.model.state.mode='training';
@@ -281,7 +373,7 @@ async function backupTests(){
   payload.progress.learningEffectiveness.schemaVersion=99;const saved=JSON.stringify(store.data);assert.strictEqual(await ctx.importBackup(file),false);assert.strictEqual(JSON.stringify(store.data),saved);assert.strictEqual(reloads,1);
   passed++;console.log('PASS real two-key backup transaction preserves evidence and rolls back failures');
 }
-backupTests().then(signedBackupTests).catch(error=>{failed++;console.error(error.stack);}).finally(()=>{test('a transplanted active exam score cannot add a second history or mastery result',()=>{
+backupTests().then(signedBackupTests).then(provenanceBackupTests).catch(error=>{failed++;console.error(error.stack);}).finally(()=>{test('a transplanted active exam score cannot add a second history or mastery result',()=>{
   const {ctx,model,rpg,store}=context('exam');ctx.stopExamTimer=()=>{};ctx.view.examResult=()=>{};ctx.submit();
   const priorSession=clone(model.state.examSession);assert(ctx.finishExam(true));
   model.state.examSession={...priorSession,startedAt:priorSession.startedAt+100000,endAt:priorSession.endAt+100000};

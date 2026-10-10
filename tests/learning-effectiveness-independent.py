@@ -23,7 +23,7 @@ for index in range(1200):
 driver = r"""
 const fs=require('fs'),Model=require('./js/model');
 const events=JSON.parse(fs.readFileSync(0,'utf8'));
-const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState,state.reviewSchedule,state.reviewAssignments,state.examHistory,state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds,state.placement,state.mistakeCounts,state.drafts];
+const integrityInput=state=>[state.learningEffectiveness,state.questionStats,state.lastLearningAt,state.answeredIds,state.correctIds,state.incorrectIds,state.learningContinuityState,state.reviewSchedule,state.reviewAssignments,state.examHistory,state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds,state.placement,state.mistakeCounts,state.drafts,state.learningDayHistory,state.legacyProvenance,state.completed,state.lastExamReview];
 const questions={Q:{type:'journal',category:'x'},R:{type:'journal',category:'x'},T:{type:'ledger',category:'x',table:{inputCells:['a','b']}}};
 const run=legacy=>{
  let bytes=null;const store={getItem:()=>bytes,setItem:(_k,value)=>{bytes=value;return true;}};
@@ -78,7 +78,7 @@ for result in [*actual.values(), *exam_actual.values()]:
         unit = int.from_bytes(encoded[index:index+2], 'little')
         fingerprint = ((fingerprint ^ unit) * 16777619) & 0xffffffff
     assert result['schema'] == 3
-    assert result['integrity'] == {'schemaVersion': 9, 'signature': f'{fingerprint:08x}'}
+    assert result['integrity'] == {'schemaVersion': 10, 'signature': f'{fingerprint:08x}'}
     integrity_checked += 1
 exam_checked = 0
 exam_sessions = [(10000, 20000, [('E0', True, 10010), ('E1', False, 10020)]),
@@ -172,7 +172,7 @@ for origin, result in actual.items():
                                  pending=unassisted is None, assisted=bool(assisted_times))
         assert value['misconceptionStats'] == patterns, (origin, qid, value['misconceptionStats'], patterns)
         checks += 1
-def continuity_from_ledger(ledger):
+def continuity_from_ledger(ledger, include_days=False):
     days = {}
     for event in ledger:
         key = datetime.fromtimestamp(event['at'] / 1000, timezone.utc).strftime('%Y-%m-%d')
@@ -182,13 +182,14 @@ def continuity_from_ledger(ledger):
         day['reviewSuccessCount'] += int(event['correct'] and event.get('due', False))
         if event['id'] not in day['questionIds']:
             day['questionIds'].append(event['id'])
-    return dict(activeDayKeys=sorted(days), today=days[key])
+    return days if include_days else dict(activeDayKeys=sorted(days), today=days[key])
 
 expected_continuity = continuity_from_ledger(events)
 assert len(expected_continuity['activeDayKeys']) == 30
 continuity_checked = 0
 for result in actual.values():
     assert result['integrityInput'][6] == expected_continuity
+    assert result['integrityInput'][17] == continuity_from_ledger(events, True)
     continuity_checked += 1
 exam_ledger = []
 for start, end, answers in exam_sessions:
@@ -196,6 +197,7 @@ for start, end, answers in exam_sessions:
     exam_ledger.extend(dict(id='E14', correct=True, at=end+i) for i in range(201))
 for result in exam_actual.values():
     assert result['integrityInput'][6] == continuity_from_ledger(exam_ledger)
+    assert result['integrityInput'][17] == continuity_from_ledger(exam_ledger, True)
     continuity_checked += 1
 print(json.dumps(dict(status='PASS', events_per_origin=len(events), origins=list(actual), question_aggregates_checked=checks, mistake_totals_checked=6,
                       replay_rejections=2*len(events), outer_integrity_records_checked=integrity_checked, continuity_records_checked=continuity_checked,

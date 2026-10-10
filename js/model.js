@@ -29,7 +29,7 @@
   };
   // Completion and observation are separate operations (notably in an active
   // exam). Bind the issued values without deriving completion from an answer.
-  const evidenceStateSignature = (state, version = 9) => valueSignature([state.learningEffectiveness, state.questionStats,
+  const evidenceStateSignature = (state, version = 10) => valueSignature([state.learningEffectiveness, state.questionStats,
     state.lastLearningAt, state.answeredIds, state.correctIds, state.incorrectIds,
     ...(version >= 3 ? [state.learningContinuityState] : []),
     ...(version >= 4 ? [state.reviewSchedule, state.reviewAssignments] : []),
@@ -37,7 +37,8 @@
     ...(version >= 6 ? [state.examSession,state.examAttempt,state.contentMigrationArchive,state.contentRecheckIds] : []),
     ...(version >= 7 ? [state.placement] : []),
     ...(version >= 8 ? [state.mistakeCounts] : []),
-    ...(version >= 9 ? [state.drafts] : [])]);
+    ...(version >= 9 ? [state.drafts] : []),
+    ...(version >= 10 ? [state.learningDayHistory, state.legacyProvenance, state.completed, state.lastExamReview] : [])]);
   const emptyEffectiveness = (initialHistory = 'complete', attempts = []) => ({ schemaVersion:1, initialHistory, retainedAttemptsSignature:valueSignature(attempts), questions:{} });
   const emptyEvidence = () => ({
     observedAttempts:0, correctCount:0, incorrectCount:0, firstObservedAt:null, lastObservedAt:null, firstAttempt:null,
@@ -94,6 +95,54 @@
       const model = new ProgressModel(questions, isolated, 'backup-migration', examPool);
       return !model.storageWriteBlocked && ProgressModel.validateBackupState(model.state, questions, examPool) ? cloneContent(model.state) : null;
     }
+    static legacyExamGrade(state, id, questions) {
+      // marker-v5 and the current release have byte-identical canonical questions
+      // and grading engine. Earlier content revisions cannot use this oracle.
+      const score = state.examSession?.scores?.[id], question = questions[id];
+      const engine = root.GradingEngine || (typeof require === 'function' ? require('./engine') : null);
+      if (state.contentRevision !== CONTENT_REVISION || !score?.answer || !question?.answer || !engine) return null;
+      try { return engine.grade(question, score.answer); } catch (_) { return null; }
+    }
+    static validLegacyExamGrades(state, questions) {
+      if (!(state.learningEvidenceIntegrity?.schemaVersion < 6)) return true;
+      return Object.entries(state.examSession?.scores || {}).every(([id, score]) => {
+        const grade = ProgressModel.legacyExamGrade(state, id, questions);
+        return !grade || ['correct','earned','possible','ratio'].every(key => grade[key] === score[key]);
+      });
+    }
+    static validMigrationMetadata(state, questions) {
+      const plain = value => value && typeof value === 'object' && !Array.isArray(value);
+      if (!plain(state.learningDayHistory) || !Object.hasOwn(state, 'legacyProvenance')) return false;
+      const probe = Object.create(ProgressModel.prototype); probe.questions = questions;
+      for (const [key, day] of Object.entries(state.learningDayHistory)) {
+        if (day?.dayKey !== key || !probe.validLearningContinuityState({activeDayKeys:state.learningContinuityState.activeDayKeys,today:day})) return false;
+      }
+      const today = state.learningContinuityState.today;
+      if (today && valueSignature(state.learningDayHistory[today.dayKey]) !== valueSignature(today)) return false;
+      const provenance = state.legacyProvenance;
+      if (provenance === null) return true;
+      if (!plain(provenance) || provenance.schemaVersion !== 1 || typeof provenance.original !== 'string' ||
+          !Number.isSafeInteger(provenance.markerVersion) || provenance.markerVersion < 0 || provenance.markerVersion > 9 ||
+          !plain(provenance.pending) || !plain(provenance.approvedDrafts) || !Array.isArray(provenance.unsignedFields) ||
+          !Array.isArray(provenance.archivedExams)) return false;
+      for (const field of ['continuityDays','activeDays']) if (!Array.isArray(provenance.pending[field]) ||
+          provenance.pending[field].some(key => !Number.isSafeInteger(probe.dayOrdinalFromKey(key)))) return false;
+      for (const archive of provenance.archivedExams) if (!plain(archive) || archive.reason !== 'unverifiable-score' ||
+          !Number.isFinite(archive.archivedAt) || archive.archivedAt < 0 || !plain(archive.session) ||
+          !Array.isArray(archive.session.ids) || archive.session.ids.some(id => !Object.hasOwn(questions,id))) return false;
+      for (const field of ['drafts','reviewSchedule','examScores','examHistory','mistakeCounts']) {
+        const list = provenance.pending[field];
+        if (!Array.isArray(list) || new Set(list).size !== list.length || list.some(id => typeof id !== 'string' ||
+            (field !== 'examHistory' && !Object.hasOwn(questions,id)))) return false;
+      }
+      if (typeof provenance.pending.placement !== 'boolean' || typeof provenance.pending.completed !== 'boolean') return false;
+      try {
+        const original = JSON.parse(provenance.original);
+        if ((original.learningEvidenceIntegrity?.schemaVersion || 0) !== provenance.markerVersion ||
+            !ProgressModel.validEffectivenessState(original, questions)) return false;
+      } catch (_) { return false; }
+      return true;
+    }
     static validateBackupState(value, questions = {}, examPool = root.ExamPoolDefinition) {
       const plain = item => item && typeof item === 'object' && !Array.isArray(item);
       const finite = number => typeof number === 'number' && Number.isFinite(number);
@@ -104,6 +153,7 @@
       const idList = item => Array.isArray(item) && item.every(knownId);
       if (!plain(value) || !safeValue(value) || !ProgressModel.validContentMetadata(value, questions)) return false;
       if (!ProgressModel.validEffectivenessState(value, questions)) return false;
+      if (!ProgressModel.validLegacyExamGrades(value, questions)) return false;
       const mandatoryV1Core = ['mode', 'currentQuestionId', 'answeredIds', 'correctIds', 'incorrectIds', 'mistakeCounts', 'reviewSchedule', 'reviewAssignments', 'attempts', 'drafts', 'completed', 'placement', 'examAttempt', 'examSession', 'examHistory', 'lastExamReview'];
       if (!mandatoryV1Core.every(key => Object.prototype.hasOwnProperty.call(value, key))) return false;
       if (value.contentRevision !== undefined && !(Number.isSafeInteger(value.contentRevision) && value.contentRevision >= 1 && value.contentRevision <= CONTENT_REVISION)) return false;
@@ -158,7 +208,7 @@
       const evidence = state.learningEffectiveness, integrity = state.learningEvidenceIntegrity;
       if (state.learningSchemaVersion >= 3 && integrity === undefined) return false;
       if (integrity !== undefined && (state.learningSchemaVersion !== LEARNING_SCHEMA_VERSION || !integrity || typeof integrity !== 'object' || Array.isArray(integrity) ||
-          Object.keys(integrity).length !== 2 || ![1,2,3,4,5,6,7,8,9].includes(integrity.schemaVersion) || evidence === undefined ||
+          Object.keys(integrity).length !== 2 || ![1,2,3,4,5,6,7,8,9,10].includes(integrity.schemaVersion) || evidence === undefined ||
           integrity.signature !== (integrity.schemaVersion === 1 ? valueSignature(evidence) : evidenceStateSignature(state,integrity.schemaVersion)))) return false;
       if (evidence === undefined) {
         // Old releases never issued observation receipts. Their presence proves
@@ -173,6 +223,7 @@
       const probe = Object.create(ProgressModel.prototype);
       probe.questions = questions;
       if (!probe.validLearningContinuityState(state.learningContinuityState)) return false;
+      if (integrity?.schemaVersion === 10 && !ProgressModel.validMigrationMetadata(state, questions)) return false;
       for (const [id, stats] of Object.entries(state.questionStats)) {
         if (!Object.hasOwn(questions, id) || !probe.validQuestionStats(stats)) return false;
         const item = evidence.questions[id];
@@ -258,7 +309,23 @@
           // the legacy controller. An unfinished exam observation is not completion.
           const ordinaryWrong = ['story','training','desk'].reduce((sum,mode) => sum + (item.modes[mode].attempts - item.modes[mode].successes),0);
           const reviewFailures = item.delayedReview.attempts - item.delayedReview.successes, count = mistakes[id] || 0;
-          if (count < ordinaryWrong || count - ordinaryWrong < reviewFailures) return false;
+          // A session-bound observation from a strictly earlier, signed attempt
+          // is finalized. The current attempt's observations are not completions.
+          const finalized = new Map();
+          if (integrity.schemaVersion >= 6) {
+            // A later counter alone is insufficient: retry can abandon an active
+            // session. Require a protected finalized history entry for its time
+            // window and question membership as well.
+            const hasFinalization = session => session.attempt < state.examAttempt && state.examHistory?.some(history =>
+              typeof history.setSignature === 'string' && history.setSignature.split('|').includes(id) &&
+              history.finishedAt >= session.startedAt && history.durationMs === Math.max(0,Math.min(history.finishedAt,session.endAt)-session.startedAt));
+            for (const row of retained[id] || []) if (row.mode === 'exam' && row.examSession &&
+                hasFinalization(row.examSession)) finalized.set(JSON.stringify(row.examSession),row.correct);
+            const exam = item.lastExamObservation;
+            if (exam && hasFinalization(exam.session)) finalized.set(JSON.stringify(exam.session),exam.correct);
+          }
+          const finalizedWrong = [...finalized.values()].filter(correct => !correct).length;
+          if (count < ordinaryWrong + reviewFailures + finalizedWrong) return false;
         }
         if (Array.isArray(state.incorrectIds) && state.incorrectIds.some(id => !(mistakes[id] > 0))) return false;
       }
@@ -349,6 +416,8 @@
       this.examPool = Array.isArray(examPool) ? [...examPool] : null;
       this.state = { contentRevision:CONTENT_REVISION, questionContentVersions:ProgressModel.currentContentVersions(this.questions), contentMigrationArchive:emptyContentArchive(), contentRecheckIds:[], learningSchemaVersion:LEARNING_SCHEMA_VERSION, lastLearningAt:0, learningContinuityState:{ activeDayKeys:[], today:null }, questionStats:{}, mode: 'story', currentQuestionId: null, answeredIds: [], correctIds: [], incorrectIds: [], mistakeCounts: {}, reviewSchedule: {}, reviewAssignments: {}, attempts: [], drafts: {}, completed: false, placement: null, examAttempt: 0, examSession: null, examHistory: [], lastExamReview: null };
       this.state.learningEffectiveness = emptyEffectiveness();
+      this.state.learningDayHistory = {};
+      this.state.legacyProvenance = null;
       this.refreshEvidenceIntegrity();
       this.load();
     }
@@ -365,6 +434,7 @@
           if ((Number.isSafeInteger(saved.contentRevision) && saved.contentRevision > CONTENT_REVISION) ||
               !ProgressModel.validContentMetadata(saved, this.questions) ||
               !ProgressModel.validEffectivenessState(saved, this.questions) ||
+              !ProgressModel.validLegacyExamGrades(saved, this.questions) ||
               (saved.examSession != null && !this.validExamSession(saved.examSession))) {
             this.storageWriteBlocked = true; return;
           }
@@ -431,12 +501,57 @@
           // A missing row/flag in an old save cannot prove a never-attempted question.
           const needsEvidenceMigration = saved.learningEffectiveness === undefined;
           if (needsEvidenceMigration) this.state.learningEffectiveness = emptyEffectiveness('unknown', this.state.attempts);
-          const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 9;
+          const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 10;
+          if (needsIntegrityMigration) this.migrateUnsignedFields(saved, read.value);
           if (needsEvidenceMigration || needsIntegrityMigration) this.refreshEvidenceIntegrity();
           if (needsContentMigration || needsLearningMigration || needsEvidenceMigration || needsIntegrityMigration) this.save();
         }
       } catch (_) { this.storageWriteBlocked = true; }
     }
+    migrateUnsignedFields(saved, original) {
+      const version = saved.learningEvidenceIntegrity?.schemaVersion || 0;
+      this.state.learningDayHistory = this.state.learningContinuityState.today
+        ? {[this.state.learningContinuityState.today.dayKey]:cloneContent(this.state.learningContinuityState.today)} : {};
+      const minimum = {learningContinuityState:3,reviewSchedule:4,reviewAssignments:4,examHistory:5,
+        examSession:6,examAttempt:6,contentMigrationArchive:6,contentRecheckIds:6,placement:7,mistakeCounts:8,drafts:9,completed:10,lastExamReview:10};
+      const unsignedFields = Object.keys(minimum).filter(field => version < minimum[field]);
+      // A complete retained signed log can corroborate the old continuity value.
+      // Otherwise keep its numbers visible, explicitly unverified. Older formats
+      // retained only one day's counters; do not invent totals for the other days.
+      const evidence = saved.learningEffectiveness;
+      const completeLog = evidence?.initialHistory === 'complete' && Object.values(evidence.questions).reduce((n,item) => n + item.observedAttempts,0) === saved.attempts.length;
+      const continuityCorroborated = completeLog && valueSignature(this.continuityStateFromAttempts(saved.attempts)) === valueSignature(saved.learningContinuityState);
+      const unsignedDays = version < 3 && !continuityCorroborated ? [...this.state.learningContinuityState.activeDayKeys] : [];
+      const pending = {drafts:version < 9 ? Object.keys(this.state.drafts) : [],
+        continuityDays:this.state.learningContinuityState.activeDayKeys.filter(key => unsignedDays.includes(key) || key !== this.state.learningContinuityState.today?.dayKey),
+        activeDays:unsignedDays,
+        reviewSchedule:version < 4 ? Object.keys(this.state.reviewSchedule) : [],
+        examHistory:version < 5 ? this.state.examHistory.map(valueSignature) : [],
+        examScores:version < 6 ? Object.keys(this.state.examSession?.scores || {}).filter(id => !ProgressModel.legacyExamGrade(saved,id,this.questions)) : [],
+        mistakeCounts:version < 8 ? Object.keys(this.state.mistakeCounts).filter(id => {
+          const evidence = saved.learningEffectiveness, item = evidence?.questions[id];
+          if (evidence?.initialHistory !== 'complete' || !item || item.modes.exam.attempts) return true;
+          const ordinary = ['story','training','desk'].reduce((sum,mode) => sum + item.modes[mode].attempts - item.modes[mode].successes,0);
+          return this.state.mistakeCounts[id] !== ordinary + item.delayedReview.attempts - item.delayedReview.successes;
+        }) : [],
+        placement:version < 7, completed:true};
+      this.state.legacyProvenance = {schemaVersion:1,markerVersion:version,original,unsignedFields,pending,approvedDrafts:{},archivedExams:[]};
+    }
+    isUnverified(field, id) {
+      const pending = this.state.legacyProvenance?.pending[field];
+      return Array.isArray(pending) ? pending.includes(id) : pending === true;
+    }
+    approveDraft(id, answer, now = Date.now()) {
+      if (!this.isUnverified('drafts',id) || !answer || typeof answer !== 'object' || !Number.isFinite(now) || now < 0) return false;
+      const before = cloneContent(this.state), provenance = this.state.legacyProvenance;
+      provenance.pending.drafts = provenance.pending.drafts.filter(value => value !== id);
+      provenance.approvedDrafts[id] = {answer:cloneContent(answer),approvedAt:now};
+      this.state.drafts[id] = cloneContent(answer); this.refreshEvidenceIntegrity();
+      if (!ProgressModel.validateBackupState(this.state,this.questions,this.examPool) || !this.save()) { this.state = before; return false; }
+      return true;
+    }
+    verifiedExamHistory() { return this.state.examHistory.filter(item => !this.isUnverified('examHistory',valueSignature(item))); }
+    examHistoryForDisplay() { return this.state.examHistory.map(item => ({...item,unverified:this.isUnverified('examHistory',valueSignature(item))})); }
     migrateContentIdentity(fromRevision, savedQuestionStats) {
       const state = this.state, versions = ProgressModel.currentContentVersions(this.questions);
       const archive = emptyContentArchive(), complete = new Set();
@@ -603,12 +718,15 @@
         current.activeDayKeys.sort((a, b) => this.dayOrdinalFromKey(a) - this.dayOrdinalFromKey(b));
       }
       if (!current.today || current.today.dayKey !== dayKey) {
-        current.today = { dayKey, attempts:0, correctCount:0, questionIds:[], reviewSuccessCount:0 };
+        current.today = this.state.learningDayHistory[dayKey]
+          ? cloneContent(this.state.learningDayHistory[dayKey])
+          : { dayKey, attempts:0, correctCount:0, questionIds:[], reviewSuccessCount:0 };
       }
       current.today.attempts += 1;
       if (correct) current.today.correctCount += 1;
       if (!current.today.questionIds.includes(id)) current.today.questionIds.push(id);
       if (correct && delayedSuccess === true) current.today.reviewSuccessCount += 1;
+      this.state.learningDayHistory[dayKey] = cloneContent(current.today);
       this.state.learningContinuityState = current;
       return true;
     }
@@ -683,12 +801,15 @@
         const days = new Set(activeOrdinals);
         for (let cursor = latest; days.has(cursor); cursor -= 1) currentStreak += 1;
       }
-      const today = continuity.today?.dayKey === todayKey ? continuity.today : null;
+      const today = this.state.learningDayHistory[todayKey] || (continuity.today?.dayKey === todayKey ? continuity.today : null);
       const attempts = today?.attempts || 0;
       const correctCount = today?.correctCount || 0;
       return {
         currentStreak,
         activeDays:activeOrdinals.length,
+        ...(this.isUnverified('continuityDays',todayKey) || this.state.legacyProvenance?.pending.activeDays.some(key => key <= todayKey)
+          ? {verification:{today:this.isUnverified('continuityDays',todayKey) ? 'unverified' : 'verified',
+              activeDays:this.state.legacyProvenance.pending.activeDays.some(key => key <= todayKey) ? 'unverified' : 'verified'}} : {}),
         today:{
           attempts,
           correctCount,
@@ -740,11 +861,14 @@
         return possible === null || score.possible === possible;
       });
     }
-    refreshEvidenceIntegrity() { this.state.learningEvidenceIntegrity = {schemaVersion:9,signature:evidenceStateSignature(this.state)}; }
+    refreshEvidenceIntegrity() { this.state.learningEvidenceIntegrity = {schemaVersion:10,signature:evidenceStateSignature(this.state)}; }
     save() { if (this.storageWriteBlocked || typeof this.storage?.setItem !== 'function') return false; try { return this.storage.setItem(this.key, JSON.stringify(this.state)) !== false; } catch (_) { return false; } }
     setDraft(id, answer) { if (!this.questions[id] || !answer || typeof answer !== 'object') return false; this.state.drafts[id] = answer; this.state.currentQuestionId = id; this.refreshEvidenceIntegrity(); return this.save(); }
-    clearDraft(id) { if (!this.questions[id]) return false; delete this.state.drafts[id]; this.refreshEvidenceIntegrity(); return this.save(); }
-    clearDrafts(ids) { if (!Array.isArray(ids)) return false; ids.filter(id => this.questions[id]).forEach(id => { delete this.state.drafts[id]; }); this.refreshEvidenceIntegrity(); return this.save(); }
+    discardDraftCandidate(id) {
+      if (this.state.legacyProvenance) this.state.legacyProvenance.pending.drafts = this.state.legacyProvenance.pending.drafts.filter(value => value !== id);
+    }
+    clearDraft(id) { if (!this.questions[id]) return false; delete this.state.drafts[id]; this.discardDraftCandidate(id); this.refreshEvidenceIntegrity(); return this.save(); }
+    clearDrafts(ids) { if (!Array.isArray(ids)) return false; ids.filter(id => this.questions[id]).forEach(id => { delete this.state.drafts[id]; this.discardDraftCandidate(id); }); this.refreshEvidenceIntegrity(); return this.save(); }
     record(id, correct, now = Date.now()) {
       if (!this.questions[id]) return false;
       if (this.state.learningEffectiveness && !this.state.learningEffectiveness.questions[id]) {
@@ -753,7 +877,8 @@
       if (!this.state.answeredIds.includes(id)) this.state.answeredIds.push(id);
       if (correct && !this.state.correctIds.includes(id)) this.state.correctIds.push(id);
       const intervals = [20 * 60 * 1000, 24 * 60 * 60 * 1000, 3 * 24 * 60 * 60 * 1000, 7 * 24 * 60 * 60 * 1000];
-      const scheduled = this.state.reviewSchedule[id];
+      const unverifiedSchedule = this.isUnverified('reviewSchedule',id);
+      const scheduled = unverifiedSchedule ? null : this.state.reviewSchedule[id];
       if (!correct) {
         if (!this.state.incorrectIds.includes(id)) this.state.incorrectIds.push(id);
         this.state.mistakeCounts[id] = (this.state.mistakeCounts[id] || 0) + 1;
@@ -769,6 +894,7 @@
         this.state.reviewSchedule[id] = { stage:0, dueAt:now + intervals[0] };
       }
       if (correct === true) this.state.contentRecheckIds = this.state.contentRecheckIds.filter(value => value !== id);
+      if (unverifiedSchedule) this.state.legacyProvenance.pending.reviewSchedule = this.state.legacyProvenance.pending.reviewSchedule.filter(value => value !== id);
       delete this.state.drafts[id]; this.refreshEvidenceIntegrity(); this.save(); return true;
     }
     dueReviewIds(now = Date.now()) {
@@ -786,6 +912,7 @@
     completeReview(sourceQuestionId, correct, now = Date.now(), reviewQuestionId = null) {
       const assignment = this.state.reviewAssignments[sourceQuestionId];
       if (!assignment || assignment.status !== 'assigned' || now < assignment.dueAt) return false;
+      const unverified = this.isUnverified('reviewSchedule',sourceQuestionId);
       const recorded = this.record(sourceQuestionId, correct, now);
       if (recorded) {
         const actualReviewId = reviewQuestionId || assignment.reviewQuestionId;
@@ -793,7 +920,9 @@
         delete this.state.reviewAssignments[sourceQuestionId];
         this.refreshEvidenceIntegrity(); this.save();
       }
-      return recorded;
+      // Current practice starts a new schedule; an unverified old deadline/stage
+      // cannot earn a delayed-review completion or its bonus.
+      return recorded && !unverified;
     }
     learningEffectivenessForQuestion(id) {
       if (!Object.hasOwn(this.questions, id)) return null;
@@ -809,6 +938,7 @@
     }
     qualifiedDelayedReview(id, sourceId, now, mode) {
       if (mode !== 'review' || !Object.hasOwn(this.questions, sourceId)) return null;
+      if (this.isUnverified('reviewSchedule',sourceId)) return null;
       const assignment = this.state.reviewAssignments[sourceId], schedule = this.state.reviewSchedule[sourceId];
       if (!assignment || !schedule || assignment.status !== 'assigned' || assignment.sourceQuestionId !== sourceId ||
           assignment.reviewQuestionId !== id || assignment.stage !== schedule.stage || assignment.dueAt !== schedule.dueAt ||
@@ -923,12 +1053,13 @@
       const recent = this.recentAccuracy({ questionId:id, limit:5 });
       const stats = this.statsForQuestion(id);
       const schedule = this.state.reviewSchedule[id] || null;
-      const due = Boolean(schedule && Number.isFinite(schedule.dueAt) && schedule.dueAt <= now);
+      const due = Boolean(schedule && !this.isUnverified('reviewSchedule',id) && Number.isFinite(schedule.dueAt) && schedule.dueAt <= now);
       const attempts = lifetime?.attempts || 0;
       const inactiveMs = attempts && stats.lastAnsweredAt > 0 ? Math.max(0, now - stats.lastAnsweredAt) : null;
       const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
       let tier = 5;
       const reasons = [];
+      if (this.isUnverified('reviewSchedule',id)) reasons.push('旧版の復習予定あり（未検証）');
       if (due) {
         tier = 0;
         reasons.push('復習期限を過ぎています');
@@ -1009,6 +1140,7 @@
       const startQuestionId = this.placementStart({ foundation, closing });
       if (!startQuestionId) return null;
       this.state.placement = { completed:true, foundation, closing, startQuestionId, completedAt:now };
+      if (this.state.legacyProvenance) this.state.legacyProvenance.pending.placement = false;
       this.state.currentQuestionId = startQuestionId; this.state.mode = 'story'; this.refreshEvidenceIntegrity(); this.save();
       return startQuestionId;
     }
@@ -1019,7 +1151,7 @@
       this.state.placement = { completed:true, foundation:0, closing:0, startQuestionId, completedAt:now, migrated:true };
       this.refreshEvidenceIntegrity(); this.save(); return true;
     }
-    resetPlacement() { this.state.placement = null; this.refreshEvidenceIntegrity(); this.save(); }
+    resetPlacement() { this.state.placement = null; if (this.state.legacyProvenance) this.state.legacyProvenance.pending.placement = false; this.refreshEvidenceIntegrity(); this.save(); }
     practicalEvidencePassed() {
       const practicalTypes = ['ledger','worksheet','financial_statement','comprehensive'];
       // Graduation represents repeatable competence, not one lucky answer in each
@@ -1038,11 +1170,13 @@
       });
     }
     updateCompletion(rpg) {
-      const passedExams = this.state.examHistory.filter(item => item.points >= 70 && item.setSignature).map(item => item.setSignature);
+      const passedExams = this.verifiedExamHistory().filter(item => item.points >= 70 && item.setSignature).map(item => item.setSignature);
       const practicalPassed = this.practicalEvidencePassed();
       const masteryPassed = ['仕訳','帳簿','決算整理','財務諸表'].every(skill => rpg?.skillMastery?.(skill) >= .7);
-      this.state.completed = practicalPassed && masteryPassed && new Set(passedExams).size >= 2;
-      this.refreshEvidenceIntegrity(); this.save(); return this.state.completed;
+      const verified = practicalPassed && masteryPassed && new Set(passedExams).size >= 2;
+      if (verified || !this.isUnverified('completed')) this.state.completed = verified;
+      if (verified && this.state.legacyProvenance) this.state.legacyProvenance.pending.completed = false;
+      this.refreshEvidenceIntegrity(); this.save(); return verified;
     }
   }
   root.ProgressModel = ProgressModel;

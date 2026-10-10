@@ -89,7 +89,9 @@
         card.append(copy, button); return card;
       }));
       itemsBox.hidden = noticeItems.length === 0;
-      cancel.onclick = close;
+      const cancelNotice = () => { close(); if (typeof options.onCancel === 'function') options.onCancel(); };
+      cancel.onclick = cancelNotice;
+      dialog.oncancel = event => { event.preventDefault(); cancelNotice(); };
       confirm.onclick = () => { close(); if (typeof options.onConfirm === 'function') options.onConfirm(); };
       if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); }
       else dialog.setAttribute('open', '');
@@ -1243,7 +1245,7 @@
       const heading = this.document.createElement('h3'); heading.textContent = '問題別レビュー'; container.append(heading);
       review.items.forEach((item, index) => { const question = questions[item.id]; const details = this.document.createElement('details'); const summary = this.document.createElement('summary'); summary.textContent = `第${index + 1}問｜${item.earned}/${item.points}点｜${item.correct ? '正解' : item.answer ? '不正解' : '未回答'}｜${item.topic}`; details.append(summary, this.answerReviewBlock('自分の回答', question, item.answer), this.answerReviewBlock('正解', question, question.answer)); const diagnostics = this.renderDiagnostics(question, item.answer, { correct: item.correct }); if (diagnostics) details.append(diagnostics); const explanation = this.document.createElement('p'); explanation.className = 'exam-review-explanation'; explanation.textContent = question.explanation; details.append(explanation); container.append(details); });
       const historyHeading = this.document.createElement('h3'); historyHeading.textContent = '直近の成績'; container.append(historyHeading);
-      const list = this.document.createElement('ol'); history.slice(-5).reverse().forEach(item => { const row = this.document.createElement('li'); row.textContent = `${new Date(item.finishedAt).toLocaleString('ja-JP')}｜${item.points}点｜${item.passed ? '合格圏' : '要復習'}｜所要${Math.ceil(item.durationMs / 60000)}分｜未回答${item.unansweredCount}問`; list.append(row); }); container.append(list);
+      const list = this.document.createElement('ol'); history.slice(-5).reverse().forEach(item => { const row = this.document.createElement('li'); row.textContent = `${new Date(item.finishedAt).toLocaleString('ja-JP')}｜${item.points}点${item.unverified ? '（旧記録・未検証）' : ''}｜${item.passed ? '合格圏' : '要復習'}｜所要${Math.ceil(item.durationMs / 60000)}分｜未回答${item.unansweredCount}問`; list.append(row); }); container.append(list);
     }
     explanationSections(explanation = '') {
       const parts = String(explanation).split(/【([^】]+)】/); const sections = [];

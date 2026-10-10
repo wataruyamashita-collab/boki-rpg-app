@@ -237,8 +237,9 @@
     openSettings() {
       const migration = this.document.getElementById('content-migration-status');
       if (migration) {
-        migration.hidden = !Object.keys(this.model.state.contentMigrationArchive?.questions || {}).length;
+        migration.hidden = !Object.keys(this.model.state.contentMigrationArchive?.questions || {}).length && !this.model.state.legacyProvenance;
         migration.textContent = migration.hidden ? '' : '内容を更新した問題の以前の成績・入力は、このJSONバックアップに保管されています。現在の習熟度には、更新後の内容と確認できた回答だけを使用します。';
+        if (this.model.state.legacyProvenance) migration.textContent += ' 旧版で整合性を確認できない情報は未検証として保持しています。不正と判定した情報ではありません。原本はJSONバックアップに含まれます。途中入力は回答時に確認し、未検証の成績は新しい進捗判定に使用しません。';
       }
       const dialog = this.document.getElementById('settings-dialog');
       if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
@@ -553,7 +554,9 @@
     }
     leaveExamResult(mode) { this.currentId = null; this.showMode(mode); this.renderModes(); }
     retryExam(now = Date.now()) {
-      const previousIds = this.model.state.examSession?.ids || this.model.state.lastExamReview?.items?.map(item => item.id) || [];
+      // Finished sessions already cleared their drafts. An old unsigned result
+      // list must not authorize deleting inputs saved since that exam ended.
+      const previousIds = this.model.state.examSession?.ids || [];
       if (previousIds.length) this.model.clearDrafts?.(previousIds);
       this.model.state.examSession = null; this.currentId = null;
       const session = this.ensureExamSession(now);
@@ -659,6 +662,26 @@
     finishExam(force, now = Date.now(), confirmed = false) {
       const session = this.model.state.examSession; if (!session) return false;
       if (session.status === 'FINISHING' || session.status === 'FINISHED') return false;
+      const unknownScores = Object.keys(session.scores).filter(id => this.model.isUnverified?.('examScores',id));
+      if (unknownScores.length) {
+        this.stopExamTimer();
+        this.view.showNotice(`旧版の${unknownScores.length}問は保存答案から得点を確認できません。原本と既得報酬を保持し、この模試の得点・習熟度・報酬は確定しません。`, {
+          title:'未検証の模試記録', cancelLabel:'回答に戻る', confirmLabel:'原本を保管して終了',
+          onCancel:() => { if (this.model.state.examSession === session && Date.now() < session.endAt) this.startExamTimer(); },
+          onConfirm:() => {
+            if (this.model.state.examSession !== session) return;
+            const saved = Controller.prototype.learningTransaction.call(this, () => {
+              this.model.state.legacyProvenance.archivedExams.push({reason:'unverifiable-score',archivedAt:Date.now(),session:JSON.parse(JSON.stringify(session))});
+              this.model.state.examSession = null;
+              this.model.state.examAttempt += 1;
+              this.model.state.legacyProvenance.pending.examScores = [];
+              this.model.refreshEvidenceIntegrity(); return this.model.save();
+            });
+            if (saved) this.showMode('story');
+          }
+        });
+        return false;
+      }
       const timedOut = force || now >= session.endAt || session.status === 'EXPIRED';
       const unanswered = this.unansweredExamIds();
       if (!timedOut && unanswered.length) { this.view.showNotice(`未回答が${unanswered.length}問あります。全問回答後に採点してください。`, { title:'未回答があります' }); this.start(unanswered[0]); return false; }
@@ -691,7 +714,7 @@
       this.stopExamTimer();
       this.document?.body?.classList?.remove('exam-active');
       const achievement = { level:this.rpg.level > previousProgress.level ? this.rpg.level : null, role:this.rpg.role !== previousProgress.role ? this.rpg.role : null };
-      this.view.examResult(review, this.questions, this.model.state.examHistory, achievement);
+      this.view.examResult(review, this.questions, this.model.examHistoryForDisplay?.() || this.model.state.examHistory, achievement);
       this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus(); return true;
     }
     questionAccounts(question) { return question.type === 'journal' ? [...question.answer.debit, ...question.answer.credit].map(item => item.account) : []; }
@@ -993,6 +1016,8 @@
         make('span', '', `最終学習 ${last}`)
       );
       container.append(heading, grid, meta);
+      if (summary.verification) container.append(make('p','learning-continuity-meta',
+        `${summary.verification.today === 'unverified' ? '今日の旧集計には未検証の値または残っていない内訳があります。' : ''}${summary.verification.activeDays === 'unverified' ? '旧版の学習日・継続日数は未検証です。' : ''} 原本を保持し、不足分を推測で補っていません。`));
       return true;
     }
     renderStudyRecommendations(mode, now = Date.now()) {
@@ -1069,7 +1094,7 @@
     }
     visibleIdsForMode(ids, mode) { return mode === 'exam' ? [...ids] : this.filteredIds(ids); }
     renderModes() {
-      const render = (id, ids, mode) => { const filtered = this.visibleIdsForMode(ids, mode); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; if (mode !== 'exam') button.dataset.startFresh = 'true'; const mistakes = this.model.state.mistakeCounts[qid] || 0; const hasDraft = Boolean(this.model.state.drafts?.[qid]); button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回` : ''}${mode !== 'exam' && hasDraft ? '｜保存入力あり・最初から' : ''}`; return button; })); return filtered.length; };
+      const render = (id, ids, mode) => { const filtered = this.visibleIdsForMode(ids, mode); const list = this.document.getElementById(id); list.replaceChildren(...filtered.map(qid => { const button = this.document.createElement('button'); button.type = 'button'; button.dataset.action = 'start'; button.dataset.questionId = qid; if (mode !== 'exam') button.dataset.startFresh = 'true'; const mistakes = this.model.state.mistakeCounts[qid] || 0; const hasDraft = Boolean(this.model.state.drafts?.[qid]); button.textContent = `${qid}｜${this.questions[qid].category}${mistakes ? `｜誤答 ${mistakes}回${this.model.isUnverified?.('mistakeCounts',qid) ? '（旧記録・未検証）' : ''}` : ''}${mode !== 'exam' && hasDraft ? '｜保存入力あり・最初から' : ''}`; return button; })); return filtered.length; };
       const storyIds = this.storyIds();
       const trainingIds = this.learningIds().filter(id => this.questions[id].type !== 'journal');
       const reviewIds = this.reviewIds();
@@ -1130,7 +1155,7 @@
         onConfirm:() => this.start(id)
       });
     }
-    start(id, options = {}) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; if (options.fresh === true) this.model.clearDraft?.(id); this.resetCalculator(); this.submitting = false; this.learningFlow = this.model.state.mode === 'exam' ? null : { questionId:id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false }; this.currentId = id; this.learningObservationNumber = this.model.nextLearningObservation?.(id); this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.resetLearningSurfaces?.(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.setAnswerMode?.('initial'); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; this.document.getElementById?.('q-text')?.focus(); }
+    start(id, options = {}) { if (!this.questions[id] || (this.model.state.mode === 'exam' && !this.modeIds().includes(id))) return; if (options.fresh === true) this.model.clearDraft?.(id); this.resetCalculator(); this.submitting = false; this.learningFlow = this.model.state.mode === 'exam' ? null : { questionId:id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false }; this.currentId = id; this.learningObservationNumber = this.model.nextLearningObservation?.(id); this.questionStartedAt = Date.now(); this.reviewSourceId = this.model.state.mode === 'review' ? (this.reviewMappings.get(id)?.sourceQuestionId || (this.model.dueReviewIds().includes(id) ? id : null)) : null; this.model.state.currentQuestionId = id; this.model.save(); this.view.resetLearningSurfaces?.(); this.view.renderQuestion(this.questions[id], this.model.state.drafts[id], this.model.state.mode); this.view.setAnswerMode?.('initial'); this.view.show('view-question'); this.document.getElementById('question-filters').hidden = true; this.document.getElementById?.('q-text')?.focus(); const status = this.document.getElementById('save-status'); if (status && this.model.isUnverified?.('drafts',id)) status.textContent = '旧版の未検証の途中入力です。編集でき、回答時に内容を確認します。'; if (status && this.reviewSourceId && this.model.isUnverified?.('reviewSchedule',this.reviewSourceId)) status.textContent = '旧版の復習予定は未検証です。今回の回答から予定を再評価します。過去の復習段階の達成や追加報酬は確定しません。'; }
     saveDraft(message) {
       if (!this.currentId) return false;
       if (this.model.state.mode !== 'exam' && ['W','R'].includes(this.learningFlow?.phase)) {
@@ -1144,8 +1169,21 @@
       if (this.submitting || !this.currentId || !this.questions[this.currentId]) return;
       if (this.model.state.mode === 'exam' && this.isExamExpired()) { const session = this.model.state.examSession; if (session) session.status = 'EXPIRED'; this.model.refreshEvidenceIntegrity?.(); this.finishExam(true); return; }
       if (this.model.state.mode !== 'exam' && !['I','R'].includes(this.learningFlow?.phase)) return false;
-      this.submitting = true;
       const question = this.questions[this.currentId]; const answer = this.view.readAnswer(question);
+      if (this.model.isUnverified?.('drafts',question.id)) {
+        const id = this.currentId, mode = this.model.state.mode, session = this.model.state.examSession;
+        this.view.showNotice('旧版の途中入力を表示しています。内容を確認し、現在の回答として使用しますか？ この操作は過去の入力の真正性を証明するものではありません。', {
+          title:'途中入力の確認', cancelLabel:'編集に戻る', confirmLabel:'この回答を使用する',
+          onConfirm:() => {
+            if (this.currentId !== id || this.model.state.mode !== mode || this.model.state.examSession !== session ||
+                JSON.stringify(this.view.readAnswer(question)) !== JSON.stringify(answer)) return;
+            if (this.model.approveDraft(id,answer)) this.submit();
+            else this.view.showNotice('確認内容を保存できませんでした。入力を保持しています。',{title:'保存できません'});
+          }
+        });
+        return false;
+      }
+      this.submitting = true;
       if (this.model.state.mode === 'exam' && this.isExamExpired()) { this.model.state.examSession.status = 'EXPIRED'; this.model.refreshEvidenceIntegrity?.(); this.finishExam(true); return; }
       const score = root.GradingEngine.grade(question, answer);
       if (this.model.state.mode !== 'exam' && this.learningFlow?.phase === 'R') return this.finishCoachingRetry(question, answer, score);
@@ -1172,6 +1210,8 @@
           const observationNumber = this.model.state.learningEffectiveness?.questions[question.id]?.observedAttempts;
           this.model.state.examSession.scores[question.id] = { correct:score.correct, earned:score.earned, possible:score.possible, ratio:score.ratio, answer,
             ...(Number.isSafeInteger(observationNumber) ? {observationNumber} : {}) };
+          if (this.model.state.legacyProvenance) this.model.state.legacyProvenance.pending.examScores =
+            this.model.state.legacyProvenance.pending.examScores.filter(id => id !== question.id);
           this.model.refreshEvidenceIntegrity?.(); this.model.setDraft(question.id,answer); this.model.save();
           return true;
         }
