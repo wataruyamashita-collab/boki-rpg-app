@@ -124,7 +124,8 @@
       if (!plain(provenance) || provenance.schemaVersion !== 1 || typeof provenance.original !== 'string' ||
           !Number.isSafeInteger(provenance.markerVersion) || provenance.markerVersion < 0 || provenance.markerVersion > 9 ||
           !plain(provenance.pending) || !plain(provenance.approvedDrafts) || !Array.isArray(provenance.unsignedFields) ||
-          !Array.isArray(provenance.archivedExams)) return false;
+          !Array.isArray(provenance.archivedExams) ||
+          (provenance.progressionVersion !== undefined && provenance.progressionVersion !== 2)) return false;
       for (const field of ['continuityDays','activeDays']) if (!Array.isArray(provenance.pending[field]) ||
           provenance.pending[field].some(key => !Number.isSafeInteger(probe.dayOrdinalFromKey(key)))) return false;
       for (const archive of provenance.archivedExams) if (!plain(archive) || archive.reason !== 'unverifiable-score' ||
@@ -315,22 +316,18 @@
           // the legacy controller. An unfinished exam observation is not completion.
           const ordinaryWrong = ['story','training','desk'].reduce((sum,mode) => sum + (item.modes[mode].attempts - item.modes[mode].successes),0);
           const reviewFailures = item.delayedReview.attempts - item.delayedReview.successes, count = mistakes[id] || 0;
-          // A session-bound observation from a strictly earlier, signed attempt
-          // is finalized. The current attempt's observations are not completions.
-          const finalized = new Map();
-          if (integrity.schemaVersion >= 6) {
-            // A later counter alone is insufficient: retry can abandon an active
-            // session. Require a protected finalized history entry for its time
-            // window and question membership as well.
-            const hasFinalization = session => session.attempt < state.examAttempt && state.examHistory?.some(history =>
-              typeof history.setSignature === 'string' && history.setSignature.split('|').includes(id) &&
-              history.finishedAt >= session.startedAt && history.durationMs === Math.max(0,Math.min(history.finishedAt,session.endAt)-session.startedAt));
-            for (const row of retained[id] || []) if (row.mode === 'exam' && row.examSession &&
-                hasFinalization(row.examSession)) finalized.set(JSON.stringify(row.examSession),row.correct);
-            const exam = item.lastExamObservation;
-            if (exam && hasFinalization(exam.session)) finalized.set(JSON.stringify(exam.session),exam.correct);
-          }
-          const finalizedWrong = [...finalized.values()].filter(correct => !correct).length;
+          // Legacy history has no session identity. A timeout's clamped duration
+          // cannot prove which retry completed, especially across clock rollback.
+          // Its signed answered count can still prove one finalized wrong answer:
+          // every observed candidate must have answered, and this ID never had an
+          // exam success. Use only a lower bound, never invent a cumulative total.
+          const finalizedWrong = integrity.schemaVersion >= 6 && item.modes.exam.successes === 0 && state.examHistory?.some(history => {
+            const ids = typeof history.setSignature === 'string' ? history.setSignature.split('|') : [];
+            if (ids.length !== 15 || new Set(ids).size !== 15 || ids.some(key => !Object.hasOwn(questions,key)) ||
+                !ids.includes(id) || !Number.isInteger(history.unansweredCount) || history.unansweredCount < 0 || history.unansweredCount > 15) return false;
+            const candidates = ids.filter(key => evidence.questions[key]?.modes.exam.attempts > 0), answered = 15 - history.unansweredCount;
+            return answered > 0 && candidates.includes(id) && answered === candidates.length;
+          }) ? 1 : 0;
           if (count < ordinaryWrong + reviewFailures + finalizedWrong) return false;
         }
         if (Array.isArray(state.incorrectIds) && state.incorrectIds.some(id => !(mistakes[id] > 0))) return false;
@@ -510,7 +507,7 @@
           const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 10;
           if (needsIntegrityMigration) this.migrateUnsignedFields(saved, read.value);
           const needsProgressionMigration = !needsIntegrityMigration && this.state.legacyProvenance?.markerVersion < 2 &&
-            this.state.legacyProvenance.pending.correctIds === undefined;
+            this.state.legacyProvenance.progressionVersion !== 2;
           if (needsProgressionMigration) this.migrateUnsignedProgression(JSON.parse(this.state.legacyProvenance.original),true);
           if (needsEvidenceMigration || needsIntegrityMigration || needsProgressionMigration) this.refreshEvidenceIntegrity();
           if (needsContentMigration || needsLearningMigration || needsEvidenceMigration || needsIntegrityMigration || needsProgressionMigration) this.save();
@@ -549,6 +546,7 @@
     }
     migrateUnsignedProgression(original, alreadySealed = false) {
       const provenance = this.state.legacyProvenance;
+      const previewWithoutProgression = alreadySealed && provenance.pending.correctIds === undefined;
       const proven = {answeredIds:new Set(),correctIds:new Set(),incorrectIds:new Set()};
       for (const [id,item] of Object.entries(this.state.learningEffectiveness.questions)) {
         // Ordinary observations and source-bound delayed reviews were committed
@@ -566,27 +564,37 @@
           for (const row of this.state.attempts) if (row.questionId === id && row.mode === 'exam')
             retain({session:row.examSession,observationNumber:row.observationNumber,correct:row.correct});
           retain(item.lastExamObservation);
-          // Keep an earlier finalized success even when a later exam is active,
-          // but never use a superseded answer from the same session as its result.
-          for (const exam of observations.values()) if (exam.session.attempt < this.state.examAttempt && this.verifiedExamHistory().some(history =>
-              history.setSignature?.split('|').includes(id) && history.finishedAt >= exam.session.startedAt &&
-              history.durationMs === Math.max(0,Math.min(history.finishedAt,exam.session.endAt)-exam.session.startedAt))) {
-            proven.answeredIds.add(id);
-            if (exam.correct) proven.correctIds.add(id);
+          // Earlier previews resealed an unsigned legacy lastExamReview. Only a
+          // different, subsequently saved review can corroborate finalization.
+          // History alone omits startedAt, so duration cannot identify a retry.
+          const review = this.state.lastExamReview;
+          if (review && valueSignature(review) !== valueSignature(original.lastExamReview ?? null) &&
+              Array.isArray(review.items) && review.items.length === 15 && new Set(review.items.map(row => row.id)).size === 15) {
+            const result = review.items.find(row => row.id === id);
+            for (const exam of observations.values()) if (exam.correct && result?.correct === true &&
+                exam.session.attempt < this.state.examAttempt && review.startedAt === exam.session.startedAt &&
+                this.verifiedExamHistory().some(history => history === this.state.examHistory.at(-1) && history.setSignature === review.items.map(row => row.id).sort().join('|') &&
+                  ['finishedAt','durationMs','points','unansweredCount'].every(key => history[key] === review[key]) &&
+                  history.finishedAt >= exam.session.startedAt &&
+                  history.durationMs === Math.max(0,Math.min(history.finishedAt,exam.session.endAt)-exam.session.startedAt))) {
+              proven.answeredIds.add(id); proven.correctIds.add(id);
+            }
           }
         }
       }
       for (const field of Object.keys(proven)) {
         if (!provenance.unsignedFields.includes(field)) provenance.unsignedFields.push(field);
-        // A flag added after the old preview migration is protected by v10.
-        // Never overwrite current progress with the archived original value.
-        if (alreadySealed && original.contentRevision === CONTENT_REVISION && Array.isArray(original[field]))
+        // The first preview did not synthesize flags from exam history. Later
+        // progression previews did, so their additions need independent proof.
+        // Preserve every candidate, including additions that remain unverified.
+        if (previewWithoutProgression && original.contentRevision === CONTENT_REVISION && Array.isArray(original[field]))
           for (const id of this.state[field]) if (!original[field].includes(id)) proven[field].add(id);
         if (field !== 'incorrectIds') this.state[field] = [...new Set([...this.state[field],...proven[field]])];
         // incorrectIds is mutable recovery state, not a cumulative wrong count.
         // Preserve the candidate; only a current answer can settle it.
         provenance.pending[field] = this.state[field].filter(id => !proven[field].has(id));
       }
+      provenance.progressionVersion = 2;
     }
     isUnverified(field, id) {
       const pending = this.state.legacyProvenance?.pending[field];

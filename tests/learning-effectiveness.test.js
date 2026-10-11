@@ -705,17 +705,43 @@ test('earlier v10 preserves retained finalized exam success when the latest obse
   const Old=priorModel('ed21218967958e42e67ba9aafe9c333a5bbccc55'),Preview=priorModel('05c147e0edf15f4441e18fed54ea396c7b3d8c4c');
   const id=canonicalPool.find(q=>catalog[q].type==='journal'),ids=[id,...canonicalPool.filter(q=>q!==id).slice(0,14)];
   const old=new Old(catalog,storage(),'test',canonicalPool);old.state.learningEffectiveness.initialHistory='unknown';old.state.correctIds=[id];old.refreshEvidenceIntegrity();
-  const store=storage(JSON.stringify(old.state)),preview=new Preview(catalog,store,'test',canonicalPool);
+  const store={data:{test:JSON.stringify(old.state)},getItem(key){return this.data[key]??null;},setItem(key,value){this.data[key]=value;return true;},removeItem(key){delete this.data[key];return true;}};
+  const preview=new Preview(catalog,store,'test',canonicalPool);
   for(const [startedAt,correct] of [[100,true],[3000,false]]){
     preview.state.examSession={ids,startedAt,endAt:startedAt+10000,status:'RUNNING',evidenceVersion:1,scores:{}};
     assert(answer(preview,id,correct,startedAt+500,{mode:'exam'}));
     preview.state.examSession.scores[id]={correct,earned:correct?1:0,possible:1,ratio:correct?1:0,observationNumber:preview.state.learningEffectiveness.questions[id].observedAttempts};
-    if(correct){preview.record(id,true,startedAt+1000);preview.state.examHistory.push({finishedAt:startedAt+1000,durationMs:1000,setSignature:ids.join('|'),points:100});preview.state.examAttempt++;preview.state.examSession=null;}
+    if(correct){
+      // Use the actual finalizer: history alone lacks the session identity, and
+      // one answered question does not produce the synthetic 100-point result.
+      const sandbox={window:{ProgressModel:Preview,RPGModel:require('../js/rpg')},console};
+      require('vm').runInNewContext(require('child_process').execFileSync('git',['show','05c147e0edf15f4441e18fed54ea396c7b3d8c4c:js/controller.js'],{encoding:'utf8'}),sandbox);
+      const ctx=Object.create(sandbox.window.AppController.prototype),node=()=>({focus(){},classList:{remove(){}}});
+      Object.assign(ctx,{model:preview,rpg:new sandbox.window.RPGModel(preview.storage,'r'),questions:catalog,unansweredExamIds:()=>ids.slice(1),stopExamTimer(){},view:{examResult(){},show(){},showNotice(){}},document:{body:node(),getElementById:node}});
+      preview.refreshEvidenceIntegrity();preview.save();assert(Preview.validateBackupState(preview.state,catalog,canonicalPool));
+      assert(ctx.finishExam(true,startedAt+1000));
+    }
     preview.refreshEvidenceIntegrity();preview.save();
   }
   assert(Preview.validateBackupState(preview.state,catalog,canonicalPool));
   const model=new Model(catalog,store,'test',canonicalPool);assert(!model.storageWriteBlocked);assert(model.verifiedCorrectIds().includes(id));
   assert.deepStrictEqual(model.state.examHistory,clone(preview.state.examHistory));assert.deepStrictEqual(Model.prepareBackupState(model.state,catalog,canonicalPool),model.state);
+});
+test('v7 abandoned wrong exam does not become a finalized mistake through a later timeout',()=>{
+  const data={window:{}};require('vm').runInNewContext(require('fs').readFileSync('data/questions.js','utf8'),data);const catalog=data.window.QuestionData;
+  const Old=priorModel('86135e34047c7356aa2a020d5221ca14f205c4d9'),id=canonicalPool.find(q=>catalog[q].type==='journal'),ids=[id,...canonicalPool.filter(q=>q!==id).slice(0,14)];
+  for(const late of [0,5000]){
+    const old=new Old(catalog,storage(),'test',canonicalPool);old.state.mode='exam';
+    old.state.examSession={ids,startedAt:100,endAt:3600100,status:'RUNNING',evidenceVersion:1,scores:{}};
+    assert(answer(old,id,false,500,{mode:'exam'}));
+    old.state.examSession=null;old.state.examAttempt=1;
+    old.state.examHistory=[{finishedAt:3610000+late,durationMs:3600000,setSignature:ids.join('|'),points:0}];old.refreshEvidenceIntegrity();old.save();
+    const original=clone(old.state);assert(Old.validateBackupState(original,catalog,canonicalPool));assert.deepStrictEqual(original.mistakeCounts,{});
+    const migrated=Model.prepareBackupState(original,catalog,canonicalPool);assert(migrated,'genuine abandoned answer was rejected as a completed mistake');
+    assert.deepStrictEqual(migrated.mistakeCounts,{});assert.deepStrictEqual(JSON.parse(migrated.legacyProvenance.original),original);
+    const store=storage(JSON.stringify(migrated)),model=new Model(catalog,store,'test',canonicalPool);assert(!model.storageWriteBlocked);
+    assert.deepStrictEqual(Model.prepareBackupState(model.state,catalog,canonicalPool),model.state);
+  }
 });
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;

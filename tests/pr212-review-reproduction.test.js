@@ -94,4 +94,38 @@ test('6 v1 deleted progression flags are corroborated from signed ordinary compl
  assert.deepStrictEqual(JSON.parse(migrated.legacyProvenance.original),bad);
  assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
 });
+test('7 abandoned v10 preview exam cannot borrow a retry timeout to authenticate old flags',()=>{
+ const Old=oldClass('ed21218967958e42e67ba9aafe9c333a5bbccc55'),Preview=oldClass('05c147e0edf15f4441e18fed54ea396c7b3d8c4c'),EarlierFix=oldClass('cfaeb11e13cb5ae2f9980bcecce1af6b7bbca306');
+ const id=pool.find(q=>catalog[q].type==='journal'),ids=[id,...pool.filter(q=>q!==id).slice(0,14)];
+ for(const retryCorrect of [null,false,true])for(const late of [0,5000])for(const rollback of [false,true])for(const originalFlag of [true,false]){
+  const firstStart=rollback?10000:100,retryStart=rollback?100:10000,finishedAt=retryStart+3600000+late+(rollback?9900:0);
+  const old=new Old(catalog,store(),'p',pool);old.state.learningEffectiveness.initialHistory='unknown';old.state.correctIds=originalFlag?[id]:[];old.refreshEvidenceIntegrity();
+  const s=store();s.setItem('p',JSON.stringify(old.state));const preview=new Preview(catalog,s,'p',pool);preview.state.mode='exam';
+  preview.state.examSession={ids,startedAt:firstStart,endAt:firstStart+3600000,status:'RUNNING',evidenceVersion:1,scores:{}};
+  observe(preview,id,true,firstStart+400,{mode:'exam'});
+  preview.state.examSession={ids,startedAt:retryStart,endAt:retryStart+3600000,status:'RUNNING',evidenceVersion:1,scores:{}};
+  if(retryCorrect!==null){
+   observe(preview,id,retryCorrect,retryStart+1000,{mode:'exam'});
+   preview.state.examSession.scores[id]={correct:retryCorrect,earned:retryCorrect?1:0,possible:1,ratio:retryCorrect?1:0,answer:retryCorrect?catalog[id].answer:{debit:[],credit:[]},observationNumber:2};
+  }
+  const sandbox={window:{ProgressModel:Preview,RPGModel:require('../js/rpg')},console};
+  vm.runInNewContext(cp.execFileSync('git',['show','05c147e0edf15f4441e18fed54ea396c7b3d8c4c:js/controller.js'],{encoding:'utf8'}),sandbox);
+  const ctx=Object.create(sandbox.window.AppController.prototype),node=()=>({focus(){},classList:{remove(){}}});
+  Object.assign(ctx,{model:preview,rpg:new sandbox.window.RPGModel(preview.storage,'r'),questions:catalog,unansweredExamIds:()=>retryCorrect===null?ids:ids.slice(1),stopExamTimer(){},view:{examResult(){},show(){},showNotice(){}},document:{body:node(),getElementById:node}});
+  preview.refreshEvidenceIntegrity();preview.save();assert(Preview.validateBackupState(preview.state,catalog,pool));
+  assert(ctx.finishExam(true,finishedAt));
+  assert(Preview.validateBackupState(preview.state,catalog,pool));const before=clone(preview.state);
+  const model=new Model(catalog,s,'p',pool);assert(!model.storageWriteBlocked);
+  assert.strictEqual(model.verifiedCorrectIds().includes(id),retryCorrect===true,'abandoned session was promoted');
+  assert.strictEqual(model.state.correctIds.includes(id),originalFlag||retryCorrect===true,'historical candidate was changed');
+  assert.strictEqual(model.state.legacyProvenance.original,before.legacyProvenance.original);
+  assert.deepStrictEqual(model.state.examHistory,before.examHistory);assert.deepStrictEqual(model.state.mistakeCounts,before.mistakeCounts);
+  assert.deepStrictEqual(Model.prepareBackupState(model.state,catalog,pool),model.state);
+  assert.deepStrictEqual(new Model(catalog,s,'p',pool).state,model.state);
+  const earlierStore=store();earlierStore.setItem('p',JSON.stringify(before));new EarlierFix(catalog,earlierStore,'p',pool);
+  const repaired=new Model(catalog,earlierStore,'p',pool);assert(!repaired.storageWriteBlocked);
+  assert.strictEqual(repaired.verifiedCorrectIds().includes(id),retryCorrect===true);
+  assert.deepStrictEqual(repaired.state.mistakeCounts,before.mistakeCounts);
+ }
+});
 console.log(`PR212_REPRODUCTION ${passed}/${passed+failed} PASS; ${failed} FAIL`);if(failed)process.exitCode=1;

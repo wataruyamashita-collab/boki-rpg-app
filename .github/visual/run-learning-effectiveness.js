@@ -257,17 +257,22 @@ async function run(){
               if(c.submit()!==false||JSON.stringify({progress:c.model.state,character:c.rpg.state})!==before||localStorage.getItem(c.model.key)!==raw[0]||localStorage.getItem(c.rpg.key)!==raw[1])throw Error('RPG overflow was not atomic');
               if(new window.RPGModel(c.rpg.storage,c.rpg.key).state.xp!==Number.MAX_SAFE_INTEGER)throw Error('RPG boundary lost on reload');
               c.rpg.state=originalCharacter;c.rpg.save();
-              const due=Date.now()+1000,at=due-20*60*1000;
+              // Always cross a local day boundary. Per-day counters must be
+              // compared with that same day's baseline, not the last answer day.
+              const due=new Date(Date.now()).setHours(0,5,0,0),at=due-20*60*1000;
               c.model.state.mode='training';if(!c.model.recordAttempt('J004',false,10,'journal-entry',false,at))throw Error('clock fixture observation');
               c.model.record('J004',false,at);c.model.assignReview('J004','J004',due);c.model.state.mode='review';c.reviewMappings.set('J004',{sourceQuestionId:'J004'});
               const originalNow=Date.now;let clock=due;Date.now=()=>clock;
               try{
                 c.start('J004',{fresh:true});c.view.applyRetryDraft(c.questions.J004,c.questions.J004.answer);
-                const count=c.model.state.learningContinuityState.today.reviewSuccessCount;clock=due-1;
+                const count=c.model.learningContinuity(due-1).today.reviewSuccessCount;
+                const dueCount=c.model.learningContinuity(due).today.reviewSuccessCount;
+                const previousDay=JSON.stringify(c.model.learningContinuity(at).today);clock=due-1;
                 if(c.submit()===false||c.model.state.attempts.at(-1).delayedSuccess||c.model.state.learningContinuityState.today.reviewSuccessCount!==count||c.model.learningEffectivenessForQuestion('J004').delayedReview.successes!==0||c.model.state.reviewSchedule.J004.stage!==0)throw Error('unqualified clock review counted');
                 if(c.rpg.state.rewardedIds.some(id=>id.startsWith('@event:review-success:J004:')))throw Error('unqualified review bonus');
                 clock=due;c.start('J004',{fresh:true});c.view.applyRetryDraft(c.questions.J004,c.questions.J004.answer);
-                if(c.submit()===false||c.model.state.learningContinuityState.today.reviewSuccessCount!==count+1||c.model.learningEffectivenessForQuestion('J004').delayedReview.successes!==1||c.model.state.reviewSchedule.J004.stage!==1)throw Error('due review did not count exactly once');
+                if(c.submit()===false||c.model.state.learningContinuityState.today.reviewSuccessCount!==dueCount+1||c.model.learningEffectivenessForQuestion('J004').delayedReview.successes!==1||c.model.state.reviewSchedule.J004.stage!==1)throw Error('due review did not count exactly once');
+                if(JSON.stringify(c.model.learningContinuity(at).today)!==previousDay)throw Error('prior-day counters changed after review');
               }finally{Date.now=originalNow;}
               return {rpgOverflowRollback:true,clockRollbackQualified:true};
             });
