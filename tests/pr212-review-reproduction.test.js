@@ -151,4 +151,29 @@ test('8 multiple post-preview completed exams keep earlier corroborated correct 
  assert.deepStrictEqual(model.state.examHistory,before.examHistory);assert.strictEqual(model.state.legacyProvenance.original,before.legacyProvenance.original);assert.strictEqual(s.getItem('r'),rewards);
  assert.deepStrictEqual(Model.prepareBackupState(model.state,catalog,pool),model.state);assert.deepStrictEqual(new Model(catalog,s,'p',pool).state,model.state);
 });
+test('9 eleven post-preview exams retain progress outside the ten-history window',()=>{
+ const Old=oldClass('ed21218967958e42e67ba9aafe9c333a5bbccc55'),Preview=oldClass('cfaeb11e13cb5ae2f9980bcecce1af6b7bbca306');
+ const idsToAnswer=pool.filter(id=>catalog[id].type==='journal').slice(0,11),old=new Old(catalog,store(),'p',pool);
+ old.state.learningEffectiveness.initialHistory='unknown';old.state.correctIds=idsToAnswer;old.refreshEvidenceIntegrity();
+ const s=store();s.setItem('p',JSON.stringify(old.state));const preview=new Preview(catalog,s,'p',pool);
+ const sandbox={window:{ProgressModel:Preview,RPGModel:require('../js/rpg')},console};
+ vm.runInNewContext(cp.execFileSync('git',['show','cfaeb11e13cb5ae2f9980bcecce1af6b7bbca306:js/controller.js'],{encoding:'utf8'}),sandbox);
+ const character=new sandbox.window.RPGModel(s,'r');
+ for(const [n,id] of idsToAnswer.entries()){
+  const ids=[id,...pool.filter(q=>q!==id&&catalog[q].category!==catalog[id].category).slice(0,14)],startedAt=10000+n*4000000;
+  preview.state.mode='exam';preview.state.examSession={ids,startedAt,endAt:startedAt+3600000,status:'RUNNING',evidenceVersion:1,scores:{}};
+  observe(preview,id,true,startedAt+500,{mode:'exam'});
+  preview.state.examSession.scores[id]={...Engine.grade(catalog[id],catalog[id].answer),answer:catalog[id].answer,observationNumber:1};preview.refreshEvidenceIntegrity();preview.save();
+  const ctx=Object.create(sandbox.window.AppController.prototype),node=()=>({focus(){},classList:{remove(){}}});
+  Object.assign(ctx,{model:preview,rpg:character,questions:catalog,unansweredExamIds:()=>ids.slice(1),stopExamTimer(){},view:{examResult(){},show(){},showNotice(){}},document:{body:node(),getElementById:node}});
+  assert(ctx.finishExam(true,startedAt+3600000+5000));
+ }
+ assert.deepStrictEqual(Array.from(preview.verifiedCorrectIds()).sort(),idsToAnswer.slice().sort());
+ const priorStore=store();priorStore.setItem('p',JSON.stringify(preview.state));const Prior=oldClass('84dfc4dd9417c1089b66ba5a6a19ec047bb97cf4');new Prior(catalog,priorStore,'p',pool);
+ const repaired=new Model(catalog,priorStore,'p',pool);assert(!repaired.storageWriteBlocked);assert.deepStrictEqual(repaired.verifiedCorrectIds().sort(),idsToAnswer.slice().sort());
+ const before=clone(preview.state),rewards=s.getItem('r'),model=new Model(catalog,s,'p',pool);assert(!model.storageWriteBlocked);
+ assert.deepStrictEqual(model.verifiedCorrectIds().sort(),idsToAnswer.slice().sort(),'earlier completed correct progress was relocked');
+ assert.deepStrictEqual(model.state.examHistory,before.examHistory);assert.strictEqual(model.state.legacyProvenance.original,before.legacyProvenance.original);assert.strictEqual(s.getItem('r'),rewards);
+ assert.deepStrictEqual(Model.prepareBackupState(model.state,catalog,pool),model.state);assert.deepStrictEqual(new Model(catalog,s,'p',pool).state,model.state);
+});
 console.log(`PR212_REPRODUCTION ${passed}/${passed+failed} PASS; ${failed} FAIL`);if(failed)process.exitCode=1;

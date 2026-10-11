@@ -788,5 +788,15 @@ test('unsigned original topic totals remain unverified after both preview migrat
   const model=new Model(catalog,store,'test',canonicalPool);assert(!model.storageWriteBlocked);assert(model.isUnverified('correctIds','J128'));
   assert.deepStrictEqual(model.verifiedCorrectIds(),[]);assert.deepStrictEqual(model.verifiedExamHistory(),[]);assert.deepStrictEqual(JSON.parse(model.state.legacyProvenance.original),original);
 });
+test('an unsigned legacy advanced review schedule cannot authenticate progression',()=>{
+  const {catalog,store,preview}=previewExamFixture('cfaeb11e13cb5ae2f9980bcecce1af6b7bbca306',['J128']);
+  const original=JSON.parse(preview.state.legacyProvenance.original);
+  original.reviewSchedule.J128={stage:3,dueAt:1000};
+  const Old=priorModel('ed21218967958e42e67ba9aafe9c333a5bbccc55');assert(Old.validateBackupState(original,catalog,canonicalPool));
+  store.setItem('test',JSON.stringify(original));const Preview=priorModel('cfaeb11e13cb5ae2f9980bcecce1af6b7bbca306');new Preview(catalog,store,'test',canonicalPool);
+  const model=new Model(catalog,store,'test',canonicalPool);assert(!model.storageWriteBlocked);
+  assert(model.isUnverified('reviewSchedule','J128'));assert(model.isUnverified('correctIds','J128'));
+  assert.deepStrictEqual(model.verifiedCorrectIds(),[]);assert.deepStrictEqual(JSON.parse(model.state.legacyProvenance.original),original);
+});
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;

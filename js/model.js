@@ -125,7 +125,7 @@
           !Number.isSafeInteger(provenance.markerVersion) || provenance.markerVersion < 0 || provenance.markerVersion > 9 ||
           !plain(provenance.pending) || !plain(provenance.approvedDrafts) || !Array.isArray(provenance.unsignedFields) ||
           !Array.isArray(provenance.archivedExams) ||
-          (provenance.progressionVersion !== undefined && ![2,3].includes(provenance.progressionVersion))) return false;
+          (provenance.progressionVersion !== undefined && ![2,3,4].includes(provenance.progressionVersion))) return false;
       for (const field of ['continuityDays','activeDays']) if (!Array.isArray(provenance.pending[field]) ||
           provenance.pending[field].some(key => !Number.isSafeInteger(probe.dayOrdinalFromKey(key)))) return false;
       for (const archive of provenance.archivedExams) if (!plain(archive) || archive.reason !== 'unverifiable-score' ||
@@ -507,7 +507,7 @@
           const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 10;
           if (needsIntegrityMigration) this.migrateUnsignedFields(saved, read.value);
           const needsProgressionMigration = !needsIntegrityMigration && this.state.legacyProvenance?.markerVersion < 2 &&
-            this.state.legacyProvenance.progressionVersion !== 3;
+            this.state.legacyProvenance.progressionVersion !== 4;
           if (needsProgressionMigration) this.migrateUnsignedProgression(JSON.parse(this.state.legacyProvenance.original),true);
           if (needsEvidenceMigration || needsIntegrityMigration || needsProgressionMigration) this.refreshEvidenceIntegrity();
           if (needsContentMigration || needsLearningMigration || needsEvidenceMigration || needsIntegrityMigration || needsProgressionMigration) this.save();
@@ -546,7 +546,7 @@
     }
     migrateUnsignedProgression(original, alreadySealed = false) {
       const provenance = this.state.legacyProvenance;
-      const retainVerifiedProgression = provenance.progressionVersion === 2;
+      const retainVerifiedProgression = [2,3].includes(provenance.progressionVersion);
       const previewWithoutProgression = alreadySealed && provenance.pending.correctIds === undefined;
       const proven = {answeredIds:new Set(),correctIds:new Set(),incorrectIds:new Set()};
       for (const [id,item] of Object.entries(this.state.learningEffectiveness.questions)) {
@@ -585,6 +585,16 @@
       }
       if (alreadySealed && original.contentRevision === CONTENT_REVISION &&
           valueSignature(original.questionContentVersions ?? null) === valueSignature(ProgressModel.currentContentVersions(this.questions))) {
+        // Legacy schedules start quarantined. Only a current record() creates
+        // or confirms one; the preview's flawed flag migration never does.
+        // A promoted stage requires a correct completion. At stage zero, a
+        // wrong completion always leaves incorrectIds set. This proof survives
+        // the bounded exam display history without inventing missing receipts.
+        for (const [id,schedule] of Object.entries(this.state.reviewSchedule)) {
+          if (this.isUnverified('reviewSchedule',id)) continue;
+          proven.answeredIds.add(id);
+          if (schedule.stage > 0 || !this.state.incorrectIds.includes(id)) proven.correctIds.add(id);
+        }
         // The preview's catalog and grading engine are unchanged. Signed topic
         // totals can corroborate older completions after lastExamReview advances.
         // Each question contributes nonnegative rounded loss. Only a topic loss
@@ -611,7 +621,7 @@
       }
       for (const field of Object.keys(proven)) {
         if (!provenance.unsignedFields.includes(field)) provenance.unsignedFields.push(field);
-        // Version 2 was issued only after the unsafe preview additions were
+        // Versions 2/3 were issued only after the unsafe preview additions were
         // quarantined. Its subsequent current completions remain authoritative.
         if (retainVerifiedProgression && Array.isArray(provenance.pending[field]))
           for (const id of this.state[field]) if (!provenance.pending[field].includes(id)) proven[field].add(id);
@@ -625,7 +635,7 @@
         // Preserve the candidate; only a current answer can settle it.
         provenance.pending[field] = this.state[field].filter(id => !proven[field].has(id));
       }
-      provenance.progressionVersion = 3;
+      provenance.progressionVersion = 4;
     }
     isUnverified(field, id) {
       const pending = this.state.legacyProvenance?.pending[field];
