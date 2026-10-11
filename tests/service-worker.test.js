@@ -55,7 +55,24 @@ const dispatch = async (type, event = {}) => {
   assert.deepStrictEqual(deleted, ['boki-rpg-v9'], 'old cache is removed');
   let clientProof=null;
   await dispatch('message',{data:{type:'BOKI_STORAGE_CLIENTS'},source:{id:'current'},ports:[{postMessage(value){clientProof=JSON.parse(JSON.stringify(value));}}]});
-  assert.deepStrictEqual(clientProof,{protocol:1,release,requester:'current',clients:['current','legacy-without-lock']},'client proof includes a prior release that does not participate in Web Locks');
+  assert.deepStrictEqual(clientProof,{protocol:1,release,requester:'current',clients:['current','legacy-without-lock'],activation:null},'client proof includes a prior release that does not participate in Web Locks');
+
+
+  const ownWorker={state:'installed'},oldWorker={state:'activated'};
+  sandbox.self.serviceWorker=ownWorker;sandbox.self.registration={active:oldWorker};
+  const inspectOwn=()=>dispatch('message',{data:{type:'BOKI_STORAGE_CLIENTS'},source:{id:'current'},ports:[{postMessage(value){clientProof=JSON.parse(JSON.stringify(value));}}]});
+  await inspectOwn();assert.deepStrictEqual(clientProof.activation,{state:'installed',active:false},'waiting worker cannot use the old active worker as its own activation proof');
+  ownWorker.state='activating';sandbox.self.registration.active=ownWorker;
+  await inspectOwn();assert.deepStrictEqual(clientProof.activation,{state:'activating',active:true},'real activation in progress is reported without elevation');
+  ownWorker.state='activated';await inspectOwn();assert.deepStrictEqual(clientProof.activation,{state:'activated',active:true},'activated proof belongs to the actual replying worker');
+  sandbox.self.serviceWorker=undefined;await inspectOwn();assert.deepStrictEqual(clientProof.activation,{state:'unknown',active:false},'broken supported API is not silently treated as unsupported');
+  delete sandbox.self.serviceWorker;await inspectOwn();assert.strictEqual(clientProof.activation,null,'explicitly absent API preserves the normal activated Firefox path');
+
+  const restartedHandlers={},restartedWorker={state:'activated'};
+  const restarted={...sandbox,self:{...sandbox.self,serviceWorker:restartedWorker,registration:{active:restartedWorker},addEventListener(type,listener){restartedHandlers[type]=listener;}}};
+  vm.runInNewContext(source,restarted);let restartedPending,restartedProof;
+  restartedHandlers.message({data:{type:'BOKI_STORAGE_CLIENTS'},source:{id:'current'},ports:[{postMessage(value){restartedProof=JSON.parse(JSON.stringify(value));}}],waitUntil(value){restartedPending=value;}});
+  await restartedPending;assert.deepStrictEqual(restartedProof.activation,{state:'activated',active:true},'a restarted worker proves activation without any in-memory install/activate flag');
 
   const navigation = { url: 'https://example.test/', method: 'GET', mode: 'navigate' };
   const fresh = await dispatch('fetch', { request: navigation });

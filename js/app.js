@@ -13,15 +13,15 @@
       return Boolean(current&&offered&&Number.isSafeInteger(Number(offered[2]))&&
         (offered[1]>current[1]||(offered[1]===current[1]&&Number(offered[2])>Number(current[2]))));
     },
-    storageClients(worker, allowOtherRelease=false) {
+    storageClients(worker, allowOtherRelease=false, timeoutMs=5000) {
       return new Promise((resolve,reject) => {
         if (!worker || worker.state==='redundant') { reject(new Error('storage-client-worker')); return; }
         const channel=new MessageChannel();
         const finish=(error,value) => { clearTimeout(timer); channel.port1.close(); channel.port2.close(); error?reject(error):resolve(value); };
-        const timer=setTimeout(()=>finish(new Error('storage-client-timeout')),5000);
+        const timer=setTimeout(()=>finish(new Error('storage-client-timeout')),timeoutMs);
         channel.port1.onmessage=event => {
           const value=event.data;
-          if (value?.protocol!==1 || typeof value.release!=='string' || (!allowOtherRelease&&value.release!==shellRelease) || typeof value.requester!=='string' ||
+          if (worker.state==='redundant' || value?.protocol!==1 || typeof value.release!=='string' || (!allowOtherRelease&&value.release!==shellRelease) || typeof value.requester!=='string' ||
               !Array.isArray(value.clients) || !value.clients.every(id=>typeof id==='string'&&id.length>0) ||
               new Set(value.clients).size!==value.clients.length || !value.clients.includes(value.requester)) {
             finish(new Error('storage-client-proof')); return;
@@ -45,14 +45,42 @@
         }
         throw new Error('storage-worker-state');
       };
+      const now=()=>root.performance?.now?.()??Date.now();
+      const checkedProof=async (registration,worker,timeoutMs=5000) => {
+        const wasActive=registration.active===worker,controller=manager.controller;
+        const proof=await this.storageClients(worker,false,timeoutMs);
+        if(!open()||worker.state==='redundant')throw new Error('storage-client-closed');
+        const isActive=wasActive&&registration.active===worker&&manager.controller===controller;
+        const isCurrent=isActive&&controller===worker;
+        const own=proof.activation;
+        // Firefox without the own-worker API uses the normal activated path.
+        // Missing/malformed proof never means unsupported. WebKit can retain an
+        // activating page wrapper after activation: only the same active worker
+        // itself may attest completion, after enumerating all origin clients.
+        const ownActivated=own?.state==='activated'&&own.active===true;
+        const activated=(worker.state==='activated'&&isActive&&(controller===null||controller===worker)&&(own===null||ownActivated))||
+          (worker.state==='activating'&&isCurrent&&ownActivated);
+        return {worker,proof,activated};
+      };
+      const waitActivated=async (registration,worker) => {
+        const deadline=now()+30000;
+        for(let attempt=0;attempt<120&&open();attempt++) {
+          const remaining=deadline-now();if(remaining<=0)break;
+          const result=await checkedProof(registration,worker,Math.min(5000,remaining));
+          if(result.activated)return result;
+          const rest=deadline-now();if(rest<=0)break;
+          await new Promise(resolve=>setTimeout(resolve,Math.min(250,rest)));
+        }
+        throw new Error('storage-worker-state');
+      };
       this.storageClientStatus='checking';
       const rejected=new Set();
       const matchingWorker=async registration => {
         for(const worker of [registration?.active,registration?.waiting,registration?.installing]) {
           if(!worker||rejected.has(worker))continue;
           try {
-            await waitState(worker,['installed','activated']);
-            return {worker,proof:await this.storageClients(worker)};
+            await waitState(worker,['installed','activating','activated']);
+            return await checkedProof(registration,worker);
           } catch (_) { rejected.add(worker); }
         }
         return null;
@@ -64,18 +92,20 @@
         match=await matchingWorker(registration);
         if(!match)throw new Error('storage-worker-release');
       }
-      let {worker,proof}=match;
       while(open()) {
+        const {worker,proof,activated}=match;
         if(proof.clients.length!==1) {
           this.storageClientStatus='waiting';
           notice('以前の画面が残っています。このサイトのほかのタブを閉じてください。保存データを引き継いで開始します。');
-          await pause();proof=await this.storageClients(worker);continue;
+          await pause();match=await checkedProof(registration,worker);continue;
         }
-        if(worker.state!=='activated') {
+        if(!activated) {
           // Only this not-yet-started document remains. Activate the new shell
           // before loading saves, then recheck clients after activation/claim.
-          worker.postMessage({type:'SKIP_WAITING'});
-          await waitState(worker,['activated']);proof=await this.storageClients(worker);continue;
+          if(worker.state==='installed')worker.postMessage({type:'SKIP_WAITING'});
+          await waitActivated(registration,worker);
+          // Never reuse a client list captured before activation/claim.
+          match=await checkedProof(registration,worker);continue;
         }
         this.storageClientStatus='ready';return;
       }

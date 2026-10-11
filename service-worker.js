@@ -1,5 +1,5 @@
 /* The release id is shared by every cache key in this deployment. */
-const RELEASE = '20260924-204';
+const RELEASE = '20260924-205';
 const CACHE_PREFIX = 'boki-rpg-';
 const CACHE_NAME = `${CACHE_PREFIX}${RELEASE}`;
 const VERSIONED_ASSETS = [
@@ -19,9 +19,13 @@ self.addEventListener('message', event => {
   if (event.data?.type === 'BOKI_STORAGE_CLIENTS' && event.source?.id && event.ports?.[0]) {
     const port=event.ports[0];
     // includeUncontrolled is essential: Release179 clients have no Web Lock.
-    event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(clients =>
-      port.postMessage({protocol:1,release:RELEASE,requester:event.source.id,clients:clients.map(client=>client.id)})
-    ).catch(()=>port.postMessage({protocol:1,error:true})));
+    event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(clients => {
+      // Identify this replying worker, not a different active worker seen by a
+      // waiting installation. A page wrapper may lag after a manual reload.
+      const supported='serviceWorker' in self,worker=supported?self.serviceWorker:null;
+      const activation=supported?{state:worker?.state??'unknown',active:!!worker&&self.registration.active===worker}:null;
+      port.postMessage({protocol:1,release:RELEASE,requester:event.source.id,clients:clients.map(client=>client.id),activation});
+    }).catch(()=>port.postMessage({protocol:1,error:true})));
   }
 });
 

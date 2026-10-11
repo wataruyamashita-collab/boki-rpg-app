@@ -199,13 +199,15 @@ async function trial(engine,launcher,number,oldSource,newSource,oldTabBoundary=f
       assert.strictEqual(await oldTab.evaluate(()=>!!App.controller),false,'old second tab waits for exclusive ownership');
     }
     stage='detect-update';current=true;await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});await page.waitForFunction(async()=>!!(await navigator.serviceWorker.getRegistration())?.waiting);await page.locator('#app-toast-action').waitFor({state:'visible'});report.waiting=await capture(page);
-    stage='manual-update';await page.locator('#app-toast-action').click();
+    stage='manual-update';const updateDeadline=Date.now()+30000;
+    record('wait-start',{timeoutMs:30000,condition:'same-tab navigation AND new release shell AND App.controller'});
+    await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded',timeout:30000}),page.locator('#app-toast-action').click()]);
     if(oldTabBoundary) {
       await page.waitForFunction(async release=>{
         if(!document.querySelector('script[src*="js/app.js"]')?.src.includes('?v='+release)||!window.App?.storageOwnership||App.controller||App.storageOwnership.active)return false;
         const locks=await navigator.locks.query(),owned=locks.held.some(lock=>lock.name==='boki-rpg-saved-learning');
         return owned&&(locks.pending.some(lock=>lock.name==='boki-rpg-saved-learning')||App.storageClientStatus==='waiting');
-      },newSource.release,{timeout:30000});
+      },newSource.release,{timeout:Math.max(1,updateDeadline-Date.now())});
       const blocked=await capture(page);assert.strictEqual(blocked.appController,false,'old tab blocks the new learning writer');assert.strictEqual(blocked.ownership.active,false);
       assert.deepStrictEqual(blocked.local,before.local,'blocked startup never changes saved originals');
       const clients=await proof(page);assert.strictEqual(clients.data.clients.length,2,'both real documents remain visible to the worker');
@@ -216,9 +218,11 @@ async function trial(engine,launcher,number,oldSource,newSource,oldTabBoundary=f
       report.oldTabBoundary={status:'PASS',worker:blocked.worker,ownership:blocked.ownership,oldState,lockState,clientCount:clients.data.clients.length,savedNamespaceUnchanged:true};
       record('old-tab-blocked',report.oldTabBoundary);await oldTab.close();record('old-tab-closed');
     }
-    record('wait-start',{timeoutMs:30000,condition:'new release shell AND App.controller'});
-    await page.waitForFunction(release=>Boolean(window.App?.controller)&&document.querySelector('script[src*="js/app.js"]').src.includes('?v='+release),newSource.release,{timeout:30000});
-    stage='new-app';const after=await capture(page);report.after=after;checkRetained(before,after);checkCache(after,newSource);assert(after.ownership.active);assert.strictEqual(after.worker.active.state,'activated');assert(after.worker.sameController);report.manualUpdate='PASS';
+    await page.waitForFunction(release=>Boolean(window.App?.controller)&&document.querySelector('script[src*="js/app.js"]').src.includes('?v='+release),newSource.release,{timeout:Math.max(1,updateDeadline-Date.now())});
+    stage='new-app';const after=await capture(page);report.after=after;checkRetained(before,after);checkCache(after,newSource);assert(after.ownership.active);assert(after.worker.sameController);report.workerProof=await proof(page);
+    assert.strictEqual(report.workerProof.data.release,newSource.release);assert.strictEqual(report.workerProof.data.clients.length,1);assert(report.workerProof.data.clients.includes(report.workerProof.data.requester));
+    assert.deepStrictEqual(report.workerProof.data.activation,{state:'activated',active:true},'the replying active worker has actually completed activation');
+    assert(['activating','activated'].includes(after.worker.active.state),'page wrapper is active or the specifically proven stale activating state');report.manualUpdate='PASS';
     assert(report.timeline.some(x=>x.event==='worker-message'&&x.type==='SKIP_WAITING'),'real button sent SKIP_WAITING');assert(report.timeline.some(x=>x.event==='controllerchange'&&x.stage==='manual-update'),'same-page controllerchange observed');assert.strictEqual(context.pages().length,1,'same tab only');
     stage='learning-continuation';await continueLearning(page,report,record);const continued=await capture(page);report.continued=continued;
     stage='reload-after-update';await page.reload({waitUntil:'load'});await page.waitForFunction(()=>Boolean(window.App?.controller));const reloaded=await capture(page);checkRetained(continued,reloaded);report.reload='PASS';
