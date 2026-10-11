@@ -17,6 +17,15 @@ assert.strictEqual(artifact.source.release,'20260924-175');
 
 // Issue #199 Design Lock: period-end capitalization of expensed unused supplies,
 // not merchandise purchases/cost of sales. Baseline: ef86102d (Generation142).
+// Issue #199: rubric v0.3 (#178 comment 6010772012), final executed inputs.
+const l031=artifact.rows.find(row=>row.id==='L031');
+assert.strictEqual(l031.cognitiveLevel,'Knowledge','L031 scores five recalled terms, not reasons');
+assert.strictEqual(l031.explanationLearningObjective.performanceVerb,'IDENTIFY');
+const l050=artifact.rows.find(row=>row.id==='L050');
+assert.strictEqual(l050.cognitiveLevel,'Application','L050 applies routine voucher classification');
+assert.strictEqual(l050.explanationLearningObjective.performanceVerb,'CLASSIFY');
+assert.deepStrictEqual(l050.explanationLearningObjective.targetConceptIds,['BOOK_VOUCHER_CLASSIFICATION']);
+
 const j035=artifact.rows.find(row=>row.id==='J035');
 assert.strictEqual(j035.primarySyllabusMapping.code,'P3-3','J035 unused stamps are a closing adjustment');
 assert.deepStrictEqual(j035.secondarySyllabusMappings,[{code:'P2-21'}]);
@@ -27,13 +36,20 @@ assert.strictEqual(j035.transferGroup,'XFER:unused-revenue-stamp-adjustment');
 assert.strictEqual(j035.transferStatus,'TRANSFER_REVIEW_REQUIRED');
 assert.strictEqual(j035.cognitiveLevel,'Application');
 assert.strictEqual(j035.explanationLearningObjective.performanceVerb,'APPLY');
-assert.strictEqual(crypto.createHash('sha256').update(JSON.stringify(artifact.rows.filter(row=>row.id!=='J035'))).digest('hex'),
-  'a9985a403d38c36c013a551c9f918c845b8be17a16c7ba664ffdf1a3284e9b38','J035-only correction preserves the other 299 rows');
+assert.strictEqual(crypto.createHash('sha256').update(JSON.stringify(artifact.rows.filter(row=>!['L031','L050'].includes(row.id)))).digest('hex'),
+  'c47c057125d66e823e4bdd4a8b938baede757faa9f64c53678d391bfeb5ab5f5','L031/L050 correction preserves the other 298 rows including accepted J035 and held L039 (c00bdabd)');
 
 const sandbox={window:{},console:{log(){},warn(){},error(){}}};
 vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),sandbox,{filename:'data/questions.js'});
 const questions=sandbox.window.QuestionData;
 const ids=Object.keys(questions).sort();
+assert.deepStrictEqual(JSON.parse(JSON.stringify(questions.L031.answer.cells)),{
+  assetIncreaseSide:'借方',assetDecreaseSide:'貸方',liabilityIncreaseSide:'貸方',liabilityDecreaseSide:'借方',balancePrinciple:'一致'
+},'L031 final executed answer requires recalled rules');
+assert.deepStrictEqual(JSON.parse(JSON.stringify(questions.L050.answer.cells)),{
+  value1:50000,value2:20000,value3:30000
+},'L050 final executed answer allocates three transaction amounts');
+assert.deepStrictEqual(artifact.prerequisiteConcepts.BOOK_VOUCHER_CLASSIFICATION,['FND_JOURNAL_ENTRY','FND_EVIDENCE_READING']);
 
 assert(Array.isArray(artifact.rows));
 assert.strictEqual(artifact.rows.length,300,'taxonomy row count');
@@ -116,7 +132,7 @@ for(const row of artifact.rows){
   if(row.transferStatus==='TRANSFER_REVIEW_REQUIRED')transferReview.add(row.id);
 }
 assert.deepStrictEqual(mappingCounts,{DIRECT:219,MULTI:54,ITEM_DERIVED:27},'mappingMode aggregate');
-assert.deepStrictEqual(cognitiveCounts,{Knowledge:0,Understanding:1,Application:223,'Integrated Judgment':76},'cognitive aggregate');
+assert.deepStrictEqual(cognitiveCounts,{Knowledge:1,Understanding:0,Application:224,'Integrated Judgment':75},'cognitive aggregate');
 
 const expectedItemDerived=[
   ...Array.from({length:20},(_,i)=>'E'+String(i+1).padStart(3,'0')),
@@ -144,4 +160,19 @@ for(const [name,mutate] of [
   assert.throws(()=>validateArtifact(broken),/J035|ADJ_UNUSED_SUPPLIES|cycle|transfer review candidates/,name);
 }
 
+// Keep aggregate counts unchanged in cognitive mutants, so rejection must
+// identify the wrong assessed demand rather than merely count totals.
+for(const [name,mutate,reason] of [
+  ['L031 unsupported application',a=>{a.rows.find(r=>r.id==='L031').cognitiveLevel='Application';a.rows.find(r=>r.id==='J001').cognitiveLevel='Knowledge';},/L031 assessed demand/],
+  ['L031 explanation verb',a=>a.rows.find(r=>r.id==='L031').explanationLearningObjective.performanceVerb='EXPLAIN',/L031 assessed demand/],
+  ['L031 wrong target',a=>a.rows.find(r=>r.id==='L031').explanationLearningObjective.targetConceptIds=['FND_EVIDENCE_READING'],/L031 account-rule target/],
+  ['L050 unsupported integration',a=>{a.rows.find(r=>r.id==='L050').cognitiveLevel='Integrated Judgment';a.rows.find(r=>r.id==='L039').cognitiveLevel='Application';},/L050 assessed demand/],
+  ['L050 reconcile verb',a=>a.rows.find(r=>r.id==='L050').explanationLearningObjective.performanceVerb='RECONCILE',/L050 assessed demand/],
+  ['L050 generic target',a=>a.rows.find(r=>r.id==='L050').explanationLearningObjective.targetConceptIds=['FND_EVIDENCE_READING'],/L050 voucher target/],
+  ['L031 wrong syllabus',a=>a.rows.find(r=>r.id==='L031').primarySyllabusMapping.code='P1-4',/L031 syllabus/],
+  ['L050 wrong syllabus',a=>a.rows.find(r=>r.id==='L050').primarySyllabusMapping.code='P1-4',/L050 syllabus/]
+]){
+  const broken=JSON.parse(JSON.stringify(artifact));mutate(broken);
+  assert.throws(()=>validateArtifact(broken),reason,name);
+}
 console.log('ISSUE201_EDU_TAXONOMY_SIDECAR_PASS');

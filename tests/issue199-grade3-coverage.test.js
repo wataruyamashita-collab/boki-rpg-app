@@ -92,7 +92,7 @@ const l031=taxonomy.rows.find(row=>row.id==='L031');
 assert(l031,'L031 taxonomy row');
 assert.strictEqual(l031.authoredCategory,'勘定記入法則');
 assert.strictEqual(l031.primarySyllabusMapping.code,'P1-3');
-assert.strictEqual(l031.cognitiveLevel,'Understanding');
+assert.strictEqual(l031.cognitiveLevel,'Knowledge');
 assert(l031.explanationLearningObjective.targetConceptIds.includes('FND_DEBIT_CREDIT'));
 
 const lifecycle=require('../scripts/qa/phase-b-lifecycle');
