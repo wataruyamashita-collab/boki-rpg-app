@@ -60,7 +60,7 @@ function validateArtifact(artifact,questions=loadQuestions()){
   if(JSON.stringify(rows.map(r=>r.id).sort())!==JSON.stringify(ids))fail('taxonomy IDs must exactly match QuestionData');
 
   const concepts=artifact.prerequisiteConcepts||{};
-  if(Object.keys(concepts).length!==36)fail('prerequisite concept count must be 36');
+  if(Object.keys(concepts).length!==37)fail('prerequisite concept count must be 37');
   const conceptSet=new Set(Object.keys(concepts));
   const visiting=new Set(),done=new Set();
   const visit=id=>{
@@ -76,6 +76,10 @@ function validateArtifact(artifact,questions=loadQuestions()){
     visiting.delete(id);done.add(id);
   };
   Object.keys(concepts).forEach(visit);
+  // Expensed unused supplies become an asset at closing; this is neither
+  // merchandise cost adjustment nor a question-ID-specific concept.
+  if(JSON.stringify(concepts.ADJ_UNUSED_SUPPLIES)!==JSON.stringify(['TX_REVENUE_EXPENSE','FND_ACCOUNT_CLASSIFICATION']))
+    fail('ADJ_UNUSED_SUPPLIES prerequisite contract mismatch');
 
   const mappingCounts={DIRECT:0,MULTI:0,ITEM_DERIVED:0};
   const cognitiveCounts={Knowledge:0,Understanding:0,Application:0,'Integrated Judgment':0};
@@ -145,6 +149,15 @@ function validateArtifact(artifact,questions=loadQuestions()){
 
   const f001=rows.find(row=>row.id==='F001');
   if(!f001||JSON.stringify(f001.explanationLearningObjective.targetConceptIds)!==JSON.stringify(['FS_INCOME_STATEMENT']))fail('F001 income statement learning target mismatch');
+
+  const j035=rows.find(row=>row.id==='J035');
+  if(j035.primarySyllabusMapping.code!=='P3-3'||JSON.stringify(j035.secondarySyllabusMappings)!==JSON.stringify([{code:'P2-21'}]))fail('J035 closing adjustment syllabus mismatch');
+  if(j035.mappingMode!=='MULTI'||j035.cognitiveLevel!=='Application'||j035.explanationLearningObjective.performanceVerb!=='APPLY')fail('J035 assessed demand mismatch');
+  if(JSON.stringify(j035.explanationLearningObjective.targetConceptIds)!==JSON.stringify(['ADJ_UNUSED_SUPPLIES','TX_TAX']))fail('J035 unused supplies target mismatch');
+  if(j035.transferGroup!=='XFER:unused-revenue-stamp-adjustment'||j035.transferStatus!=='TRANSFER_REVIEW_REQUIRED')fail('J035 transfer evidence mismatch');
+  const outcome=j035.explanationLearningObjective.observableOutcome;
+  if(!['費用処理','収入印紙','未使用','決算','資産へ振り替え','貯蔵品を借方','租税公課を貸方','未使用額'].every(term=>outcome.includes(term)))fail('J035 observable adjustment outcome missing');
+  if(!['費用処理','未使用','収入印紙','決算整理','主分類','租税公課','税金','副分類'].every(term=>j035.mappingRationale.includes(term)))fail('J035 mapping rationale missing');
 
   return {ok:true,rows:rows.length,concepts:Object.keys(concepts).length,mappingCounts,cognitiveCounts};
 }

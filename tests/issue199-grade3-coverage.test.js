@@ -76,7 +76,7 @@ assert(/資産.*借方|借方.*資産/u.test(accountRule.explanation)&&/負債.*
 
 const taxonomy=JSON.parse(fs.readFileSync('reports/edu-quality/question-taxonomy-2026.json','utf8'));
 assert.strictEqual(taxonomy.rows.length,300,'taxonomy remains 300 rows');
-assert.strictEqual(Object.keys(taxonomy.prerequisiteConcepts||{}).length,36,'controlled concepts include dividend concept');
+assert.strictEqual(Object.keys(taxonomy.prerequisiteConcepts||{}).length,37,'controlled concepts include dividend and unused-supplies concepts');
 
 const j051=taxonomy.rows.find(row=>row.id==='J051');
 assert(j051,'J051 taxonomy row');

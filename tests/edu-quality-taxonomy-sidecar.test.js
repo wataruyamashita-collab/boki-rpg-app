@@ -2,6 +2,8 @@
 const assert=require('assert');
 const fs=require('fs');
 const vm=require('vm');
+const crypto=require('crypto');
+const {validateArtifact}=require('../scripts/qa/validate-edu-taxonomy');
 
 const ARTIFACT='reports/edu-quality/question-taxonomy-2026.json';
 assert(fs.existsSync(ARTIFACT),'Issue #201 taxonomy sidecar must exist');
@@ -12,6 +14,21 @@ assert.strictEqual(artifact.syllabusAuthorityVersion,'JCCI_GRADE3_2022_APPLIED_2
 assert.strictEqual(artifact.source.mainHead,'08d13e806d4983114e44506407ef7b7b109356e6');
 assert.strictEqual(artifact.source.generation,109);
 assert.strictEqual(artifact.source.release,'20260924-175');
+
+// Issue #199 Design Lock: period-end capitalization of expensed unused supplies,
+// not merchandise purchases/cost of sales. Baseline: ef86102d (Generation142).
+const j035=artifact.rows.find(row=>row.id==='J035');
+assert.strictEqual(j035.primarySyllabusMapping.code,'P3-3','J035 unused stamps are a closing adjustment');
+assert.deepStrictEqual(j035.secondarySyllabusMappings,[{code:'P2-21'}]);
+assert.deepStrictEqual(artifact.prerequisiteConcepts.ADJ_UNUSED_SUPPLIES,
+  ['TX_REVENUE_EXPENSE','FND_ACCOUNT_CLASSIFICATION']);
+assert.deepStrictEqual(j035.explanationLearningObjective.targetConceptIds,['ADJ_UNUSED_SUPPLIES','TX_TAX']);
+assert.strictEqual(j035.transferGroup,'XFER:unused-revenue-stamp-adjustment');
+assert.strictEqual(j035.transferStatus,'TRANSFER_REVIEW_REQUIRED');
+assert.strictEqual(j035.cognitiveLevel,'Application');
+assert.strictEqual(j035.explanationLearningObjective.performanceVerb,'APPLY');
+assert.strictEqual(crypto.createHash('sha256').update(JSON.stringify(artifact.rows.filter(row=>row.id!=='J035'))).digest('hex'),
+  'a9985a403d38c36c013a551c9f918c845b8be17a16c7ba664ffdf1a3284e9b38','J035-only correction preserves the other 299 rows');
 
 const sandbox={window:{},console:{log(){},warn(){},error(){}}};
 vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),sandbox,{filename:'data/questions.js'});
@@ -43,7 +60,7 @@ const transferStatuses=new Set(['GROUP_CONFIRMED','CROSS_GROUP_CONFIRMED','TRANS
 
 assert(artifact.prerequisiteConcepts&&typeof artifact.prerequisiteConcepts==='object');
 const conceptIds=Object.keys(artifact.prerequisiteConcepts);
-assert.strictEqual(conceptIds.length,36,'controlled prerequisite concept count');
+assert.strictEqual(conceptIds.length,37,'controlled prerequisite concept count');
 const conceptSet=new Set(conceptIds);
 for(const [id,deps] of Object.entries(artifact.prerequisiteConcepts)){
   assert(Array.isArray(deps),id+': prerequisite DAG deps array');
@@ -112,5 +129,19 @@ assert.deepStrictEqual([...transferReview].sort(),expectedTransferReview,'transf
 
 assert(!fs.readFileSync('index.html','utf8').includes(ARTIFACT),'runtime HTML must not load taxonomy sidecar');
 assert(!fs.readFileSync('service-worker.js','utf8').includes(ARTIFACT),'service worker must not cache taxonomy sidecar');
+
+assert(validateArtifact(artifact).ok);
+for(const [name,mutate] of [
+  ['merchandise mapping',a=>a.rows.find(r=>r.id==='J035').primarySyllabusMapping.code='P2-9'],
+  ['inventory concept',a=>a.rows.find(r=>r.id==='J035').explanationLearningObjective.targetConceptIds[0]='ADJ_INVENTORY_COST'],
+  ['unrelated transfer group',a=>a.rows.find(r=>r.id==='J035').transferGroup='XFER:syllabus:P3-3'],
+  ['unsupported transfer confirmation',a=>a.rows.find(r=>r.id==='J035').transferStatus='GROUP_CONFIRMED'],
+  ['generic objective',a=>a.rows.find(r=>r.id==='J035').explanationLearningObjective.observableOutcome='取引事実を読み適切な会計処理を選択できる。'],
+  ['wrong dependency',a=>a.prerequisiteConcepts.ADJ_UNUSED_SUPPLIES=['TX_INVENTORY_PURCHASE_SALES']],
+  ['dependency cycle',a=>a.prerequisiteConcepts.ADJ_UNUSED_SUPPLIES.push('ADJ_UNUSED_SUPPLIES')]
+]){
+  const broken=JSON.parse(JSON.stringify(artifact));mutate(broken);
+  assert.throws(()=>validateArtifact(broken),/J035|ADJ_UNUSED_SUPPLIES|cycle|transfer review candidates/,name);
+}
 
 console.log('ISSUE201_EDU_TAXONOMY_SIDECAR_PASS');

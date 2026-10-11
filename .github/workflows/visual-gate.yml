@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - 'reports/edu-quality/question-taxonomy-2026.json'
       - '.github/visual/**'
       - 'tests/foundation-extension-contract.test.js'
       - 'tests/fixtures/foundation-extension-cases.js'
