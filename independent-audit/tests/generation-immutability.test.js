@@ -1,10 +1,10 @@
 'use strict';
 
 const assert=require('assert');
+const childProcess=require('child_process');
 const crypto=require('crypto');
 const fs=require('fs');
 const path=require('path');
-const childProcess=require('child_process');
 const core=require('../../scripts/qa/audit-core');
 const lifecycle=require('../../scripts/qa/phase-b-lifecycle');
 
@@ -36,17 +36,6 @@ const authorityBytes=new Map(
 
 const auditBytes=fs.readFileSync(auditPath);
 
-const committed=generation=>
-  childProcess.spawnSync(
-    'git',
-    [
-      'cat-file',
-      '-e',
-      `HEAD:reports/auto-gate/audit-locks/phase-b-generation-${generation}.json`
-    ],
-    {cwd:core.ROOT}
-  ).status===0;
-
 const digest=value=>
   crypto.createHash('sha256').update(value).digest('hex');
 
@@ -58,251 +47,44 @@ const test=(name,fn)=>{
   console.log(`ok ${count} - ${name}`);
 };
 
-const rejectCandidate=(candidate,generations)=>
-  assert.strictEqual(
-    lifecycle.verifyCandidate(candidate,{generations}).ok,
-    false
-  );
+const rejectCandidate=(candidate,generations,expectedError)=>{
+  const result=lifecycle.verifyCandidate(candidate,{generations});
+  assert.strictEqual(result.ok,false);
+  if(expectedError)assert(result.errors.some(error=>error.includes(expectedError)),
+    `expected ${expectedError}, received ${result.errors.join('; ')}`);
+};
+
+const assertAuthorityInventory=(authorities,historicalFiles)=>
+  assert.deepStrictEqual(authorities.map(item=>item.file).sort(),historicalFiles);
 
 try{
   const authorities=lifecycle.generationAuthorities();
+  // HEAD's current inventory alone cannot detect deletion of a committed tip.
+  // Keep every authority path ever introduced in reachable ancestry mandatory.
+  const historicalFiles=[...new Set(childProcess.execFileSync('git',[
+    'log','--full-history','-m','--format=','--name-only','--no-renames','HEAD','--',
+    'reports/auto-gate/audit-locks'
+  ],{cwd:core.ROOT,encoding:'utf8'}).split(/\n/u).filter(file=>
+    file.startsWith('reports/auto-gate/audit-locks/')&&file.endsWith('.json')))].sort();
+  test('no authority from reachable history is deleted',()=>
+    assertAuthorityInventory(authorities,historicalFiles));
+  test('deleting the committed tip cannot shrink the accepted history',()=>{
+    assert(authorities.length>1,'history fixture contains multiple generations');
+    assert.throws(()=>assertAuthorityInventory(authorities.slice(0,-1),historicalFiles),assert.AssertionError);
+  });
+  test('deleting a committed suffix cannot shrink the accepted history',()=>
+    assert.throws(()=>assertAuthorityInventory(authorities.slice(0,-2),historicalFiles),assert.AssertionError));
   const generations=authorities.map(
     item=>item.document.generation
   );
-  const generation67Committed=committed(67);
-  const generation68Committed=committed(68);
-  const generation69Committed=committed(69);
-  const generation70Committed=committed(70);
-  const generation71Committed=committed(71);
-  const generation72Committed=committed(72);
-  const generation73Committed=committed(73);
-  const generation74Committed=committed(74);
-  const generation75Committed=committed(75);
-  const generation76Committed=committed(76);
-  const generation77Committed=committed(77);
-  const generation78Committed=committed(78);
-  const generation79Committed=committed(79);
-  const generation80Committed=committed(80);
-  const generation81Committed=committed(81);
-  const generation82Committed=committed(82);
-  const generation83Committed=committed(83);
-  const generation84Committed=committed(84);
-  const generation85Committed=committed(85);
-  const generation86Committed=committed(86);
-  const generation87Committed=committed(87);
-  const generation88Committed=committed(88);
-  const generation89Committed=committed(89);
-  const generation90Committed=committed(90);
-  const generation91Committed=committed(91);
-  const generation92Committed=committed(92);
-  const generation93Committed=committed(93);
-  const generation94Committed=committed(94);
-  const generation95Committed=committed(95);
-  const generation96Committed=committed(96);
-  const generation97Committed=committed(97);
-  const generation98Committed=committed(98);
-  const generation99Committed=committed(99);
-  const generation100Committed=committed(100);
-  const generation101Committed=committed(101);
-  const generation102Committed=committed(102);
-  const generation103Committed=committed(103);
-  const generation104Committed=committed(104);
-  const generation105Committed=committed(105);
-  const generation106Committed=committed(106);
-  const generation107Committed=committed(107);
-  const generation108Committed=committed(108);
-  const generation109Committed=committed(109);
-  const generation110Committed=committed(110);
-  const generation111Committed=committed(111);
-  const generation112Committed=committed(112);
-  const generation113Committed=committed(113);
-  const generation114Committed=committed(114);
-  const generation115Committed=committed(115);
-  const generation116Committed=committed(116);
-  const generation117Committed=committed(117);
-  const generation118Committed=committed(118);
-  const generation119Committed=committed(119);
-  const generation120Committed=committed(120);
-  const generation121Committed=committed(121);
-  const generation122Committed=committed(122);
-  const generation123Committed=committed(123);
-  const generation124Committed=committed(124);
-  const generation125Committed=committed(125);
-  const generation126Committed=committed(126);
-  const generation127Committed=committed(127);
-  const generation128Committed=committed(128);
-  const generation129Committed=committed(129);
-  const generation130Committed=committed(130);
-  const generation142Committed=committed(142);
-  const generation141Committed=committed(141);
-  const generation140Committed=committed(140);
-  const generation139Committed=committed(139);
-  const generation138Committed=committed(138);
-  const generation137Committed=committed(137);
-  const generation136Committed=committed(136);
-  const generation135Committed=committed(135);
-  const generation134Committed=committed(134);
-  const generation133Committed=committed(133);
-  const generation132Committed=committed(132);
-  const generation131Committed=committed(131);
-
+  // Derive the sequence only from Git-backed authorities, never from the
+  // largest worktree filename. Continuity is also checked by the lifecycle.
+  const root=lifecycle.phaseARootAuthority().document;
   test(
-    'authority sequence tracks committed Generations through 142',
+    'committed authorities form a contiguous sequence after the immutable root',
     ()=>assert.deepStrictEqual(
       generations,
-      generation142Committed
-        ? Array.from({length:141},(_,index)=>index+2)
-        :generation141Committed
-        ? Array.from({length:140},(_,index)=>index+2)
-        :generation140Committed
-        ? Array.from({length:139},(_,index)=>index+2)
-        :generation139Committed
-        ? Array.from({length:138},(_,index)=>index+2)
-        :generation138Committed
-        ? Array.from({length:137},(_,index)=>index+2)
-        :generation137Committed
-        ? Array.from({length:136},(_,index)=>index+2)
-        :generation136Committed
-        ? Array.from({length:135},(_,index)=>index+2)
-        :generation135Committed
-        ? Array.from({length:134},(_,index)=>index+2)
-        :generation134Committed
-        ? Array.from({length:133},(_,index)=>index+2)
-        :generation133Committed
-        ? Array.from({length:132},(_,index)=>index+2)
-        :generation132Committed
-        ? Array.from({length:131},(_,index)=>index+2)
-        :generation131Committed
-        ? Array.from({length:130},(_,index)=>index+2)
-        :generation130Committed
-        ? Array.from({length:129},(_,index)=>index+2)
-        :generation129Committed
-        ? Array.from({length:128},(_,index)=>index+2)
-        :generation128Committed
-        ? Array.from({length:127},(_,index)=>index+2)
-        :generation127Committed
-        ? Array.from({length:126},(_,index)=>index+2)
-        :generation126Committed
-        ? Array.from({length:125},(_,index)=>index+2)
-        :generation125Committed
-        ? Array.from({length:124},(_,index)=>index+2)
-        :generation124Committed
-        ? Array.from({length:123},(_,index)=>index+2)
-        :generation123Committed
-        ? Array.from({length:122},(_,index)=>index+2)
-        :generation122Committed
-        ? Array.from({length:121},(_,index)=>index+2)
-        :generation121Committed
-        ? Array.from({length:120},(_,index)=>index+2)
-        :generation120Committed
-        ? Array.from({length:119},(_,index)=>index+2)
-        :generation119Committed
-        ? Array.from({length:118},(_,index)=>index+2)
-        :generation118Committed
-        ? Array.from({length:117},(_,index)=>index+2)
-        : generation117Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117]
-        : generation116Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116]
-        : generation115Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115]
-        : generation114Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114]
-        : generation113Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113]
-        : generation112Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112]
-        : generation111Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111]
-        : generation110Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110]
-        : generation109Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109]
-        : generation108Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108]
-        : generation107Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107]
-        : generation106Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106]
-        : generation105Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105]
-        : generation104Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104]
-        : generation103Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104]
-        : generation102Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102]
-        : generation101Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101]
-        : generation100Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100]
-        : generation99Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99]
-        : generation98Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98]
-        : generation97Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97]
-        : generation96Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96]
-        : generation95Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95]
-        : generation94Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94]
-        : generation93Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93]
-        : generation92Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92]
-        : generation91Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
-        : generation90Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90]
-        : generation89Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89]
-        : generation88Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88]
-        : generation87Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87]
-        : generation86Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86]
-        : generation85Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85]
-        : generation84Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84]
-        : generation83Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83]
-        : generation82Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82]
-        : generation81Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81]
-        : generation80Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80]
-        : generation79Committed
-        ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79]
-        : generation78Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78]
-          : generation77Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77]
-        : generation76Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76]
-          : generation75Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75]
-          : generation74Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74]
-        : generation73Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73]
-        : generation72Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72]
-        : generation71Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71]
-          : generation70Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70]
-          : generation69Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69]
-          : generation68Committed
-          ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68]
-          : generation67Committed
-            ? [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67]
-            : [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66]
+      Array.from({length:authorities.length},(_,index)=>root.baselineVersion+index+1)
     )
   );
 
@@ -380,13 +162,19 @@ try{
 
   const documents=authorities.map(item=>item.document);
 
-  const candidate=generation67Committed
-    ? documents.at(-1)
-    : (
-        fs.existsSync(authorityPath(67))
-          ? JSON.parse(fs.readFileSync(authorityPath(67),'utf8'))
-          : lifecycle.createCandidate()
-      );
+  // Start negative cases from a valid immediate successor so they cannot
+  // pass merely because an already committed tip is not a candidate.
+  const candidate=lifecycle.createCandidate();
+  test('valid immediate successor passes candidate verification',()=>
+    assert.strictEqual(lifecycle.verifyCandidate(candidate).ok,true));
+  test('later successors use the same contract without a fixed ceiling',()=>{
+    const fixtureHistory=[...authorities,{document:candidate}];
+    const successor=lifecycle.createCandidate('B_GENERATION',fixtureHistory);
+    assert.strictEqual(successor.generation,candidate.generation+1);
+    assert.strictEqual(lifecycle.verifyCandidate(successor,{generations:fixtureHistory}).ok,true);
+    // An in-memory future fixture is never accepted as committed history.
+    rejectCandidate(successor,authorities,'candidate generation must be exactly');
+  });
 
   for(const generation of generations){
     test(
@@ -399,53 +187,46 @@ try{
 
         rejectCandidate(
           candidate,
-          [...documents,structuredClone(existing)]
+          [...documents,structuredClone(existing)],
+          `competing generation ${generation} authorities found`
         );
       }
     );
   }
 
   test(
-    'stale-predecessor Generation 71 successor is rejected',
+    'stale generation is rejected',
     ()=>{
       const skipped=structuredClone(candidate);
-      skipped.generation=71;
-      rejectCandidate(skipped,documents);
+      skipped.generation=candidate.generation-1;
+      rejectCandidate(skipped,documents,'candidate generation must be exactly');
     }
   );
 
-  test(
-    'competing Generation 67 is rejected',
-    ()=>{
-      const fork=structuredClone(candidate);
-      fork.auditHash='f'.repeat(64);
+  test('skipped candidate generation is rejected',()=>{
+    const skipped=structuredClone(candidate);
+    skipped.generation++;
+    rejectCandidate(skipped,documents,'candidate generation must be exactly');
+  });
 
-      rejectCandidate(
-        candidate,
-        [
-          ...documents.filter(
-            document=>document.generation<67
-          ),
-          fork
-        ]
-      );
-    }
-  );
+  test('missing generation is rejected',()=>{
+    assert(documents.length>1,'history fixture contains multiple generations');
+    rejectCandidate(candidate,documents.filter((_,index)=>index!==Math.floor(documents.length/2)),
+      'generation skip:');
+  });
 
-  test(
-    'broken Generation 67 predecessor is rejected',
-    ()=>{
-      const broken=structuredClone(candidate);
-      broken.predecessor.canonicalDocumentSha256='0'.repeat(64);
+  test('competing history branch is rejected',()=>{
+    const fork=structuredClone(documents.at(-1));
+    fork.files['unapproved-authority']='f'.repeat(64);
+    fork.auditHash=digest(JSON.stringify(fork.files));
+    rejectCandidate(candidate,[...documents,fork],`competing generation ${fork.generation} authorities found`);
+  });
 
-      rejectCandidate(
-        broken,
-        documents.filter(
-          document=>document.generation<67
-        )
-      );
-    }
-  );
+  test('wrong predecessor identity is rejected',()=>{
+    const broken=structuredClone(candidate);
+    broken.predecessor.canonicalDocumentSha256='0'.repeat(64);
+    rejectCandidate(broken,documents,'candidate predecessor canonicalDocumentSha256 mismatch');
+  });
 
   test(
     'coordinated audit and historical authority tamper is rejected',
@@ -485,1175 +266,46 @@ try{
     }
   );
 
-  const generation142Pending=fs.existsSync(authorityPath(142))&&!generation142Committed;
-  const generation141Pending=fs.existsSync(authorityPath(141))&&!generation141Committed;
-  const generation140Pending=fs.existsSync(authorityPath(140))&&!generation140Committed;
-  const generation139Pending=fs.existsSync(authorityPath(139))&&!generation139Committed;
-  const generation138Pending=fs.existsSync(authorityPath(138))&&!generation138Committed;
-  const generation137Pending=fs.existsSync(authorityPath(137))&&!generation137Committed;
-  const generation136Pending=fs.existsSync(authorityPath(136))&&!generation136Committed;
-  const generation135Pending=fs.existsSync(authorityPath(135))&&!generation135Committed;
-  const generation134Pending=fs.existsSync(authorityPath(134))&&!generation134Committed;
-  const generation133Pending=fs.existsSync(authorityPath(133))&&!generation133Committed;
-  const generation132Pending=fs.existsSync(authorityPath(132))&&!generation132Committed;
-  const generation131Pending=fs.existsSync(authorityPath(131))&&!generation131Committed;
-  const generation130Pending=fs.existsSync(authorityPath(130))&&!generation130Committed;
-  const generation129Pending=fs.existsSync(authorityPath(129))&&!generation129Committed;
-  const generation128Pending=fs.existsSync(authorityPath(128))&&!generation128Committed;
-  const generation127Pending=fs.existsSync(authorityPath(127))&&!generation127Committed;
-  const generation126Pending=fs.existsSync(authorityPath(126))&&!generation126Committed;
-  const generation125Pending=fs.existsSync(authorityPath(125))&&!generation125Committed;
-  const generation124Pending=fs.existsSync(authorityPath(124))&&!generation124Committed;
-  const generation123Pending=fs.existsSync(authorityPath(123))&&!generation123Committed;
-  const generation122Pending=fs.existsSync(authorityPath(122))&&!generation122Committed;
-  const generation121Pending=fs.existsSync(authorityPath(121))&&!generation121Committed;
-  const generation120Pending=fs.existsSync(authorityPath(120))&&!generation120Committed;
-  const generation119Pending=fs.existsSync(authorityPath(119))&&!generation119Committed;
-  const generation118Pending=
-    fs.existsSync(authorityPath(118))&&!generation118Committed;
-  const generation117Pending=
-    fs.existsSync(authorityPath(117))&&!generation117Committed;
-  const generation116Pending=
-    fs.existsSync(authorityPath(116))&&!generation116Committed;
-  const generation115Pending=
-    fs.existsSync(authorityPath(115))&&!generation115Committed;
-  const generation114Pending=
-    fs.existsSync(authorityPath(114))&&!generation114Committed;
-  const generation113Pending=
-    fs.existsSync(authorityPath(113))&&!generation113Committed;
-  const generation112Pending=
-    fs.existsSync(authorityPath(112))&&!generation112Committed;
-  const generation111Pending=
-    fs.existsSync(authorityPath(111))&&!generation111Committed;
-  const generation110Pending=
-    fs.existsSync(authorityPath(110))&&!generation110Committed;
-  const generation109Pending=
-    fs.existsSync(authorityPath(109))&&!generation109Committed;
-  const generation108Pending=
-    fs.existsSync(authorityPath(108))&&!generation108Committed;
-  const generation107Pending=
-    fs.existsSync(authorityPath(107))&&!generation107Committed;
-  const generation106Pending=
-    fs.existsSync(authorityPath(106))&&!generation106Committed;
-  const generation105Pending=
-    fs.existsSync(authorityPath(105))&&!generation105Committed;
-  const generation104Pending=
-    fs.existsSync(authorityPath(104))&&!generation104Committed;
-  const generation103Pending=
-    fs.existsSync(authorityPath(103))&&!generation103Committed;
-  const generation102Pending=
-    fs.existsSync(authorityPath(102))&&!generation102Committed;
-  const generation101Pending=
-    fs.existsSync(authorityPath(101))&&!generation101Committed;
-  const generation100Pending=
-    fs.existsSync(authorityPath(100))&&!generation100Committed;
-  const generation99Pending=
-    fs.existsSync(authorityPath(99))&&!generation99Committed;
-  const generation98Pending=
-    fs.existsSync(authorityPath(98))&&!generation98Committed;
-  const generation97Pending=
-    fs.existsSync(authorityPath(97))&&!generation97Committed;
-  const generation96Pending=
-    fs.existsSync(authorityPath(96))&&!generation96Committed;
-  const generation95Pending=
-    fs.existsSync(authorityPath(95))&&!generation95Committed;
-  const generation94Pending=
-    fs.existsSync(authorityPath(94))&&!generation94Committed;
-  const generation93Pending=
-    fs.existsSync(authorityPath(93))&&!generation93Committed;
-  const generation92Pending=
-    fs.existsSync(authorityPath(92))&&!generation92Committed;
-  const generation91Pending=
-    fs.existsSync(authorityPath(91))&&!generation91Committed;
-  const generation90Pending=
-    fs.existsSync(authorityPath(90))&&!generation90Committed;
-  const generation89Pending=
-    fs.existsSync(authorityPath(89))&&!generation89Committed;
-  const generation88Pending=
-    fs.existsSync(authorityPath(88))&&!generation88Committed;
-  const generation87Pending=
-    fs.existsSync(authorityPath(87))&&!generation87Committed;
-  const generation86Pending=
-    fs.existsSync(authorityPath(86))&&!generation86Committed;
-  const generation85Pending=
-    fs.existsSync(authorityPath(85))&&!generation85Committed;
-  const generation84Pending=
-    fs.existsSync(authorityPath(84))&&!generation84Committed;
-  const generation83Pending=
-    fs.existsSync(authorityPath(83))&&!generation83Committed;
-  const generation82Pending=
-    fs.existsSync(authorityPath(82))&&!generation82Committed;
-  const generation81Pending=
-    fs.existsSync(authorityPath(81))&&!generation81Committed;
-  const generation80Pending=
-    fs.existsSync(authorityPath(80))&&!generation80Committed;
-  const generation79Pending=
-    fs.existsSync(authorityPath(79))&&!generation79Committed;
-  const generation78Pending=
-    fs.existsSync(authorityPath(78))&&!generation78Committed;
-  const generation77Pending=
-    fs.existsSync(authorityPath(77))&&!generation77Committed;
-  const generation76Pending=
-    fs.existsSync(authorityPath(76))&&!generation76Committed;
-  const generation75Pending=
-    fs.existsSync(authorityPath(75))&&!generation75Committed;
-  const generation74Pending=
-    fs.existsSync(authorityPath(74))&&!generation74Committed;
-  const generation73Pending=
-    fs.existsSync(authorityPath(73))&&!generation73Committed;
-  const generation72Pending=
-    fs.existsSync(authorityPath(72))&&!generation72Committed;
-  const generation71Pending=
-    fs.existsSync(authorityPath(71))&&!generation71Committed;
-  const generation70Pending=
-    fs.existsSync(authorityPath(70))&&!generation70Committed;
-  const generation69Pending=
-    fs.existsSync(authorityPath(69))&&!generation69Committed;
-  const generation68Pending=
-    fs.existsSync(authorityPath(68))&&!generation68Committed;
-
-  if(generation142Committed){
-    test('committed Generation 142 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation142Pending){
-    const generation142Candidate=JSON.parse(fs.readFileSync(authorityPath(142),'utf8'));
-    test('pending Generation 142 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation142Candidate).ok,true));
-  }else if(generation141Committed){
-    test('committed Generation 141 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation141Pending){
-    const generation141Candidate=JSON.parse(fs.readFileSync(authorityPath(141),'utf8'));
-    test('pending Generation 141 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation141Candidate).ok,true));
-  }else if(generation140Committed){
-    test('committed Generation 140 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation140Pending){
-    const generation140Candidate=JSON.parse(fs.readFileSync(authorityPath(140),'utf8'));
-    test('pending Generation 140 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation140Candidate).ok,true));
-  }else if(generation139Committed){
-    test('committed Generation 139 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation139Pending){
-    const generation139Candidate=JSON.parse(fs.readFileSync(authorityPath(139),'utf8'));
-    test('pending Generation 139 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation139Candidate).ok,true));
-  }else if(generation138Committed){
-    test('committed Generation 138 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation138Pending){
-    const generation138Candidate=JSON.parse(fs.readFileSync(authorityPath(138),'utf8'));
-    test('pending Generation 138 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation138Candidate).ok,true));
-  }else if(generation137Committed){
-    test('committed Generation 137 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation137Pending){
-    const generation137Candidate=JSON.parse(fs.readFileSync(authorityPath(137),'utf8'));
-    test('pending Generation 137 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation137Candidate).ok,true));
-  }else if(generation136Committed){
-    test('committed Generation 136 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation136Pending){
-    const generation136Candidate=JSON.parse(fs.readFileSync(authorityPath(136),'utf8'));
-    test('pending Generation 136 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation136Candidate).ok,true));
-  }else if(generation135Committed){
-    test('committed Generation 135 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation135Pending){
-    const generation135Candidate=JSON.parse(fs.readFileSync(authorityPath(135),'utf8'));
-    test('pending Generation 135 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation135Candidate).ok,true));
-  }else if(generation134Committed){
-    test('committed Generation 134 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation134Pending){
-    const generation134Candidate=JSON.parse(fs.readFileSync(authorityPath(134),'utf8'));
-    test('pending Generation 134 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation134Candidate).ok,true));
-  }else if(generation133Committed){
-    test('committed Generation 133 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation133Pending){
-    const generation133Candidate=JSON.parse(fs.readFileSync(authorityPath(133),'utf8'));
-    test('pending Generation 133 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation133Candidate).ok,true));
-  }else if(generation132Committed){
-    test('committed Generation 132 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation132Pending){
-    const generation132Candidate=JSON.parse(fs.readFileSync(authorityPath(132),'utf8'));
-    test('pending Generation 132 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation132Candidate).ok,true));
-  }else if(generation131Committed){
-    test('committed Generation 131 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation131Pending){
-    const generation131Candidate=JSON.parse(fs.readFileSync(authorityPath(131),'utf8'));
-    test('pending Generation 131 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation131Candidate).ok,true));
-  }else if(generation130Committed){
-    test('committed Generation 130 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation130Pending){
-    const generation130Candidate=JSON.parse(fs.readFileSync(authorityPath(130),'utf8'));
-    test('pending Generation 130 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation130Candidate).ok,true));
-  }else if(generation129Committed){
-    test('committed Generation 129 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation129Pending){
-    const generation129Candidate=JSON.parse(fs.readFileSync(authorityPath(129),'utf8'));
-    test('pending Generation 129 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation129Candidate).ok,true));
-  }else if(generation128Committed){
-    test('committed Generation 128 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation128Pending){
-    const generation128Candidate=JSON.parse(fs.readFileSync(authorityPath(128),'utf8'));
-    test('pending Generation 128 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation128Candidate).ok,true));
-  }else if(generation127Committed){
-    test('committed Generation 127 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation127Pending){
-    const generation127Candidate=JSON.parse(fs.readFileSync(authorityPath(127),'utf8'));
-    test('pending Generation 127 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation127Candidate).ok,true));
-  }else if(generation126Committed){
-    test('committed Generation 126 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation126Pending){
-    const generation126Candidate=JSON.parse(fs.readFileSync(authorityPath(126),'utf8'));
-    test('pending Generation 126 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation126Candidate).ok,true));
-  }else if(generation125Committed){
-    test('committed Generation 125 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation125Pending){
-    const generation125Candidate=JSON.parse(fs.readFileSync(authorityPath(125),'utf8'));
-    test('pending Generation 125 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation125Candidate).ok,true));
-  }else if(generation124Committed){
-    test('committed Generation 124 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation124Pending){
-    const generation124Candidate=JSON.parse(fs.readFileSync(authorityPath(124),'utf8'));
-    test('pending Generation 124 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation124Candidate).ok,true));
-  }else if(generation123Committed){
-    test('committed Generation 123 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation123Pending){
-    const generation123Candidate=JSON.parse(fs.readFileSync(authorityPath(123),'utf8'));
-    test('pending Generation 123 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation123Candidate).ok,true));
-  }else if(generation122Committed){
-    test('committed Generation 122 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation122Pending){
-    const generation122Candidate=JSON.parse(fs.readFileSync(authorityPath(122),'utf8'));
-    test('pending Generation 122 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation122Candidate).ok,true));
-  }else if(generation121Committed){
-    test('committed Generation 121 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation121Pending){
-    const generation121Candidate=JSON.parse(fs.readFileSync(authorityPath(121),'utf8'));
-    test('pending Generation 121 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation121Candidate).ok,true));
-  }else if(generation120Committed){
-    test('committed Generation 120 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation120Pending){
-    const generation120Candidate=JSON.parse(fs.readFileSync(authorityPath(120),'utf8'));
-    test('pending Generation 120 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation120Candidate).ok,true));
-  }else if(generation119Committed){
-    test('committed Generation 119 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation119Pending){
-    const generation119Candidate=JSON.parse(fs.readFileSync(authorityPath(119),'utf8'));
-    test('pending Generation 119 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation119Candidate).ok,true));
-  }else if(generation118Committed){
-    test('committed Generation 118 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
-  }else if(generation118Pending){
-    const generation118Candidate=JSON.parse(fs.readFileSync(authorityPath(118),'utf8'));
-    test('pending Generation 118 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation118Candidate).ok,true));
-  }else if(generation117Committed){
-    test(
-      'committed Generation 117 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation117Pending){
-    const generation117Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(117),'utf8'));
-    test(
-      'pending Generation 117 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation117Candidate).ok,
-        true
-      )
-    );
-  }else if(generation116Committed){
-    test(
-      'committed Generation 116 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation116Pending){
-    const generation116Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(116),'utf8'));
-    test(
-      'pending Generation 116 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation116Candidate).ok,
-        true
-      )
-    );
-  }else if(generation115Committed){
-    test(
-      'committed Generation 115 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation115Pending){
-    const generation115Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(115),'utf8'));
-    test(
-      'pending Generation 115 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation115Candidate).ok,
-        true
-      )
-    );
-  }else if(generation114Committed){
-    test(
-      'committed Generation 114 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation114Pending){
-    const generation114Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(114),'utf8'));
-    test(
-      'pending Generation 114 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation114Candidate).ok,
-        true
-      )
-    );
-  }else if(generation113Committed){
-    test(
-      'committed Generation 113 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation113Pending){
-    const generation113Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(113),'utf8'));
-    test(
-      'pending Generation 113 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation113Candidate).ok,
-        true
-      )
-    );
-  }else if(generation112Committed){
-    test(
-      'committed Generation 112 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation112Pending){
-    const generation112Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(112),'utf8'));
-    test(
-      'pending Generation 112 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation112Candidate).ok,
-        true
-      )
-    );
-  }else if(generation111Committed){
-    test(
-      'committed Generation 111 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation111Pending){
-    const generation111Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(111),'utf8'));
-    test(
-      'pending Generation 111 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation111Candidate).ok,
-        true
-      )
-    );
-  }else if(generation110Committed){
-    test(
-      'committed Generation 110 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation110Pending){
-    const generation110Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(110),'utf8'));
-    test(
-      'pending Generation 110 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation110Candidate).ok,
-        true
-      )
-    );
-  }else if(generation109Committed){
-    test(
-      'committed Generation 109 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation109Pending){
-    const generation109Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(109),'utf8'));
-    test(
-      'pending Generation 109 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation109Candidate).ok,
-        true
-      )
-    );
-  }else if(generation108Committed){
-    test(
-      'committed Generation 108 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation108Pending){
-    const generation108Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(108),'utf8'));
-    test(
-      'pending Generation 108 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation108Candidate).ok,
-        true
-      )
-    );
-  }else if(generation107Committed){
-    test(
-      'committed Generation 107 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation107Pending){
-    const generation107Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(107),'utf8'));
-    test(
-      'pending Generation 107 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation107Candidate).ok,
-        true
-      )
-    );
-  }else if(generation106Committed){
-    test(
-      'committed Generation 106 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation106Pending){
-    const generation106Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(106),'utf8'));
-    test(
-      'pending Generation 106 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation106Candidate).ok,
-        true
-      )
-    );
-  }else if(generation105Committed){
-    test(
-      'committed Generation 105 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation105Pending){
-    const generation105Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(105),'utf8'));
-    test(
-      'pending Generation 105 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation105Candidate).ok,
-        true
-      )
-    );
-  }else if(generation104Committed){
-    test(
-      'committed Generation 104 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation104Pending){
-    const generation104Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(104),'utf8'));
-    test(
-      'pending Generation 104 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation104Candidate).ok,
-        true
-      )
-    );
-  }else if(generation103Committed){
-    test(
-      'committed Generation 103 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation103Pending){
-    const generation103Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(103),'utf8'));
-    test(
-      'pending Generation 103 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation103Candidate).ok,
-        true
-      )
-    );
-  }else if(generation102Committed){
-    test(
-      'committed Generation 102 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation102Pending){
-    const generation102Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(102),'utf8'));
-    test(
-      'pending Generation 102 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation102Candidate).ok,
-        true
-      )
-    );
-  }else if(generation101Committed){
-    test(
-      'committed Generation 101 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation101Pending){
-    const generation101Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(101),'utf8'));
-    test(
-      'pending Generation 101 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation101Candidate).ok,
-        true
-      )
-    );
-  }else if(generation100Committed){
-    test(
-      'committed Generation 100 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation100Pending){
-    const generation100Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(100),'utf8'));
-    test(
-      'pending Generation 100 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation100Candidate).ok,
-        true
-      )
-    );
-  }else if(generation99Committed){
-    test(
-      'committed Generation 99 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation99Pending){
-    const generation99Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(99),'utf8'));
-    test(
-      'pending Generation 99 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation99Candidate).ok,
-        true
-      )
-    );
-  }else if(generation98Committed){
-    test(
-      'committed Generation 98 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation98Pending){
-    const generation98Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(98),'utf8'));
-    test(
-      'pending Generation 98 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation98Candidate).ok,
-        true
-      )
-    );
-  }else if(generation97Committed){
-    test(
-      'committed Generation 97 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation97Pending){
-    const generation97Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(97),'utf8'));
-    test(
-      'pending Generation 97 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation97Candidate).ok,
-        true
-      )
-    );
-  }else if(generation96Committed){
-    test(
-      'committed Generation 96 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation96Pending){
-    const generation96Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(96),'utf8'));
-    test(
-      'pending Generation 96 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation96Candidate).ok,
-        true
-      )
-    );
-  }else if(generation95Committed){
-    test(
-      'committed Generation 95 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation95Pending){
-    const generation95Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(95),'utf8'));
-    test(
-      'pending Generation 95 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation95Candidate).ok,
-        true
-      )
-    );
-  }else if(generation94Committed){
-    test(
-      'committed Generation 94 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation94Pending){
-    const generation94Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(94),'utf8'));
-    test(
-      'pending Generation 94 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation94Candidate).ok,
-        true
-      )
-    );
-  }else if(generation93Committed){
-    test(
-      'committed Generation 93 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation93Pending){
-    const generation93Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(93),'utf8'));
-    test(
-      'pending Generation 93 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation93Candidate).ok,
-        true
-      )
-    );
-  }else if(generation92Committed){
-    test(
-      'committed Generation 92 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation92Pending){
-    const generation92Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(92),'utf8'));
-    test(
-      'pending Generation 92 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation92Candidate).ok,
-        true
-      )
-    );
-  }else if(generation91Committed){
-    test(
-      'committed Generation 91 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation91Pending){
-    const generation91Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(91),'utf8'));
-    test(
-      'pending Generation 91 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation91Candidate).ok,
-        true
-      )
-    );
-  }else if(generation90Committed){
-    test(
-      'committed Generation 90 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation90Pending){
-    const generation90Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(90),'utf8'));
-    test(
-      'pending Generation 90 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation90Candidate).ok,
-        true
-      )
-    );
-  }else if(generation89Committed){
-    test(
-      'committed Generation 89 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation89Pending){
-    const generation89Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(89),'utf8'));
-    test(
-      'pending Generation 89 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation89Candidate).ok,
-        true
-      )
-    );
-  }else if(generation88Committed){
-    test(
-      'committed Generation 88 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation88Pending){
-    const generation88Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(88),'utf8'));
-    test(
-      'pending Generation 88 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation88Candidate).ok,
-        true
-      )
-    );
-  }else if(generation87Committed){
-    test(
-      'committed Generation 87 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation87Pending){
-    const generation87Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(87),'utf8'));
-    test(
-      'pending Generation 87 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation87Candidate).ok,
-        true
-      )
-    );
-  }else if(generation86Committed){
-    test(
-      'committed Generation 86 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation86Pending){
-    const generation86Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(86),'utf8'));
-    test(
-      'pending Generation 86 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation86Candidate).ok,
-        true
-      )
-    );
-  }else if(generation85Committed){
-    test(
-      'committed Generation 85 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation85Pending){
-    const generation85Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(85),'utf8'));
-    test(
-      'pending Generation 85 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation85Candidate).ok,
-        true
-      )
-    );
-  }else if(generation84Committed){
-    test(
-      'committed Generation 84 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation84Pending){
-    const generation84Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(84),'utf8'));
-    test(
-      'pending Generation 84 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation84Candidate).ok,
-        true
-      )
-    );
-  }else if(generation83Committed){
-    test(
-      'committed Generation 83 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation83Pending){
-    const generation83Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(83),'utf8'));
-    test(
-      'pending Generation 83 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation83Candidate).ok,
-        true
-      )
-    );
-  }else if(generation82Committed){
-    test(
-      'committed Generation 82 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation82Pending){
-    const generation82Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(82),'utf8'));
-    test(
-      'pending Generation 82 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation82Candidate).ok,
-        true
-      )
-    );
-  }else if(generation81Committed){
-    test(
-      'committed Generation 81 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation81Pending){
-    const generation81Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(81),'utf8'));
-    test(
-      'pending Generation 81 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation81Candidate).ok,
-        true
-      )
-    );
-  }else if(generation80Committed){
-    test(
-      'committed Generation 80 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation80Pending){
-    const generation80Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(80),'utf8'));
-    test(
-      'pending Generation 80 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation80Candidate).ok,
-        true
-      )
-    );
-  }else if(generation79Committed){
-    test(
-      'committed Generation 79 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation79Pending){
-    const generation79Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(79),'utf8'));
-    test(
-      'pending Generation 79 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation79Candidate).ok,
-        true
-      )
-    );
-  }else if(generation78Committed){
-    test(
-      'committed Generation 78 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation78Pending){
-    const generation78Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(78),'utf8'));
-    test(
-      'pending Generation 78 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation78Candidate).ok,
-        true
-      )
-    );
-  }else if(generation77Committed){
-    test(
-      'committed Generation 77 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation77Pending){
-    const generation77Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(77),'utf8'));
-    test(
-      'pending Generation 77 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation77Candidate).ok,
-        true
-      )
-    );
-  }else if(generation76Committed){
-    test(
-      'committed Generation 76 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation76Pending){
-    const generation76Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(76),'utf8'));
-    test(
-      'pending Generation 76 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation76Candidate).ok,
-        true
-      )
-    );
-  }else if(generation75Committed){
-    test(
-      'committed Generation 75 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation75Pending){
-    const generation75Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(75),'utf8'));
-    test(
-      'pending Generation 75 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation75Candidate).ok,
-        true
-      )
-    );
-  }else if(generation74Committed){
-    test(
-      'committed Generation 74 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation74Pending){
-    const generation74Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(74),'utf8'));
-    test(
-      'pending Generation 74 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation74Candidate).ok,
-        true
-      )
-    );
-  }else if(generation73Committed){
-    test(
-      'committed Generation 73 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation73Pending){
-    const generation73Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(73),'utf8'));
-    test(
-      'pending Generation 73 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation73Candidate).ok,
-        true
-      )
-    );
-  }else if(generation72Committed){
-    test(
-      'committed Generation 72 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation72Pending){
-    const generation72Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(72),'utf8'));
-    test(
-      'pending Generation 72 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation72Candidate).ok,
-        true
-      )
-    );
-  }else if(generation71Committed){
-    test(
-      'committed Generation 71 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation71Pending){
-    const generation71Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(71),'utf8'));
-    test(
-      'pending Generation 71 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation71Candidate).ok,
-        true
-      )
-    );
-  }else if(generation70Committed){
-    test(
-      'committed Generation 70 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation70Pending){
-    const generation70Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(70),'utf8'));
-    test(
-      'pending Generation 70 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation70Candidate).ok,
-        true
-      )
-    );
-  }else if(generation69Committed){
-    test(
-      'committed Generation 69 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation69Pending){
-    const generation69Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(69),'utf8'));
-    test(
-      'pending Generation 69 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation69Candidate).ok,
-        true
-      )
-    );
-  }else if(generation68Committed){
-    test(
-      'committed Generation 68 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else if(generation68Pending){
-    const generation68Candidate=
-      JSON.parse(fs.readFileSync(authorityPath(68),'utf8'));
-    test(
-      'pending Generation 68 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(generation68Candidate).ok,
-        true
-      )
-    );
-  }else if(generation67Committed){
-    test(
-      'committed Generation 67 current integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCurrent().ok,
-        true
-      )
-    );
-  }else{
-    test(
-      'pending Generation 67 candidate integrity passes',
-      ()=>assert.strictEqual(
-        lifecycle.verifyCandidate(candidate).ok,
-        true
-      )
-    );
+  // A file's presence/number is not authority. Only Git history supplies
+  // committed originals; at most one separately verified successor may be pending.
+  const committedFiles=new Set(authorities.map(item=>item.file));
+  const pendingFiles=core.walk('reports/auto-gate/audit-locks')
+    .filter(file=>file.endsWith('.json')&&!committedFiles.has(file));
+  test('at most one uncommitted candidate is present',()=>assert(pendingFiles.length<=1));
+  for(const authority of authorities){
+    assert(fs.readFileSync(path.join(core.ROOT,authority.file)).equals(authority.bytes),
+      'pending candidate cannot legitimize changed historical original '+authority.file);
   }
+  if(pendingFiles.length){
+    const file=pendingFiles[0];
+    const pending=JSON.parse(fs.readFileSync(path.join(core.ROOT,file),'utf8'));
+    test('pending successor has its canonical filename',()=>assert.strictEqual(
+      file,`reports/auto-gate/audit-locks/phase-b-generation-${pending.generation}.json`));
+    test('pending successor passes only candidate verification',()=>{
+      const result=lifecycle.verifyCandidate(pending,{generations:authorities});
+      assert.strictEqual(result.ok,true,result.errors.join('; '));
+      const current=lifecycle.verifyCurrent();
+      assert.strictEqual(current.ok,false,'pending file must not become current authority');
+      assert(current.errors.includes(`uncommitted generation authority: ${file}`));
+    });
+  }else{
+    test('committed tip passes current verification',()=>{
+      const result=lifecycle.verifyCurrent();
+      assert.strictEqual(result.ok,true,result.errors.join('; '));
+    });
+  }
+
+  test('unapproved on-disk authority is never a committed original',()=>{
+    const extra=path.join(core.ROOT,'reports/auto-gate/audit-locks/unapproved-authority.json');
+    assert(!fs.existsSync(extra),'negative fixture must not overwrite existing data');
+    try{
+      fs.writeFileSync(extra,JSON.stringify(candidate));
+      const result=lifecycle.verifyCurrent();
+      assert.strictEqual(result.ok,false);
+      assert(result.errors.includes('uncommitted generation authority: reports/auto-gate/audit-locks/unapproved-authority.json'));
+    }finally{fs.unlinkSync(extra);}
+  });
+
 }finally{
   fs.writeFileSync(auditPath,auditBytes);
 
