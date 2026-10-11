@@ -74,7 +74,7 @@ const corruptStorage = { getItem(key) { return corruptValues[key] || null; }, se
 const recoveredProgress = new ProgressModel({ J1: {} }, corruptStorage);
 assert.deepStrictEqual([recoveredProgress.state.mode, recoveredProgress.state.answeredIds.length, recoveredProgress.state.completed], ['story', 0, false], '破損した進捗の各フィールドを安全な初期値へ戻す');
 const recoveredRpg = new RPGModel(corruptStorage);
-assert.deepStrictEqual([recoveredRpg.state.xp, recoveredRpg.state.rewardedIds.length, recoveredRpg.state.companyHP, recoveredRpg.state.totalTransactionAmount], [0, 0, 0, 0], '破損したRPG状態を型検証し範囲内へ補正する');
+assert.deepStrictEqual([recoveredRpg.state.xp, recoveredRpg.state.rewardedIds.length, recoveredRpg.state.companyHP, recoveredRpg.state.totalTransactionAmount], [0, 0, 0, -1], '不正なXP・報酬・HPを補正し、有限な符号付き累計金額は保持する');
 const graduationQuestions = { J1:{ type:'journal' } };
 for (const [prefix, type] of Object.entries({ L:'ledger', W:'worksheet', F:'financial_statement', C:'comprehensive' })) {
   for (let index = 1; index <= 3; index += 1) graduationQuestions[`${prefix}${index}`] = {
@@ -474,9 +474,9 @@ for (let number = 1; number <= 20; number += 1) {
 const correction = browserSandbox.window.QuestionData.E001;
 assert.strictEqual(Engine.grade(correction, { cells: { debitAccount: '広告宣伝費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } }).correct, true, 'E001の科目・金額を入力して正解にできる');
 assert.strictEqual(Engine.grade(correction, { cells: { debitAccount: '消耗品費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } }).correct, false, 'E001の誤った科目は不正解にする');
-const correctionProgress = new ProgressModel({ E001: correction }, storage);
+const correctionProgress = new ProgressModel({ E001: correction }, storage, 'correction-draft-test');
 correctionProgress.setDraft('E001', { cells: { debitAccount: '広告宣伝費', debitAmount: '22,500', creditAccount: '備品', creditAmount: '22,500' } });
-assert.deepStrictEqual(new ProgressModel({ E001: correction }, storage).state.drafts.E001.cells, correctionProgress.state.drafts.E001.cells, '記帳訂正の文字列と金額の下書きを再表示用に復元する');
+assert.deepStrictEqual(new ProgressModel({ E001: correction }, storage, 'correction-draft-test').state.drafts.E001.cells, correctionProgress.state.drafts.E001.cells, '記帳訂正の文字列と金額の下書きを再表示用に復元する');
 Object.values(browserSandbox.window.QuestionData).filter(question => question.type === 'journal').forEach(question => {
   [...question.answer.debit, ...question.answer.credit].forEach(item => {
     const choices = browserSandbox.window.AppController.accountChoices(question, item.account);
@@ -1184,7 +1184,7 @@ assert.deepStrictEqual(['A','B','C'].map(id=>reviewModel.state.reviewSchedule[id
 const isolationStoreValues={}; const isolationStore={getItem:key=>isolationStoreValues[key]||null,setItem:(key,value)=>{isolationStoreValues[key]=value;}};
 const isolationQuestions=Object.fromEntries(['A','B','C','D','V'].map(id=>[id,{id,category:'shared',difficulty:2,learningRole:id==='V'?'review':'core'}]));
 const isolationModel=new ProgressModel(isolationQuestions,isolationStore,'spacing-isolation');
-const isolationNow=Date.now(); ['A','B','C','D'].forEach(id=>isolationModel.record(id,false,isolationNow));
+const isolationNow=Date.now(); ['A','B','C','D'].forEach(id=>{ assert(isolationModel.recordAttempt(id,false,10,'table-cell',false,isolationNow)); isolationModel.record(id,false,isolationNow); });
 isolationModel.state.reviewSchedule={A:{stage:0,dueAt:isolationNow-1},B:{stage:1,dueAt:isolationNow+86400000},C:{stage:2,dueAt:isolationNow+259200000},D:{stage:3,dueAt:isolationNow+604800000}};
 isolationModel.recommendedIds=()=>['B','C','D','V','A'];
 const isolationController={model:isolationModel,questions:isolationQuestions,reviewMappings:new Map(),reviewIds:browserSandbox.window.AppController.prototype.reviewIds};

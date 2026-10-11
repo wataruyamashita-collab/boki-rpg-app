@@ -1,5 +1,6 @@
 (function (root) {
   'use strict';
+  const shellRelease = (() => { try { return new URL(document.currentScript.src).searchParams.get('v'); } catch (_) { return null; } })();
   const App = {
     initialRoute(search = root.location?.search || '') {
       try {
@@ -7,14 +8,140 @@
         return { mode: params.get('mode'), questionId: params.get('question') };
       } catch (_) { return {}; }
     },
+    newerRelease(release) {
+      const current=shellRelease?.match(/^(\d{8})-(\d+)$/),offered=release?.match(/^(\d{8})-(\d+)$/);
+      return Boolean(current&&offered&&Number.isSafeInteger(Number(offered[2]))&&
+        (offered[1]>current[1]||(offered[1]===current[1]&&Number(offered[2])>Number(current[2]))));
+    },
+    storageClients(worker, allowOtherRelease=false) {
+      return new Promise((resolve,reject) => {
+        if (!worker || worker.state==='redundant') { reject(new Error('storage-client-worker')); return; }
+        const channel=new MessageChannel();
+        const finish=(error,value) => { clearTimeout(timer); channel.port1.close(); channel.port2.close(); error?reject(error):resolve(value); };
+        const timer=setTimeout(()=>finish(new Error('storage-client-timeout')),5000);
+        channel.port1.onmessage=event => {
+          const value=event.data;
+          if (value?.protocol!==1 || typeof value.release!=='string' || (!allowOtherRelease&&value.release!==shellRelease) || typeof value.requester!=='string' ||
+              !Array.isArray(value.clients) || !value.clients.every(id=>typeof id==='string'&&id.length>0) ||
+              new Set(value.clients).size!==value.clients.length || !value.clients.includes(value.requester)) {
+            finish(new Error('storage-client-proof')); return;
+          }
+          finish(null,value);
+        };
+        try { worker.postMessage({type:'BOKI_STORAGE_CLIENTS'},[channel.port2]); }
+        catch (error) { finish(error); }
+      });
+    },
+    async waitForStorageClients(notice) {
+      const manager=root.navigator?.serviceWorker;
+      if (!manager?.getRegistration || !manager.register) throw new Error('storage-client-unavailable');
+      const pause=()=>new Promise(resolve=>setTimeout(resolve,250));
+      const open=()=>!this.storageOwnership.closed;
+      const waitState=async (worker,states) => {
+        for(let attempt=0;attempt<120&&open();attempt++) {
+          if(states.includes(worker?.state))return;
+          if(!worker||worker.state==='redundant')break;
+          await pause();
+        }
+        throw new Error('storage-worker-state');
+      };
+      this.storageClientStatus='checking';
+      const rejected=new Set();
+      const matchingWorker=async registration => {
+        for(const worker of [registration?.active,registration?.waiting,registration?.installing]) {
+          if(!worker||rejected.has(worker))continue;
+          try {
+            await waitState(worker,['installed','activated']);
+            return {worker,proof:await this.storageClients(worker)};
+          } catch (_) { rejected.add(worker); }
+        }
+        return null;
+      };
+      let registration=await manager.getRegistration(),match=await matchingWorker(registration);
+      if(!match) {
+        registration=await manager.register('./service-worker.js',{updateViaCache:'none'});
+        if(!registration.installing)await registration.update();
+        match=await matchingWorker(registration);
+        if(!match)throw new Error('storage-worker-release');
+      }
+      let {worker,proof}=match;
+      while(open()) {
+        if(proof.clients.length!==1) {
+          this.storageClientStatus='waiting';
+          notice('以前の画面が残っています。このサイトのほかのタブを閉じてください。保存データを引き継いで開始します。');
+          await pause();proof=await this.storageClients(worker);continue;
+        }
+        if(worker.state!=='activated') {
+          // Only this not-yet-started document remains. Activate the new shell
+          // before loading saves, then recheck clients after activation/claim.
+          worker.postMessage({type:'SKIP_WAITING'});
+          await waitState(worker,['activated']);proof=await this.storageClients(worker);continue;
+        }
+        this.storageClientStatus='ready';return;
+      }
+      throw new Error('storage-client-closed');
+    },
     init() {
+      if (this.ready) return this.ready;
+      const ownership = this.storageOwnership = { active:false, closed:false };
+      const warning = document.getElementById('storage-warning');
+      const originalWarning = warning?.textContent;
+      const notice = text => { if (warning) { warning.textContent=text; warning.hidden=false; } };
+      let finish, release;
+      this.ready = new Promise(resolve => { finish=resolve; });
+      const lifetime = new Promise(resolve => { release=resolve; });
+      // Hold one origin-wide writer for the document lifetime, including startup
+      // recovery. A second tab must not mistake a live journal for a crashed one.
+      root.addEventListener('pagehide', () => {
+        ownership.active=false; ownership.closed=true;
+        this.controller?.stopExamTimer?.(); release(); finish(false);
+      });
+      root.addEventListener('pageshow', event => { if (event.persisted) root.location.reload(); });
+      const unavailable = () => {
+        ownership.active=false;
+        notice('保存データを安全に確認できません。このサイトのほかのタブを閉じ、オンラインで開き直してください。対応するブラウザとHTTPSの学習ページが必要です。');
+        finish(false);
+      };
+      if (!root.navigator?.locks?.request) { unavailable(); return this.ready; }
+      notice('別のタブで学習中の場合は、そのタブを閉じてください。保存データを引き継いで開始します。');
+      try {
+        this.storageLock = root.navigator.locks.request('boki-rpg-saved-learning', {mode:'exclusive'}, async () => {
+          if (ownership.closed) return;
+          await this.waitForStorageClients(notice);
+          if (ownership.closed) return;
+          this.storageMigrationSnapshot=root.AppController.captureStorageNamespace();
+          if(this.storageMigrationSnapshot.kind==='legacy')await this.waitForStorageClients(notice);
+          if (ownership.closed) return;
+          ownership.active=true;
+          if (warning) { warning.textContent=originalWarning; warning.hidden=true; }
+          try { this.start(); finish(true); await lifetime; }
+          finally { ownership.active=false; }
+        }).catch(unavailable);
+      } catch (_) { unavailable(); }
+      return this.ready;
+    },
+    start() {
       this.controller = new root.AppController(document, root.QuestionData); this.controller.init(this.initialRoute());
       this.setupInstallPrompt();
       if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' }).then(registration => {
         let updateAccepted = false;
-        const offerUpdate = worker => { if (!worker || !navigator.serviceWorker.controller) return; this.showToast('新しいバージョンが利用可能です。', '更新', () => { updateAccepted = true; worker.postMessage({ type:'SKIP_WAITING' }); }); };
-        offerUpdate(registration.waiting); registration.addEventListener('updatefound', () => registration.installing?.addEventListener('statechange', () => { if (registration.installing?.state === 'installed') offerUpdate(registration.installing); }));
+        const offerUpdate = worker => {
+          if (!worker || !navigator.serviceWorker.controller) return;
+          this.storageClients(worker,true).then(proof => {
+            if(!this.newerRelease(proof.release))return;
+            this.showToast('新しいバージョンが利用可能です。', '更新', () => {
+              if(worker.state!=='installed')return;
+              updateAccepted = true; worker.postMessage({ type:'SKIP_WAITING' });
+            });
+          }).catch(()=>{});
+        };
+        offerUpdate(registration.waiting); registration.addEventListener('updatefound', () => {
+          const worker=registration.installing;
+          worker?.addEventListener('statechange', () => { if (worker.state === 'installed') offerUpdate(worker); });
+        });
         navigator.serviceWorker.addEventListener('controllerchange', () => { if (updateAccepted) root.location.reload(); });
+      }).catch(() => {
+        if (!this.storageOwnership.closed) this.showToast('オフライン利用の準備ができませんでした。オンラインで学習を続け、後でページを開き直してください。');
       });
     },
     setupInstallPrompt() {

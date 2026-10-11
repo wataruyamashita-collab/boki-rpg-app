@@ -12,7 +12,7 @@ assert.strictEqual(noCausalChange.causalDeltaConfirmed,false,'a pre-existing fai
   const saved={verifyCurrent:lifecycle.verifyCurrent,generationAuthorities:lifecycle.generationAuthorities,verifyCandidate:lifecycle.verifyCandidate};
   const directory='reports/auto-gate/audit-locks';
   const files=fs.readdirSync(path.join(c.ROOT,directory)).filter(name=>/^phase-b-generation-\d+\.json$/u.test(name)).sort((a,b)=>Number(a.match(/\d+/u)[0])-Number(b.match(/\d+/u)[0]));
-  const authorities=files.map(name=>({file:`${directory}/${name}`}));
+  const authorities=files.map(name=>({file:`${directory}/${name}`,bytes:fs.readFileSync(path.join(c.ROOT,directory,name))}));
   const pending=JSON.parse(fs.readFileSync(path.join(c.ROOT,authorities[authorities.length-1].file),'utf8'));
   let historyCalls=0,candidateCalls=0,selected=authorities.slice(0,-1),candidateOK=true;
   const drift={ok:false,errors:['INTEGRITY_SNAPSHOT_TEST_DRIFT']};
@@ -35,9 +35,13 @@ assert.strictEqual(noCausalChange.causalDeltaConfirmed,false,'a pre-existing fai
     selected=authorities.slice(0,-1);candidateOK=false;
     assert.strictEqual(c.currentIntegrityCheck(),drift,'an invalid pending successor cannot hide current drift');
     assert.strictEqual(historyCalls,4);assert.strictEqual(candidateCalls,2);
+    selected=authorities.slice(0,-1).map((item,index)=>index ? item : {...item,bytes:Buffer.from('different historical authority')});
+    candidateOK=true;
+    assert.strictEqual(c.currentIntegrityCheck(),drift,'a valid pending successor cannot hide a historical raw-byte mismatch');
+    assert.strictEqual(historyCalls,5);assert.strictEqual(candidateCalls,2,'reject historical drift before considering the candidate');
     const current={ok:true};lifecycle.verifyCurrent=()=>current;
     assert.strictEqual(c.currentIntegrityCheck(),current,'a valid committed authority remains authoritative');
-    assert.strictEqual(historyCalls,4,'do not perform pending discovery for a valid committed tip');
+    assert.strictEqual(historyCalls,5,'do not perform pending discovery for a valid committed tip');
   }finally{Object.assign(lifecycle,saved);}
 }
 const mutations=c.mutations();

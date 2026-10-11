@@ -35,7 +35,7 @@ const sandbox = {
   caches, URL,
   fetch: async (request, options) => { fetches.push({ url: request.url || request, options }); if (!online) throw new Error('offline'); return response(`network:${request.url || request}`); },
   self: {
-    location: { origin: 'https://example.test' }, clients: { async claim() {} }, skipWaiting() {},
+    location: { origin: 'https://example.test' }, clients: { async claim() {}, async matchAll(options) { assert.deepStrictEqual(JSON.parse(JSON.stringify(options)),{type:'window',includeUncontrolled:true}); return [{id:'current'},{id:'legacy-without-lock'}]; } }, skipWaiting() {},
     addEventListener(type, listener) { handlers[type] = listener; }
   }
 };
@@ -53,6 +53,9 @@ const dispatch = async (type, event = {}) => {
   assert(current.added.includes(`./data/questions.js?v=${release}`) && current.added.includes(`./js/feedback.js?v=${release}`) && current.added.includes(`./js/controller.js?v=${release}`), 'coherent version assets are installed');
   await dispatch('activate');
   assert.deepStrictEqual(deleted, ['boki-rpg-v9'], 'old cache is removed');
+  let clientProof=null;
+  await dispatch('message',{data:{type:'BOKI_STORAGE_CLIENTS'},source:{id:'current'},ports:[{postMessage(value){clientProof=JSON.parse(JSON.stringify(value));}}]});
+  assert.deepStrictEqual(clientProof,{protocol:1,release,requester:'current',clients:['current','legacy-without-lock']},'client proof includes a prior release that does not participate in Web Locks');
 
   const navigation = { url: 'https://example.test/', method: 'GET', mode: 'navigate' };
   const fresh = await dispatch('fetch', { request: navigation });

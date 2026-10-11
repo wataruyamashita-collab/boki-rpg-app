@@ -122,12 +122,81 @@ try{
   const generation117Committed=committed(117);
   const generation118Committed=committed(118);
   const generation119Committed=committed(119);
+  const generation120Committed=committed(120);
+  const generation121Committed=committed(121);
+  const generation122Committed=committed(122);
+  const generation123Committed=committed(123);
+  const generation124Committed=committed(124);
+  const generation125Committed=committed(125);
+  const generation126Committed=committed(126);
+  const generation127Committed=committed(127);
+  const generation128Committed=committed(128);
+  const generation129Committed=committed(129);
+  const generation130Committed=committed(130);
+  const generation142Committed=committed(142);
+  const generation141Committed=committed(141);
+  const generation140Committed=committed(140);
+  const generation139Committed=committed(139);
+  const generation138Committed=committed(138);
+  const generation137Committed=committed(137);
+  const generation136Committed=committed(136);
+  const generation135Committed=committed(135);
+  const generation134Committed=committed(134);
+  const generation133Committed=committed(133);
+  const generation132Committed=committed(132);
+  const generation131Committed=committed(131);
 
   test(
-    'authority sequence tracks committed Generations through 119',
+    'authority sequence tracks committed Generations through 142',
     ()=>assert.deepStrictEqual(
       generations,
-      generation119Committed
+      generation142Committed
+        ? Array.from({length:141},(_,index)=>index+2)
+        :generation141Committed
+        ? Array.from({length:140},(_,index)=>index+2)
+        :generation140Committed
+        ? Array.from({length:139},(_,index)=>index+2)
+        :generation139Committed
+        ? Array.from({length:138},(_,index)=>index+2)
+        :generation138Committed
+        ? Array.from({length:137},(_,index)=>index+2)
+        :generation137Committed
+        ? Array.from({length:136},(_,index)=>index+2)
+        :generation136Committed
+        ? Array.from({length:135},(_,index)=>index+2)
+        :generation135Committed
+        ? Array.from({length:134},(_,index)=>index+2)
+        :generation134Committed
+        ? Array.from({length:133},(_,index)=>index+2)
+        :generation133Committed
+        ? Array.from({length:132},(_,index)=>index+2)
+        :generation132Committed
+        ? Array.from({length:131},(_,index)=>index+2)
+        :generation131Committed
+        ? Array.from({length:130},(_,index)=>index+2)
+        :generation130Committed
+        ? Array.from({length:129},(_,index)=>index+2)
+        :generation129Committed
+        ? Array.from({length:128},(_,index)=>index+2)
+        :generation128Committed
+        ? Array.from({length:127},(_,index)=>index+2)
+        :generation127Committed
+        ? Array.from({length:126},(_,index)=>index+2)
+        :generation126Committed
+        ? Array.from({length:125},(_,index)=>index+2)
+        :generation125Committed
+        ? Array.from({length:124},(_,index)=>index+2)
+        :generation124Committed
+        ? Array.from({length:123},(_,index)=>index+2)
+        :generation123Committed
+        ? Array.from({length:122},(_,index)=>index+2)
+        :generation122Committed
+        ? Array.from({length:121},(_,index)=>index+2)
+        :generation121Committed
+        ? Array.from({length:120},(_,index)=>index+2)
+        :generation120Committed
+        ? Array.from({length:119},(_,index)=>index+2)
+        :generation119Committed
         ? Array.from({length:118},(_,index)=>index+2)
         :generation118Committed
         ? Array.from({length:117},(_,index)=>index+2)
@@ -416,6 +485,29 @@ try{
     }
   );
 
+  const generation142Pending=fs.existsSync(authorityPath(142))&&!generation142Committed;
+  const generation141Pending=fs.existsSync(authorityPath(141))&&!generation141Committed;
+  const generation140Pending=fs.existsSync(authorityPath(140))&&!generation140Committed;
+  const generation139Pending=fs.existsSync(authorityPath(139))&&!generation139Committed;
+  const generation138Pending=fs.existsSync(authorityPath(138))&&!generation138Committed;
+  const generation137Pending=fs.existsSync(authorityPath(137))&&!generation137Committed;
+  const generation136Pending=fs.existsSync(authorityPath(136))&&!generation136Committed;
+  const generation135Pending=fs.existsSync(authorityPath(135))&&!generation135Committed;
+  const generation134Pending=fs.existsSync(authorityPath(134))&&!generation134Committed;
+  const generation133Pending=fs.existsSync(authorityPath(133))&&!generation133Committed;
+  const generation132Pending=fs.existsSync(authorityPath(132))&&!generation132Committed;
+  const generation131Pending=fs.existsSync(authorityPath(131))&&!generation131Committed;
+  const generation130Pending=fs.existsSync(authorityPath(130))&&!generation130Committed;
+  const generation129Pending=fs.existsSync(authorityPath(129))&&!generation129Committed;
+  const generation128Pending=fs.existsSync(authorityPath(128))&&!generation128Committed;
+  const generation127Pending=fs.existsSync(authorityPath(127))&&!generation127Committed;
+  const generation126Pending=fs.existsSync(authorityPath(126))&&!generation126Committed;
+  const generation125Pending=fs.existsSync(authorityPath(125))&&!generation125Committed;
+  const generation124Pending=fs.existsSync(authorityPath(124))&&!generation124Committed;
+  const generation123Pending=fs.existsSync(authorityPath(123))&&!generation123Committed;
+  const generation122Pending=fs.existsSync(authorityPath(122))&&!generation122Committed;
+  const generation121Pending=fs.existsSync(authorityPath(121))&&!generation121Committed;
+  const generation120Pending=fs.existsSync(authorityPath(120))&&!generation120Committed;
   const generation119Pending=fs.existsSync(authorityPath(119))&&!generation119Committed;
   const generation118Pending=
     fs.existsSync(authorityPath(118))&&!generation118Committed;
@@ -520,7 +612,122 @@ try{
   const generation68Pending=
     fs.existsSync(authorityPath(68))&&!generation68Committed;
 
-  if(generation119Committed){
+  if(generation142Committed){
+    test('committed Generation 142 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation142Pending){
+    const generation142Candidate=JSON.parse(fs.readFileSync(authorityPath(142),'utf8'));
+    test('pending Generation 142 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation142Candidate).ok,true));
+  }else if(generation141Committed){
+    test('committed Generation 141 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation141Pending){
+    const generation141Candidate=JSON.parse(fs.readFileSync(authorityPath(141),'utf8'));
+    test('pending Generation 141 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation141Candidate).ok,true));
+  }else if(generation140Committed){
+    test('committed Generation 140 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation140Pending){
+    const generation140Candidate=JSON.parse(fs.readFileSync(authorityPath(140),'utf8'));
+    test('pending Generation 140 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation140Candidate).ok,true));
+  }else if(generation139Committed){
+    test('committed Generation 139 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation139Pending){
+    const generation139Candidate=JSON.parse(fs.readFileSync(authorityPath(139),'utf8'));
+    test('pending Generation 139 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation139Candidate).ok,true));
+  }else if(generation138Committed){
+    test('committed Generation 138 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation138Pending){
+    const generation138Candidate=JSON.parse(fs.readFileSync(authorityPath(138),'utf8'));
+    test('pending Generation 138 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation138Candidate).ok,true));
+  }else if(generation137Committed){
+    test('committed Generation 137 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation137Pending){
+    const generation137Candidate=JSON.parse(fs.readFileSync(authorityPath(137),'utf8'));
+    test('pending Generation 137 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation137Candidate).ok,true));
+  }else if(generation136Committed){
+    test('committed Generation 136 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation136Pending){
+    const generation136Candidate=JSON.parse(fs.readFileSync(authorityPath(136),'utf8'));
+    test('pending Generation 136 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation136Candidate).ok,true));
+  }else if(generation135Committed){
+    test('committed Generation 135 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation135Pending){
+    const generation135Candidate=JSON.parse(fs.readFileSync(authorityPath(135),'utf8'));
+    test('pending Generation 135 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation135Candidate).ok,true));
+  }else if(generation134Committed){
+    test('committed Generation 134 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation134Pending){
+    const generation134Candidate=JSON.parse(fs.readFileSync(authorityPath(134),'utf8'));
+    test('pending Generation 134 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation134Candidate).ok,true));
+  }else if(generation133Committed){
+    test('committed Generation 133 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation133Pending){
+    const generation133Candidate=JSON.parse(fs.readFileSync(authorityPath(133),'utf8'));
+    test('pending Generation 133 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation133Candidate).ok,true));
+  }else if(generation132Committed){
+    test('committed Generation 132 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation132Pending){
+    const generation132Candidate=JSON.parse(fs.readFileSync(authorityPath(132),'utf8'));
+    test('pending Generation 132 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation132Candidate).ok,true));
+  }else if(generation131Committed){
+    test('committed Generation 131 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation131Pending){
+    const generation131Candidate=JSON.parse(fs.readFileSync(authorityPath(131),'utf8'));
+    test('pending Generation 131 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation131Candidate).ok,true));
+  }else if(generation130Committed){
+    test('committed Generation 130 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation130Pending){
+    const generation130Candidate=JSON.parse(fs.readFileSync(authorityPath(130),'utf8'));
+    test('pending Generation 130 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation130Candidate).ok,true));
+  }else if(generation129Committed){
+    test('committed Generation 129 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation129Pending){
+    const generation129Candidate=JSON.parse(fs.readFileSync(authorityPath(129),'utf8'));
+    test('pending Generation 129 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation129Candidate).ok,true));
+  }else if(generation128Committed){
+    test('committed Generation 128 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation128Pending){
+    const generation128Candidate=JSON.parse(fs.readFileSync(authorityPath(128),'utf8'));
+    test('pending Generation 128 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation128Candidate).ok,true));
+  }else if(generation127Committed){
+    test('committed Generation 127 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation127Pending){
+    const generation127Candidate=JSON.parse(fs.readFileSync(authorityPath(127),'utf8'));
+    test('pending Generation 127 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation127Candidate).ok,true));
+  }else if(generation126Committed){
+    test('committed Generation 126 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation126Pending){
+    const generation126Candidate=JSON.parse(fs.readFileSync(authorityPath(126),'utf8'));
+    test('pending Generation 126 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation126Candidate).ok,true));
+  }else if(generation125Committed){
+    test('committed Generation 125 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation125Pending){
+    const generation125Candidate=JSON.parse(fs.readFileSync(authorityPath(125),'utf8'));
+    test('pending Generation 125 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation125Candidate).ok,true));
+  }else if(generation124Committed){
+    test('committed Generation 124 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation124Pending){
+    const generation124Candidate=JSON.parse(fs.readFileSync(authorityPath(124),'utf8'));
+    test('pending Generation 124 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation124Candidate).ok,true));
+  }else if(generation123Committed){
+    test('committed Generation 123 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation123Pending){
+    const generation123Candidate=JSON.parse(fs.readFileSync(authorityPath(123),'utf8'));
+    test('pending Generation 123 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation123Candidate).ok,true));
+  }else if(generation122Committed){
+    test('committed Generation 122 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation122Pending){
+    const generation122Candidate=JSON.parse(fs.readFileSync(authorityPath(122),'utf8'));
+    test('pending Generation 122 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation122Candidate).ok,true));
+  }else if(generation121Committed){
+    test('committed Generation 121 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation121Pending){
+    const generation121Candidate=JSON.parse(fs.readFileSync(authorityPath(121),'utf8'));
+    test('pending Generation 121 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation121Candidate).ok,true));
+  }else if(generation120Committed){
+    test('committed Generation 120 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+  }else if(generation120Pending){
+    const generation120Candidate=JSON.parse(fs.readFileSync(authorityPath(120),'utf8'));
+    test('pending Generation 120 candidate integrity passes',()=>assert.strictEqual(lifecycle.verifyCandidate(generation120Candidate).ok,true));
+  }else if(generation119Committed){
     test('committed Generation 119 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
   }else if(generation119Pending){
     const generation119Candidate=JSON.parse(fs.readFileSync(authorityPath(119),'utf8'));

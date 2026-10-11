@@ -31,7 +31,10 @@ function lockCheck(){
 function currentIntegrityCheck(){
   const lifecycle=require('./phase-b-lifecycle'),current=lifecycle.verifyCurrent();
   if(current.ok)return current;
-  const committedFiles=new Set(lifecycle.generationAuthorities().map(item=>item.file));
+  const authorities=lifecycle.generationAuthorities();
+  // A pending successor may explain new source hashes, never rewritten history.
+  if(authorities.some(item=>!fs.existsSync(path.join(ROOT,item.file))||!fs.readFileSync(path.join(ROOT,item.file)).equals(item.bytes)))return current;
+  const committedFiles=new Set(authorities.map(item=>item.file));
   const candidates=walk('reports/auto-gate/audit-locks').filter(file=>/phase-b-generation-\d+\.json$/u.test(file)&&!committedFiles.has(file));
   if(candidates.length!==1)return current;
   const candidate=json(candidates[0]),verification=lifecycle.verifyCandidate(candidate);

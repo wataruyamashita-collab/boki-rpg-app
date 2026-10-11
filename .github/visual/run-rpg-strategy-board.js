@@ -63,6 +63,7 @@ async function run(){
                 localStorage.setItem('boki-rpg-character-v1',JSON.stringify(characterState));
               },{progress,characterState});
               await page.goto(url,{waitUntil:'load'});
+              await page.waitForFunction(()=>Boolean(window.App?.controller));
               const report={browser:browserName,width,scenario,...await inspect(page),pageErrors,violations:[]};
               if(!report.text.includes('攻略ミッション'))report.violations.push('MISSING_MISSION_HEADING');
               if(!report.text.includes('対応スキル：仕訳 80%'))report.violations.push('MISSING_SKILL_LINK');

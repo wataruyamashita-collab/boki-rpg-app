@@ -66,6 +66,7 @@ async function run(){
                 localStorage.setItem('boki-rpg-character-v1',JSON.stringify(characterState));
               },{progress,characterState});
               await page.goto(url,{waitUntil:'load'});
+              await page.waitForFunction(()=>Boolean(window.App?.controller));
               const report={browser:browserName,width,scenario,...await inspect(page),pageErrors,violations:[]};
               if(!report.text.includes('攻略エリア'))report.violations.push('MISSING_AREA_HEADING');
               if(report.cardCount<1)report.violations.push('MISSING_AREA_CARDS');

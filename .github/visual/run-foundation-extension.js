@@ -53,7 +53,10 @@ if(!Object.hasOwn(FoundationExtensionCases,requested))throw new Error('Unknown f
 const rawFixtureStorage=window.localStorage;
 const extensionController=new FoundationExtensionAdapter.ExtensionController(document,FoundationExtensionAdapter.catalog(FoundationExtensionCases),rawFixtureStorage,'${prefix}');
 window.extensionController=extensionController;
-extensionController.model.state.placement ||= {completed:true,foundation:0,closing:0,startQuestionId:FoundationExtensionCases[requested].id,completedAt:1};
+if(!extensionController.model.state.placement){
+  extensionController.model.state.placement={completed:true,foundation:0,closing:0,startQuestionId:FoundationExtensionCases[requested].id,completedAt:1};
+  extensionController.model.refreshEvidenceIntegrity();
+}
 extensionController.model.state.mode=reviewRoute?'review':'training';
 extensionController.bindEvents();extensionController.view.updateRpg(extensionController.rpg);
 let startId=FoundationExtensionCases[requested].id;
@@ -111,7 +114,7 @@ async function inspect(page,id){return page.evaluate(({id,prefix,keys})=>{
   const visible=el=>el.getBoundingClientRect().width>0&&el.getBoundingClientRect().height>0;
   const clips=[...document.querySelectorAll('.journal-grid-scroll,#table-container,#explanation')].filter(visible).filter(el=>el.scrollWidth>el.clientWidth+1);
   return {question:document.getElementById('q-text').textContent,answer:c.view.readAnswer(c.questions[id]),stored,
-    backupValid:ProgressModel.validateBackupState(stored,c.questions),score:c.learningFlow?.authoritativeScore||null,
+    backupValid:ProgressModel.validateBackupState(stored,c.questions),character:JSON.parse(JSON.stringify(c.rpg.state)),characterBackupValid:RPGModel.validateBackupState(c.rpg.state),score:c.learningFlow?.authoritativeScore||null,
     explanation:document.getElementById('explanation').textContent,canonicalCount:Object.keys(QuestionData).length,
     originals:keys.map(key=>localStorage.getItem(key)),noOriginalApp:typeof window.App==='undefined',
     overflow:document.documentElement.scrollWidth>innerWidth+1,clipCount:clips.length};
@@ -233,7 +236,19 @@ async function run(){
           assert.strictEqual(end.stored.questionStats[q.id].correctCount,2);assert.strictEqual(end.stored.questionStats[q.id].incorrectCount,1);
           assert.deepStrictEqual(end.due,[]);assert.strictEqual(end.currentId,null);assert.strictEqual(end.reviewSourceId,null);assert(end.reviewViewActive);assert.strictEqual(end.reviewEntryCount,0);
           assert.deepStrictEqual(end.originals,keys.map(key=>'sentinel:'+key));assert.deepStrictEqual(errors,[]);
-          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,reviewReloadDue:true,ordinaryCalculatorChecked:key==='equipment',trailingDecimalChecked:key==='cost',trailingDecimalEqualsAndDirectInsertChecked:Boolean(decimalSelector),recurringDivisionAndChainingChecked:Boolean(decimalSelector),signedRecurringHalfUpChecked:key.startsWith('npv'),canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
+          assert(result.characterBackupValid&&reviewed.characterBackupValid);
+          if(key==='npvNegative'){
+            assert.strictEqual(result.character.totalTransactionAmount,-5870);assert.strictEqual(reviewed.character.totalTransactionAmount,-5870);
+            const payload=await page.evaluate(()=>({format:'boki-rpg-backup',version:1,progress:extensionController.model.state,character:extensionController.rpg.state}));
+            assert.deepStrictEqual(payload.character,reviewed.character,'review reload retains all earned RPG state');
+            await Promise.all([page.waitForNavigation({waitUntil:'load'}),page.evaluate(payload=>{
+              setTimeout(()=>extensionController.importBackup({text:async()=>JSON.stringify(payload)}),100);
+            },payload)]);
+            const restored=await inspect(page,q.id);assert(restored.backupValid&&restored.characterBackupValid);
+            assert.deepStrictEqual(restored.character,payload.character,'signed NPV backup retains rewards after actual import/reload');
+            assert.deepStrictEqual(restored.originals,keys.map(key=>'sentinel:'+key));assert.deepStrictEqual(errors,[]);
+          }
+          evidence.reports.push({engine,width,key,id:q.id,blankRejected:true,draftReload:true,signedBackupRestored:key==='npvNegative',correct:true,topicExplanation:true,reviewCompleted:true,reviewReloadNoDue:true,reviewReloadDue:true,ordinaryCalculatorChecked:key==='equipment',trailingDecimalChecked:key==='cost',trailingDecimalEqualsAndDirectInsertChecked:Boolean(decimalSelector),recurringDivisionAndChainingChecked:Boolean(decimalSelector),signedRecurringHalfUpChecked:key.startsWith('npv'),canonicalUnchanged:true,overflow:false,pageErrors:errors});write();
         }finally{await context.close();}
       }}finally{await browser.close();}
     }

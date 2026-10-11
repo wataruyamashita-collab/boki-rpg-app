@@ -6,7 +6,7 @@ const authorities=lifecycle.generationAuthorities(),g37=authorities.find(x=>x.do
 test('Generation 38 is discoverable',()=>assert(g38));
 test('Generation 38 predecessor is exact Generation 37',()=>assert.deepStrictEqual(g38.document.predecessor,lifecycle.identity(g37.document)));
 test('Generation 38 production identity changes for structured explanation integration',()=>assert.notStrictEqual(g38.document.baselineIdentity,g37.document.baselineIdentity));
-test('committed Generation 38 current integrity passes',()=>assert.strictEqual(lifecycle.verifyCurrent().ok,true));
+test('committed Generation 38 current integrity passes',()=>assert.strictEqual(core.currentIntegrityCheck().ok,true));
 test('duplicate Generation 38 issuance fails',()=>assert.notStrictEqual(childProcess.spawnSync(process.execPath,['scripts/qa/finalize-phase-b-generation-38.js'],{cwd:core.ROOT,encoding:'utf8'}).status,0));
 test('historical authority raw SHA values are pinned',()=>assert.deepStrictEqual(finalizer.authorityPaths.map(f=>digest(fs.readFileSync(f))),finalizer.expectedAuthoritySha256));
 console.log(`Generation 38 finalizer regressions: ${count}/${count}`);
