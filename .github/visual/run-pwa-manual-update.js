@@ -162,8 +162,8 @@ async function continueLearning(page,report,record) {
   record('draft-resume-submit',journal);assert(journal.correct);assert(/未使用分[^。]*次期以降[^。]*資産/.test(journal.summary));assert(journal.transfers.some(c=>c.from.includes('貯蔵品')&&/資産の増加/.test(c.from)&&c.to==='借方'));assert(journal.transfers.some(c=>c.from.includes('租税公課')&&/費用の減少/.test(c.from)&&c.to==='貸方'));assert.strictEqual(journal.rewardedIds.filter(id=>id==='J001').length,1,'old reward retained once');assert.strictEqual(new Set(journal.rewardedIds).size,journal.rewardedIds.length);
   report.continuation={status:'PASS',reviewWrong:reviewed,reviewCorrect:corrected,draftResume:journal};
 }
-async function trial(engine,launcher,number,oldSource,newSource) {
-  const report={engine,trial:number,status:'RUNNING',oldRelease:oldSource.release,newRelease:newSource.release,errors:[],timeline:[]};evidence.reports.push(report);write();
+async function trial(engine,launcher,number,oldSource,newSource,oldTabBoundary=false) {
+  const report={engine,trial:number,boundary:oldTabBoundary?'old-release-tab-remains':null,status:'RUNNING',oldRelease:oldSource.release,newRelease:newSource.release,errors:[],timeline:[]};evidence.reports.push(report);write();
   const start=Date.now();let stage='start',current=false,browser,context,page,before,serverStopped=false;
   const record=(kind,data={})=>report.timeline.push({ms:Date.now()-start,stage,kind,...data});
   const server=http.createServer((req,res)=>{
@@ -189,8 +189,34 @@ async function trial(engine,launcher,number,oldSource,newSource) {
       c.showMode('story');c.start('J035');c.view.applyRetryDraft(c.questions.J035,{debit:[{account:'貯蔵品',amount:5000}],credit:[]});c.saveDraft(false);return {j001:j,l031:l};
     });assert.strictEqual(seeded.j001,true);assert.strictEqual(seeded.l031,false);
     before=await capture(page);report.before=before;assert(before.character.xp>0);assert(before.character.rewardedIds.includes('J001'));assert.strictEqual(before.model.questionStats.L031.incorrectCount,1);assert(before.model.reviewSchedule.L031);assert(before.model.incorrectIds.includes('L031'));assert(before.ownership.active);
+    let oldTab;
+    if(oldTabBoundary) {
+      stage='old-tab-remains';oldTab=await context.newPage();
+      oldTab.on('pageerror',error=>{report.errors.push('old-tab: '+String(error));record('old-tab-page-error',{error:String(error)});});
+      oldTab.on('console',message=>{if(message.type()==='error'){report.errors.push('old-tab: '+message.text());record('old-tab-console-error',{text:message.text()});}});
+      await oldTab.goto(url);
+      await oldTab.waitForFunction(()=>!!window.App?.storageOwnership);
+      assert.strictEqual(await oldTab.evaluate(()=>!!App.controller),false,'old second tab waits for exclusive ownership');
+    }
     stage='detect-update';current=true;await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});await page.waitForFunction(async()=>!!(await navigator.serviceWorker.getRegistration())?.waiting);await page.locator('#app-toast-action').waitFor({state:'visible'});report.waiting=await capture(page);
-    stage='manual-update';await page.locator('#app-toast-action').click();record('wait-start',{timeoutMs:30000,condition:'new release shell AND App.controller'});
+    stage='manual-update';await page.locator('#app-toast-action').click();
+    if(oldTabBoundary) {
+      await page.waitForFunction(async release=>{
+        if(!document.querySelector('script[src*="js/app.js"]')?.src.includes('?v='+release)||!window.App?.storageOwnership||App.controller||App.storageOwnership.active)return false;
+        const locks=await navigator.locks.query(),owned=locks.held.some(lock=>lock.name==='boki-rpg-saved-learning');
+        return owned&&(locks.pending.some(lock=>lock.name==='boki-rpg-saved-learning')||App.storageClientStatus==='waiting');
+      },newSource.release,{timeout:30000});
+      const blocked=await capture(page);assert.strictEqual(blocked.appController,false,'old tab blocks the new learning writer');assert.strictEqual(blocked.ownership.active,false);
+      assert.deepStrictEqual(blocked.local,before.local,'blocked startup never changes saved originals');
+      const clients=await proof(page);assert.strictEqual(clients.data.clients.length,2,'both real documents remain visible to the worker');
+      const lockState=await page.evaluate(()=>navigator.locks.query());
+      assert(lockState.held.some(lock=>lock.name==='boki-rpg-saved-learning'),'exclusive lock remains held while another real client is present');
+      const oldState=await oldTab.evaluate(()=>({controller:!!App.controller,ownership:App.storageOwnership,status:App.storageClientStatus}));
+      assert.strictEqual(oldState.controller,false,'old waiting page cannot become a second learning writer');
+      report.oldTabBoundary={status:'PASS',worker:blocked.worker,ownership:blocked.ownership,oldState,lockState,clientCount:clients.data.clients.length,savedNamespaceUnchanged:true};
+      record('old-tab-blocked',report.oldTabBoundary);await oldTab.close();record('old-tab-closed');
+    }
+    record('wait-start',{timeoutMs:30000,condition:'new release shell AND App.controller'});
     await page.waitForFunction(release=>Boolean(window.App?.controller)&&document.querySelector('script[src*="js/app.js"]').src.includes('?v='+release),newSource.release,{timeout:30000});
     stage='new-app';const after=await capture(page);report.after=after;checkRetained(before,after);checkCache(after,newSource);assert(after.ownership.active);assert.strictEqual(after.worker.active.state,'activated');assert(after.worker.sameController);report.manualUpdate='PASS';
     assert(report.timeline.some(x=>x.event==='worker-message'&&x.type==='SKIP_WAITING'),'real button sent SKIP_WAITING');assert(report.timeline.some(x=>x.event==='controllerchange'&&x.stage==='manual-update'),'same-page controllerchange observed');assert.strictEqual(context.pages().length,1,'same tab only');
@@ -217,7 +243,7 @@ async function trial(engine,launcher,number,oldSource,newSource) {
         shell:report.failure.shell,worker:report.failure.worker,ownership:report.failure.ownership,
         caches:report.failure.caches.map(cache=>({key:cache.key,entries:cache.entries.length}))} : undefined,
       workerProof:report.workerProof,observationError:report.observationError,
-      continuation:report.continuation?.status,reload:report.reload,offline:report.offline?.status,
+      oldTabBoundary:report.oldTabBoundary,continuation:report.continuation?.status,reload:report.reload,offline:report.offline?.status,
       errors:report.errors,timeline:summaryTimeline}));
     write();fs.writeFileSync(path.join(OUT,`${engine}-${number}.json`),JSON.stringify(report,null,2)+'\n');
     if(context)await context.close();if(browser)await browser.close();if(!serverStopped)await new Promise(resolve=>server.close(resolve));
@@ -228,7 +254,8 @@ async function trial(engine,launcher,number,oldSource,newSource) {
     const oldSource=snapshot('old',BASE),newSource=snapshot('new',NEW_SHA);assert.strictEqual(oldSource.release,'20260924-202');assert(newSource.release>oldSource.release,'genuine newer release');
     evidence.sources={old:oldSource,new:newSource};write();
     for(const [engine,launcher]of Object.entries({chromium,webkit}))for(let number=1;number<=TRIALS;number++)await trial(engine,launcher,number,oldSource,newSource);
-    assert.strictEqual(evidence.reports.length,TRIALS*2);evidence.status=evidence.reports.every(r=>r.status==='PASS')?'PASS':'FAIL';
+    if(TRIALS===5)for(const [engine,launcher]of Object.entries({chromium,webkit}))await trial(engine,launcher,'old-tab',oldSource,newSource,true);
+    assert.strictEqual(evidence.reports.length,TRIALS*2+(TRIALS===5?2:0));evidence.status=evidence.reports.every(r=>r.status==='PASS')?'PASS':'FAIL';
   } catch(error) {evidence.status='FAIL';evidence.setupError=error.stack;}
   finally {write();fs.rmSync(temp,{recursive:true,force:true});}
   console.log(JSON.stringify({status:evidence.status,trials:evidence.reports.map(r=>({engine:r.engine,trial:r.trial,status:r.status,stage:r.failedStage,manualUpdate:r.manualUpdate,continuation:r.continuation?.status,offline:r.offline?.status})),evidence:path.join(OUT,'evidence.json')}));process.exitCode=evidence.status==='PASS'?0:1;
