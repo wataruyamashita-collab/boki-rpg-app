@@ -125,7 +125,7 @@
           !Number.isSafeInteger(provenance.markerVersion) || provenance.markerVersion < 0 || provenance.markerVersion > 9 ||
           !plain(provenance.pending) || !plain(provenance.approvedDrafts) || !Array.isArray(provenance.unsignedFields) ||
           !Array.isArray(provenance.archivedExams) ||
-          (provenance.progressionVersion !== undefined && provenance.progressionVersion !== 2)) return false;
+          (provenance.progressionVersion !== undefined && ![2,3].includes(provenance.progressionVersion))) return false;
       for (const field of ['continuityDays','activeDays']) if (!Array.isArray(provenance.pending[field]) ||
           provenance.pending[field].some(key => !Number.isSafeInteger(probe.dayOrdinalFromKey(key)))) return false;
       for (const archive of provenance.archivedExams) if (!plain(archive) || archive.reason !== 'unverifiable-score' ||
@@ -507,7 +507,7 @@
           const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 10;
           if (needsIntegrityMigration) this.migrateUnsignedFields(saved, read.value);
           const needsProgressionMigration = !needsIntegrityMigration && this.state.legacyProvenance?.markerVersion < 2 &&
-            this.state.legacyProvenance.progressionVersion !== 2;
+            this.state.legacyProvenance.progressionVersion !== 3;
           if (needsProgressionMigration) this.migrateUnsignedProgression(JSON.parse(this.state.legacyProvenance.original),true);
           if (needsEvidenceMigration || needsIntegrityMigration || needsProgressionMigration) this.refreshEvidenceIntegrity();
           if (needsContentMigration || needsLearningMigration || needsEvidenceMigration || needsIntegrityMigration || needsProgressionMigration) this.save();
@@ -546,6 +546,7 @@
     }
     migrateUnsignedProgression(original, alreadySealed = false) {
       const provenance = this.state.legacyProvenance;
+      const retainVerifiedProgression = provenance.progressionVersion === 2;
       const previewWithoutProgression = alreadySealed && provenance.pending.correctIds === undefined;
       const proven = {answeredIds:new Set(),correctIds:new Set(),incorrectIds:new Set()};
       for (const [id,item] of Object.entries(this.state.learningEffectiveness.questions)) {
@@ -582,8 +583,38 @@
           }
         }
       }
+      if (alreadySealed && original.contentRevision === CONTENT_REVISION &&
+          valueSignature(original.questionContentVersions ?? null) === valueSignature(ProgressModel.currentContentVersions(this.questions))) {
+        // The preview's catalog and grading engine are unchanged. Signed topic
+        // totals can corroborate older completions after lastExamReview advances.
+        // Each question contributes nonnegative rounded loss. Only a topic loss
+        // below this question's minimum possible incorrect loss proves correct.
+        // Unknown ordering uses the minimum over all issued point weights.
+        for (const history of this.verifiedExamHistory()) {
+          const ids = typeof history.setSignature === 'string' ? history.setSignature.split('|') : [];
+          if (ids.length !== 15 || new Set(ids).size !== 15 || ids.some(id => !Object.hasOwn(this.questions,id))) continue;
+          for (const id of ids) {
+            const question = this.questions[id], topic = history.topicScores?.[question.category];
+            const count = ids.filter(key => this.questions[key].category === question.category).length;
+            if (!topic || !Number.isSafeInteger(topic.earned) || !Number.isSafeInteger(topic.possible) || topic.earned < 0 ||
+                topic.earned > topic.possible || topic.possible < 5 * count || topic.possible > 9 * count) continue;
+            const cells = question.answer?.cells;
+            const units = question.type === 'journal' ? 1 : ['ledger','trial_balance','correction','worksheet','financial_statement','comprehensive'].includes(question.type) &&
+              cells && typeof cells === 'object' && !Array.isArray(cells) ? Object.keys(cells).length : 0;
+            if (!Number.isSafeInteger(units) || units < 1) continue;
+            const minimumLoss = Math.min(...[5,6,9].map(weight => weight - Math.round(((units - 1) / units) * weight)));
+            if (minimumLoss > 0 && topic.possible - topic.earned < minimumLoss) {
+              proven.answeredIds.add(id); proven.correctIds.add(id);
+            }
+          }
+        }
+      }
       for (const field of Object.keys(proven)) {
         if (!provenance.unsignedFields.includes(field)) provenance.unsignedFields.push(field);
+        // Version 2 was issued only after the unsafe preview additions were
+        // quarantined. Its subsequent current completions remain authoritative.
+        if (retainVerifiedProgression && Array.isArray(provenance.pending[field]))
+          for (const id of this.state[field]) if (!provenance.pending[field].includes(id)) proven[field].add(id);
         // The first preview did not synthesize flags from exam history. Later
         // progression previews did, so their additions need independent proof.
         // Preserve every candidate, including additions that remain unverified.
@@ -594,7 +625,7 @@
         // Preserve the candidate; only a current answer can settle it.
         provenance.pending[field] = this.state[field].filter(id => !proven[field].has(id));
       }
-      provenance.progressionVersion = 2;
+      provenance.progressionVersion = 3;
     }
     isUnverified(field, id) {
       const pending = this.state.legacyProvenance?.pending[field];

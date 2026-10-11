@@ -743,5 +743,50 @@ test('v7 abandoned wrong exam does not become a finalized mistake through a late
     assert.deepStrictEqual(Model.prepareBackupState(model.state,catalog,canonicalPool),model.state);
   }
 });
+const previewExamFixture=(previewSha,originalIds)=>{
+  const vm=require('vm'),fs=require('fs'),cp=require('child_process'),data={window:{}};vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),data);const catalog=data.window.QuestionData;
+  const Old=priorModel('ed21218967958e42e67ba9aafe9c333a5bbccc55'),Preview=priorModel(previewSha),old=new Old(catalog,storage(),'test',canonicalPool);
+  old.state.learningEffectiveness.initialHistory='unknown';old.state.correctIds=originalIds;old.refreshEvidenceIntegrity();
+  const store={data:{test:JSON.stringify(old.state)},getItem(key){return this.data[key]??null;},setItem(key,value){this.data[key]=value;return true;},removeItem(key){delete this.data[key];return true;}};
+  const preview=new Preview(catalog,store,'test',canonicalPool),sandbox={window:{ProgressModel:Preview,RPGModel:require('../js/rpg')},console};
+  vm.runInNewContext(cp.execFileSync('git',['show',previewSha+':js/controller.js'],{encoding:'utf8'}),sandbox);const rpg=new sandbox.window.RPGModel(store,'r');
+  const finish=(id,answerValue,startedAt,index=0)=>{
+    const ids=canonicalPool.filter(q=>q!==id&&catalog[q].category!==catalog[id].category).slice(0,14);ids.splice(index,0,id);
+    preview.state.mode='exam';preview.state.examSession={ids,startedAt,endAt:startedAt+3600000,status:'RUNNING',evidenceVersion:1,scores:{}};
+    const grade=require('../js/engine').grade(catalog[id],answerValue);assert(answer(preview,id,grade.correct,startedAt+500,{mode:'exam'}));
+    preview.state.examSession.scores[id]={...grade,answer:answerValue,observationNumber:preview.state.learningEffectiveness.questions[id].observedAttempts};preview.refreshEvidenceIntegrity();preview.save();
+    const ctx=Object.create(sandbox.window.AppController.prototype),node=()=>({focus(){},classList:{remove(){}}});
+    Object.assign(ctx,{model:preview,rpg,questions:catalog,unansweredExamIds:()=>ids.filter(q=>q!==id),stopExamTimer(){},view:{examResult(){},show(){},showNotice(){}},document:{body:node(),getElementById:node}});
+    assert(ctx.finishExam(true,startedAt+3600000+5000));return grade;
+  };
+  return {catalog,store,preview,finish};
+};
+test('rounded full topic points cannot authenticate an incorrect partial answer',()=>{
+  const {catalog,store,preview,finish}=previewExamFixture('cfaeb11e13cb5ae2f9980bcecce1af6b7bbca306',['L034']);
+  const value=clone(catalog.L034.answer),key=Object.keys(value.cells).find(key=>value.cells[key]!==0);delete value.cells[key];
+  const grade=finish('L034',value,10000,5);assert.strictEqual(grade.correct,false);assert.strictEqual(grade.earned,13);assert.strictEqual(grade.possible,14);
+  const topic=preview.state.examHistory[0].topicScores[catalog.L034.category];assert.strictEqual(topic.earned,5);assert.strictEqual(topic.possible,5);
+  finish('J129',catalog.J129.answer,4000000);const before=clone(preview.state),rewards=store.getItem('r'),model=new Model(catalog,store,'test',canonicalPool);
+  assert(!model.storageWriteBlocked);assert(model.state.correctIds.includes('L034'));assert(model.isUnverified('correctIds','L034'));assert(!model.verifiedCorrectIds().includes('L034'));
+  assert.deepStrictEqual(model.state.examHistory,before.examHistory);assert.strictEqual(store.getItem('r'),rewards);assert.deepStrictEqual(Model.prepareBackupState(model.state,catalog,canonicalPool),model.state);
+});
+test('safe v2 progression retains current earlier exam approvals even without a rounding proof',()=>{
+  const {catalog,store,preview,finish}=previewExamFixture('7be2a034db8c2308c14c3faefe89eb1fe04534ea',['L034','J129']);
+  assert.strictEqual(preview.state.legacyProvenance.progressionVersion,2);
+  finish('L034',catalog.L034.answer,10000,5);finish('J129',catalog.J129.answer,4000000);
+  const before=clone(preview.state),rewards=store.getItem('r'),model=new Model(catalog,store,'test',canonicalPool);assert(!model.storageWriteBlocked);
+  assert.deepStrictEqual(model.verifiedCorrectIds().sort(),['J129','L034']);assert.deepStrictEqual(model.state.examHistory,before.examHistory);
+  assert.strictEqual(model.state.legacyProvenance.original,before.legacyProvenance.original);assert.strictEqual(store.getItem('r'),rewards);
+  assert.deepStrictEqual(Model.prepareBackupState(model.state,catalog,canonicalPool),model.state);assert.deepStrictEqual(new Model(catalog,store,'test',canonicalPool).state,model.state);
+});
+test('unsigned original topic totals remain unverified after both preview migrations',()=>{
+  const {catalog,store,preview}=previewExamFixture('cfaeb11e13cb5ae2f9980bcecce1af6b7bbca306',['J128']);
+  const original=JSON.parse(preview.state.legacyProvenance.original),ids=['J128',...canonicalPool.filter(id=>id!=='J128'&&catalog[id].category!==catalog.J128.category).slice(0,14)];
+  original.examHistory=[{finishedAt:1000,durationMs:1000,points:9,unansweredCount:14,setSignature:ids.sort().join('|'),topicScores:{[catalog.J128.category]:{earned:9,possible:9}}}];
+  const Old=priorModel('ed21218967958e42e67ba9aafe9c333a5bbccc55');assert(Old.validateBackupState(original,catalog,canonicalPool));
+  store.setItem('test',JSON.stringify(original));const Preview=priorModel('cfaeb11e13cb5ae2f9980bcecce1af6b7bbca306');new Preview(catalog,store,'test',canonicalPool);
+  const model=new Model(catalog,store,'test',canonicalPool);assert(!model.storageWriteBlocked);assert(model.isUnverified('correctIds','J128'));
+  assert.deepStrictEqual(model.verifiedCorrectIds(),[]);assert.deepStrictEqual(model.verifiedExamHistory(),[]);assert.deepStrictEqual(JSON.parse(model.state.legacyProvenance.original),original);
+});
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;
