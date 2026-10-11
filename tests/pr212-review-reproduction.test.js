@@ -81,4 +81,17 @@ for(const version of ['v3','v4','v6'])test('5 '+version+' unsigned authority can
  if(version==='v4'){assert.deepStrictEqual(loaded.verifiedExamHistory(),[]);assert.deepStrictEqual(loaded.state.examHistory,bad.examHistory);}
  if(version==='v6')assert(loaded.isUnverified('placement'));
 });
+test('6 v1 deleted progression flags are corroborated from signed ordinary completions',()=>{
+ const Old=oldClass('ed21218967958e42e67ba9aafe9c333a5bbccc55'),old=new Old(questions,store(),'p');
+ observe(old,'Q',true,1000);old.record('Q',true,1000);
+ const original=clone(old.state),bad=clone(original);bad.correctIds=[];bad.answeredIds=[];
+ assert.strictEqual(original.learningEvidenceIntegrity.schemaVersion,1);
+ assert.deepStrictEqual(bad.learningEvidenceIntegrity,original.learningEvidenceIntegrity);
+ assert(Old.validateBackupState(bad,questions));
+ const migrated=Model.prepareBackupState(bad,questions);assert(migrated);
+ assert(migrated.correctIds.includes('Q'),'signed correct completion was lost');
+ assert(migrated.answeredIds.includes('Q'),'signed answered completion was lost');
+ assert.deepStrictEqual(JSON.parse(migrated.legacyProvenance.original),bad);
+ assert.deepStrictEqual(Model.prepareBackupState(migrated,questions),migrated);
+});
 console.log(`PR212_REPRODUCTION ${passed}/${passed+failed} PASS; ${failed} FAIL`);if(failed)process.exitCode=1;

@@ -135,6 +135,12 @@
         if (!Array.isArray(list) || new Set(list).size !== list.length || list.some(id => typeof id !== 'string' ||
             (field !== 'examHistory' && !Object.hasOwn(questions,id)))) return false;
       }
+      for (const field of ['answeredIds','correctIds','incorrectIds']) {
+        const list = provenance.pending[field];
+        // Older marker-v10 previews predate progression provenance.
+        if (list !== undefined && (!Array.isArray(list) || new Set(list).size !== list.length ||
+            list.some(id => !Object.hasOwn(questions,id)))) return false;
+      }
       if (typeof provenance.pending.placement !== 'boolean' || typeof provenance.pending.completed !== 'boolean') return false;
       try {
         const original = JSON.parse(provenance.original);
@@ -503,8 +509,11 @@
           if (needsEvidenceMigration) this.state.learningEffectiveness = emptyEffectiveness('unknown', this.state.attempts);
           const needsIntegrityMigration = saved.learningEvidenceIntegrity?.schemaVersion !== 10;
           if (needsIntegrityMigration) this.migrateUnsignedFields(saved, read.value);
-          if (needsEvidenceMigration || needsIntegrityMigration) this.refreshEvidenceIntegrity();
-          if (needsContentMigration || needsLearningMigration || needsEvidenceMigration || needsIntegrityMigration) this.save();
+          const needsProgressionMigration = !needsIntegrityMigration && this.state.legacyProvenance?.markerVersion < 2 &&
+            this.state.legacyProvenance.pending.correctIds === undefined;
+          if (needsProgressionMigration) this.migrateUnsignedProgression(JSON.parse(this.state.legacyProvenance.original),true);
+          if (needsEvidenceMigration || needsIntegrityMigration || needsProgressionMigration) this.refreshEvidenceIntegrity();
+          if (needsContentMigration || needsLearningMigration || needsEvidenceMigration || needsIntegrityMigration || needsProgressionMigration) this.save();
         }
       } catch (_) { this.storageWriteBlocked = true; }
     }
@@ -512,7 +521,7 @@
       const version = saved.learningEvidenceIntegrity?.schemaVersion || 0;
       this.state.learningDayHistory = this.state.learningContinuityState.today
         ? {[this.state.learningContinuityState.today.dayKey]:cloneContent(this.state.learningContinuityState.today)} : {};
-      const minimum = {learningContinuityState:3,reviewSchedule:4,reviewAssignments:4,examHistory:5,
+      const minimum = {answeredIds:2,correctIds:2,incorrectIds:2,learningContinuityState:3,reviewSchedule:4,reviewAssignments:4,examHistory:5,
         examSession:6,examAttempt:6,contentMigrationArchive:6,contentRecheckIds:6,placement:7,mistakeCounts:8,drafts:9,completed:10,lastExamReview:10};
       const unsignedFields = Object.keys(minimum).filter(field => version < minimum[field]);
       // A complete retained signed log can corroborate the old continuity value.
@@ -536,11 +545,54 @@
         }) : [],
         placement:version < 7, completed:true};
       this.state.legacyProvenance = {schemaVersion:1,markerVersion:version,original,unsignedFields,pending,approvedDrafts:{},archivedExams:[]};
+      if (version < 2) this.migrateUnsignedProgression(saved);
+    }
+    migrateUnsignedProgression(original, alreadySealed = false) {
+      const provenance = this.state.legacyProvenance;
+      const proven = {answeredIds:new Set(),correctIds:new Set(),incorrectIds:new Set()};
+      for (const [id,item] of Object.entries(this.state.learningEffectiveness.questions)) {
+        // Ordinary observations and source-bound delayed reviews were committed
+        // atomically with record(). Review targets and unfinished exams were not.
+        const ordinary = ['story','training','desk'].map(mode => item.modes[mode]);
+        if (ordinary.some(mode => mode.attempts > 0) || item.delayedReview.attempts > 0) proven.answeredIds.add(id);
+        if (ordinary.some(mode => mode.successes > 0) || item.delayedReview.successes > 0) proven.correctIds.add(id);
+        if (alreadySealed) {
+          const observations = new Map();
+          const retain = exam => {
+            if (!exam?.session) return;
+            const key = JSON.stringify(exam.session), previous = observations.get(key);
+            if (!previous || exam.observationNumber > previous.observationNumber) observations.set(key,exam);
+          };
+          for (const row of this.state.attempts) if (row.questionId === id && row.mode === 'exam')
+            retain({session:row.examSession,observationNumber:row.observationNumber,correct:row.correct});
+          retain(item.lastExamObservation);
+          // Keep an earlier finalized success even when a later exam is active,
+          // but never use a superseded answer from the same session as its result.
+          for (const exam of observations.values()) if (exam.session.attempt < this.state.examAttempt && this.verifiedExamHistory().some(history =>
+              history.setSignature?.split('|').includes(id) && history.finishedAt >= exam.session.startedAt &&
+              history.durationMs === Math.max(0,Math.min(history.finishedAt,exam.session.endAt)-exam.session.startedAt))) {
+            proven.answeredIds.add(id);
+            if (exam.correct) proven.correctIds.add(id);
+          }
+        }
+      }
+      for (const field of Object.keys(proven)) {
+        if (!provenance.unsignedFields.includes(field)) provenance.unsignedFields.push(field);
+        // A flag added after the old preview migration is protected by v10.
+        // Never overwrite current progress with the archived original value.
+        if (alreadySealed && original.contentRevision === CONTENT_REVISION && Array.isArray(original[field]))
+          for (const id of this.state[field]) if (!original[field].includes(id)) proven[field].add(id);
+        if (field !== 'incorrectIds') this.state[field] = [...new Set([...this.state[field],...proven[field]])];
+        // incorrectIds is mutable recovery state, not a cumulative wrong count.
+        // Preserve the candidate; only a current answer can settle it.
+        provenance.pending[field] = this.state[field].filter(id => !proven[field].has(id));
+      }
     }
     isUnverified(field, id) {
       const pending = this.state.legacyProvenance?.pending[field];
       return Array.isArray(pending) ? pending.includes(id) : pending === true;
     }
+    verifiedCorrectIds() { return this.state.correctIds.filter(id => !this.isUnverified('correctIds',id)); }
     approveDraft(id, answer, now = Date.now()) {
       if (!this.isUnverified('drafts',id) || !answer || typeof answer !== 'object' || !Number.isFinite(now) || now < 0) return false;
       const before = cloneContent(this.state), provenance = this.state.legacyProvenance;
@@ -895,6 +947,10 @@
       }
       if (correct === true) this.state.contentRecheckIds = this.state.contentRecheckIds.filter(value => value !== id);
       if (unverifiedSchedule) this.state.legacyProvenance.pending.reviewSchedule = this.state.legacyProvenance.pending.reviewSchedule.filter(value => value !== id);
+      for (const field of ['answeredIds','incorrectIds',...(correct ? ['correctIds'] : [])]) {
+        const pending = this.state.legacyProvenance?.pending[field];
+        if (Array.isArray(pending)) this.state.legacyProvenance.pending[field] = pending.filter(value => value !== id);
+      }
       delete this.state.drafts[id]; this.refreshEvidenceIntegrity(); this.save(); return true;
     }
     dueReviewIds(now = Date.now()) {
@@ -1157,7 +1213,7 @@
       // Graduation represents repeatable competence, not one lucky answer in each
       // format.  IDs are de-duplicated on load, but use a Set here as a final
       // defensive boundary for callers that construct state in memory.
-      const correctEvidence = new Set(this.state.correctIds);
+      const correctEvidence = new Set(this.verifiedCorrectIds());
       const minimumEvidencePerType = 3;
       return practicalTypes.every(type => {
         const distinctCorrect = [...correctEvidence].map(id => this.questions[id]).filter(question => question?.type === type);

@@ -654,5 +654,68 @@ test('clock rollback retains every recorded day after rolling log eviction and r
   assert.strictEqual(model.state.attempts.length,200);model=new Model(questions,store,'test');
   days.forEach((at,i)=>assert.strictEqual(model.learningContinuity(at).today.attempts,counts[i]));assert.strictEqual(model.learningContinuity(Math.max(...days)).currentStreak,4);
 });
+const priorModel=sha=>{const module={exports:{}};require('vm').runInNewContext(require('child_process').execFileSync('git',['show',sha+':js/model.js'],{encoding:'utf8'}),{module,console});return module.exports;};
+test('v1 source review receipts survive eviction without promoting the review target or reviving recovered mistakes',()=>{
+  const Old=priorModel('ed21218967958e42e67ba9aafe9c333a5bbccc55'),old=new Old(questions,storage(),'test');
+  assert(answer(old,'Q',false,1000));old.record('Q',false,1000);
+  for(let i=0;i<4;i++){
+    const due=old.state.reviewSchedule.Q.dueAt,stage=old.state.reviewSchedule.Q.stage;
+    old.assignReview('Q','R',due-1);assert(answer(old,'R',true,due,{mode:'review',reviewSourceId:'Q',stage}));assert(old.completeReview('Q',true,due,'R'));
+  }
+  assert(!old.state.incorrectIds.includes('Q'));
+  for(let i=0;i<201;i++)assert(answer(old,'T',true,old.state.lastLearningAt+1,{mode:'training'}));
+  old.state.answeredIds=[];old.state.correctIds=[];old.save();const original=clone(old.state);
+  const migrated=Model.prepareBackupState(original,questions);assert(migrated);
+  assert(migrated.correctIds.includes('Q'));assert(!migrated.correctIds.includes('R'));assert(!migrated.incorrectIds.includes('Q'));
+  const {model}=fresh(JSON.stringify(migrated));assert(model.verifiedCorrectIds().includes('Q'));assert.deepStrictEqual(model.state.mistakeCounts,original.mistakeCounts);
+  assert.deepStrictEqual(JSON.parse(model.state.legacyProvenance.original),original);assert.deepStrictEqual(Model.prepareBackupState(model.state,questions),model.state);
+});
+test('v1 unknown and exam-only flags remain visible candidates until current completion',()=>{
+  const Old=priorModel('ed21218967958e42e67ba9aafe9c333a5bbccc55'),old=new Old(questions,storage(),'test');
+  old.state.learningEffectiveness.initialHistory='unknown';old.state.correctIds=['T'];old.state.answeredIds=['T'];old.save();
+  assert(answer(old,'Q',true,1000,{mode:'exam'}));old.record('Q',true,1000);const original=clone(old.state);
+  const migrated=Model.prepareBackupState(original,questions);assert(migrated);const {model}=fresh(JSON.stringify(migrated));
+  assert.deepStrictEqual(model.state.correctIds,original.correctIds);assert.deepStrictEqual(model.verifiedCorrectIds(),[]);
+  for(const id of ['Q','T'])assert(model.isUnverified('correctIds',id));
+  assert(answer(model,'Q',false,2000,{mode:'training'}));model.record('Q',false,2000);assert(model.isUnverified('correctIds','Q'));
+  assert(answer(model,'Q',true,3000,{mode:'training'}));model.record('Q',true,3000);assert(!model.isUnverified('correctIds','Q'));assert(model.isUnverified('correctIds','T'));
+  assert.deepStrictEqual(model.verifiedCorrectIds(),['Q']);assert.deepStrictEqual(JSON.parse(model.state.legacyProvenance.original),original);
+  assert.deepStrictEqual(Model.prepareBackupState(model.state,questions),model.state);
+});
+test('earlier v10 preview repairs v1 omission without replacing progress earned after migration',()=>{
+  const Old=priorModel('ed21218967958e42e67ba9aafe9c333a5bbccc55'),Preview=priorModel('05c147e0edf15f4441e18fed54ea396c7b3d8c4c'),old=new Old(questions,storage(),'test');
+  assert(answer(old,'Q',true,1000));old.record('Q',true,1000);old.state.correctIds=[];old.state.answeredIds=[];old.save();
+  const original=clone(old.state),previewStore=storage(JSON.stringify(original)),preview=new Preview(questions,previewStore,'test');
+  assert(!preview.state.correctIds.includes('Q'));assert(answer(preview,'T',true,2000,{mode:'training'}));preview.record('T',true,2000);
+  const before=clone(preview.state),model=new Model(questions,previewStore,'test');assert(!model.storageWriteBlocked);
+  assert.deepStrictEqual(model.verifiedCorrectIds().sort(),['Q','T']);assert.deepStrictEqual(model.state.learningEffectiveness,before.learningEffectiveness);
+  assert.deepStrictEqual(model.state.questionStats,before.questionStats);assert.strictEqual(model.state.legacyProvenance.original,before.legacyProvenance.original);
+  const repeated=new Model(questions,previewStore,'test');assert.deepStrictEqual(repeated.state,model.state);assert.deepStrictEqual(Model.prepareBackupState(model.state,questions),model.state);
+});
+test('earlier v10 migration does not authenticate flags synthesized from unsigned pre-marker attempts',()=>{
+  const Legacy=priorModel('81088e2ad3bc96a6ff5bd995e6dfcfb58a4fd62f'),Preview=priorModel('05c147e0edf15f4441e18fed54ea396c7b3d8c4c');
+  const old=new Legacy(questions,storage(),'test');old.recordAttempt('Q',true,10,'',false,1000);delete old.state.correctIds;
+  const store=storage(JSON.stringify(old.state)),preview=new Preview(questions,store,'test');assert(preview.state.correctIds.includes('Q'));
+  const original=preview.state.legacyProvenance.original,model=new Model(questions,store,'test');assert(!model.storageWriteBlocked);
+  assert(model.state.correctIds.includes('Q'));assert(model.isUnverified('correctIds','Q'));assert(!model.verifiedCorrectIds().includes('Q'));
+  assert.strictEqual(model.state.legacyProvenance.original,original);
+});
+test('earlier v10 preserves retained finalized exam success when the latest observation is unfinished',()=>{
+  const data={window:{}};require('vm').runInNewContext(require('fs').readFileSync('data/questions.js','utf8'),data);const catalog=data.window.QuestionData;
+  const Old=priorModel('ed21218967958e42e67ba9aafe9c333a5bbccc55'),Preview=priorModel('05c147e0edf15f4441e18fed54ea396c7b3d8c4c');
+  const id=canonicalPool.find(q=>catalog[q].type==='journal'),ids=[id,...canonicalPool.filter(q=>q!==id).slice(0,14)];
+  const old=new Old(catalog,storage(),'test',canonicalPool);old.state.learningEffectiveness.initialHistory='unknown';old.state.correctIds=[id];old.refreshEvidenceIntegrity();
+  const store=storage(JSON.stringify(old.state)),preview=new Preview(catalog,store,'test',canonicalPool);
+  for(const [startedAt,correct] of [[100,true],[3000,false]]){
+    preview.state.examSession={ids,startedAt,endAt:startedAt+10000,status:'RUNNING',evidenceVersion:1,scores:{}};
+    assert(answer(preview,id,correct,startedAt+500,{mode:'exam'}));
+    preview.state.examSession.scores[id]={correct,earned:correct?1:0,possible:1,ratio:correct?1:0,observationNumber:preview.state.learningEffectiveness.questions[id].observedAttempts};
+    if(correct){preview.record(id,true,startedAt+1000);preview.state.examHistory.push({finishedAt:startedAt+1000,durationMs:1000,setSignature:ids.join('|'),points:100});preview.state.examAttempt++;preview.state.examSession=null;}
+    preview.refreshEvidenceIntegrity();preview.save();
+  }
+  assert(Preview.validateBackupState(preview.state,catalog,canonicalPool));
+  const model=new Model(catalog,store,'test',canonicalPool);assert(!model.storageWriteBlocked);assert(model.verifiedCorrectIds().includes(id));
+  assert.deepStrictEqual(model.state.examHistory,clone(preview.state.examHistory));assert.deepStrictEqual(Model.prepareBackupState(model.state,catalog,canonicalPool),model.state);
+});
 console.log(`LEARNING_EFFECTIVENESS ${passed}/${passed+failed} PASS; ${failed} FAIL`);
 if(failed)process.exitCode=1;

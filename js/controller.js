@@ -531,7 +531,9 @@
             label:this.questions[id]?.category || id,
             detail:this.questions[id]?.question || ''
           }));
-          this.view.showNotice(`模試の前に基礎演習を完了してください（残り${unmet.length}問）。下の未完了問題から進められます。`, {
+          const legacyNotice = unmet.some(id => this.model.isUnverified?.('correctIds',id))
+            ? ' 旧版の正答記録は保持されていますが、一部は確認できないため、その問題の回答で進捗を再確認します。' : '';
+          this.view.showNotice(`模試の前に基礎演習を完了してください（残り${unmet.length}問）。下の未完了問題から進められます。${legacyNotice}`, {
             title:'模試を開始できません',
             items,
             itemActionLabel:'この問題を解く',
@@ -588,7 +590,7 @@
         .filter(id => this.questions[id] && ['core', 'drill'].includes(this.questions[id].learningRole));
     }
     unmetExamPrerequisites() {
-      const correct = new Set(this.model.state.correctIds || []);
+      const correct = new Set(this.model.verifiedCorrectIds?.() || this.model.state.correctIds || []);
       return this.examPrerequisiteIds().filter(id => !correct.has(id));
     }
     learningIds() {
