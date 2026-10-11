@@ -133,9 +133,20 @@ function validateArtifact(artifact,questions=loadQuestions()){
     if(row.transferStatus==='TRANSFER_REVIEW_REQUIRED')transferReview.add(row.id);
   }
 
+  // Rubric v0.3 (#178): classify the demand actually scored, not ledger layout.
+  const l031=rows.find(row=>row.id==='L031');
+  if(l031.cognitiveLevel!=='Knowledge'||l031.explanationLearningObjective.performanceVerb!=='IDENTIFY')fail('L031 assessed demand mismatch');
+  if(JSON.stringify(l031.explanationLearningObjective.targetConceptIds)!==JSON.stringify(['FND_DEBIT_CREDIT']))fail('L031 account-rule target mismatch');
+  const l050=rows.find(row=>row.id==='L050');
+  if(l050.cognitiveLevel!=='Application'||l050.explanationLearningObjective.performanceVerb!=='CLASSIFY')fail('L050 assessed demand mismatch');
+  if(JSON.stringify(l050.explanationLearningObjective.targetConceptIds)!==JSON.stringify(['BOOK_VOUCHER_CLASSIFICATION']))fail('L050 voucher target mismatch');
+  for(const [row,code] of [[l031,'P1-3'],[l050,'P1-5']]){
+    if(row.mappingMode!=='DIRECT'||row.primarySyllabusMapping.code!==code||row.secondarySyllabusMappings.length!==0)fail(row.id+' syllabus mismatch');
+  }
+
   const expectedMapping={DIRECT:219,MULTI:54,ITEM_DERIVED:27};
   if(JSON.stringify(mappingCounts)!==JSON.stringify(expectedMapping))fail('mappingMode aggregate mismatch');
-  const expectedCognitive={Knowledge:0,Understanding:1,Application:223,'Integrated Judgment':76};
+  const expectedCognitive={Knowledge:1,Understanding:0,Application:224,'Integrated Judgment':75};
   if(JSON.stringify(cognitiveCounts)!==JSON.stringify(expectedCognitive))fail('cognitive aggregate mismatch');
 
   const expectedItemDerived=[

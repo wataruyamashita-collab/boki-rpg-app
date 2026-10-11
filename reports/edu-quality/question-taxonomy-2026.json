@@ -9301,9 +9301,9 @@
       ],
       "sequencingEvidenceQuestionIds": [],
       "difficulty": 2,
-      "cognitiveLevel": "Understanding",
+      "cognitiveLevel": "Knowledge",
       "cognitiveEvidence": [
-        "L031は資産・負債の増減と借方・貸方の関係、および貸借平均の原理を区別して説明可能な形で選別する課題である。"
+        "資産・負債の増減を記入する側と貸借平均の原理について、5つの固定した語句を再生する。具体的な取引への適用や理由説明は採点しない。"
       ],
       "answerType": "ledger",
       "likelyErrorTags": [
@@ -9314,8 +9314,8 @@
         "targetConceptIds": [
           "FND_DEBIT_CREDIT"
         ],
-        "performanceVerb": "CLASSIFY",
-        "observableOutcome": "資産・負債の増加・減少を借方または貸方へ分類し、借方合計と貸方合計が一致する原理を確認できる。"
+        "performanceVerb": "IDENTIFY",
+        "observableOutcome": "資産・負債の増加・減少を記入する側を借方または貸方で答え、借方合計と貸方合計の関係を一致と答えられる。"
       },
       "transferGroup": "XFER:account-entry-rules",
       "transferStatus": "TRANSFER_REVIEW_REQUIRED"
@@ -10059,9 +10059,9 @@
         "J002"
       ],
       "difficulty": 3,
-      "cognitiveLevel": "Integrated Judgment",
+      "cognitiveLevel": "Application",
       "cognitiveEvidence": [
-        "L050は複数の記録・調整・判断を統合して最終結果を確定する課題である。"
+        "現金の受取・支払・現金を伴わない3取引に既知の3伝票制の分類規則を適用し、それぞれの伝票へ取引金額を記入する。"
       ],
       "answerType": "ledger",
       "likelyErrorTags": [
@@ -10070,10 +10070,10 @@
       ],
       "explanationLearningObjective": {
         "targetConceptIds": [
-          "FND_EVIDENCE_READING"
+          "BOOK_VOUCHER_CLASSIFICATION"
         ],
-        "performanceVerb": "RECONCILE",
-        "observableOutcome": "伝票（3伝票制）の記録と根拠資料を照合し、差異または必要な処理を特定して正しく反映できる。"
+        "performanceVerb": "CLASSIFY",
+        "observableOutcome": "現金の受取・支払・現金を伴わない取引を入金伝票・出金伝票・振替伝票へ分類し、それぞれの取引金額を記入できる。"
       },
       "transferGroup": "XFER:syllabus:P1-5",
       "transferStatus": "TRANSFER_REVIEW_REQUIRED"
