@@ -387,10 +387,37 @@
       '問題文の条件を分類し、使う数字と使わない数字を分けてから計算します。'
     ];
   }
+  function authoredSection(q, heading){
+    const text=String(q.explanation||''),marker='【'+heading+'】',start=text.indexOf(marker);
+    if(start<0)return '';
+    return text.slice(start+marker.length).split('【')[0].trim();
+  }
+  // Keep authored reasoning in the structured path without appending its answer
+  // recap. This is presentation of existing evidence, not a new accounting oracle.
+  function journalReason(q){
+    const explicit=authoredSection(q,'処理の根拠');
+    if(explicit)return explicit;
+    return String(q.explanation||'').split('【')[0].split(/借方・貸方はいずれも/u)[0].trim();
+  }
+  function journalDecision(q,item){
+    const side=item.debitCredit,sideLabel=side==='debit'?'借方':side==='credit'?'貸方':'';
+    const row=arr(q.answer?.[side]).find(row=>row.account===item.decision&&row.amount===item.value);
+    if(!sideLabel||!row)return item;
+    const ending='するため、'+sideLabel+'を'+row.account+num(row.amount)+'円とします';
+    const sentence=authoredSection(q,'この問題への当てはめ').split('。').find(text=>text.endsWith(ending));
+    if(!sentence)return item;
+    const why=sentence.slice(0,-ending.length);
+    return {...item,decision:row.account+'：'+why,evidenceRefs:[...arr(item.evidenceRefs),'explanation']};
+  }
   function optimizeInstruction(q,m){
     const out={...m};
     const strategy=learnerStrategy(q);
     out.summary=strategy.map(text=>({text,evidenceRef:'question'}));
+    if(q.type==='journal'){
+      const reason=journalReason(q);
+      if(reason)out.summary.push({text:reason,evidenceRef:'explanation'});
+      out.transfer=arr(out.transfer).map(item=>journalDecision(q,item));
+    }
     const placementCritical=['journal','correction','worksheet'].includes(q.type);
     const calculatedValues=new Set(arr(out.calculation).filter(item=>/[×÷＋+−\-＝=]/u.test(String(item?.expression||''))).map(item=>comparableValue(item?.result)).filter(Boolean));
     if(!placementCritical&&calculatedValues.size){
