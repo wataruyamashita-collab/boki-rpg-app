@@ -131,6 +131,11 @@
   function ledgerGuidance(question) {
     const format = question.format || '', category = String(question.category || '');
     if (format === 'bookkeeping-account-rule') return ['資産の増加は借方、減少は貸方に記録します。','負債の増加は貸方、減少は借方に記録します。','借方合計と貸方合計の一致を確認します。'];
+    if (format === 'bookkeeping-account-ledger' && /支払利息/u.test(category)) return ['前期末の見越し、当期首の再振替、当期の支払、当期末の未払計上を時系列に並べます。','元本・年利率・対象月数から各期間の利息を求め、費用と未払額を区別して借方・貸方へ記入します。','費用勘定の当期額を損益へ振り替え、次期繰越をゼロにします。未払利息は負債として次期へ繰り越します。'];
+    if (format === 'bookkeeping-general-ledger' || format === 'bookkeeping-account-ledger' || (!format && /総勘定元帳|売掛金元帳|買掛金元帳/u.test(category))) return ['仕訳の日付・相手勘定・金額を、その勘定の借方または貸方へ転記します。','資産の増加は借方、負債の増加は貸方で、減少はそれぞれ反対側です。期首残高に増加を加え、減少を差し引き、残高方向も確認します。'];
+    if (format === 'bookkeeping-petty-cash-book') return ['支払報告の摘要を読み、支払を対応する費用科目へ分類して科目別に合計します。','定額資金前渡法では、報告された支払額と同額を補給する条件を確認し、その合計を補給額にします。'];
+    if (format === 'bookkeeping-purchase-book') return ['仕入と仕入返品を分けて仕入帳へ記帳し、総仕入高から返品額を差し引いて純仕入高を求めます。'];
+    if (format === 'bookkeeping-sales-book') return ['売上と売上返品を分けて売上帳へ記帳し、総売上高から返品額を差し引いて純売上高を求めます。'];
     if (format === 'fixed-asset-ledger' || (!format && /固定資産台帳/u.test(category))) return ['取得原価・残存価額・耐用年数・償却方法・使用月数を資料から確認します。','指定された償却方法で、売却時や決算時など問題で指定された時点までの減価償却費を求め、期首の累計額に加えます。','取得原価からその時点の減価償却累計額を差し引いて帳簿価額を求めます。売却損益を求める場合は、売却時の帳簿価額と売却価額を比べます。'];
     if (format === 'bookkeeping-voucher-entry') return ['現金が増える取引は入金伝票、現金が減る取引は出金伝票、現金が動かない取引は振替伝票を選びます。','取引内容と金額を資料に照らして記入します。'];
     if (format === 'bookkeeping-cash-book' || (!format && /現金出納帳/u.test(category))) return ['証憑を日付順に転記し、入金は加算、出金は減算して直前残高から更新します。','日付・摘要・残高を資料と照合します。'];

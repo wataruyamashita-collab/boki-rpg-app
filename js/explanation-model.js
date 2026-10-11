@@ -404,9 +404,16 @@
     const row=arr(q.answer?.[side]).find(row=>row.account===item.decision&&row.amount===item.value);
     if(!sideLabel||!row)return item;
     const ending='するため、'+sideLabel+'を'+row.account+num(row.amount)+'円とします';
-    const sentence=authoredSection(q,'この問題への当てはめ').split('。').find(text=>text.endsWith(ending));
-    if(!sentence)return item;
-    const why=sentence.slice(0,-ending.length);
+    const sentences=authoredSection(q,'この問題への当てはめ').split('。').map(text=>text.trim());
+    const sentence=sentences.find(text=>text.endsWith(ending));
+    let why=sentence?.slice(0,-ending.length);
+    if(!why){
+      const specialEnding='するため、この問題では'+sideLabel+'に'+num(row.amount)+'円を記録します';
+      const index=sentences.findIndex(text=>text.startsWith(row.account+'という特殊勘定')&&text.endsWith(specialEnding));
+      const definition=sentences[index-1];
+      if(index<1||!definition.startsWith(row.account+'は'))return item;
+      why=definition+'。'+sentences[index].replace('に'+num(row.amount)+'円を記録します','に記録します');
+    }
     return {...item,decision:row.account+'：'+why,evidenceRefs:[...arr(item.evidenceRefs),'explanation']};
   }
   function optimizeInstruction(q,m){

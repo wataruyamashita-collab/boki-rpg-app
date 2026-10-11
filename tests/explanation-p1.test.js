@@ -60,4 +60,49 @@ test('cashbook / neutral unknown format / all 300 immutable',()=>{
   for(const q of Object.values(questions))assert(Model.validate(Model.build(q,{}, {correct:false})).valid,q.id);
   assert.strictEqual(JSON.stringify(questions),before);
 });
+const reviewedLedgerRules={
+  L001:[/期首残高/,/増加/,/減少/,/残高方向/],
+  L002:[/期首残高/,/増加/,/減少/,/残高方向/],
+  L003:[/期首残高/,/増加/,/減少/,/残高方向/],
+  L037:[/相手勘定/,/資産.*増加.*借方/,/負債.*増加.*貸方/,/残高方向/],
+  L038:[/相手勘定/,/期首残高/,/減少/,/残高方向/],
+  L039:[/再振替/,/月数/,/未払/,/損益/,/次期繰越/],
+  L046:[/支払.*費用.*分類/,/合計/,/補給/],
+  L047:[/総仕入高.*返品.*差し引.*純仕入高/],
+  L048:[/総売上高.*返品.*差し引.*純売上高/]
+};
+for(const [id,rules] of Object.entries(reviewedLedgerRules))test('review ledger '+id,()=>{
+  const q=questions[id],guidance=Feedback.ledgerGuidance(q).join('');
+  rules.forEach(rule=>assert(rule.test(guidance),id+' format procedure '+rule));
+  for(const cells of [{},Object.fromEntries(Object.keys(q.answer.cells).map(key=>[key,'不正値']))]){
+    const text=Feedback.diagnoseWrongAnswer(q,{cells},{correct:false}).map(d=>d.reason).join('');
+    rules.forEach(rule=>assert(rule.test(text),id+' diagnostic '+rule));
+  }
+  assert.deepStrictEqual(Feedback.ledgerGuidance({...q,id:'renamed'}),Feedback.ledgerGuidance(q));
+});
+const specialAccounts={J050:[['損益','一時的な決算勘定'],['繰越利益剰余金','会社内に留保された純資産']],J100:[['損益','一時的な決算勘定'],['繰越利益剰余金','会社内に留保された純資産']],J017:[['現金過不足','原因判明まで記録する仮勘定']],J145:[['貸倒引当金','資産の評価勘定']]};
+for(const [id,accounts] of Object.entries(specialAccounts))test('review special accounts '+id,()=>{
+  const q=questions[id];
+  for(const correct of [true,false])for(const [account,definition] of accounts){
+    const model=Model.build(q,correct?q.answer:{},{correct});
+    const card=model.transfer.find(item=>item.decision.startsWith(account+'：'));
+    assert(card&&card.decision.includes(definition),id+' '+account+' authored definition reaches transfer');
+    assert(card.decision.includes('この問題では'+card.to+'に'),'authored placement remains tied to side');
+    assert(!/円/u.test(card.decision),'金額は転記先に一度だけ表示する');
+    assert(card.evidenceRefs.includes('explanation'));
+  }
+});
+test('special-account evidence must match account, side and amount',()=>{
+  const q=questions.J050;
+  for(const [from,to] of [['借方に420,000円','借方に999,000円'],['借方に420,000円','貸方に420,000円'],['損益という特殊勘定','別科目という特殊勘定']]){
+    const model=Model.build({...q,explanation:q.explanation.replace(from,to)},{},{correct:true});
+    assert.strictEqual(model.transfer.find(item=>item.to==='借方').decision,'損益');
+  }
+});
+test('account-ledger guidance does not infer interest from format alone',()=>{
+  const q={...questions.L039,category:'任意の勘定元帳'};
+  const guidance=Feedback.ledgerGuidance(q).join('');
+  assert(!/利息|年利率|再振替/.test(guidance));
+  assert(/相手勘定/.test(guidance));
+});
 if(failures.length){console.error(failures.length+' P1 regression failures');process.exitCode=1;}
