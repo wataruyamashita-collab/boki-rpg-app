@@ -75,6 +75,10 @@
       "TX_REVENUE_EXPENSE",
       "FND_JOURNAL_ENTRY"
     ],
+    "ADJ_UNUSED_SUPPLIES": [
+      "TX_REVENUE_EXPENSE",
+      "FND_ACCOUNT_CLASSIFICATION"
+    ],
     "ADJ_DEPRECIATION": [
       "TX_FIXED_ASSETS",
       "FND_JOURNAL_ENTRY"
@@ -3701,7 +3705,7 @@
       "authoredCategory": "貯蔵品",
       "mappingMode": "MULTI",
       "primarySyllabusMapping": {
-        "code": "P2-9"
+        "code": "P3-3"
       },
       "secondarySyllabusMappings": [
         {
@@ -3709,7 +3713,7 @@
         }
       ],
       "scopeStatus2026": "IN_SCOPE",
-      "mappingRationale": "貯蔵品は主論点に加えて帳簿・債権債務・決算等の副論点を同時に扱うため複合対応付けとした。",
+      "mappingRationale": "費用処理済みの未使用収入印紙を決算時に資産へ振り替える処理を採点するため、決算整理を主分類とする。租税公課として処理した収入印紙に関するため税金を副分類とする。",
       "prerequisiteConcepts": [
         "FND_TRANSACTION_ANALYSIS",
         "FND_DEBIT_CREDIT"
@@ -3728,13 +3732,13 @@
       ],
       "explanationLearningObjective": {
         "targetConceptIds": [
-          "TX_INVENTORY_PURCHASE_SALES",
+          "ADJ_UNUSED_SUPPLIES",
           "TX_TAX"
         ],
         "performanceVerb": "APPLY",
-        "observableOutcome": "貯蔵品の取引事実を読み、適切な勘定科目・借貸方向・金額へ変換して処理できる。"
+        "observableOutcome": "購入時に費用処理した収入印紙の未使用分を決算時に資産へ振り替え、貯蔵品を借方、租税公課を貸方に未使用額で記帳できる。"
       },
-      "transferGroup": "XFER:syllabus:P2-9",
+      "transferGroup": "XFER:unused-revenue-stamp-adjustment",
       "transferStatus": "TRANSFER_REVIEW_REQUIRED"
     },
     {
