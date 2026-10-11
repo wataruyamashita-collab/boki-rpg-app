@@ -31,6 +31,8 @@ jobs:
         run: npm install --no-save --package-lock=false playwright@1.55.0
       - name: Install Chromium and WebKit
         run: npx playwright install --with-deps chromium webkit
+      - name: Run repeated same-page manual PWA update and old-tab ownership gate
+        run: node .github/visual/run-pwa-manual-update.js
       - name: Run durable learning evidence and persistence gate
         run: node .github/visual/run-learning-effectiveness.js
       - name: Run PR 212 legacy provenance and input confirmation gate
@@ -45,6 +47,8 @@ jobs:
         run: node .github/visual/run-visual.js strict
       - name: Run explanation integration gate in real browsers
         run: node .github/visual/run-explanation-integration.js
+      - name: Run explanation P1 rendered reasoning and actual learning routes
+        run: node .github/visual/run-explanation-p1.js && node .github/visual/run-explanation-p1-paths.js
       - name: Run journal explanation ticket gate in real browsers
         run: node .github/visual/run-journal-explanation-ticket.js
       - name: Run worksheet mobile gate in real browsers

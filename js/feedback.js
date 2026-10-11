@@ -77,7 +77,7 @@
       const opposite = side === 'debit' ? 'credit' : 'debit';
       if ((answer?.[opposite] || []).some(row => row.account === item.account)) result.push(entry('side', `${item.account}の貸借が逆です`, directionReason(item.account, side, question), context(question), cashOverShort(question) ? '帳簿残高と実際有高の大小を先に書き、現金を実際有高へ合わせる側と、現金過不足の側を決めます。' : `勘定の性質と増減を分けて判断し、${item.account}を${side === 'debit' ? '借方' : '貸方'}へ記入します。`, `side:${item.account}`));
       const same = entered.find(row => row.account === item.account);
-      if (same && Number(same.amount) !== item.amount) result.push(entry('amount', `${item.account}の金額が違います`, `入力した${yen(same.amount)}円ではなく${yen(item.amount)}円です。表示額のうち、総額・控除額・差額の役割を取り違えています。`, context(question), '問題文の数値へ役割を書き添え、必要な加減算を式にしてから転記します。', `amount:${item.account}`));
+      if (same && Number(same.amount) !== item.amount) result.push(entry('amount', `${item.account}の金額が違います`, `入力した${yen(same.amount)}円ではなく${yen(item.amount)}円です。問題文の金額と入力値を照合し、計算が必要な場合は総額・控除額・差額の役割を確認します。`, context(question), '問題文の数値へ役割を書き添え、必要な加減算を式にしてから転記します。', `amount:${item.account}`));
       if (!same && !entered.some(row => row.account && !correct.some(value => value.account === row.account))) result.push(entry('missing', `${item.account}が未記入です`, `${side === 'debit' ? '借方' : '貸方'}の${item.account} ${yen(item.amount)}円が必要です。この要素を省くと取引の一部が記録されません。`, context(question), '取引を構成する資産・負債・純資産・収益・費用の変化を列挙し、合計の貸借一致まで確認します。', `missing:${item.account}`));
     }
     const remainingExpected = [...correct]; const wrongRows = [];
@@ -126,8 +126,28 @@
     const expression = sumExpression(question, expected); if (expression) return `合計を構成する金額を漏れなく足すと、${expression}です。${actual === '未入力' ? '未入力のため、根拠となる項目を一つずつ転記します。' : `入力値${actual}は、一項目漏れ・二重計上がないか照合します。`}`;
     return context(question);
   }
+  // Shared by diagnostics and the legacy explanation path. A ledger is not
+  // necessarily a cashbook; explicit formats take precedence over old categories.
+  function ledgerGuidance(question) {
+    const format = question.format || '', category = String(question.category || '');
+    if (format === 'bookkeeping-account-rule') return ['資産の増加は借方、減少は貸方に記録します。','負債の増加は貸方、減少は借方に記録します。','借方合計と貸方合計の一致を確認します。'];
+    if (format === 'bookkeeping-account-ledger' && /支払利息/u.test(category)) return ['前期末の見越し、当期首の再振替、当期の支払、当期末の未払計上を時系列に並べます。','元本・年利率・対象月数から各期間の利息を求め、費用と未払額を区別して借方・貸方へ記入します。','費用勘定の当期額を損益へ振り替え、次期繰越をゼロにします。未払利息は負債として次期へ繰り越します。'];
+    if (format === 'bookkeeping-general-ledger' || format === 'bookkeeping-account-ledger' || (!format && /総勘定元帳|売掛金元帳|買掛金元帳/u.test(category))) return ['仕訳の日付・相手勘定・金額を、その勘定の借方または貸方へ転記します。','資産の増加は借方、負債の増加は貸方で、減少はそれぞれ反対側です。期首残高に増加を加え、減少を差し引き、残高方向も確認します。'];
+    if (format === 'bookkeeping-petty-cash-book') return ['支払報告の摘要を読み、支払を対応する費用科目へ分類して科目別に合計します。','定額資金前渡法では、報告された支払額と同額を補給する条件を確認し、その合計を補給額にします。'];
+    if (format === 'bookkeeping-purchase-book') return ['仕入と仕入返品を分けて仕入帳へ記帳し、総仕入高から返品額を差し引いて純仕入高を求めます。'];
+    if (format === 'bookkeeping-sales-book') return ['売上と売上返品を分けて売上帳へ記帳し、総売上高から返品額を差し引いて純売上高を求めます。'];
+    if (format === 'fixed-asset-ledger' || (!format && /固定資産台帳/u.test(category))) return ['取得原価・残存価額・耐用年数・償却方法・使用月数を資料から確認します。','指定された償却方法で、売却時や決算時など問題で指定された時点までの減価償却費を求め、期首の累計額に加えます。','取得原価からその時点の減価償却累計額を差し引いて帳簿価額を求めます。売却損益を求める場合は、売却時の帳簿価額と売却価額を比べます。'];
+    if (format === 'bookkeeping-voucher-entry') return ['現金が増える取引は入金伝票、現金が減る取引は出金伝票、現金が動かない取引は振替伝票を選びます。','取引内容と金額を資料に照らして記入します。'];
+    if (format === 'bookkeeping-cash-book' || (!format && /現金出納帳/u.test(category))) return ['証憑を日付順に転記し、入金は加算、出金は減算して直前残高から更新します。','日付・摘要・残高を資料と照合します。'];
+    if (format === 'bookkeeping-checking-book') return ['当座預金の預入と引出を分け、預入を加え、引出を差し引いて残高をつなげます。'];
+    if (format === 'bookkeeping-inventory-ledger' || (!format && /商品有高帳/u.test(category))) return ['数量と単価を区別し、指定された払出単価の計算方法で払出額と残高額を求めます。'];
+    if (format === 'journal-book' || (!format && /仕訳帳/u.test(category))) return ['取引の勘定科目と貸借を決め、日付順に仕訳帳へ記入します。','元丁は転記先の総勘定元帳を示す番号として確認します。'];
+    if (format === 'bookkeeping-notes-receivable') return ['約束手形の受取を記帳対象に選び、振出人・金額・満期日を資料と照合します。'];
+    if (format === 'bookkeeping-notes-payable') return ['自店が振り出した約束手形を記帳対象に選び、金額・満期日を資料と照合します。'];
+    return ['求められている記入欄の意味を確認し、その帳簿の対象となる取引・勘定科目・金額を資料と照合します。'];
+  }
   const typeRule = question => ({
-    ledger:'証憑を日付順に転記し、入金は加算、出金は減算して直前残高から更新します。',
+    ledger:ledgerGuidance(question).join(''),
     trial_balance:'各勘定残高を借方・貸方の正しい列へ一度だけ集計し、両側の合計一致で検算します。',
     correction:'元の誤仕訳を逆仕訳で取り消し、正しい仕訳を加えた差額が訂正仕訳です。科目と貸借をこの順で確認します。',
     worksheet:'整理前残高に決算整理仕訳を反映し、損益計算書と貸借対照表へ勘定の性質ごとに振り分けます。',
@@ -135,9 +155,10 @@
     comprehensive:'資料ごとに仕訳し、転記、集計、決算整理の順に処理して各段階の貸借一致を確認します。'
   }[question.type] || '資料、会計ルール、計算式、転記先の順に確認します。');
   function diagnoseTable(question, answer) {
-    return Object.entries(question.answer.cells).filter(([id, expected]) => !sameValue(answer?.cells?.[id], expected)).map(([id, expected]) => {
+    return Object.entries(question.answer.cells).filter(([id, expected]) => !sameValue(answer?.cells?.[id], expected)).map(([id, expected], index) => {
       const actual = answer?.cells?.[id]; const normalized = normalize(actual); const numeric = normalized !== '' && Number.isFinite(Number(normalized)); const shown = actual == null || String(actual).trim() === '' ? '未入力' : (typeof expected === 'number' ? (numeric ? `${yen(normalized)}円` : `入力値「${String(actual)}」`) : `「${actual}」`); const label = humanLabel(question, id); const correct = typeof expected === 'number' ? `${yen(expected)}円` : `「${expected}」`;
-      return entry('cell', `${label}を見直します`, `${label}は${shown}ではなく${correct}です。${typeRule(question)}`, derivation(question, id, expected, shown), `「${label}」の意味を確認し、根拠となる資料と計算式を照合して${correct}を記入します。`, `${question.type}:${label}`);
+      const rule = question.type === 'ledger' && index > 0 ? '' : typeRule(question);
+      return entry('cell', `${label}を見直します`, `${label}は${shown}ではなく${correct}です。${rule}`, derivation(question, id, expected, shown), `「${label}」の意味を確認し、根拠となる資料と計算式を照合して${correct}を記入します。`, `${question.type}:${label}`);
     });
   }
   function diagnoseWrongAnswer(question, answer, score) {
@@ -145,5 +166,5 @@
     const diagnostics = question.type === 'journal' ? diagnoseJournal(question, answer || {}) : question.type === 'correction' ? diagnoseCorrection(question, answer || {}) : diagnoseTable(question, answer || {});
     return diagnostics.length ? diagnostics : [entry('general', '正解との差を確認します', '入力した科目・金額・位置の組合せが会計処理と一致していません。', context(question), typeRule(question))];
   }
-  return Object.freeze({ diagnoseWrongAnswer, MISCONCEPTIONS, humanLabel });
+  return Object.freeze({ diagnoseWrongAnswer, MISCONCEPTIONS, humanLabel, ledgerGuidance });
 });

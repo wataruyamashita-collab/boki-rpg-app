@@ -23,7 +23,7 @@ function fixture() {
 function tab(f, locks=f.locks) {
   const events = {}, warning = {hidden:true,textContent:'original warning'}, document = {currentScript:{src:'https://boki.test/js/app.js?v='+currentRelease},addEventListener(){},getElementById:id=>id==='storage-warning'?warning:null};
   const clientId='client-'+(++f.nextClient);
-  const worker={state:'activated',postMessage(message,ports){if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:currentRelease,requester:clientId,clients:[...f.clients]});}};
+  const worker={state:'activated',postMessage(message,ports){if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:currentRelease,requester:clientId,clients:[...f.clients],activation:null});}};
   const registration={active:worker,waiting:null,installing:null,addEventListener(){},async update(){return this;}};
   const serviceWorker={controller:worker,async getRegistration(){f.clients.add(clientId);return registration;},async register(){f.clients.add(clientId);return registration;},addEventListener(){}};
   let reloads=0;
@@ -313,6 +313,78 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS '+name);}
       await Promise.all(proofs);await tick();assert.strictEqual(notices.length,1);assert.strictEqual(activated,0);
       notices[0][2]();assert.strictEqual(activated,1);
     }finally{a.fire('pagehide');}
+  });
+
+  const ownProof=(f,a,activation,after=()=>{})=>{
+    a.worker.postMessage=function(message,ports){
+      if(message.type==='BOKI_STORAGE_CLIENTS'){
+        const value={protocol:1,release:currentRelease,requester:a.clientId,clients:[...f.clients],activation:typeof activation==='function'?activation():activation};
+        after();ports[0].postMessage(value);
+      }
+    };
+  };
+  const until=async condition=>{for(let i=0;i<200&&!condition();i++)await new Promise(resolve=>setTimeout(resolve,5));};
+  await test('a stale activating page wrapper starts only with its active worker own activated proof',async()=>{
+    const f=fixture(),a=tab(f);a.worker.state='activating';ownProof(f,a,{state:'activated',active:true});
+    try{a.app.init();await until(()=>!!a.app.controller);assert(a.app.controller,'own activated coordinator must unblock the stale page wrapper');assert(a.app.storageOwnership.active);}
+    finally{a.fire('pagehide');}
+  });
+  for(const activation of [{state:'activating',active:true},{state:'installed',active:false},undefined,{state:'activated'}, {state:'activated',active:false}])await test('page activated does not override missing, inconsistent or incomplete own activation '+JSON.stringify(activation),async()=>{
+    const f=fixture(),a=tab(f);f.data[progressKey]='original';ownProof(f,a,activation);
+    try{a.app.init();await new Promise(resolve=>setTimeout(resolve,40));assert.strictEqual(a.app.controller,undefined);assert.strictEqual(f.storage.reads,0);assert.deepStrictEqual(f.data,{[progressKey]:'original'});}
+    finally{a.fire('pagehide');}
+  });
+  for(const invalidation of ['other-controller','replaced-active','redundant','pagehide'])await test('own activation proof cannot survive '+invalidation+' during the reply',async()=>{
+    const f=fixture(),a=tab(f);ownProof(f,a,{state:'activated',active:true},()=>{
+      if(invalidation==='other-controller')a.root.navigator.serviceWorker.controller={state:'activated'};
+      if(invalidation==='replaced-active')a.registration.active={state:'activated',postMessage(){throw Error('different worker');}};
+      if(invalidation==='redundant')a.worker.state='redundant';
+      if(invalidation==='pagehide')a.fire('pagehide');
+    });
+    try{a.app.init();await new Promise(resolve=>setTimeout(resolve,40));assert.strictEqual(a.app.controller,undefined);assert.strictEqual(f.storage.reads,0);}
+    finally{a.fire('pagehide');}
+  });
+  await test('a genuinely activating worker prevents storage reads until its own activation completes',async()=>{
+    const f=fixture(),a=tab(f);a.worker.state='activating';let ownState='activating';ownProof(f,a,()=>({state:ownState,active:true}));
+    try{a.app.init();await new Promise(resolve=>setTimeout(resolve,40));assert.strictEqual(f.storage.reads,0);assert.strictEqual(a.app.controller,undefined);
+      ownState='activated';await until(()=>!!a.app.controller);assert(a.app.controller);}
+    finally{a.fire('pagehide');}
+  });
+  await test('own activated proof cannot bypass an old client, and startup rechecks after that client closes',async()=>{
+    const f=fixture(),a=tab(f);a.worker.state='activating';f.clients.add('old-client');ownProof(f,a,{state:'activated',active:true});
+    try{a.app.init();await until(()=>a.app.storageClientStatus==='waiting');assert.strictEqual(a.app.storageClientStatus,'waiting');assert.strictEqual(f.storage.reads,0);
+      f.clients.delete('old-client');await until(()=>!!a.app.controller);assert(a.app.controller);}
+    finally{a.fire('pagehide');}
+  });
+  await test('explicitly unsupported own-state API never unlocks an activating page wrapper',async()=>{
+    const f=fixture(),a=tab(f);a.worker.state='activating';
+    try{a.app.init();await new Promise(resolve=>setTimeout(resolve,40));assert.strictEqual(f.storage.reads,0);assert.strictEqual(a.app.controller,undefined);}
+    finally{a.fire('pagehide');}
+  });
+  for(const activation of [null,{state:'activated',active:true}])await test('force refresh with no controlling worker preserves normal activated coordinator startup '+JSON.stringify(activation),async()=>{
+    const f=fixture(),a=tab(f);a.root.navigator.serviceWorker.controller=null;ownProof(f,a,activation);
+    try{a.app.init();await until(()=>!!a.app.controller);assert(a.app.controller,'force reload remains supported without taking the stale activating exception');}
+    finally{a.fire('pagehide');}
+  });
+  await test('startup re-enumerates clients after installed worker activation before reading saves',async()=>{
+    const f=fixture(),a=tab(f);let activeProofs=0;
+    const old={state:'activated',postMessage(message,ports){if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:'20260924-187',requester:a.clientId,clients:[...f.clients]});}};
+    a.registration.active=old;a.registration.waiting=a.worker;a.root.navigator.serviceWorker.controller=old;a.worker.state='installed';
+    a.worker.postMessage=function(message,ports){
+      if(message.type==='SKIP_WAITING'){this.state='activating';a.registration.active=this;a.registration.waiting=null;a.root.navigator.serviceWorker.controller=this;f.clients.add('arrived-during-activation');}
+      if(message.type==='BOKI_STORAGE_CLIENTS'){
+        const activated=this.state==='activating';if(activated)activeProofs++;
+        ports[0].postMessage({protocol:1,release:currentRelease,requester:a.clientId,clients:[...f.clients],activation:{state:activated?'activated':'installed',active:activated}});
+      }
+    };
+    try{a.app.init();await until(()=>a.app.storageClientStatus==='waiting');assert.strictEqual(a.app.storageClientStatus,'waiting');assert(activeProofs>=2,'post-activation client list must be obtained again');assert.strictEqual(f.storage.reads,0);
+      f.clients.delete('arrived-during-activation');await until(()=>!!a.app.controller);assert(a.app.controller);}
+    finally{a.fire('pagehide');}
+  });
+  for(const malformed of ['duplicate-clients','missing-requester','wrong-release'])await test('own activated evidence never overrides '+malformed,async()=>{
+    const f=fixture(),a=tab(f);a.worker.postMessage=function(message,ports){if(message.type==='BOKI_STORAGE_CLIENTS')ports[0].postMessage({protocol:1,release:malformed==='wrong-release'?'20260924-187':currentRelease,requester:a.clientId,clients:malformed==='duplicate-clients'?[a.clientId,a.clientId]:malformed==='missing-requester'?['another-client']:[a.clientId],activation:{state:'activated',active:true}});};
+    try{await a.app.init();assert.strictEqual(a.app.controller,undefined);assert.strictEqual(f.storage.reads,0);}
+    finally{a.fire('pagehide');}
   });
   console.log(`STORAGE_OWNERSHIP ${passed}/${passed+failed} PASS; ${failed} FAIL`);if(failed)process.exitCode=1;
 })();
