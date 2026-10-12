@@ -100,4 +100,18 @@ geometry.panel.style.left=''; geometry.panel.style.top='';
 otherInput.getBoundingClientRect=()=>({right:200,top:90,bottom:134});
 geometry.controller.positionCalculatorNearTarget(otherInput,geometry.panel,true);
 assert.equal(geometry.panel.getBoundingClientRect().top,142,'cleared/reopened positioning must re-anchor');
+// Width changes must handle an offscreen anchor without selecting/resetting it.
+for(const viewport of [{width:844,height:320,offsetTop:0},{width:390,height:844,offsetTop:0},{width:844,height:160,offsetTop:90}]) {
+  for(const targetTop of [-180,980]) {
+    Object.assign(geometry.root.visualViewport,viewport);
+    inputTop=targetTop;
+    geometry.controller.calculatorPlacement=null;
+    const beforeState=JSON.stringify([geometry.input.value,geometry.controller.expression,geometry.controller.calculator]);
+    geometry.controller.positionCalculatorNearTarget(geometry.input,geometry.panel,true);
+    const r=geometry.panel.getBoundingClientRect();
+    assert(r.top>=viewport.offsetTop+8 && r.bottom<=viewport.offsetTop+viewport.height-8,
+      `offscreen anchor ${targetTop} must fit visible height ${viewport.height}: ${JSON.stringify(r)}`);
+    assert.equal(JSON.stringify([geometry.input.value,geometry.controller.expression,geometry.controller.calculator]),beforeState);
+  }
+}
 console.log('CALCULATOR_VIEWPORT contract cases PASS');

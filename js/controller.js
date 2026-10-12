@@ -1407,7 +1407,8 @@
       const requiredHeight = Math.min(naturalHeight || 280, 280);
       const placeBelow = availableBelow >= requiredHeight || availableBelow >= availableAbove;
       const available = placeBelow ? availableBelow : availableAbove;
-      const maxHeight = Math.max(0, Math.min(380, available));
+      const visibleHeight = Math.max(0, viewportHeight - edge * 2);
+      const maxHeight = Math.max(0, Math.min(380, visibleHeight, available || visibleHeight));
       calculatorPanel.style.maxHeight = `${maxHeight}px`;
       panelRect = calculatorPanel.getBoundingClientRect?.() || { height:maxHeight };
       const height = Math.max(0, Number(panelRect.height) || 0);
@@ -1429,6 +1430,15 @@
           anchoredTop = top + correction;
           calculatorPanel.style.top = `${Math.round(anchoredTop)}px`;
         }
+      }
+      // Rotation can leave the selected field outside the visual viewport.
+      // Keep its calculation/selection, but constrain the rendered panel itself.
+      const placedRect = calculatorPanel.getBoundingClientRect?.();
+      if (placedRect) {
+        const visibleTop = Math.max(viewportTop + edge,
+          Math.min(placedRect.top, viewportBottom - placedRect.height - edge));
+        anchoredTop += visibleTop - placedRect.top;
+        calculatorPanel.style.top = `${Math.round(anchoredTop)}px`;
       }
       calculatorPanel.classList?.toggle?.('calculator-placement-above', !placeBelow);
       if (calculatorPanel.dataset) calculatorPanel.dataset.placement = placeBelow ? 'below' : 'above';
