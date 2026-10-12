@@ -74,6 +74,24 @@ async function run() {
             });
             assert(Math.abs(report.scroll.delta)>1, 'scroll contract is tested only after real scrolling');
             assert(Math.abs(report.scroll.before-report.scroll.after)<2, 'calculator must not chase scrolling');
+            const beforeToolbar = await snapshot(page);
+            // Mobile browser toolbars can change height as the document scrolls.
+            await page.setViewportSize({width:scenario.to.width,height:scenario.to.height+60}); await settled(page);
+            report.toolbarResize = await snapshot(page);
+            await page.screenshot({path:path.join(OUT,engine+'-'+scenario.name+'-toolbar.png'),fullPage:true});
+            assert(Math.abs(report.toolbarResize.rect.top-report.scroll.after)<2,
+              'height-only toolbar resize after scrolling must preserve the fixed screen position');
+            for (const key of ['expression','calculator','values','target','draft']) assert.deepStrictEqual(report.toolbarResize[key],beforeToolbar[key]);
+            // A smaller visual area is a keyboard-height proxy, not a native iOS keyboard test.
+            await page.setViewportSize({width:scenario.to.width,height:520}); await settled(page);
+            report.heightReduction = await snapshot(page);
+            assert(report.heightReduction.rect.top>=7 && report.heightReduction.rect.bottom<=513,
+              'height reduction must keep the calculator within the visible area');
+            for (const key of ['expression','calculator','values','target','draft']) assert.deepStrictEqual(report.heightReduction[key],beforeToolbar[key]);
+            for (const key of ['AC','9','×','9','＝']) await page.locator(`[data-calc="${key}"]`).tap();
+            await page.locator('[data-action="calc-insert"]').tap();
+            assert.equal(await fields.nth(1).inputValue(),'81');
+            assert.equal(await fields.nth(0).inputValue(),'123');
             await page.locator('.calculator summary').tap();
             await page.setViewportSize(scenario.from); await settled(page);
             assert.equal(await page.locator('.calculator').evaluate(e=>e.open), false, 'resize must not reopen a closed calculator');
