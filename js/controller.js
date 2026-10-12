@@ -203,6 +203,19 @@
         this.selectCalculatorTarget(event.target);
       });
       const calculatorPanel = this.document.querySelector?.('.calculator');
+      const resizeCalculator = () => {
+        if (this.calculatorPositionFrame != null) root.cancelAnimationFrame?.(this.calculatorPositionFrame);
+        this.calculatorPositionFrame = root.requestAnimationFrame(() => {
+          this.calculatorPositionFrame = null;
+          const target = this.calculatorTarget;
+          if (!calculatorPanel?.open || !calculatorPanel.classList?.contains?.('calculator-contextual-float') ||
+              !target || target.disabled || !this.document.body.contains(target)) return;
+          // Reflow only: selecting again would discard an in-progress calculation.
+          this.positionCalculatorNearTarget(target, calculatorPanel);
+        });
+      };
+      root.addEventListener?.('resize', resizeCalculator);
+      root.visualViewport?.addEventListener?.('resize', resizeCalculator);
       calculatorPanel?.addEventListener?.('toggle', () => {
         const active = Boolean(calculatorPanel.open && calculatorPanel.classList?.contains?.('calculator-contextual-float'));
         if (!active) {
