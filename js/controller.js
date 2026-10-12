@@ -203,9 +203,23 @@
         this.selectCalculatorTarget(event.target);
       });
       const calculatorPanel = this.document.querySelector?.('.calculator');
+      const resizeCalculator = () => {
+        if (this.calculatorPositionFrame != null) root.cancelAnimationFrame?.(this.calculatorPositionFrame);
+        this.calculatorPositionFrame = root.requestAnimationFrame(() => {
+          this.calculatorPositionFrame = null;
+          const target = this.calculatorTarget;
+          if (!calculatorPanel?.open || !calculatorPanel.classList?.contains?.('calculator-contextual-float') ||
+              !target || target.disabled || !this.document.body.contains(target)) return;
+          // Reflow only: selecting again would discard an in-progress calculation.
+          this.positionCalculatorNearTarget(target, calculatorPanel, true);
+        });
+      };
+      root.addEventListener?.('resize', resizeCalculator);
+      root.visualViewport?.addEventListener?.('resize', resizeCalculator);
       calculatorPanel?.addEventListener?.('toggle', () => {
         const active = Boolean(calculatorPanel.open && calculatorPanel.classList?.contains?.('calculator-contextual-float'));
         if (!active) {
+          this.calculatorPlacement = null;
           calculatorPanel.classList?.remove?.('calculator-contextual-float');
           calculatorPanel.classList?.remove?.('calculator-placement-above');
           calculatorPanel.style?.removeProperty?.('left');
@@ -1351,7 +1365,7 @@
       input.setSelectionRange?.(caretAt(digitOffset(selectionStart)), caretAt(digitOffset(selectionEnd)), selectionDirection);
       return true;
     }
-    positionCalculatorNearTarget(input, calculatorPanel = this.document.querySelector?.('.calculator')) {
+    positionCalculatorNearTarget(input, calculatorPanel = this.document.querySelector?.('.calculator'), preserveScreenPosition = false) {
       if (!input || !calculatorPanel?.open || !calculatorPanel.classList?.contains?.('calculator-contextual-float')) return false;
       const inputRect = input.getBoundingClientRect?.();
       if (!inputRect) return false;
@@ -1367,7 +1381,24 @@
       const edge = 8;
       const gap = 8;
       const width = Math.max(0, Math.min(420, viewportWidth - edge * 2));
+      const previousRect = preserveScreenPosition && this.calculatorPlacement?.input === input &&
+        this.calculatorPlacement.viewportWidth === viewportWidth &&
+        Number.isFinite(parseFloat(calculatorPanel.style.left)) && Number.isFinite(parseFloat(calculatorPanel.style.top))
+        ? calculatorPanel.getBoundingClientRect?.() : null;
       calculatorPanel.style.width = `${width}px`;
+      if (previousRect) {
+        // Height changes include both scrolling browser toolbars and keyboards.
+        // Keep screen coordinates without guessing the cause; clamp to the new visible area.
+        const maxHeight = Math.max(0, Math.min(380, viewportHeight - edge * 2));
+        calculatorPanel.style.maxHeight = `${maxHeight}px`;
+        const height = calculatorPanel.getBoundingClientRect().height;
+        const left = Math.max(viewportLeft + edge, Math.min(previousRect.left, viewportRight - width - edge));
+        const top = Math.max(viewportTop + edge, Math.min(previousRect.top, viewportBottom - height - edge));
+        calculatorPanel.style.left = `${Math.round(parseFloat(calculatorPanel.style.left) + left - previousRect.left)}px`;
+        calculatorPanel.style.top = `${Math.round(parseFloat(calculatorPanel.style.top) + top - previousRect.top)}px`;
+        this.calculatorPlacement = { input, viewportWidth };
+        return { placement:calculatorPanel.dataset?.placement, left, top, width, maxHeight };
+      }
       calculatorPanel.style.maxHeight = '380px';
       let panelRect = calculatorPanel.getBoundingClientRect?.() || { height:0 };
       const naturalHeight = Math.max(0, Number(panelRect.height) || 0);
@@ -1376,7 +1407,8 @@
       const requiredHeight = Math.min(naturalHeight || 280, 280);
       const placeBelow = availableBelow >= requiredHeight || availableBelow >= availableAbove;
       const available = placeBelow ? availableBelow : availableAbove;
-      const maxHeight = Math.max(0, Math.min(380, available));
+      const visibleHeight = Math.max(0, viewportHeight - edge * 2);
+      const maxHeight = Math.max(0, Math.min(380, visibleHeight, available || visibleHeight));
       calculatorPanel.style.maxHeight = `${maxHeight}px`;
       panelRect = calculatorPanel.getBoundingClientRect?.() || { height:maxHeight };
       const height = Math.max(0, Number(panelRect.height) || 0);
@@ -1399,8 +1431,18 @@
           calculatorPanel.style.top = `${Math.round(anchoredTop)}px`;
         }
       }
+      // Rotation can leave the selected field outside the visual viewport.
+      // Keep its calculation/selection, but constrain the rendered panel itself.
+      const placedRect = calculatorPanel.getBoundingClientRect?.();
+      if (placedRect) {
+        const visibleTop = Math.max(viewportTop + edge,
+          Math.min(placedRect.top, viewportBottom - placedRect.height - edge));
+        anchoredTop += visibleTop - placedRect.top;
+        calculatorPanel.style.top = `${Math.round(anchoredTop)}px`;
+      }
       calculatorPanel.classList?.toggle?.('calculator-placement-above', !placeBelow);
       if (calculatorPanel.dataset) calculatorPanel.dataset.placement = placeBelow ? 'below' : 'above';
+      this.calculatorPlacement = { input, viewportWidth };
       return { placement: placeBelow ? 'below' : 'above', left, top:anchoredTop, width, maxHeight };
     }
     selectCalculatorTarget(input) {
@@ -1515,6 +1557,7 @@
       this.clearCalculator();
       if (this.calculatorPositionFrame !== null && typeof root.cancelAnimationFrame === 'function') root.cancelAnimationFrame(this.calculatorPositionFrame);
       this.calculatorPositionFrame=null;
+      this.calculatorPlacement=null;
       this.calculatorTarget=null;
       this.updateCalculatorDisplay();
       this.document.querySelectorAll?.('.amount-input.calculator-selected')?.forEach?.(field=>field.classList?.remove?.('calculator-selected'));
