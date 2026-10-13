@@ -964,7 +964,7 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSecti
   { label: '実務MEMO', kind: 'memo', text: '資産が増えます。' },
   { label: '試験POINT', kind: 'point', text: 'ここに注意。' }
 ], '解説見出しを実務MEMO・試験POINTのカード構造へ正規化する');
-assert(viewSource.includes("score.correct ? '正解です！' : 'もう一歩です'"), '採点結果は従来どおり正解またはもう一歩と表示する');
+assert(viewSource.includes("score.correct ? '正解です！' : '今回は不正解です'"), '回答結果は正解と不正解を曖昧にせず区別して表示する');
 assert(!viewSource.includes('部分点'), 'ユーザー向けの採点結果に部分点を表示しない');
 assert.strictEqual(browserSandbox.window.AppView.prefersCalculatorFirst({ matchMedia:()=>({ matches:true }) }), true, 'coarse touch primary inputはcalculator-firstにする');
 assert.strictEqual(browserSandbox.window.AppView.prefersCalculatorFirst({ matchMedia:()=>({ matches:false }) }), false, 'fine pointerまたはhybrid primary inputはdesktop direct-entryを保つ');
