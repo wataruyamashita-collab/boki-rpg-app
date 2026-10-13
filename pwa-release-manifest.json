@@ -1,8 +1,8 @@
 {
-  "release": "20260924-213",
-  "previousRelease": "20260924-212",
+  "release": "20261014-214",
+  "previousRelease": "20260924-213",
   "assets": {
-    "css/style.css": "07d82b4621eb2d77e9e705fc3fb6ee804e00c1a7a3ddf9e7e205ebc728255119",
+    "css/style.css": "f2d32d7fde198ccd7d5152abe6d2b7331cae716656a6bb7a0392e5e5e0294979",
     "data/accounting-domain.js": "16f07804022f6ad69800f84f3af06653e5cdc25a52ae0232254e101425ec1e00",
     "data/questions.js": "613f95ddbad6696a547a195f6aa51b6b09a0348219beba0f477667b97375a77e",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
@@ -14,8 +14,8 @@
     "js/explanation-formulas.js": "3b96bc7ddbe21a3094200b30b0e2d3b1de899b555a88724c02b3f7c8f4db47c5",
     "js/explanation-model.js": "37fbcc76065a3e9925353e9715002b5f7122d0920c50ce573ea0c9e825fcf7e0",
     "js/explanation-design-system.js": "4a574d98b014deef416bc5120d2da5664f95d8039142eaeb9d8bf45582b7898d",
-    "js/view.js": "c6cbcf7397e563e2cfd3979045d49dc46bc033f4bfbac0de1289bbe3b16af30a",
-    "js/controller.js": "0bfa44329e6bcc921cef10beceb175e30694613da4020c91d686757dabeb278c",
+    "js/view.js": "40ff9ab4b6497186bd651fcb096d567183c2a79ecfd9b9e469a309c11c604982",
+    "js/controller.js": "a3412379a2b30e649613676cae1f665b232f892eb9b6a0da9070e0c2b6ac9635",
     "js/app.js": "48926f2d3f871c202bff4d35ead2e05d2b55c71dfd533a0797802fd5dc4a34de",
     "data/form-a.json": "8d980909e2dccd532bb9f23b6908bcd49fb8b9fdef7fc661afc72799d2a77bc1",
     "js/form-a-scoring.js": "0f115fdbd542438685d86a412c02e7a07262b516606c50fbe24409c0536cd086",
@@ -24,6 +24,6 @@
     "css/form-a.css": "3ba52dc986d720c5244636b3e866fadd4d71d4587fffcc3750e7438ff8e09369"
   },
   "pages": {
-    "form-a.html": "65eeae48bb39a839c53e699a30502ca538cd7d31f0232073e09ffee915f94b8a"
+    "form-a.html": "340be1769750973dcb1e6032fa44c7fcac9b9ef66357517d63616610ecc6749d"
   }
 }
