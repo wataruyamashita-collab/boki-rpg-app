@@ -50,3 +50,64 @@ const feedbackIndex=html.indexOf(`js/feedback.js?v=${release}`),modelIndex=html.
 assert(feedbackIndex>=0&&feedbackIndex<modelIndex&&modelIndex<viewIndex,'feedback→explanation model→viewの順に読み込む');
 assert(worker.includes("'./js/explanation-model.js'"),'PWAキャッシュへexplanation modelを含める');
 console.log('explanation integration tests: PASS');
+
+// Exercise the final runtime data (including late editorial overrides), not source markers.
+class ExplanationNode {
+  constructor(tag) { this.tagName=tag; this.children=[]; this.dataset={}; this.attributes={}; this.className=''; this._text=''; this.classList={add:()=>{}}; }
+  append(...nodes) { this.children.push(...nodes); }
+  replaceChildren(...nodes) { this.children=nodes; this._text=''; }
+  setAttribute(key,value) { this.attributes[key]=String(value); }
+  set textContent(value) { this._text=String(value??''); this.children=[]; }
+  get textContent() { return this._text+this.children.map(node=>node.textContent).join(''); }
+}
+for(const file of ['js/feedback.js','js/explanation-formulas.js','js/explanation-model.js','js/explanation-design-system.js','js/view.js']) vm.runInNewContext(fs.readFileSync(file,'utf8'),sandbox,{filename:file});
+const descendants=node=>[node,...node.children.flatMap(descendants)];
+const visible=node=>node.tagName==='details'&&!node.open?node.children[0].textContent:node._text+node.children.map(visible).join('');
+const before=JSON.stringify(q);
+for(const question of Object.values(q)) for(const correct of [false,true]) {
+  const container=new ExplanationNode('div'), instance=Object.create(sandbox.window.AppView.prototype);
+  instance.document={createElement:tag=>new ExplanationNode(tag)};
+  instance.byId=()=>container;
+  instance.renderExplanation(question,{correct},correct?question.answer:{});
+  const nodes=descendants(container), details=nodes.filter(node=>node.tagName==='details');
+  assert(details.length>0,question.id+': supplements have native disclosure');
+  assert(details.every(node=>!node.open&&node.children[0].tagName==='summary'),question.id+': disclosure starts closed and has native accessible summary');
+  assert(!visible(container).includes('解答までの道筋'),question.id+': generic route is supplementary');
+  assert(!visible(container).includes('この問題で覚えること'),question.id+': generic takeaway is supplementary');
+  const model=sandbox.window.ExplanationModel.build(question,correct?question.answer:{},{correct});
+  if(question.teachingPresentation==='structured-always'||!correct) {
+    const flow=nodes.find(node=>node.className==='explanation-flow');
+    assert(flow,question.id+': structured flow remains available');
+    const steps=descendants(flow).filter(node=>node.className==='explanation-flow-step').map(node=>Number(node.textContent));
+    assert.deepStrictEqual(steps,steps.map((_,index)=>index+1),question.id+': primary steps are sequential');
+    const primaryMistakes=flow.children.filter(node=>node.dataset.section==='mistakes').flatMap(node=>node.children.filter(child=>child.className==='explanation-mistake-card'));
+    assert.strictEqual(primaryMistakes.length,correct?0:Math.min(1,model.mistakes.length),question.id+': at most one supported correction initially');
+    for(const item of model.summary) assert(container.textContent.includes(item.text),question.id+': summary retained');
+    for(const item of model.transfer) assert(visible(flow).includes(item.decision),question.id+': placement visible');
+    if(model.calculation.some(item=>/[×÷＋+−\-＝=]/u.test(String(item.expression||'')))) for(const item of model.calculation) if(item.derivation!=='direct'&&item.expression) assert(visible(flow).includes(item.expression),question.id+': necessary calculation visible');
+    for(const item of model.mistakes) assert(container.textContent.includes(item.correction),question.id+': extra corrections remain reachable');
+    const authored=model.summary.filter(item=>item.evidenceRef==='explanation');
+    if(authored.length) assert(visible(flow).includes(authored[0].text)&&!visible(flow).includes(model.summary[0].text),question.id+': authored accounting reason precedes generic goal');
+  }
+}
+assert.strictEqual(JSON.stringify(q),before,'rendering all 300 must preserve canonical runtime data');
+for(const [id,term] of [['J131','水道光熱費'],['J137','未収入金'],['J147','当座預金'],['L039','再振替']]) assert(JSON.stringify(sandbox.window.ExplanationModel.build(q[id],{},{correct:false})).includes(term),id+': final override evidence retained');
+console.log('progressive explanation runtime 300 × correct/wrong: PASS');
+// Legacy/unstructured callers still see authored explanations without expanding generic steps.
+for(const mode of ['no-question-model','no-runtime-model','ordinary-correct']) {
+  const savedModel=sandbox.window.ExplanationModel;
+  const question={...q.J001};
+  if(mode==='no-question-model') delete question.explanationModel;
+  if(mode==='no-runtime-model') sandbox.window.ExplanationModel=undefined;
+  if(mode==='ordinary-correct') question.teachingPresentation=undefined;
+  try {
+    const container=new ExplanationNode('div'),instance=Object.create(sandbox.window.AppView.prototype);
+    instance.document={createElement:tag=>new ExplanationNode(tag)}; instance.byId=()=>container;
+    instance.renderExplanation(question,{correct:true},question.answer);
+    assert(!descendants(container).some(node=>node.className==='explanation-flow'),mode+': fallback used');
+    assert(visible(container).includes('株主'),mode+': authored rationale remains visible');
+    assert(!visible(container).includes('解き方（この順番で考える）'),mode+': generic steps remain optional');
+    assert(container.textContent.includes('解き方（この順番で考える）'),mode+': generic steps retained');
+  } finally { sandbox.window.ExplanationModel=savedModel; }
+}
+console.log('progressive explanation fallback paths: PASS');

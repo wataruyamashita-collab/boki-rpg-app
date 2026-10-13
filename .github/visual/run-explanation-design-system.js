@@ -41,7 +41,8 @@ async function renderIds(page,ids){
       const q=window.QuestionData[id],score=window.GradingEngine.grade(q,q.answer);
       try{
         view.renderExplanation(q,score,q.answer);
-        const route=document.querySelector('#explanation > .explanation-route');
+        document.querySelectorAll('#explanation > details.explanation-supplement > summary').forEach(summary=>summary.click());
+        const route=document.querySelector('#explanation > details.explanation-supplement > .explanation-route');
         const violation=[];
         if(!score.correct)violation.push('REFERENCE_ANSWER_NOT_CORRECT');
         if(!route)violation.push('ROUTE_MISSING');
@@ -78,7 +79,7 @@ async function run(){
           try{
             const result=await renderIds(current.page,reps.map(row=>row.id));
             const layout=await current.page.evaluate(()=>({
-              overflow:document.querySelector('#explanation > .explanation-route')?.scrollWidth>document.querySelector('#explanation > .explanation-route')?.clientWidth+1,
+              overflow:document.querySelector('#explanation > details.explanation-supplement > .explanation-route')?.scrollWidth>document.querySelector('#explanation > details.explanation-supplement > .explanation-route')?.clientWidth+1,
               columns:getComputedStyle(document.querySelector('.explanation-route-list')).gridTemplateColumns.split(' ').filter(Boolean).length
             }));
             const failures=[...result.failures];
