@@ -16,6 +16,11 @@ for (const [file, expectedHash] of Object.entries(manifest.assets)) {
   const actualHash = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
   assert.strictEqual(actualHash, expectedHash, `${file} changed without regenerating the release manifest`);
 }
+assert.deepStrictEqual(Object.keys(manifest.pages),['form-a.html'],'independent navigation shell is release-owned');
+assert.strictEqual(crypto.createHash('sha256').update(fs.readFileSync('form-a.html')).digest('hex'),manifest.pages['form-a.html']);
+for(const match of fs.readFileSync('form-a.html','utf8').matchAll(/(?:src|href)="([^"?#]+)\?v=([^"#]+)"/g)){
+  assert.strictEqual(match[2],release,'Form A URLs share release');assert(Object.hasOwn(manifest.assets,match[1]));
+}
 
 class MemoryCache {
   constructor() { this.entries = new Map(); this.added = []; }
@@ -51,6 +56,7 @@ const dispatch = async (type, event = {}) => {
   assert.strictEqual(currentKey, `boki-rpg-${release}`);
   const current = stores.get(currentKey);
   assert(current.added.includes(`./data/questions.js?v=${release}`) && current.added.includes(`./js/feedback.js?v=${release}`) && current.added.includes(`./js/controller.js?v=${release}`), 'coherent version assets are installed');
+  assert(current.added.includes('./form-a.html') && current.added.includes(`./data/form-a.json?v=${release}`),'Form A shell and data precached');
   await dispatch('activate');
   assert.deepStrictEqual(deleted, ['boki-rpg-v9'], 'old cache is removed');
   let clientProof=null;
@@ -80,6 +86,8 @@ const dispatch = async (type, event = {}) => {
   online = false;
   const offline = await dispatch('fetch', { request: navigation });
   assert.strictEqual((await offline).body, 'network:https://example.test/', 'latest navigation is available offline');
+  const transfer=await dispatch('fetch',{request:{url:'https://example.test/form-a.html?resume=1',method:'GET',mode:'navigate'}});
+  assert.strictEqual(transfer.body,'precache:./form-a.html','independent offline route never falls back to RPG page');
 
   const oldQuery = { url: 'https://example.test/js/controller.js?v=old', method: 'GET', mode: 'same-origin' };
   await assert.rejects(async () => dispatch('fetch', { request: oldQuery }).then(value => value), 'old query cannot alias the current cached script');

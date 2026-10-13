@@ -31,7 +31,7 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(),'boki-pwa-manual-'));
 function snapshot(label, revision) {
   const read = relative => revision ? git(['show',`${revision}:${relative}`]) : fs.readFileSync(path.join(ROOT,relative));
   const manifest = JSON.parse(read('pwa-release-manifest.json'));
-  const files = [...new Set(['index.html','service-worker.js','manifest.webmanifest','icons/app-icon.svg','pwa-release-manifest.json',...Object.keys(manifest.assets)])];
+  const files = [...new Set(['index.html','service-worker.js','manifest.webmanifest','icons/app-icon.svg','pwa-release-manifest.json',...Object.keys(manifest.assets),...Object.keys(manifest.pages||{})])];
   const target = path.join(temp,label), hashes = {};
   for (const relative of files) {
     const bytes = read(relative), local = path.join(target,relative);
@@ -39,6 +39,7 @@ function snapshot(label, revision) {
     const gitBlob = blob(bytes);
     if (revision) assert.strictEqual(gitBlob,git(['rev-parse',`${revision}:${relative}`]).toString().trim(),`exact historical blob ${relative}`);
     if (manifest.assets[relative]) assert.strictEqual(sha(bytes),manifest.assets[relative],`manifest ${label}/${relative}`);
+    if (manifest.pages?.[relative]) assert.strictEqual(sha(bytes),manifest.pages[relative],`manifest page ${label}/${relative}`);
     hashes[relative] = { sha256:sha(bytes), gitBlob };
   }
   const index = fs.readFileSync(path.join(target,'index.html'),'utf8');
