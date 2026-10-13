@@ -44,4 +44,46 @@ const start=html.indexOf('<div id="standard-result-actions">'),end=html.indexOf(
 assert(start>=0&&actions.indexOf('coaching-retry-result')>=0&&actions.indexOf('coaching-retry-result')<actions.indexOf('data-action="next"'),'解き直しを次へ進むより優先する');
 assert(!controller.includes("renderLearningContinuity.call(this, 'result-learning-summary'"),'結果画面に進捗を再描画しない');
 assert(css.includes('.result-error-summary[hidden]'),'誤答ガイドの非表示を保証');
-console.log('RESULT_FEEDBACK_UX_PASS');
+// Independent bookkeeping expectations: purchase 200,000 plus buyer-paid freight
+// 6,000 is inventory cost 206,000, financed by accounts payable 200,000 and cash 6,000.
+// These amounts and expected messages are not obtained from the summary generator.
+const engine=require('../js/engine');
+const purchase={type:'journal',answer:{debit:[{account:'仕入',amount:206000}],credit:[{account:'買掛金',amount:200000},{account:'現金',amount:6000}]}};
+const messages=()=>error.children.find(n=>n.tagName==='ul')?.children.map(n=>n.textContent)||[];
+let cases=0;
+function check(name,q,input,correct,expected,overflow=0){
+  const before=JSON.stringify({q,input}),score=engine.grade(q,input),gradeBefore=JSON.stringify(score);
+  assert.strictEqual(score.correct,correct,name+' independent correctness');
+  view.renderErrorSummary(q,score,input);
+  assert.deepStrictEqual(messages(),expected,name+' exact messages and stable order');
+  assert.strictEqual(error.hidden,correct,name+' visibility');
+  assert.strictEqual(flatten(error).includes(`ほか${overflow}件`),overflow>0,name+' truthful overflow');
+  assert.strictEqual(JSON.stringify({q,input}),before,name+' data unchanged');
+  assert.strictEqual(JSON.stringify(engine.grade(q,input)),gradeBefore,name+' grading unchanged');
+  cases++;
+}
+check('exact compound reordered',purchase,{debit:[{account:'仕入',amount:206000}],credit:[{account:'現金',amount:6000},{account:'買掛金',amount:200000}]},true,[]);
+check('same amount different account',journal,answer,false,['借方の勘定科目・金額：入力 売掛金 1,000円／正答 未収入金 1,000円']);
+check('one amount',journal,{debit:[{account:'未収入金',amount:900}],credit:[{account:'備品',amount:1000}]},false,['借方「未収入金」の金額：入力 900円／正答 1,000円']);
+check('side reversal',journal,{debit:[{account:'備品',amount:1000}],credit:[{account:'未収入金',amount:1000}]},false,['借方の勘定科目・金額：入力 備品 1,000円／正答 未収入金 1,000円','貸方の勘定科目・金額：入力 未収入金 1,000円／正答 備品 1,000円']);
+check('unanswered',journal,{debit:[],credit:[]},false,['借方に必要な「未収入金」1,000円を確認','貸方に必要な「備品」1,000円を確認']);
+check('partial amount missing',journal,{debit:[{account:'未収入金',amount:NaN}],credit:[]},false,['借方「未収入金」の金額：入力 未入力／正答 1,000円','貸方に必要な「備品」1,000円を確認']);
+const compoundExpected=['貸方の勘定科目・金額：入力 売掛金 199,000円／正答 買掛金 200,000円','貸方「現金」の金額：入力 7,000円／正答 6,000円'];
+for(const credit of [[{account:'現金',amount:7000},{account:'売掛金',amount:199000}],[{account:'売掛金',amount:199000},{account:'現金',amount:7000}]])
+  check('compound same-account reservation',purchase,{debit:[{account:'仕入',amount:206000}],credit},false,compoundExpected);
+check('extra line',journal,{debit:[{account:'未収入金',amount:1000},{account:'現金',amount:1}],credit:[{account:'備品',amount:1000}]},false,['借方の余分な入力：現金 1円']);
+// Four explicit table entries are stable in grading-contract order, not educational ranking.
+const four={type:'ledger',table:{inputCells:['a','b','c','d'],inputMetadata:Object.fromEntries(['a','b','c','d'].map((id,i)=>[id,{label:`金額${i+1}`,semanticType:'amount'}]))},answer:{cells:{a:100,b:200,c:300,d:400}}};
+const tableExpected=['金額1：入力 1円／正答 100円','金額2：入力 2円／正答 200円','金額3：入力 3円／正答 300円'];
+check('three differences',four,{cells:{a:1,b:2,c:3,d:400}},false,tableExpected);
+check('four differences',four,{cells:{a:1,b:2,c:3,d:4}},false,tableExpected,1);
+check('table normalization exact',four,{cells:{a:'１００',b:' 200 ',c:300,d:'400'}},true,[]);
+check('partial table',four,{cells:{a:100,b:200,c:300}},false,['金額4：入力 未入力／正答 400円']);
+for(const correct of [false,true]){
+  let anchor;
+  view.renderAchievement=(node)=>{anchor=node;};
+  view.result(journal,{correct,details:[]},answer,'sure',{},!correct);
+  assert.strictEqual(anchor,els.explanation,'reward follows explanation for both outcomes');
+  assert(flatten(els['result-status']).includes(correct?'正解です！':'もう一歩です'));
+}
+console.log(`RESULT_FEEDBACK_UX_PASS independentCases=${cases}`);

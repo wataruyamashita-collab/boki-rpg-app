@@ -697,9 +697,9 @@
       const topActions = this.byId('top-result-actions'); if (topActions) topActions.hidden = !score.correct;
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
       const calibration = confidence === 'sure'
-        ? (score.correct ? '自信と理解が一致しました。この判断軸を次の仕事でも再現しましょう。' : '自信ありとして回答しました。下の相違点と解説で判断の根拠を確かめましょう。')
-        : (score.correct ? '慎重に考えて正解へ到達しました。解説で根拠を言葉にすると自信へ変わります。' : 'まだ自信なしとして回答しました。下の相違点を確認してから解説へ進みましょう。');
-      const headline = this.document.createElement('strong'); headline.className = 'result-headline'; headline.textContent = score.correct ? '正解です！' : '今回は不正解です';
+        ? (score.correct ? '自信ありとして回答し、正解しました。解説で判断の根拠を確認しましょう。' : '自信ありとして回答しました。下の相違点と解説で判断の根拠を確かめましょう。')
+        : (score.correct ? 'まだ自信なしとして回答し、正解しました。解説で判断の根拠を確認しましょう。' : 'まだ自信なしとして回答しました。下の相違点を確認してから解説へ進みましょう。');
+      const headline = this.document.createElement('strong'); headline.className = 'result-headline'; headline.textContent = score.correct ? '正解です！' : 'もう一歩です';
       const confidenceFeedback = this.document.createElement('span'); confidenceFeedback.className = `confidence-feedback confidence-${confidence}-${score.correct ? 'correct' : 'wrong'}`;
       confidenceFeedback.textContent = `${confidence === 'sure' ? '自信あり' : 'まだ自信なし'} × ${score.correct ? '正解' : '要確認'}｜${calibration}`;
       box.replaceChildren(headline, confidenceFeedback);
@@ -707,7 +707,7 @@
       this.renderAnswerComparison(question, score, userAnswer);
       this.renderCorrectJournal(question);
       this.renderExplanation(question, score, userAnswer);
-      this.renderAchievement(score.correct ? box : this.byId('explanation'), achievement);
+      this.renderAchievement(this.byId('explanation'), achievement);
     }
     renderErrorSummary(question, score, userAnswer) {
       const panel = this.byId('result-error-summary');
@@ -725,10 +725,15 @@
             if (index < 0) return true;
             entered.splice(index, 1); return false;
           });
-          unmatched.forEach(row => {
+          // Reserve all same-account rows before pairing remaining different accounts.
+          // Keep expected-row order without consuming a later row's amount-only match.
+          const sameAccount = unmatched.map(row => {
             const index = entered.findIndex(value => value.account === row.account);
-            if (index >= 0) {
-              const actual = entered.splice(index, 1)[0];
+            return index < 0 ? null : entered.splice(index, 1)[0];
+          });
+          unmatched.forEach((row, rowIndex) => {
+            if (sameAccount[rowIndex]) {
+              const actual = sameAccount[rowIndex];
               items.push(`${label}「${row.account}」の金額：入力 ${Number.isFinite(actual.amount) ? yen(actual.amount) + '円' : '未入力'}／正答 ${yen(row.amount)}円`);
             } else if (entered.length) {
               const actual = entered.shift();
@@ -748,7 +753,7 @@
       }
       const heading = this.document.createElement('h3'); heading.textContent = 'まず、ここを確認';
       const lead = this.document.createElement('p');
-      lead.textContent = 'あなたの回答と正答の相違点です。なぜそう判断したかは解説で確かめましょう。';
+      lead.textContent = 'あなたの回答と正答の相違点です。正答の判断根拠は解説で確かめましょう。';
       const list = this.document.createElement('ul');
       (items.length ? items.slice(0, 3) : ['貸借の合計と各入力欄を確認してください。']).forEach(message => {
         const item = this.document.createElement('li'); item.textContent = message; list.append(item);

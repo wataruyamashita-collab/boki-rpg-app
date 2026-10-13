@@ -2,7 +2,7 @@
   "release": "20261014-214",
   "previousRelease": "20260924-213",
   "assets": {
-    "css/style.css": "f2d32d7fde198ccd7d5152abe6d2b7331cae716656a6bb7a0392e5e5e0294979",
+    "css/style.css": "ba07e1886efc5ff5e8cafe1ede4df01bd97db414aa00d974e7e528555a85cb3b",
     "data/accounting-domain.js": "16f07804022f6ad69800f84f3af06653e5cdc25a52ae0232254e101425ec1e00",
     "data/questions.js": "613f95ddbad6696a547a195f6aa51b6b09a0348219beba0f477667b97375a77e",
     "data/accounting-oracle.js": "4f5c58a0447f9d07fa5249202d39600369301254d728b2d7ab3d494a55caac44",
@@ -14,7 +14,7 @@
     "js/explanation-formulas.js": "3b96bc7ddbe21a3094200b30b0e2d3b1de899b555a88724c02b3f7c8f4db47c5",
     "js/explanation-model.js": "37fbcc76065a3e9925353e9715002b5f7122d0920c50ce573ea0c9e825fcf7e0",
     "js/explanation-design-system.js": "4a574d98b014deef416bc5120d2da5664f95d8039142eaeb9d8bf45582b7898d",
-    "js/view.js": "40ff9ab4b6497186bd651fcb096d567183c2a79ecfd9b9e469a309c11c604982",
+    "js/view.js": "536f061757f381aa73d69f140bb9111c00ac60576468203f825b645df930c4f2",
     "js/controller.js": "a3412379a2b30e649613676cae1f665b232f892eb9b6a0da9070e0c2b6ac9635",
     "js/app.js": "48926f2d3f871c202bff4d35ead2e05d2b55c71dfd533a0797802fd5dc4a34de",
     "data/form-a.json": "8d980909e2dccd532bb9f23b6908bcd49fb8b9fdef7fc661afc72799d2a77bc1",

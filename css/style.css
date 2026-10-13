@@ -1025,7 +1025,7 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
 .result-error-summary li { margin: 8px 0; line-height: 1.6; overflow-wrap: anywhere; }
 #standard-result-actions { margin-top: 18px; }
 #standard-result-actions [data-action="coaching-retry-result"]:not([hidden]) { background: #166534; }
-#standard-result-actions [data-action="next"].secondary-button { background: #fff; }
+#standard-result-actions [data-action="next"].secondary-button { background: #fff; color: var(--primary-color); }
 .answer-comparison, .correct-journal { margin-top: 20px; }
 .answer-comparison { padding: 14px; border: 2px solid #e6b0aa; border-radius: 8px; background: #fff8f7; }
 .answer-comparison[hidden],
