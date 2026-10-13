@@ -13,6 +13,17 @@ async function protectedKeys(page){assert(await page.evaluate(()=>['boki-rpg-pro
 (async()=>{await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const url='http://127.0.0.1:'+server.address().port;
  for(const [engine,type] of Object.entries({chromium,webkit})){
   const browser=await type.launch();try{
+   // Browser automation has no notched-device safe-area API. Substitute only the
+   // CSS env() readings to exercise the production cascade with explicit insets.
+   for(const viewport of [{width:390,height:844},{width:844,height:390}]){
+    const insets={top:44,right:59,bottom:34,left:59},c=await browser.newContext({viewport,serviceWorkers:'block'});
+    await c.route('**/css/form-a.css*',async route=>{const response=await route.fetch(),css=(await response.text()).replace(/env\(safe-area-inset-(top|right|bottom|left)\)/g,(_,edge)=>insets[edge]+'px');await route.fulfill({response,body:css});});
+    const p=await c.newPage();await open(p,url);await p.locator('#start').click();await p.locator('#exercise').waitFor({state:'visible'});
+    const metrics=await p.evaluate(()=>{const style=getComputedStyle(document.querySelector('main'));return {padding:Object.fromEntries(['top','right','bottom','left'].map(edge=>[edge,parseFloat(style.getPropertyValue('padding-'+edge))])),overflow:document.documentElement.scrollWidth>innerWidth,controls:[...document.querySelectorAll('header a,#exercise input,#exercise select,#submit')].map(e=>{const b=e.getBoundingClientRect();return {left:b.left,right:b.right};})};});
+    for(const edge of Object.keys(insets))assert(metrics.padding[edge]>=insets[edge],engine+' '+viewport.width+' safe-area '+edge);
+    assert(!metrics.overflow);assert(metrics.controls.every(b=>b.left>=insets.left && b.right<=viewport.width-insets.right),'controls clear cutouts');
+    reports.push({engine,case:'safe-area env substitution, portrait/landscape',viewport,insets,metrics,pass:true});await c.close();
+   }
    for(const width of [320,390,1280])for(const correct of [true,false]){
     const context=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'}),page=await context.newPage();await open(page,url);await seed(page);assert.equal(await read(page),null);assert.equal(await page.locator('#materials').innerText(),'');
     await page.locator('#start').click();await page.locator('#exercise').waitFor({state:'visible'});let state=await read(page);assert.equal(state.attempts.length,1);assert(state.firstExposure);assert.equal(state.firstSubmission,null);assert.equal(await page.locator('#explanation').innerText(),'');
