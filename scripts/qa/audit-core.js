@@ -5,7 +5,7 @@ const read=p=>fs.readFileSync(path.join(ROOT,p),'utf8');
 const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT,p))).digest('hex');
 const json=p=>JSON.parse(read(p));
 const walk=dir=>fs.readdirSync(path.join(ROOT,dir),{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(`${dir}/${e.name}`):[`${dir}/${e.name}`]).sort();
-const productionFiles=()=>['data','js','css','types'].flatMap(walk).concat(['index.html','manifest.webmanifest','pwa-release-manifest.json','service-worker.js']).sort();
+const productionFiles=()=>['data','js','css','types'].flatMap(walk).concat(['index.html','form-a.html','manifest.webmanifest','pwa-release-manifest.json','service-worker.js']).sort();
 function loadProduction(root=ROOT){const source=p=>fs.readFileSync(path.join(root,p),'utf8');const window={};const context={window,console,Event:function(){},queueMicrotask};vm.runInNewContext(source('data/questions.js'),context,{filename:'data/questions.js'});vm.runInNewContext(source('data/accounting-domain.js'),context,{filename:'data/accounting-domain.js'});vm.runInNewContext(source('js/controller.js'),context,{filename:'js/controller.js'});return {questions:window.QuestionData,exam:window.ExamPoolDefinition,domain:window.AccountingDomain,Controller:window.AppController,root};}
 const LOCK_PATH='reports/auto-gate/audit-lock.json';
 function reachableFinalV2(){

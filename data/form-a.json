@@ -1,0 +1,28 @@
+{
+  "family": "voucher-transfer-l050",
+  "contentIdentity": "assessment:voucher-transfer-l050:form-a:v1",
+  "rubricVersion": "voucher-row-pair-v1",
+  "protocolVersion": "local-first-exposure-v1",
+  "question": "次の4つの取引について、解答欄に示された取引IDごとに、3伝票制で使用する伝票の種類と記入金額を答えなさい。取引は1件ずつ別々に扱い、合計しません。同じ種類の伝票を複数回選んでもかまいません。金額は円単位です。",
+  "materials": [
+    {"id":"A","text":"得意先から売掛金42,000円が当店の普通預金口座に振り込まれた。","amount":42000},
+    {"id":"B","text":"仕入先への買掛金18,000円を手許現金で支払った。","amount":18000},
+    {"id":"C","text":"得意先から売掛金18,000円を手許現金で回収した。","amount":18000},
+    {"id":"D","text":"当月の通信費6,000円が当店の普通預金口座から引き落とされた。","amount":6000}
+  ],
+  "answerOrder": ["C","A","D","B"],
+  "choices": ["入金伝票","出金伝票","振替伝票"],
+  "initialSelection": null,
+  "rubric": {"rowPoints":1,"pairRequired":true,"fullPoints":4,"reasonScored":false,"moneySyntax":"positive safe integer, optional valid comma grouping, NFKC and trim"},
+  "protocol": {"hint":false,"feedbackBeforeSubmit":false,"timeLimit":null,"initialMeasure":"first persisted exposure attempt only; local scope; unknown provenance excluded","canonicalWrites":false,"rewards":false},
+  "key": {
+    "A":{"voucher":"振替伝票","amount":42000},
+    "B":{"voucher":"出金伝票","amount":18000},
+    "C":{"voucher":"入金伝票","amount":18000},
+    "D":{"voucher":"振替伝票","amount":6000}
+  },
+  "explanation": {
+    "initial":"取引ごとに決済手段を読み、手許現金が増える・減る・動かないを判断します。増えるCは入金伝票18,000円、減るBは出金伝票18,000円です。Aの普通預金への振込み42,000円とDの普通預金からの引落し6,000円では手許現金が動かないため、どちらも振替伝票です。同じ金額でも取引IDと現金の動きを確認し、資料の順番ではなく該当する欄に記入します。",
+    "supplement":"入金・出金という日常語だけで伝票を決めません。普通預金の増減と現金勘定の増減は別です。Aは普通預金／売掛金42,000、Bは買掛金／現金18,000、Cは現金／売掛金18,000、Dは通信費／普通預金6,000。各取引は借方と貸方が一致します。4件合計の現金増減は0円でも、BとCはそれぞれ出金・入金伝票であり相殺しません。"
+  }
+}

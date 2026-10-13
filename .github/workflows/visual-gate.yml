@@ -13,6 +13,8 @@ on:
       - 'data/**'
       - 'js/**'
       - 'index.html'
+      - 'form-a.html'
+      - 'tests/form-a*.js'
       - 'service-worker.js'
 jobs:
   physical-recovery-strict-gate:
@@ -33,6 +35,8 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
       - name: Run repeated same-page manual PWA update and old-tab ownership gate
         run: node .github/visual/run-pwa-manual-update.js
+      - name: Run Form A independent transfer UI, persistence and PWA gate
+        run: node tests/form-a.browser.test.js && node tests/form-a-pwa.browser.test.js
       - name: Run durable learning evidence and persistence gate
         run: node .github/visual/run-learning-effectiveness.js
       - name: Run calculator viewport resize and input retention gate

@@ -1,13 +1,13 @@
 /* The release id is shared by every cache key in this deployment. */
-const RELEASE = '20260924-211';
+const RELEASE = '20260924-213';
 const CACHE_PREFIX = 'boki-rpg-';
 const CACHE_NAME = `${CACHE_PREFIX}${RELEASE}`;
 const VERSIONED_ASSETS = [
   './css/style.css', './data/accounting-domain.js', './data/questions.js', './data/accounting-oracle.js', './js/calculator.js', './js/model.js',
-  './js/rpg.js', './js/engine.js', './js/feedback.js', './js/explanation-formulas.js', './js/explanation-model.js', './js/explanation-design-system.js', './js/view.js', './js/controller.js', './js/app.js'
+  './js/rpg.js', './js/engine.js', './js/feedback.js', './js/explanation-formulas.js', './js/explanation-model.js', './js/explanation-design-system.js', './js/view.js', './js/controller.js', './js/app.js', './data/form-a.json', './js/form-a-scoring.js', './js/form-a-store.js', './js/form-a.js', './css/form-a.css'
 ].map(path => `${path}?v=${RELEASE}`);
 const APP_SHELL = [
-  './', './index.html', './manifest.webmanifest', './icons/app-icon.svg', ...VERSIONED_ASSETS
+  './', './index.html', './form-a.html', './manifest.webmanifest', './icons/app-icon.svg', ...VERSIONED_ASSETS
 ];
 
 self.addEventListener('install', event => {
@@ -44,7 +44,7 @@ const networkFirst = async request => {
     if (response.ok && response.type !== 'opaque') await cache.put(request, response.clone());
     return response;
   } catch (_) {
-    return (await cache.match(request)) || cache.match('./index.html');
+    return (await cache.match(request)) || cache.match(new URL(request.url).pathname.endsWith('/form-a.html') ? './form-a.html' : './index.html');
   }
 };
 
