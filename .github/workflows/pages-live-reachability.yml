@@ -12,30 +12,58 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - name: Test public Pages HTTPS connectivity (read-only)
-        shell: bash
         env:
           BASE_URL: https://wataruyamashita-collab.github.io/boki-rpg-app/
         run: |
-          set -euo pipefail
           python3 - <<'PY'
           import os, urllib.request, urllib.error, hashlib
           from urllib.parse import urljoin
           base=os.environ['BASE_URL']
-          paths=('', 'index.html', 'pwa-release-manifest.json', 'service-worker.js', 'form-a.html')
-          for path in paths:
+          for path in ('','index.html','pwa-release-manifest.json','service-worker.js','form-a.html'):
               url=urljoin(base,path)
               try:
                   req=urllib.request.Request(url,headers={'User-Agent':'boki-rpg-pages-readonly-probe/1.0','Cache-Control':'no-cache'})
                   with urllib.request.urlopen(req,timeout=15) as r:
                       body=r.read(4*1024*1024+1)
                       if len(body)>4*1024*1024: raise ValueError('response too large')
-                      print(f'{path or "/"}: HTTP {r.status}, bytes={len(body)}, sha256={hashlib.sha256(body).hexdigest()}, final_url={r.url}')
+                      print(f'{path or "/"}: HTTP {r.status}, bytes={len(body)}, sha256={hashlib.sha256(body).hexdigest()}, final_url={r.url}',flush=True)
               except urllib.error.HTTPError as e:
-                  print(f'{path or "/"}: HTTP {e.code}, final_url={e.url}')
+                  print(f'{path or "/"}: HTTP {e.code}, final_url={e.url}',flush=True)
               except Exception as e:
-                  print(f'{path or "/"}: CONNECTION_ERROR {type(e).__name__}: {e}')
+                  print(f'{path or "/"}: CONNECTION_ERROR {type(e).__name__}: {e}',flush=True)
                   raise
           PY
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pinned Playwright and browsers
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+      - name: Open live public URL in Chromium and WebKit
+        env:
+          BASE_URL: https://wataruyamashita-collab.github.io/boki-rpg-app/
+        run: |
+          node <<'JS'
+          const {chromium,webkit}=require('playwright');
+          (async()=>{
+            for(const [name,engine] of Object.entries({chromium,webkit})){
+              const browser=await engine.launch({headless:true});
+              try {
+                const context=await browser.newContext({serviceWorkers:'block'});
+                const page=await context.newPage();
+                const response=await page.goto(process.env.BASE_URL,{waitUntil:'domcontentloaded',timeout:30000});
+                if(response.status()!==200) throw Error(name+' public URL status '+response.status());
+                const title=await page.title();
+                console.log(name+' live navigation PASS '+response.status()+' title='+JSON.stringify(title)+' url='+page.url());
+                const form=await page.request.get(new URL('form-a.html',process.env.BASE_URL).href);
+                console.log(name+' form-a.html status='+form.status());
+                await context.close();
+              } finally {await browser.close();}
+            }
+          })().catch(e=>{console.error(e);process.exitCode=1});
+          JS
