@@ -61,7 +61,26 @@ jobs:
                 const title=await page.title();
                 console.log(name+' live navigation PASS '+response.status()+' title='+JSON.stringify(title)+' url='+page.url());
                 const form=await page.request.get(new URL('form-a.html',process.env.BASE_URL).href);
-                console.log(name+' form-a.html status='+form.status());
+                if(form.status()!==200) throw Error(name+' Form A missing after Release213 deployment: HTTP '+form.status());
+                const formPage=await context.newPage();
+                await formPage.goto(new URL('form-a.html',process.env.BASE_URL).href,{waitUntil:'domcontentloaded',timeout:30000});
+                await formPage.locator('#start').waitFor({state:'visible',timeout:15000});
+                await formPage.locator('#start').click();
+                await formPage.locator('#exercise').waitFor({state:'visible'});
+                const fixture=require('./data/form-a.json');
+                for(const id of fixture.answerOrder){
+                  await formPage.locator('#voucher-'+id).selectOption(fixture.key[id].voucher);
+                  await formPage.locator('#amount-'+id).fill(String(fixture.key[id].amount));
+                }
+                await formPage.waitForFunction(()=>document.getElementById('status').textContent==='入力を保存しました。');
+                await formPage.locator('#submit').click();
+                await formPage.locator('#result').waitFor({state:'visible'});
+                const score=await formPage.locator('#score').innerText();
+                if(!score.includes('4')) throw Error(name+' wrong score: '+score);
+                await formPage.reload();
+                await formPage.locator('#result').waitFor({state:'visible'});
+                console.log(name+' LIVE Form A PASS, score='+JSON.stringify(score));
+                await formPage.close();
                 await context.close();
               } finally {await browser.close();}
             }
