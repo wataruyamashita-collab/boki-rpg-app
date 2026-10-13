@@ -1527,3 +1527,8 @@ input:focus-visible { outline: 3px solid rgba(52, 152, 219, .45); outline-offset
   }
   .explanation-route-fact { grid-template-columns: 1fr; gap: 3px; }
 }
+/* Keep optional explanation material available through native keyboard disclosure. */
+.explanation-supplement { min-width:0; margin:12px 0; padding:12px; border:1px solid #d5dce0; border-radius:12px; background:#fff; overflow-wrap:anywhere; }
+.explanation-supplement > summary { cursor:pointer; font-weight:700; padding:8px 0; min-height:44px; box-sizing:border-box; }
+.explanation-supplement > summary:focus-visible { outline:3px solid var(--accent-color, #005a70); outline-offset:3px; }
+.explanation-supplement[open] > summary { margin-bottom:12px; }

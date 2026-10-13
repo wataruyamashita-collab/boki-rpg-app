@@ -1089,6 +1089,12 @@
       if (question.type === 'comprehensive') return profile('現金と利益を分けて考える','答えに反映する',['現金残高は現金の入出金、利益は収益と費用で求めるため、同じものではありません。','借入・売掛金回収・備品購入・前払いなどは、現金と損益への影響が一致しない代表例です。']);
       return profile('問題文の条件を整理する','答えに記入する',['問題文の条件を整理し、必要な会計処理を一つずつ決めます。','答えを書いたら、問題の条件に合っているか確認します。']);
     }
+    explanationDisclosure(label) {
+      const details = this.document.createElement('details'); details.className = 'explanation-supplement';
+      const summary = this.document.createElement('summary'); summary.textContent = label;
+      details.append(summary);
+      return details;
+    }
     renderStructuredExplanation(question, userAnswer, score) {
       const structuredAlways = question.teachingPresentation === 'structured-always';
       if ((score.correct && !structuredAlways) || !question.explanationModel || !root.ExplanationModel?.build) return null;
@@ -1107,10 +1113,12 @@
         ['間違えやすいところ','mistakes']
       ].filter(([,key]) => (model[key] || []).length > 0);
       const element = (tag, className, text) => { const node = this.document.createElement(tag); if (className) node.className = className; if (text != null) node.textContent = text; return node; };
-      definitions.forEach(([label, key], index) => {
+      const supplementary = this.explanationDisclosure('資料・解き方の補足・検算を確認');
+      const renderSection = (label, key, items, index) => {
         const section = element('section', 'explanation-flow-section'); section.dataset.section = key;
-        const head = element('div', 'explanation-flow-head'); head.append(element('div', 'explanation-flow-step', String(index + 1)), element('h5', '', label)); section.append(head);
-        const items = model[key] || [];
+        const head = element('div', 'explanation-flow-head');
+        if (index != null) head.append(element('div', 'explanation-flow-step', String(index + 1)));
+        head.append(element('h5', '', label)); section.append(head);
         if (key === 'sources') items.forEach(item => {
           const card = element('article', 'explanation-source-card');
           card.append(element('h6', '', item.title), element('p', 'explanation-source-focus', item.focus));
@@ -1144,8 +1152,25 @@
         if (key === 'transfer') items.forEach(item => { const card = element('article', 'explanation-transfer-card'), from = element('div', 'explanation-transfer-from'), to = element('div', 'explanation-transfer-to'); from.append(element('strong', '', item.from), element('div', '', item.decision)); to.append(element('strong', '', item.to), element('div', '', valueText(item.value))); const arrow = element('div', 'explanation-transfer-arrow', '→'); arrow.setAttribute('aria-hidden', 'true'); card.append(from, arrow, to); section.append(card); });
         if (key === 'checks') { const list = element('div', 'explanation-checks'); items.forEach(item => { const card = element('article', 'explanation-check-item'); card.append(element('div', 'explanation-check-mark', '✓')); const body = element('div', 'explanation-check-body'); body.append(element('strong', '', item.label), element('span', '', valueText(item.expected))); card.append(body); list.append(card); }); section.append(list); }
         if (key === 'mistakes') items.forEach(item => { const card = element('article', 'explanation-mistake-card'); card.append(element('h6', '', item.title), element('p', '', item.reason), element('p', 'explanation-mistake-fix', `直し方：${item.correction}`)); section.append(card); });
-        flow.append(section);
+        return section;
+      };
+      let primaryIndex = 0;
+      definitions.forEach(([label, key]) => {
+        const items = model[key] || [];
+        let primary = items, extra = [];
+        if (key === 'sources' || key === 'checks') { primary = []; extra = items; }
+        if (key === 'summary' && items.some(item => item.evidenceRef === 'explanation')) {
+          primary = items.filter(item => item.evidenceRef === 'explanation');
+          extra = items.filter(item => item.evidenceRef !== 'explanation');
+        }
+        if (key === 'mistakes') {
+          primary = score.correct ? [] : items.slice(0, 1);
+          extra = items.slice(primary.length);
+        }
+        if (primary.length) flow.append(renderSection(key === 'mistakes' ? 'まず確認する点（原因の候補）' : label, key, primary, primaryIndex++));
+        if (extra.length) supplementary.append(renderSection(label, key, extra, null));
       });
+      if (supplementary.children.length > 1) flow.append(supplementary);
       return flow;
     }
     renderLearningTakeaway(question, container) {
@@ -1173,18 +1198,19 @@
       const heading = this.document.createElement('h3'); heading.textContent = '今回の解説'; container.append(heading);
       const lead = this.document.createElement('p'); lead.className = 'explanation-summary';
       lead.textContent = score.correct
-        ? '正解です。答えの根拠、実務での使い方、試験での見分け方を順に確認しましょう。'
-        : 'もう一歩です。誤答の原因から正しい考え方へつなげ、実務と試験で使える判断手順まで一続きで確認しましょう。';
+        ? '正解です。この問題の処理と答えの根拠を確認しましょう。'
+        : 'この問題の処理と答えの根拠を確認しましょう。回答との差だけで、間違えた原因は断定できません。';
       container.append(lead);
+      const supplementary = this.explanationDisclosure('解答の道筋・学習のポイントを確認');
       if (root.ExplanationDesignSystem?.planFor && root.ExplanationDesignSystem?.render) {
         const routeModel = question.explanationModel && root.ExplanationModel?.build
           ? root.ExplanationModel.build(question, userAnswer || {}, score)
           : null;
         const route = root.ExplanationDesignSystem.planFor(question, { model:routeModel, correct:score.correct });
-        container.append(root.ExplanationDesignSystem.render(this.document, route));
+        supplementary.append(root.ExplanationDesignSystem.render(this.document, route));
       }
       const structured = this.renderStructuredExplanation(question, userAnswer, score);
-      if (structured) { container.append(structured); this.renderLearningTakeaway(question, container); return; }
+      if (structured) { container.append(structured); this.renderLearningTakeaway(question, supplementary); container.append(supplementary); return; }
       const solution = this.document.createElement('section'); solution.className = 'solution-steps';
       const solutionHeading = this.document.createElement('h4'); solutionHeading.textContent = '解き方（この順番で考える）';
       const list = this.document.createElement('ol');
@@ -1198,10 +1224,11 @@
         comprehensive:['資料ごとに必要な取引を仕訳します。','仕訳を帳簿へ転記して残高を集計します。','決算整理事項を反映します。','各段階で貸借が合っているか確認し、最後の金額を記入します。']
       }[question.type] || ['資料の条件を整理します。','必要な会計処理を決めます。','計算して対応する欄へ転記します。','合計が合っているか、元の資料と見比べて確認します。'];
       steps.forEach(step => { const item = this.document.createElement('li'); item.textContent = step; list.append(item); });
-      solution.append(solutionHeading, list); container.append(solution);
+      solution.append(solutionHeading, list); supplementary.append(solution);
       const diagnostics = this.renderDiagnostics(question, userAnswer, score);
       if (diagnostics) container.append(diagnostics);
       this.appendAuthoredExplanation(question, container);
+      container.append(supplementary);
     }
     renderKnowledgeLinks(question, container) {
       const links = question.knowledgeLinks;
