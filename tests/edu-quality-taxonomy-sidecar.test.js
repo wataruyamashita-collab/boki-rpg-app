@@ -36,13 +36,31 @@ assert.strictEqual(j035.transferGroup,'XFER:unused-revenue-stamp-adjustment');
 assert.strictEqual(j035.transferStatus,'TRANSFER_REVIEW_REQUIRED');
 assert.strictEqual(j035.cognitiveLevel,'Application');
 assert.strictEqual(j035.explanationLearningObjective.performanceVerb,'APPLY');
-assert.strictEqual(crypto.createHash('sha256').update(JSON.stringify(artifact.rows.filter(row=>!['L031','L050'].includes(row.id)))).digest('hex'),
-  'c47c057125d66e823e4bdd4a8b938baede757faa9f64c53678d391bfeb5ab5f5','L031/L050 correction preserves the other 298 rows including accepted J035 and held L039 (c00bdabd)');
+// Issue #199 approved L039-only successor: preserve every other accepted row,
+// including the prior J035/L031/L050 corrections (main 7ff5b675).
+assert.strictEqual(crypto.createHash('sha256').update(JSON.stringify(artifact.rows.filter(row=>row.id!=='L039'))).digest('hex'),
+  'ac5fecb543b9fc2224b3d3025fab356767b1dc5d0bb2ea72f9beb0ae5ea53b28','L039 correction preserves the other 299 taxonomy rows');
+const l039=artifact.rows.find(row=>row.id==='L039');
+assert.strictEqual(l039.mappingMode,'MULTI');
+assert.strictEqual(l039.primarySyllabusMapping.code,'P3-3','period attribution is the primary scored skill');
+assert.deepStrictEqual(l039.secondarySyllabusMappings,[{code:'P3-5'},{code:'P1-4'}]);
+assert.strictEqual(l039.cognitiveLevel,'Integrated Judgment');
+assert.strictEqual(l039.explanationLearningObjective.performanceVerb,'INTEGRATE');
+assert.deepStrictEqual(l039.explanationLearningObjective.targetConceptIds,
+  ['ADJ_ACCRUAL_DEFERRAL','CLOSE_PROFIT_TRANSFER','FND_LEDGER_POSTING']);
+assert.deepStrictEqual(l039.prerequisiteConcepts,['FND_JOURNAL_ENTRY','FND_DEBIT_CREDIT']);
+assert.strictEqual(l039.transferGroup,'XFER:syllabus:P1-4','legacy group is retained, not evidence of transfer');
+assert.strictEqual(l039.transferStatus,'TRANSFER_REVIEW_REQUIRED');
 
 const sandbox={window:{},console:{log(){},warn(){},error(){}}};
 vm.runInNewContext(fs.readFileSync('data/questions.js','utf8'),sandbox,{filename:'data/questions.js'});
 const questions=sandbox.window.QuestionData;
 const ids=Object.keys(questions).sort();
+assert.deepStrictEqual(JSON.parse(JSON.stringify(questions.L039.table.inputCells)),
+  ['priorAccrual','reversal','annualPayment','currentAccrual','profitTransfer','nextBalance']);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(questions.L039.answer.cells)),{
+  priorAccrual:9000,reversal:9000,annualPayment:18000,currentAccrual:9000,profitTransfer:18000,nextBalance:0
+},'L039 still scores six amounts, not a free-form reason or debit/credit choice');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(questions.L031.answer.cells)),{
   assetIncreaseSide:'借方',assetDecreaseSide:'貸方',liabilityIncreaseSide:'貸方',liabilityDecreaseSide:'借方',balancePrinciple:'一致'
 },'L031 final executed answer requires recalled rules');
@@ -131,7 +149,7 @@ for(const row of artifact.rows){
   if(row.mappingMode==='ITEM_DERIVED')itemDerived.add(row.id);
   if(row.transferStatus==='TRANSFER_REVIEW_REQUIRED')transferReview.add(row.id);
 }
-assert.deepStrictEqual(mappingCounts,{DIRECT:219,MULTI:54,ITEM_DERIVED:27},'mappingMode aggregate');
+assert.deepStrictEqual(mappingCounts,{DIRECT:218,MULTI:55,ITEM_DERIVED:27},'L039 alone moves from DIRECT to MULTI');
 assert.deepStrictEqual(cognitiveCounts,{Knowledge:1,Understanding:0,Application:224,'Integrated Judgment':75},'cognitive aggregate');
 
 const expectedItemDerived=[
@@ -171,6 +189,20 @@ for(const [name,mutate,reason] of [
   ['L050 generic target',a=>a.rows.find(r=>r.id==='L050').explanationLearningObjective.targetConceptIds=['FND_EVIDENCE_READING'],/L050 voucher target/],
   ['L031 wrong syllabus',a=>a.rows.find(r=>r.id==='L031').primarySyllabusMapping.code='P1-4',/L031 syllabus/],
   ['L050 wrong syllabus',a=>a.rows.find(r=>r.id==='L050').primarySyllabusMapping.code='P1-4',/L050 syllabus/]
+]){
+  const broken=JSON.parse(JSON.stringify(artifact));mutate(broken);
+  assert.throws(()=>validateArtifact(broken),reason,name);
+}
+for(const [name,mutate,reason] of [
+  ['ledger-only mapping with unchanged totals',a=>{a.rows.find(r=>r.id==='L039').mappingMode='DIRECT';a.rows.find(r=>r.id==='J001').mappingMode='MULTI';},/L039 syllabus/],
+  ['ledger primary',a=>a.rows.find(r=>r.id==='L039').primarySyllabusMapping.code='P1-4',/L039 syllabus/],
+  ['closing transfer omitted',a=>a.rows.find(r=>r.id==='L039').secondarySyllabusMappings=[{code:'P1-4'}],/L039 syllabus/],
+  ['period concept omitted',a=>a.rows.find(r=>r.id==='L039').explanationLearningObjective.targetConceptIds=['FND_LEDGER_POSTING'],/L039 period attribution target/],
+  ['single-period demand with unchanged totals',a=>{a.rows.find(r=>r.id==='L039').cognitiveLevel='Application';a.rows.find(r=>r.id==='J001').cognitiveLevel='Integrated Judgment';},/L039 assessed demand/],
+  ['posting-only verb',a=>a.rows.find(r=>r.id==='L039').explanationLearningObjective.performanceVerb='POST',/L039 assessed demand/],
+  ['generic objective',a=>a.rows.find(r=>r.id==='L039').explanationLearningObjective.observableOutcome='帳簿の記録を照合して必要な処理を正しく反映できる。',/L039 observable outcome/],
+  ['generic rationale',a=>a.rows.find(r=>r.id==='L039').mappingRationale='問題形式に基づき出題区分へ直接対応付けした。',/L039 mapping rationale/],
+  ['unsupported transfer confirmation',a=>a.rows.find(r=>r.id==='L039').transferStatus='GROUP_CONFIRMED',/L039 transfer evidence/]
 ]){
   const broken=JSON.parse(JSON.stringify(artifact));mutate(broken);
   assert.throws(()=>validateArtifact(broken),reason,name);

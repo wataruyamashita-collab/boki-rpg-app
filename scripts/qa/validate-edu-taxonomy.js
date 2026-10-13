@@ -144,7 +144,18 @@ function validateArtifact(artifact,questions=loadQuestions()){
     if(row.mappingMode!=='DIRECT'||row.primarySyllabusMapping.code!==code||row.secondarySyllabusMappings.length!==0)fail(row.id+' syllabus mismatch');
   }
 
-  const expectedMapping={DIRECT:219,MULTI:54,ITEM_DERIVED:27};
+  // Issue #199 L039 Design Lock: period attribution across accrual/reversal
+  // and closing is assessed through six amounts; the ledger layout is secondary.
+  const l039=rows.find(row=>row.id==='L039');
+  if(l039.mappingMode!=='MULTI'||l039.primarySyllabusMapping.code!=='P3-3'||
+    JSON.stringify(l039.secondarySyllabusMappings)!==JSON.stringify([{code:'P3-5'},{code:'P1-4'}]))fail('L039 syllabus mismatch');
+  if(l039.cognitiveLevel!=='Integrated Judgment'||l039.explanationLearningObjective.performanceVerb!=='INTEGRATE')fail('L039 assessed demand mismatch');
+  if(JSON.stringify(l039.explanationLearningObjective.targetConceptIds)!==JSON.stringify(['ADJ_ACCRUAL_DEFERRAL','CLOSE_PROFIT_TRANSFER','FND_LEDGER_POSTING']))fail('L039 period attribution target mismatch');
+  if(l039.transferGroup!=='XFER:syllabus:P1-4'||l039.transferStatus!=='TRANSFER_REVIEW_REQUIRED')fail('L039 transfer evidence mismatch');
+  if(!['前期','未払','再振替','年間支払','当期','損益振替','次期繰越','6つの金額'].every(term=>l039.explanationLearningObjective.observableOutcome.includes(term)))fail('L039 observable outcome missing');
+  if(!['期間帰属','決算整理','主分類','損益振替','帳簿','副分類','金額'].every(term=>l039.mappingRationale.includes(term)))fail('L039 mapping rationale missing');
+
+  const expectedMapping={DIRECT:218,MULTI:55,ITEM_DERIVED:27};
   if(JSON.stringify(mappingCounts)!==JSON.stringify(expectedMapping))fail('mappingMode aggregate mismatch');
   const expectedCognitive={Knowledge:1,Understanding:0,Application:224,'Integrated Judgment':75};
   if(JSON.stringify(cognitiveCounts)!==JSON.stringify(expectedCognitive))fail('cognitive aggregate mismatch');
