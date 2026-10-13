@@ -25,6 +25,25 @@ jobs:
           npx playwright install --with-deps chromium webkit
       - name: Verify actual HTTPS release with Service Workers enabled
         run: node .github/visual/run-live-release213.js
+      - name: Remove remaining diagnostic-only destination rules
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          p = pathlib.Path('artifacts/live-release213/firewall-rules.json')
+          failures = []
+          for r in json.loads(p.read_text()) if p.exists() else []:
+              try:
+                  prefix = ['sudo', '-n', r['binary'], '-w', '5']
+                  present = subprocess.run([*prefix, '-C', *r['args']], timeout=10).returncode
+                  assert present in (0, 1), 'firewall query failed'
+                  if present == 0: subprocess.run([*prefix, '-D', *r['args']], check=True, timeout=10)
+                  assert subprocess.run([*prefix, '-C', *r['args']], timeout=10).returncode == 1, 'rule remains'
+              except Exception as e: failures.append(str(e))
+          assert not failures, failures
+          if p.exists(): p.write_text('[]')
+          print('Diagnostic destination rules absent; unrelated rules untouched')
+          PY
       - name: Retain synthetic snapshots and exact-release evidence
         if: always()
         uses: actions/upload-artifact@v4

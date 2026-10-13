@@ -2,6 +2,7 @@
 // One-release, read-only deployment diagnostic. Never serves/replaces production assets.
 const assert=require('node:assert/strict'),fs=require('node:fs'),cp=require('node:child_process'),crypto=require('node:crypto');
 const {chromium,webkit,request}=require('playwright');
+const dns=require('node:dns').promises,net=require('node:net');
 const PIN='7294be99639c31db2e887c634c71578975c985f8',RELEASE='20260924-213',BASE='https://wataruyamashita-collab.github.io/boki-rpg-app/';
 const OUT='artifacts/live-release213';fs.mkdirSync(OUT,{recursive:true});
 const git=file=>cp.execFileSync('git',['show',PIN+':'+file],{maxBuffer:32*1024*1024}),hash=b=>crypto.createHash('sha256').update(b).digest('hex');
@@ -15,6 +16,56 @@ const good=order.map(id=>({id,voucher:key[id].voucher,amount:String(key[id].amou
 const independent=rows=>{const details=rows.map(r=>({id:r.id,voucherCorrect:r.voucher===key[r.id].voucher,amountCorrect:Number(r.amount)===key[r.id].amount}));return {earned:details.filter(x=>x.voucherCorrect&&x.amountCorrect).length,classificationCorrect:details.filter(x=>x.voucherCorrect).length,amountCorrect:details.filter(x=>x.amountCorrect).length,details};};
 const report={pin:PIN,release:RELEASE,base:BASE,harness:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),run:process.env.GITHUB_RUN_ID||null,environment:{node:process.version,playwright:require('playwright/package.json').version,platform:process.platform},journals,independentTotals:{debit:84000,credit:84000,cash:0,bank:36000},assets:[],engines:[]};
 const save=()=>fs.writeFileSync(OUT+'/report.json',JSON.stringify(report,null,2));
+function logSyntheticEvidence(){
+ const bundle=Object.fromEntries(fs.readdirSync(OUT).filter(n=>n.endsWith('.json')).map(n=>[n,fs.readFileSync(OUT+'/'+n,'utf8')]));
+ const zipped=require('node:zlib').gzipSync(JSON.stringify(bundle));
+ fs.writeFileSync(OUT+'/synthetic-evidence.json.gz',zipped);
+ const parts=zipped.toString('base64').match(/.{1,4000}/g);
+ console.log('LIVE_SYNTHETIC_BUNDLE_SHA256 '+hash(zipped));
+ parts.forEach((s,i)=>console.log('LIVE_SYNTHETIC_BUNDLE_PART '+i+' '+parts.length+' '+s));
+}
+// Playwright offline emulation does not reliably disable worker networking in
+// Chromium and caused an internal WebKit navigation error. Deny only this
+// origin's resolved destination IPs in the disposable Actions runner instead.
+// No proxy, local asset server, route fulfillment or production SW replacement.
+const firewallRules=[];
+async function denyOrigin(){
+ assert.equal(process.env.GITHUB_ACTIONS,'true','firewall diagnostic only on Actions');
+ const proxyEnvironment=Object.fromEntries(['HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy'].map(k=>[k,Boolean(process.env[k])]));
+ assert(Object.values(proxyEnvironment).every(x=>!x),'destination firewall requires direct browser egress');
+ const host=new URL(BASE).hostname,addresses=[];
+ for(const family of [4,6]){
+  try{addresses.push(...await dns[family===4?'resolve4':'resolve6'](host));}
+  catch(e){if(!['ENODATA','ENOTFOUND'].includes(e.code))throw e;}
+ }
+ assert(addresses.length>0,'origin DNS addresses required');
+ for(const ip of [...new Set(addresses)]){
+  assert(net.isIP(ip));
+  const binary=net.isIP(ip)===6?'ip6tables':'iptables';
+  const args=['OUTPUT','-d',ip,'-m','comment','--comment','boki-live-'+process.env.GITHUB_RUN_ID,'-j','REJECT'];
+  firewallRules.push({binary,args});
+  fs.writeFileSync(OUT+'/firewall-rules.json',JSON.stringify(firewallRules));
+  cp.execFileSync('sudo',['-n',binary,'-w','5','-I',...args],{timeout:10000});
+ }
+ return {host,addresses:[...new Set(addresses)],proxyEnvironment,method:'runner destination-IP OUTPUT REJECT (shared Pages IPs); browser offline emulation disabled'};
+}
+function restoreOrigin(){
+ const failures=[];
+ while(firewallRules.length){
+  const r=firewallRules.pop();
+  try{
+   const check=()=>cp.spawnSync('sudo',['-n',r.binary,'-w','5','-C',...r.args],{timeout:10000}).status;
+   const present=check();assert([0,1].includes(present),'firewall query must succeed');
+   if(present===0)cp.execFileSync('sudo',['-n',r.binary,'-w','5','-D',...r.args],{timeout:10000});
+   assert.equal(check(),1,'removed rule must be absent');
+  }
+  catch(e){failures.push(r);}
+ }
+ firewallRules.push(...failures);
+ fs.writeFileSync(OUT+'/firewall-rules.json',JSON.stringify(firewallRules));
+ assert.equal(failures.length,0,'restore only diagnostic firewall rules');
+}
+async function uncachedProbe(page){return page.evaluate(async()=>{try{const r=await fetch('not-cached-network-probe-'+crypto.randomUUID(),{cache:'no-store',signal:AbortSignal.timeout(10000)});return {blocked:false,status:r.status};}catch(e){return {blocked:true,error:e.name};}});}
 async function idb(page){return page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('boki-independent-transfer',1);r.onupgradeneeded=()=>{r.transaction.abort();reject(Error('expected existing product DB'));};r.onerror=()=>reject(r.error);r.onsuccess=()=>{const d=r.result,t=d.transaction('assessment','readonly'),q=t.objectStore('assessment').get('voucher-transfer-l050');q.onerror=()=>reject(q.error);t.oncomplete=()=>{resolve(q.result??null);d.close();};};}));}
 async function ls(page){return page.evaluate(()=>Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)])));}
 async function persist(page,name){const value={idb:await idb(page),localStorage:await ls(page)};fs.writeFileSync(OUT+'/'+name+'.json',JSON.stringify(value,null,2));return value;}
@@ -41,11 +92,11 @@ const cases=['https-assets','sw-control-scope','cache-coherence','rpg-correct-wr
    await run('form-receipt-reload',async()=>{const before=await idb(page);await page.reload();await page.locator('#result').waitFor({state:'visible'});assert.deepEqual(await idb(page),before);assert((await page.locator('#first-score').textContent()).includes('4/4（分類 4/4・金額 4/4）'));return {firstReceiptUnchanged:true};});
    await run('form-retake-diagnostics',async()=>{await page.locator('#retry').click();await page.locator('#exercise').waitFor({state:'visible'});const wrong=structuredClone(good);wrong.find(x=>x.id==='A').voucher='入金伝票';wrong.find(x=>x.id==='D').amount='6001';await fill(page,wrong);await page.locator('#submit').click();await page.locator('#result').waitFor({state:'visible'});let s=await idb(page);assert.equal(s.attempts.length,2);score(s.attempts[1].receipt,wrong);assert.equal(s.attempts[1].receipt.result.earned,2);assert.equal(s.attempts[1].receipt.result.classificationCorrect,3);assert.equal(s.attempts[1].receipt.result.amountCorrect,3);assert.deepEqual(s.firstExposure,firstExposure);assert.deepEqual(s.firstSubmission,first);assert.equal(await page.locator('#score').textContent(),'2 / 4 取引正解');const before=s;await page.reload();await page.locator('#result').waitFor({state:'visible'});s=await idb(page);assert.deepEqual(s,before);await persist(page,name+'-retake');return s.attempts[1].receipt;});
    await run('rpg-form-isolation',async()=>{assert.deepEqual(await ls(page),rpgBaseline);const p=JSON.parse(rpgBaseline['boki-rpg-progress-v3']);assert(p.correctIds.includes('L050'));assert.equal(p.questionStats.L050.correctCount,1);assert.equal((await idb(page)).attempts.length,2);return {allLocalStorageBytesUnchanged:true,L050CorrectCount:1,formAttempts:2};});
-   await run('offline-cache-form',async()=>{await context.setOffline(true);const blocked=await page.evaluate(async()=>{try{await fetch('not-cached-network-probe-'+crypto.randomUUID(),{cache:'no-store'});return false;}catch(_){return true;}});assert(blocked,'offline negative network control');const before=await idb(page),r=await page.goto(BASE+'form-a.html?offline-audit=1');await page.locator('#result').waitFor({state:'visible'});assert.equal(r.status(),200);assert(r.fromServiceWorker());assert.deepEqual(await idb(page),before);assert.deepEqual(await ls(page),rpgBaseline);return {offlineNetworkControl:blocked,fromServiceWorker:r.fromServiceWorker(),receiptUnchanged:true};});
+   await run('offline-cache-form',async()=>{const online=await uncachedProbe(page);assert.deepEqual(online,{blocked:false,status:404});er.networkDenial=await denyOrigin();save();const blocked=await uncachedProbe(page);assert.equal(blocked.blocked,true,'offline negative network control');assert.equal(blocked.error,'TypeError','transport rejection, not probe timeout');const before=await idb(page),r=await page.goto(BASE+'form-a.html?offline-audit=1');await page.locator('#result').waitFor({state:'visible'});assert.equal(r.status(),200);assert(r.fromServiceWorker());assert.deepEqual(await idb(page),before);assert.deepEqual(await ls(page),rpgBaseline);return {onlineControl:online,offlineNetworkControl:blocked,networkDenial:er.networkDenial,fromServiceWorker:r.fromServiceWorker(),receiptUnchanged:true};});
    await run('offline-cache-rpg',async()=>{const r=await page.goto(BASE+'?mode=training&question=J004&offline-audit=1');await ready(page);assert(r.fromServiceWorker());const p=await page.evaluate(()=>App.controller.model.state),c=await page.evaluate(()=>App.controller.rpg.state);for(const k of ['correctIds','incorrectIds','mistakeCounts','reviewSchedule','questionStats'])assert.deepEqual(p[k],oldProgress[k],k);assert.deepEqual(c,oldCharacter);assert.deepEqual(await page.evaluate(()=>App.controller.view.readAnswer(QuestionData.J004)),draftBefore);await page.evaluate(()=>{const c=App.controller;c.view.applyRetryDraft(QuestionData.J004,{debit:[{account:'仕入',amount:2345}],credit:[]});c.saveDraft(true);});await page.reload();await ready(page);assert.equal(await page.locator('.debit-amount').first().inputValue(),'2345');assert.equal(JSON.parse((await ls(page))['boki-rpg-progress-v3']).drafts.J004.debit[0].amount,2345);return {fromServiceWorker:r.fromServiceWorker(),offlineDraftPersisted:2345,historyAndRpgUnchanged:true};});
-   await run('online-return',async()=>{await context.setOffline(false);const response=await page.evaluate(async()=>{const r=await fetch('index.html?online-audit='+crypto.randomUUID(),{cache:'no-store'});return {status:r.status,text:await r.text()};});assert.equal(response.status,200);assert.equal(hash(Buffer.from(response.text)),expected['index.html']);await page.reload();await ready(page);assert.equal(await page.locator('.debit-amount').first().inputValue(),'2345');const before=await idb(page);await dismiss(page);await page.locator('[data-mode="training"]').click();const baseline=await ls(page);await page.locator('a[href="form-a.html"]').click();await page.locator('#result').waitFor({state:'visible'});assert.deepEqual(await idb(page),before);assert.deepEqual(await ls(page),baseline);assert.deepEqual(before.firstSubmission,first);await persist(page,name+'-online-final');assert.deepEqual(er.errors,[],'unexpected page errors');await page.screenshot({path:OUT+'/'+name+'-result.png',fullPage:true});return {onlineFreshResponse:200,persistedRpgDraft:2345,firstResultUnchanged:true};});
+   await run('online-return',async()=>{restoreOrigin();const onlineControl=await uncachedProbe(page);assert.deepEqual(onlineControl,{blocked:false,status:404});const response=await page.evaluate(async()=>{const r=await fetch('index.html?online-audit='+crypto.randomUUID(),{cache:'no-store'});return {status:r.status,text:await r.text()};});assert.equal(response.status,200);assert.equal(hash(Buffer.from(response.text)),expected['index.html']);await page.reload();await ready(page);assert.equal(await page.locator('.debit-amount').first().inputValue(),'2345');const before=await idb(page);await dismiss(page);await page.locator('[data-mode="training"]').click();const baseline=await ls(page);await page.locator('a[href="form-a.html"]').click();await page.locator('#result').waitFor({state:'visible'});assert.deepEqual(await idb(page),before);assert.deepEqual(await ls(page),baseline);assert.deepEqual(before.firstSubmission,first);await persist(page,name+'-online-final');assert.deepEqual(er.errors,[],'unexpected page errors');await page.screenshot({path:OUT+'/'+name+'-result.png',fullPage:true});return {onlineControl,onlineFreshResponse:200,persistedRpgDraft:2345,firstResultUnchanged:true};});
   }catch(e){er.error=e.stack;for(const id of cases)if(!er.cases.some(x=>x.id===id))er.cases.push({id,status:'UNVERIFIED',reason:'prior dependency failed'});if(page)await page.screenshot({path:OUT+'/'+name+'-failure.png',fullPage:true}).catch(()=>{});}
-  finally{er.summary=Object.fromEntries(['PASS','FAIL','UNVERIFIED'].map(s=>[s,er.cases.filter(x=>x.status===s).length]));save();await context?.close();await browser?.close();}
+  finally{try{restoreOrigin();}finally{er.summary=Object.fromEntries(['PASS','FAIL','UNVERIFIED'].map(s=>[s,er.cases.filter(x=>x.status===s).length]));save();await context?.close();await browser?.close();}}
  }
- for(const e of report.engines){assert.deepEqual(e.cases.map(x=>x.id),cases);assert.equal(new Set(e.cases.map(x=>x.id)).size,cases.length);}save();console.log('LIVE_REPORT_JSON '+JSON.stringify(report));assert.equal(report.engines.length,2);assert(report.engines.every(x=>x.summary.PASS===cases.length),'incomplete live acceptance');
+ for(const e of report.engines){assert.deepEqual(e.cases.map(x=>x.id),cases);assert.equal(new Set(e.cases.map(x=>x.id)).size,cases.length);}save();console.log('LIVE_REPORT_JSON '+JSON.stringify(report));logSyntheticEvidence();assert.equal(report.engines.length,2);assert(report.engines.every(x=>x.summary.PASS===cases.length),'incomplete live acceptance');
 })().catch(e=>{report.fatal=e.stack;save();console.error(e);process.exitCode=1;});
