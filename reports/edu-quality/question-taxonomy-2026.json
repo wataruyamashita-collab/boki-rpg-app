@@ -9611,13 +9611,20 @@
       "id": "L039",
       "syllabusAuthorityVersion": "JCCI_GRADE3_2022_APPLIED_2026",
       "authoredCategory": "支払利息勘定（複数年度・再振替）",
-      "mappingMode": "DIRECT",
+      "mappingMode": "MULTI",
       "primarySyllabusMapping": {
-        "code": "P1-4"
+        "code": "P3-3"
       },
-      "secondarySyllabusMappings": [],
+      "secondarySyllabusMappings": [
+        {
+          "code": "P3-5"
+        },
+        {
+          "code": "P1-4"
+        }
+      ],
       "scopeStatus2026": "IN_SCOPE",
-      "mappingRationale": "支払利息勘定（複数年度・再振替）の主たる解答要求と2026年度3級出題区分の対応が一義的であるため直接対応付けした。",
+      "mappingRationale": "6つの金額欄は前期見越し・当期首再振替・年間支払・当期見越しを結び付けて当期費用の期間帰属を求めるため、決算整理を主分類とする。損益振替による費用締切と帳簿上の記録を副分類とし、帳簿形式だけで分類しない。",
       "prerequisiteConcepts": [
         "FND_JOURNAL_ENTRY",
         "FND_DEBIT_CREDIT"
@@ -9626,7 +9633,7 @@
       "difficulty": 3,
       "cognitiveLevel": "Integrated Judgment",
       "cognitiveEvidence": [
-        "L039は複数の記録・調整・判断を統合して最終結果を確定する課題である。"
+        "前期末の未払計上、当期首の再振替、年間支払、当期末の未払計上を組み合わせて当期費用を算定し、損益振替と費用勘定の次期繰越まで6金額を確定する。複数期間・調整を統合する課題であり、理由説明や借貸選択そのものは採点しない。"
       ],
       "answerType": "ledger",
       "likelyErrorTags": [
@@ -9635,10 +9642,12 @@
       ],
       "explanationLearningObjective": {
         "targetConceptIds": [
+          "ADJ_ACCRUAL_DEFERRAL",
+          "CLOSE_PROFIT_TRANSFER",
           "FND_LEDGER_POSTING"
         ],
-        "performanceVerb": "RECONCILE",
-        "observableOutcome": "支払利息勘定（複数年度・再振替）の記録と根拠資料を照合し、差異または必要な処理を特定して正しく反映できる。"
+        "performanceVerb": "INTEGRATE",
+        "observableOutcome": "前期末の未払利息、当期首の再振替額、年間支払額、当期末の未払利息、当期費用の損益振替額、費用勘定の次期繰越額を期間帰属に基づく6つの金額として求め、指定欄へ記入できる。"
       },
       "transferGroup": "XFER:syllabus:P1-4",
       "transferStatus": "TRANSFER_REVIEW_REQUIRED"
