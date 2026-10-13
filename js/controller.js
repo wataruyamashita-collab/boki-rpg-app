@@ -1260,7 +1260,6 @@
       this.learningFlow ||= { questionId:question.id, phase:'I', hintStage:0, retryCount:0, nextConsumed:false, gameOverPending:false, gameOverDispatched:false };
       this.learningFlow.authoritativeAnswer = answer; this.learningFlow.authoritativeScore = score; this.learningFlow.confidence = confidence; this.learningFlow.achievement = achievement;
       this.view.updateRpg(this.rpg);
-      Controller.prototype.renderLearningContinuity.call(this, 'result-learning-summary', answeredAt, '今回までの今日の結果');
       if (!score.correct) {
         this.learningFlow.phase = 'W'; this.learningFlow.gameOverPending = this.rpg.state.companyHP === 0;
         this.view.result(question, score, answer, confidence, achievement, true); Controller.prototype.renderNarrativeResolution.call(this, question, false); this.view.show('view-result'); this.document.getElementById?.('result-status')?.focus();

@@ -964,7 +964,7 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(comparisonView.explanationSecti
   { label: '実務MEMO', kind: 'memo', text: '資産が増えます。' },
   { label: '試験POINT', kind: 'point', text: 'ここに注意。' }
 ], '解説見出しを実務MEMO・試験POINTのカード構造へ正規化する');
-assert(viewSource.includes("score.correct ? '正解です！' : 'もう一歩です'"), '採点結果は従来どおり正解またはもう一歩と表示する');
+assert(viewSource.includes("score.correct ? '正解です！' : 'もう一歩です'"), '不正解時も学習者を非難しない既存の見出しを維持する');
 assert(!viewSource.includes('部分点'), 'ユーザー向けの採点結果に部分点を表示しない');
 assert.strictEqual(browserSandbox.window.AppView.prefersCalculatorFirst({ matchMedia:()=>({ matches:true }) }), true, 'coarse touch primary inputはcalculator-firstにする');
 assert.strictEqual(browserSandbox.window.AppView.prefersCalculatorFirst({ matchMedia:()=>({ matches:false }) }), false, 'fine pointerまたはhybrid primary inputはdesktop direct-entryを保つ');
@@ -1590,8 +1590,9 @@ let renderQuestionCalls=0,answerRendererCalls=0,appliedDraft=null,focused=false;
 
 // D2 retry-action authorization regressions.
 const retryActionState={hidden:true};
+const nextActionState={secondary:false,classList:{toggle(_name,on){nextActionState.secondary=on;}}};
 const retryResultElements={
-  'standard-result-actions':{hidden:true},
+  'standard-result-actions':{hidden:true,querySelector:()=>nextActionState},
   'exam-result-actions':{hidden:false},
   'top-result-actions':{hidden:true},
   'result-status':{className:'',replaceChildren(){}}
@@ -1603,6 +1604,7 @@ const retryAuthorizationView={
     createElement:()=>({className:'',textContent:''})
   },
   renderAchievement(){},
+  renderErrorSummary(){},
   renderAnswerComparison(){},
   renderCorrectJournal(){},
   renderExplanation(){}
@@ -1612,6 +1614,7 @@ browserSandbox.window.AppView.prototype.result.call(
   retryAuthorizationView, {}, {correct:false}, {}, 'unsure', {}, true
 );
 assert.strictEqual(retryActionState.hidden,false,'State W authorization shows coaching retry');
+assert.strictEqual(nextActionState.secondary,true,'Wrong result retains a secondary continue action');
 
 browserSandbox.window.AppView.prototype.result.call(
   retryAuthorizationView, {}, {correct:false}, {}, 'unsure', {}, false
@@ -1622,6 +1625,7 @@ browserSandbox.window.AppView.prototype.result.call(
   retryAuthorizationView, {}, {correct:true}, {}, 'unsure', {}, false
 );
 assert.strictEqual(retryActionState.hidden,true,'State C keeps coaching retry hidden');
+assert.strictEqual(nextActionState.secondary,false,'Correct result restores the primary continue action');
 
 let retryAuthorizationSignal=null;
 let retryResultScore=null;

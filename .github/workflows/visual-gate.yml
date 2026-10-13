@@ -15,6 +15,7 @@ on:
       - 'index.html'
       - 'form-a.html'
       - 'tests/form-a*.js'
+      - 'tests/result-feedback-ux*.js'
       - 'service-worker.js'
 jobs:
   physical-recovery-strict-gate:
@@ -37,6 +38,8 @@ jobs:
         run: node .github/visual/run-pwa-manual-update.js
       - name: Run Form A independent transfer UI, persistence and PWA gate
         run: node tests/form-a.browser.test.js && node tests/form-a-pwa.browser.test.js
+      - name: Run result feedback UI, accounting differences and keyboard gate
+        run: node tests/result-feedback-ux.browser.test.js
       - name: Run durable learning evidence and persistence gate
         run: node .github/visual/run-learning-effectiveness.js
       - name: Run calculator viewport resize and input retention gate

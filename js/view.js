@@ -692,19 +692,77 @@
       if (standardActions) standardActions.hidden = false; if (examActions) examActions.hidden = true;
       const retryAction = this.document.querySelector('[data-action="coaching-retry-result"]');
       if (retryAction) retryAction.hidden = !retryAuthorized;
-      const topActions = this.byId('top-result-actions'); if (topActions) topActions.hidden = false;
+      const nextAction = standardActions?.querySelector('[data-action="next"]');
+      if (nextAction) nextAction.classList.toggle('secondary-button', !score.correct);
+      const topActions = this.byId('top-result-actions'); if (topActions) topActions.hidden = !score.correct;
       const box = this.byId('result-status'); box.className = `result-box ${score.correct ? 'result-correct' : 'result-incorrect'}`;
       const calibration = confidence === 'sure'
-        ? (score.correct ? '自信と理解が一致しました。この判断軸を次の仕事でも再現しましょう。' : '強い思い込みを発見できました。今ここで直せば、次の正解がより確かな力になります。')
-        : (score.correct ? '慎重に考えて正解へ到達しました。解説で根拠を言葉にすると自信へ変わります。' : '「まだ自信なし」と見抜けたことも前進です。解説の判別ポイントを一つ持ち帰りましょう。');
+        ? (score.correct ? '自信ありとして回答し、正解しました。解説で判断の根拠を確認しましょう。' : '自信ありとして回答しました。下の相違点と解説で判断の根拠を確かめましょう。')
+        : (score.correct ? 'まだ自信なしとして回答し、正解しました。解説で判断の根拠を確認しましょう。' : 'まだ自信なしとして回答しました。下の相違点を確認してから解説へ進みましょう。');
       const headline = this.document.createElement('strong'); headline.className = 'result-headline'; headline.textContent = score.correct ? '正解です！' : 'もう一歩です';
       const confidenceFeedback = this.document.createElement('span'); confidenceFeedback.className = `confidence-feedback confidence-${confidence}-${score.correct ? 'correct' : 'wrong'}`;
       confidenceFeedback.textContent = `${confidence === 'sure' ? '自信あり' : 'まだ自信なし'} × ${score.correct ? '正解' : '要確認'}｜${calibration}`;
       box.replaceChildren(headline, confidenceFeedback);
-      this.renderAchievement(box, achievement);
+      this.renderErrorSummary(question, score, userAnswer);
       this.renderAnswerComparison(question, score, userAnswer);
       this.renderCorrectJournal(question);
       this.renderExplanation(question, score, userAnswer);
+      this.renderAchievement(this.byId('explanation'), achievement);
+    }
+    renderErrorSummary(question, score, userAnswer) {
+      const panel = this.byId('result-error-summary');
+      if (!panel) return;
+      panel.replaceChildren(); panel.hidden = true;
+      if (score.correct || !userAnswer) return;
+      const items = [];
+      if (question.type === 'journal') {
+        for (const [side, label] of [['debit', '借方'], ['credit', '貸方']]) {
+          const entered = [...(userAnswer[side] || [])];
+          const expected = [...(question.answer?.[side] || [])];
+          // Complete matches first: preserve journal line order independence.
+          const unmatched = expected.filter(row => {
+            const index = entered.findIndex(value => value.account === row.account && value.amount === row.amount);
+            if (index < 0) return true;
+            entered.splice(index, 1); return false;
+          });
+          // Reserve all same-account rows before pairing remaining different accounts.
+          // Keep expected-row order without consuming a later row's amount-only match.
+          const sameAccount = unmatched.map(row => {
+            const index = entered.findIndex(value => value.account === row.account);
+            return index < 0 ? null : entered.splice(index, 1)[0];
+          });
+          unmatched.forEach((row, rowIndex) => {
+            if (sameAccount[rowIndex]) {
+              const actual = sameAccount[rowIndex];
+              items.push(`${label}「${row.account}」の金額：入力 ${Number.isFinite(actual.amount) ? yen(actual.amount) + '円' : '未入力'}／正答 ${yen(row.amount)}円`);
+            } else if (entered.length) {
+              const actual = entered.shift();
+              items.push(`${label}の勘定科目・金額：入力 ${actual.account || '未入力'} ${Number.isFinite(actual.amount) ? yen(actual.amount) + '円' : '未入力'}／正答 ${row.account} ${yen(row.amount)}円`);
+            } else {
+              items.push(`${label}に必要な「${row.account}」${yen(row.amount)}円を確認`);
+            }
+          });
+          entered.forEach(row => items.push(`${label}の余分な入力：${row.account || '未選択'} ${Number.isFinite(row.amount) ? yen(row.amount) + '円' : '金額未入力'}`));
+        }
+      } else {
+        for (const detail of score.details || []) {
+          if (detail.correct === true) continue;
+          const label = question.table?.inputMetadata?.[detail.cellId]?.label || this.cellLabel(question, detail.cellId);
+          items.push(`${label}：入力 ${this.comparisonValue(question, detail.cellId, userAnswer.cells?.[detail.cellId])}／正答 ${this.comparisonValue(question, detail.cellId, question.answer?.cells?.[detail.cellId])}`);
+        }
+      }
+      const heading = this.document.createElement('h3'); heading.textContent = 'まず、ここを確認';
+      const lead = this.document.createElement('p');
+      lead.textContent = 'あなたの回答と正答の相違点です。正答の判断根拠は解説で確かめましょう。';
+      const list = this.document.createElement('ul');
+      (items.length ? items.slice(0, 3) : ['貸借の合計と各入力欄を確認してください。']).forEach(message => {
+        const item = this.document.createElement('li'); item.textContent = message; list.append(item);
+      });
+      panel.append(heading, lead, list);
+      if (items.length > 3) {
+        const rest = this.document.createElement('p'); rest.textContent = `ほか${items.length - 3}件は下の解答比較で確認できます。`; panel.append(rest);
+      }
+      panel.hidden = false;
     }
     renderNarrativeResult(scenes = [], { mode = 'story', resolved = false, epilogueFacts = [] } = {}) {
       if (typeof this.document?.getElementById !== 'function') return false;
@@ -806,7 +864,7 @@
       const second = this.document.querySelector('[data-action="hint-2"]'); if (second) { second.hidden = true; second.disabled = false; }
       ['result-status','answer-comparison','correct-journal','explanation'].forEach(id => this.byId(id)?.replaceChildren());
       const narrativeResult = this.byId('narrative-result'); if (narrativeResult) { narrativeResult.hidden = true; narrativeResult.replaceChildren(); narrativeResult.className = 'narrative-result'; if (narrativeResult.dataset) delete narrativeResult.dataset.sceneId; }
-      const learningSummary = this.byId('result-learning-summary'); if (learningSummary) { learningSummary.hidden = true; learningSummary.replaceChildren(); }
+      const errorSummary = this.byId('result-error-summary'); if (errorSummary) { errorSummary.hidden = true; errorSummary.replaceChildren(); }
       const top = this.byId('top-result-actions'); if (top) top.hidden = true;
     }
     hideProtectedResult() { const panel = this.byId('protected-learning'); if (panel) panel.hidden = true; const status = this.byId('protected-status'); if (status) { status.hidden = true; status.replaceChildren(); } }
@@ -823,7 +881,7 @@
       if (!banner) { banner = this.document.createElement('aside'); banner.id = 'achievement-banner'; banner.className = 'achievement-banner'; banner.setAttribute('role', 'status'); banner.setAttribute('aria-live', 'polite'); anchor.after(banner); }
       const unlocks = [achievement.reward || '', achievement.level ? `LEVEL UP！ Lv.${achievement.level}` : '', achievement.role ? `NEW ROLE！「${achievement.role}」解放 — 新ツールと専用Boss Caseを確認できます` : ''].filter(Boolean);
       banner.hidden = unlocks.length === 0; banner.textContent = unlocks.join(' ／ ');
-      if (!banner.isConnected) anchor.after(banner);
+      anchor.after(banner);
     }
     journalTable(answer) {
       const wrap = this.document.createElement('div'); wrap.className = 'journal-table-wrap';

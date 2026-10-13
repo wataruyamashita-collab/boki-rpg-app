@@ -7,7 +7,7 @@ const engines={chromium,webkit};
 const widths=[320,390,768];
 const surfaces=[
   { id:'story-learning-summary', title:'今日の学習サマリー', view:'view-story' },
-  { id:'result-learning-summary', title:'今回までの今日の結果', view:'view-result' }
+  { id:'result-learning-summary', title:'今回までの今日の結果', view:'view-result', absent:true }
 ];
 const mime={'.css':'text/css','.html':'text/html','.js':'text/javascript','.json':'application/json','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png'};
 const evidence={status:'RUNNING',reports:[],failures:[]};
@@ -32,7 +32,7 @@ async function run(){
             const pageErrors=[];page.on('pageerror',error=>pageErrors.push(String(error?.stack||error?.message||error)));
             try{
               await page.goto(url,{waitUntil:'load'});
-              await page.evaluate(surface=>{
+              const rendered=await page.evaluate(surface=>{
                 document.querySelectorAll('.view').forEach(node=>{node.hidden=true;node.style.display='none';});
                 const view=document.getElementById(surface.view);if(view){view.hidden=false;view.style.display='block';}
                 const context={
@@ -45,23 +45,29 @@ async function run(){
                     lastLearningAt:Date.now()
                   };}}
                 };
-                window.AppController.prototype.renderLearningContinuity.call(context,surface.id,Date.now(),surface.title);
+                return window.AppController.prototype.renderLearningContinuity.call(context,surface.id,Date.now(),surface.title);
               },surface);
               const report=await page.evaluate(surface=>{
                 const node=document.getElementById(surface.id);
                 return{
                   text:node?.textContent||'',
+                  exists:Boolean(node),
                   hidden:node?.hidden??true,
                   containerOverflow:node ? node.scrollWidth>node.clientWidth+1 : true,
                   pageOverflow:document.documentElement.scrollWidth>window.innerWidth+1
                 };
               },surface);
               report.browser=browserName;report.width=width;report.surface=surface.id;report.pageErrors=pageErrors;report.violations=[];
-              for(const expected of [surface.title,'連続学習','7日','今日の回答','6回','83%','復習期限 3問']){
-                if(!report.text.includes(expected))report.violations.push('MISSING_'+expected);
+              if(surface.absent){
+                if(report.exists||rendered!==false)report.violations.push('RESULT_SUMMARY_MUST_BE_ABSENT');
+              }else{
+                for(const expected of [surface.title,'連続学習','7日','今日の回答','6回','83%','復習期限 3問']){
+                  if(!report.text.includes(expected))report.violations.push('MISSING_'+expected);
+                }
+                if(report.hidden)report.violations.push('SUMMARY_HIDDEN');
+                if(report.containerOverflow)report.violations.push('SUMMARY_HORIZONTAL_OVERFLOW');
               }
-              if(report.hidden)report.violations.push('SUMMARY_HIDDEN');
-              if(report.containerOverflow||report.pageOverflow)report.violations.push('HORIZONTAL_OVERFLOW');
+              if(report.pageOverflow)report.violations.push('HORIZONTAL_OVERFLOW');
               if(pageErrors.length)report.violations.push('PAGE_SCRIPT_ERROR');
               evidence.reports.push(report);
               if(report.violations.length)evidence.failures.push(`${browserName}/${width}/${surface.id}: ${report.violations.join(',')}`);
