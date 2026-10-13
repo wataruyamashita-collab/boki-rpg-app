@@ -101,10 +101,9 @@ class FakeNode {
 }
 const flatten = node => [node.textContent, ...node.children.flatMap(flatten)].filter(Boolean).join(' ');
 const story = new FakeNode('section');
-const result = new FakeNode('section');
 const documentStub = {
   createElement(tag){ return new FakeNode(tag); },
-  getElementById(id){ if (id === 'story-learning-summary') return story; if (id === 'result-learning-summary') return result; return null; }
+  getElementById(id){ if (id === 'story-learning-summary') return story; return null; }
 };
 const fixed = {
   currentStreak:3,
@@ -129,20 +128,17 @@ for (const expected of ['今日の学習サマリー','連続学習','3日','今
 }
 assert.strictEqual(story.hidden, false);
 
-assert.strictEqual(Controller.prototype.renderLearningContinuity.call(context, 'result-learning-summary', time(2026, 3, 9, 18), '今回までの今日の結果'), true);
-text = flatten(result);
-assert(text.includes('今回までの今日の結果') && text.includes('75%'), '通常結果画面にも今日の結果を表示する');
-assert.strictEqual(result.hidden, false);
+assert.strictEqual(Controller.prototype.renderLearningContinuity.call(context, 'result-learning-summary', time(2026, 3, 9, 18)), false, '結果画面に進捗集計領域を設けない');
 
-assert(html.includes('id="story-learning-summary"') && html.includes('id="result-learning-summary"'), 'Story/resultにsummary surfaceを持つ');
+assert(html.includes('id="story-learning-summary"') && !html.includes('id="result-learning-summary"'), '進捗サマリーはStoryのみ');
 assert(controllerSource.includes("Controller.prototype.renderLearningContinuity.call(this, 'story-learning-summary')"), 'Story再描画時にcontinuity summaryを同期する');
-assert(controllerSource.includes("Controller.prototype.renderLearningContinuity.call(this, 'result-learning-summary', answeredAt, '今回までの今日の結果')"), 'authoritative回答後にresult summaryを更新する');
+assert(!controllerSource.includes("Controller.prototype.renderLearningContinuity.call(this, 'result-learning-summary'"), '回答後は結果画面に進捗を描画しない');
 const retryStart = controllerSource.indexOf('    finishCoachingRetry(');
 const retryEnd = controllerSource.indexOf('\n    revealAnswer(', retryStart);
 const retrySegment = controllerSource.slice(retryStart, retryEnd);
 assert(!retrySegment.includes('recordAttempt'), 'coaching retryはauthoritative attemptを増やさない');
 assert(!retrySegment.includes('renderLearningContinuity'), 'coaching retryでsummaryを再集計して水増ししない');
-assert(viewSource.includes("this.byId('result-learning-summary')"), '次の問題開始時にresult summaryを安全に隠す');
+assert(viewSource.includes("this.byId('result-error-summary')"), '次の問題開始時に相違点表示を消す');
 assert(css.includes('grid-template-columns: repeat(4, minmax(0, 1fr));'), 'desktop summaryは4列のcompact grid');
 assert(css.includes('@media (max-width: 720px)') && css.includes('grid-template-columns: repeat(2, minmax(0, 1fr));'), 'mobile summaryは2列化して横スクロールを避ける');
 
