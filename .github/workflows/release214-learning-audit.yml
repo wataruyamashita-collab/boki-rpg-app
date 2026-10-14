@@ -1,0 +1,62 @@
+name: Release214 learning path audit (temporary, no deployment)
+on:
+  push:
+    branches: [audit/release214-learning-paths-20261014]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: harness
+      - uses: actions/checkout@v4
+        with:
+          ref: d4a5a7391d36e4e0771f14a1310c9ac172945b96
+          path: product
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install existing pinned browser tooling
+        working-directory: harness
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+      - name: Preserve exact source and audit harness
+        run: |
+          mkdir -p evidence
+          git -C product rev-parse HEAD HEAD^{tree} > evidence/product-identity.txt
+          git -C harness rev-parse HEAD HEAD^{tree} > evidence/harness-identity.txt
+          git -C harness diff d4a5a7391d36e4e0771f14a1310c9ac172945b96 HEAD > evidence/harness.diff
+          cp harness/.github/visual/release214-learning-audit.cjs evidence/
+      - name: Existing result contracts and 36 browser regressions
+        working-directory: product
+        env:
+          NODE_PATH: ${{ github.workspace }}/harness/node_modules
+        run: |
+          node tests/result-feedback-ux.test.js
+          node tests/result-feedback-ux.browser.test.js
+      - name: Four real learning paths, independent expectations, state snapshots
+        env:
+          PRODUCT_ROOT: ${{ github.workspace }}/product
+          AUDIT_OUTPUT: ${{ github.workspace }}/evidence
+        run: node harness/.github/visual/release214-learning-audit.cjs
+      - name: Confirm untouched product and Generation158
+        if: always()
+        working-directory: product
+        run: |
+          git diff --exit-code HEAD
+          node scripts/qa/verify-audit-integrity.js
+      - name: Upload synthetic evidence and reproduction source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release214-learning-path-evidence
+          path: |
+            evidence/
+            product/artifacts/result-feedback-ux/
+          retention-days: 30
+          if-no-files-found: error
