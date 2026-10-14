@@ -21,11 +21,18 @@ for(const [name,type] of Object.entries({chromium,webkit})){
   const stopped=new Promise(resolve=>server.close(resolve));server.closeAllConnections();await stopped;
   let networkFailure;try{await fetch(url);}catch(error){networkFailure=error.cause?.code;}assert.equal(networkFailure,'ECONNREFUSED');
   await form.goto(url+'/form-a.html?resume=offline');await form.locator('#exercise').waitFor({state:'visible'});assert.equal(await form.locator('#amount-C').inputValue(),'18000');await form.locator('#submit').click();await form.locator('#result').waitFor({state:'visible'});assert((await form.locator('#score').innerText()).startsWith('4 / 4'));
-  await form.reload();await form.locator('#result').waitFor({state:'visible'});assert((await form.locator('#first-score').textContent()).includes('4/4'));assert.deepEqual(await pair(form),before);await form.close();await rpg.waitForFunction(()=>window.App?.controller,{},{timeout:60000});assert.deepEqual(await pair(rpg),before,'RPG resumes unchanged after other window closes');
+  await form.reload();await form.locator('#result').waitFor({state:'visible'});assert((await form.locator('#first-score').textContent()).includes('4/4'));assert.deepEqual(await pair(form),before);await form.close();await rpg.waitForFunction(()=>window.App?.controller,{},{timeout:60000});const resumed=await pair(rpg);assert.equal(resumed['boki-rpg-character-v2'],before['boki-rpg-character-v2'],'earned RPG data unchanged after resume');
+  const previous=JSON.parse(before['boki-rpg-progress-v3']),migrated=JSON.parse(resumed['boki-rpg-progress-v3']);
+  assert.equal(previous.contentRevision,4);assert.equal(migrated.contentRevision,5);
+  assert.deepEqual(migrated.questionContentVersions,{...previous.questionContentVersions,L044:'L044:cash-book-opening-zero-v1',L045:'L045:checking-book-opening-zero-v1'});
+  assert.equal(previous.learningEvidenceIntegrity.schemaVersion,10);assert.equal(migrated.learningEvidenceIntegrity.schemaVersion,11);
+  assert(await rpg.evaluate(saved=>ProgressModel.validateBackupState(saved,QuestionData),migrated),'stored identity-bound seal validates');
+  for(const key of ['contentRevision','questionContentVersions','learningEvidenceIntegrity']){delete previous[key];delete migrated[key];}
+  assert.deepEqual(migrated,previous,'only approved identity metadata/seal changes; every learning record stays intact');
   // Real training link returns to the cached independent route in the same tab.
   if(await rpg.locator('#app-notice-dialog').isVisible())await rpg.locator('#app-notice-confirm').click();
   await rpg.locator('[data-mode="training"]').click();await rpg.locator('a[href="form-a.html"]').click();await rpg.locator('#result').waitFor({state:'visible'});assert((await rpg.locator('#score').innerText()).startsWith('4 / 4'));
-  reports.push({engine:name,baseline:BASE,release,update:true,networkFailure,controllerRelease:proof.release,oldTabInput:true,offlineQueryResume:true,offlineSubmit:true,receiptReload:true,canonicalBytesUnchanged:true,trainingLink:true});console.log(name,'Form A PWA/old-tab/offline/RPG isolation PASS');
+  reports.push({engine:name,baseline:BASE,release,update:true,networkFailure,controllerRelease:proof.release,oldTabInput:true,offlineQueryResume:true,offlineSubmit:true,receiptReload:true,canonicalBytesUnchangedBeforeRpgResume:true,approvedContentMigrationOnRpgResume:true,allOtherStateUnchanged:true,trainingLink:true});console.log(name,'Form A PWA/old-tab/offline/RPG isolation PASS');
  }finally{await context.close();await browser.close();if(server.listening)await new Promise(resolve=>server.close(resolve));}
 }
 fs.mkdirSync('artifacts/form-a',{recursive:true});fs.writeFileSync('artifacts/form-a/pwa.json',JSON.stringify(reports,null,2));server.close();

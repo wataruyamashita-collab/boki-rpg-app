@@ -17118,6 +17118,28 @@ Object.values(QuestionData).forEach(item => {
   }
 });
 
+// L044/L045: the opening amount is a condition of these exercises, not a
+// general rule for cash/checking books. Apply after all runtime replacements.
+for (const [id, month, endDay, account, plus, minus, incoming, outgoing] of [
+  ['L044',4,5,'現金','受入','支払',50000,18000],
+  ['L045',5,8,'当座預金','預入','引出',300000,85000]
+]) {
+  const q=QuestionData[id], start=`${month}月1日`, end=`${month}月${endDay}日`;
+  const before=id==='L045'?'（同日の預入前）':'';
+  q.question=`過去の${start}から${end}までの出納帳資料を点検します。${start}の記帳開始時点${before}の${account}残高は0円です。この期間の${account}の増減に関する取引は、下記資料の2件がすべてです。${plus}額・${minus}額と${end}の取引後残高を記入しなさい。`;
+  const inc=incoming.toLocaleString('ja-JP'), dec=outgoing.toLocaleString('ja-JP'), balance=(incoming-outgoing).toLocaleString('ja-JP');
+  const formula=`0 ＋ ${inc} − ${dec} = ${balance}`;
+  q.explanation=`【使用する資料】${start}の開始残高0円（前残）は、この問題で指定された条件です。【計算と転記】${account}の増加を${plus}欄、減少を${minus}欄へ記入します。資料の2件が期間内の全取引なので、開始残高0円＋${plus}${inc}円−${minus}${dec}円＝${end}の取引後残高${balance}円です（${formula}）。開始残高がある別の問題では、その金額から計算します。`;
+  q.explanationModel={
+    calculation:[
+      {label:`${plus}額：${account}の増加`,expression:null,result:incoming,operands:[],evidenceRefs:['materials[0]']},
+      {label:`${minus}額：${account}の減少`,expression:null,result:outgoing,operands:[],evidenceRefs:['materials[1]']},
+      {label:`${end}の取引後残高：開始残高0円（本問の条件）＋${plus}−${minus}`,expression:formula,result:incoming-outgoing,operands:[{label:'開始残高',value:0},{label:plus,value:incoming},{label:minus,value:outgoing}],evidenceRefs:['question','materials']}
+    ],
+    checks:[{label:'開始残高と取引範囲を確認する',expected:`開始残高はいつも0円とは限りません。本問は${start}の開始残高0円と期間内の全取引が指定されているため、${end}の残高を一意に求められます。`,evidenceRefs:['question','materials']}]
+  };
+}
+
 // Top-level `const` declarations are not added to `window` in classic scripts.
 // Expose the data explicitly because the application bootstrap reads it there.
 if (typeof window !== 'undefined') {

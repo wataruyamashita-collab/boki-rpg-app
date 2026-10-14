@@ -43,7 +43,7 @@ async function run(){
                 valid:window.ProgressModel.validateBackupState(s,window.QuestionData),stored:JSON.parse(localStorage.getItem(c.model.key)),
                 character:JSON.parse(localStorage.getItem(c.rpg.key))};
             },id);
-            const first=await inspect();assert.strictEqual(first.revision,4);assert(first.valid);
+            const first=await inspect();assert.strictEqual(first.revision,5);assert(first.valid);
             assert.deepStrictEqual(first.continuity,progress.learningContinuityState);
             assert.strictEqual(first.character.xp,character.xp);assert.deepStrictEqual(first.character.rewardedIds,character.rewardedIds);
             assert.deepStrictEqual([first.stats.correctCount,first.stats.incorrectCount],kind==='old'?[0,0]:kind==='mixed'?[1,1]:[3,0]);

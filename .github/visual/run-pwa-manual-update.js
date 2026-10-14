@@ -107,7 +107,7 @@ async function capture(page) {
     const c=window.App?.controller;
     return {shell:document.querySelector('script[src*="js/app.js"]')?.src,app:!!window.App,appController:!!c,status:window.App?.storageClientStatus,ownership:window.App?.storageOwnership,
       worker:{installing:sw(r?.installing),waiting:sw(r?.waiting),active:sw(r?.active),controller:sw(navigator.serviceWorker.controller),sameController:r?.active===navigator.serviceWorker.controller},local,caches:cacheRecords,
-      model:c?JSON.parse(JSON.stringify(c.model.state)):null,character:c?JSON.parse(JSON.stringify(c.rpg.state)):null};
+      storedProgressValid:c?ProgressModel.validateBackupState(JSON.parse(local[c.model.key]),QuestionData):false,progressKey:c?.model.key,model:c?JSON.parse(JSON.stringify(c.model.state)):null,character:c?JSON.parse(JSON.stringify(c.rpg.state)):null};
   });
 }
 async function proof(page) {
@@ -118,8 +118,18 @@ async function proof(page) {
       ch.port1.onmessage=e=>{clearTimeout(timer);ch.port1.close();resolve({state:w.state,data:e.data});};w.postMessage({type:'BOKI_STORAGE_CLIENTS'},[ch.port2]);});
   });
 }
-function checkRetained(before,after) {
-  assert.deepStrictEqual(after.local,before.local,'entire raw saved namespace survives update/reload');
+function checkRetained(before,after,contentUpgrade=false) {
+  if(!contentUpgrade){assert.deepStrictEqual(after.local,before.local,'entire raw saved namespace survives current-version reload/offline');assert(after.storedProgressValid);} else {
+  assert.strictEqual(after.progressKey,before.progressKey);assert.strictEqual(after.progressKey,'boki-rpg-progress-v3');
+  const previous=JSON.parse(before.local[before.progressKey]),migrated=JSON.parse(after.local[after.progressKey]);
+  assert.strictEqual(previous.contentRevision,4);assert.strictEqual(migrated.contentRevision,5);
+  assert.deepStrictEqual(migrated.questionContentVersions,{...previous.questionContentVersions,L044:'L044:cash-book-opening-zero-v1',L045:'L045:checking-book-opening-zero-v1'});
+  assert.strictEqual(previous.learningEvidenceIntegrity.schemaVersion,10);assert.strictEqual(migrated.learningEvidenceIntegrity.schemaVersion,11);assert(after.storedProgressValid,'saved identity-bound seal validates');
+  for(const key of ['contentRevision','questionContentVersions','learningEvidenceIntegrity']){delete previous[key];delete migrated[key];}
+  assert.deepStrictEqual(migrated,previous,'every learning record outside approved content metadata survives update/reload');
+  const oldLocal={...before.local},newLocal={...after.local};delete oldLocal[before.progressKey];delete newLocal[after.progressKey];
+  assert.deepStrictEqual(newLocal,oldLocal,'all other saved namespace bytes, including RPG and original archives, survive');
+  }
   assert.strictEqual(after.model.questionStats.L031.incorrectCount,before.model.questionStats.L031.incorrectCount);
   assert.deepStrictEqual(after.model.reviewSchedule.L031,before.model.reviewSchedule.L031);
   assert.deepStrictEqual(after.model.drafts.J035,before.model.drafts.J035);
@@ -220,7 +230,7 @@ async function trial(engine,launcher,number,oldSource,newSource,oldTabBoundary=f
       record('old-tab-blocked',report.oldTabBoundary);await oldTab.close();record('old-tab-closed');
     }
     await page.waitForFunction(release=>Boolean(window.App?.controller)&&document.querySelector('script[src*="js/app.js"]').src.includes('?v='+release),newSource.release,{timeout:Math.max(1,updateDeadline-Date.now())});
-    stage='new-app';const after=await capture(page);report.after=after;checkRetained(before,after);checkCache(after,newSource);assert(after.ownership.active);assert(after.worker.sameController);report.workerProof=await proof(page);
+    stage='new-app';const after=await capture(page);report.after=after;checkRetained(before,after,true);checkCache(after,newSource);assert(after.ownership.active);assert(after.worker.sameController);report.workerProof=await proof(page);
     assert.strictEqual(report.workerProof.data.release,newSource.release);assert.strictEqual(report.workerProof.data.clients.length,1);assert(report.workerProof.data.clients.includes(report.workerProof.data.requester));
     assert.deepStrictEqual(report.workerProof.data.activation,{state:'activated',active:true},'the replying active worker has actually completed activation');
     assert(['activating','activated'].includes(after.worker.active.state),'page wrapper is active or the specifically proven stale activating state');report.manualUpdate='PASS';

@@ -16,6 +16,7 @@ on:
       - 'form-a.html'
       - 'tests/form-a*.js'
       - 'tests/result-feedback-ux*.js'
+      - 'tests/ledger-opening*.js'
       - 'service-worker.js'
 jobs:
   physical-recovery-strict-gate:
@@ -38,6 +39,8 @@ jobs:
         run: node .github/visual/run-pwa-manual-update.js
       - name: Run Form A independent transfer UI, persistence and PWA gate
         run: node tests/form-a.browser.test.js && node tests/form-a-pwa.browser.test.js
+      - name: Run L044 L045 opening balance display and retry gate
+        run: node tests/ledger-opening.browser.test.js && node tests/ledger-opening-history.browser.test.js
       - name: Run result feedback UI, accounting differences and keyboard gate
         run: node tests/result-feedback-ux.browser.test.js
       - name: Run durable learning evidence and persistence gate

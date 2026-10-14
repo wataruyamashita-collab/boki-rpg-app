@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "baseline": "37086c6ae6511a249218533375bf6f19dac231d1",
+  "ids": [
+    "L044",
+    "L045"
+  ],
+  "design": "https://github.com/wataruyamashita-collab/boki-rpg-app/issues/177#issuecomment-6179818527",
+  "historicalFiles": {
+    "reports/edu-quality/question-quality-ledger-20261015.json": "0981721af2750c09dc8733ee9a24be4523c748d8486b084b530a968a3588106c",
+    "reports/edu-quality/question-quality-ledger-20261015.md": "1e012ff5376d5e37a96d5d0a376e4b408ff3f8737069df3339d2efc23ac462eb",
+    "reports/edu-quality/question-quality-ledger-20261015.validate.cjs": "7127f5bf55c1cc9251abe1e61c5f7f308ddf6b0bc23e4de49f8ea5e11910d7cd",
+    "reports/edu-quality/question-quality-ledger-20261015.evidence.json.gz": "93c42579c81a9770164f9c83819f510880f932a7220318ed2bd3d54159926882"
+  },
+  "candidateFiles": {
+    "data/questions.js": "b2fc0bee77f4745767c3eeb698841e7a29f2333c3af1afa953689fe0547c8b59",
+    "js/model.js": "9fafb92960072a204fc86e489bf88dfa9cec65151c4f807654d4e93f360094ff",
+    "tests/ledger-opening-migration.test.js": "63e791008112c0f648f3c98d645ef8c6cd4671550635c9e57b1f4aa785bbc1cb",
+    "tests/ledger-opening-backup.test.js": "99bd1fbb49a5d2836c6f2955ce5cce91fee0502ad89b9068c537b25979224924",
+    "tests/ledger-opening.browser.test.js": "590c919b67722b3a43a02eab3e283b176e3e1cdfed10e221e66972ad6dd55ef8",
+    "tests/ledger-opening-history.browser.test.js": "c517f9dd913c1d1bf47ca098a79d75eb19111c108042dd40b0bef1e4b1aadb99",
+    "reports/edu-quality/ledger-opening-successor.validate.cjs": "ed8d9bc56016938cc1445cbfaf1e4768ff45f3244f8f42772a93d5dd194a0453"
+  },
+  "protectedFiles": [
+    "data/accounting-domain.js",
+    "data/accounting-oracle.js",
+    "js/engine.js",
+    "js/rpg.js",
+    "js/controller.js",
+    "js/view.js",
+    "js/feedback.js",
+    "js/explanation-model.js",
+    "js/explanation-formulas.js",
+    "js/explanation-design-system.js",
+    "js/app.js",
+    "js/form-a.js",
+    "js/form-a-scoring.js",
+    "js/form-a-store.js",
+    "data/form-a.json",
+    "css/style.css",
+    "reports/question-audit-matrix.json",
+    "reports/edu-quality/question-taxonomy-2026.json"
+  ],
+  "rows": [
+    {
+      "id": "L044",
+      "beforeRuntimeHash": "f25d79dd6fcf020669b5a0cf2c9907353c99adf068c34d7e7d002e735a00fb7e",
+      "runtimeHash": "b023ac0127be30a26551ed8778b98a8d27a92c18528196df438c4556077389f7",
+      "identity": "L044:cash-book-opening-zero-v1",
+      "sourceQuote": "【使用する資料】4月1日の開始残高0円（前残）は、この問題で指定された条件です。【計算と転記】現金の増加を受入欄、減少を支払欄へ記入します。資料の2件が期間内の全取引なので、開始残高0円＋受入50,000円−支払18,000円＝4月5日の取引後残高32,000円です（0 ＋ 50,000 − 18,000 = 32,000）。開始残高がある別の問題では、その金額から計算します。",
+      "independent": {
+        "opening": 0,
+        "increase": 50000,
+        "decrease": 18000,
+        "balance": 32000,
+        "period": "4/1-4/5",
+        "terms": [
+          "受入",
+          "支払"
+        ]
+      },
+      "overall": "ACCEPTED",
+      "severity": null,
+      "learnerEvidence": "UNVERIFIED"
+    },
+    {
+      "id": "L045",
+      "beforeRuntimeHash": "897bda757e4be89a9e4a25505237a10633987769f61db141fd06999ba033046a",
+      "runtimeHash": "3725bfa0a2a9b0e3533f8708f3f51d36bf3baf254c9ea4160ecc16cbc9b9b6f6",
+      "identity": "L045:checking-book-opening-zero-v1",
+      "sourceQuote": "【使用する資料】5月1日の開始残高0円（前残）は、この問題で指定された条件です。【計算と転記】当座預金の増加を預入欄、減少を引出欄へ記入します。資料の2件が期間内の全取引なので、開始残高0円＋預入300,000円−引出85,000円＝5月8日の取引後残高215,000円です（0 ＋ 300,000 − 85,000 = 215,000）。開始残高がある別の問題では、その金額から計算します。",
+      "independent": {
+        "opening": 0,
+        "increase": 300000,
+        "decrease": 85000,
+        "balance": 215000,
+        "period": "5/1-5/8",
+        "terms": [
+          "預入",
+          "引出"
+        ]
+      },
+      "overall": "ACCEPTED",
+      "severity": null,
+      "learnerEvidence": "UNVERIFIED"
+    }
+  ],
+  "browser": {
+    "path": "reports/edu-quality/ledger-opening-browser.json",
+    "sha256": "bab591a73316f8492a000438215ca201bead1880ba23bb33234b3f7ea89acb10",
+    "environment": "Node20.20.2 / Playwright1.55.0 / Chromium+WebKit / isolated localhost / 390,1280 / synthetic only; workspace fontconfig with writable cache"
+  },
+  "currentCounts": {
+    "ACCEPTED": 295,
+    "DEFECT": 0,
+    "IMPROVEMENT CANDIDATE": 5,
+    "UNVERIFIED": 0
+  },
+  "learnerEvidence": "UNVERIFIED",
+  "acceptance": "Candidate technical evidence; exact-SHA CI/review/main acceptance recorded in PR and #177."
+}
