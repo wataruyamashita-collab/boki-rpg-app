@@ -56,7 +56,7 @@ C003：20,000×12/6＝40,000、120,000－40,000＝80,000、200,000－120,000－2
 
 ## 再現・検証
 
-`node reports/edu-quality/question-quality-ledger-20261015.validate.cjs` はruntime/答案/著者説明/コードhash、300 ID・形式/章別集計・6判定、著者引用、証拠bundle、724記録を検査し、10負例を拒否する。これは台帳整合性検査であり教材のDEFECTを消さない。
+`node reports/edu-quality/question-quality-ledger-20261015.validate.cjs` はruntime/答案/著者説明/コードhash、300 ID・形式/章別集計・6判定、著者引用、証拠bundle、724記録を検査し、22負例を拒否する。これは台帳整合性検査であり教材のDEFECTを消さない。
 
 gzip bundleはJSON形式のsafe relative path→元テキストmap。展開して個別Codexレビュー、旧可視証拠、新可視全文/バウンディング/閉じた補足、反例、固定source hashを復元できる。bundle SHA-256はJSON台帳に保存。新可視harnessはfull-historyの固定mainを`audit300/visible-product`へgit archiveし、bundle内のruntime-questions.jsonとP1既存証拠を使用。Playwright1.55.0と既存Chromium/WebKit依存を入れて`node audit300/visible-explanations.cjs`で再現する。元の試験はNode20.20.2 / Chromium140.0.7339.16 / WebKit26.0。
 
@@ -65,3 +65,5 @@ gzip bundleはJSON形式のsafe relative path→元テキストmap。展開し�
 Release214の最新公開記録は#199 comment6166124167：主要4資産/両engine Form A basic smokeのみ。SW blockの限定を保ち、全面LIVE PWA/実機/PILOT READYへ格上げしない。既存の公開承認を別SHAへ流用しない。
 
 監査は300行/件数/問題別証拠/疑義と次工程が揃った時点で終了し、新たな重大証拠なしに同一内容の全件再監査を繰り返さない。
+
+台帳CIは識別対象の教材/モデル/分類/表示コード変更でも実行し、現行sourceとの差異を検出します。固定監査の原本は書換えず、将来の実変更時は影響IDの後継評価と現行台帳/CI参照を更新する変更管理が必要です。検証器はGit objectのHEAD/TREE、元の300レビュー、181 ID×4表示ケース、記録された3独立検算のsource operand、全集計を結合して確認します。

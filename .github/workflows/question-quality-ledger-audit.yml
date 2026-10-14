@@ -2,9 +2,9 @@ name: Canonical300 quality ledger validation
 on:
   push:
     branches: [audit/canonical300-quality-ledger-20261015, main]
-    paths: ['reports/edu-quality/question-quality-ledger-20261015*', '.github/workflows/question-quality-ledger-audit.yml']
+    paths: ['reports/edu-quality/question-quality-ledger-20261015*', '.github/workflows/question-quality-ledger-audit.yml', 'data/questions.js', 'data/accounting-domain.js', 'data/accounting-oracle.js', 'js/engine.js', 'js/view.js', 'js/feedback.js', 'js/explanation-model.js', 'js/explanation-formulas.js', 'js/explanation-design-system.js', 'js/controller.js', 'js/app.js', 'js/model.js', 'js/rpg.js', 'css/style.css', 'index.html', 'reports/edu-quality/question-taxonomy-2026.json']
   pull_request:
-    paths: ['reports/edu-quality/question-quality-ledger-20261015*', '.github/workflows/question-quality-ledger-audit.yml']
+    paths: ['reports/edu-quality/question-quality-ledger-20261015*', '.github/workflows/question-quality-ledger-audit.yml', 'data/questions.js', 'data/accounting-domain.js', 'data/accounting-oracle.js', 'js/engine.js', 'js/view.js', 'js/feedback.js', 'js/explanation-model.js', 'js/explanation-formulas.js', 'js/explanation-design-system.js', 'js/controller.js', 'js/app.js', 'js/model.js', 'js/rpg.js', 'css/style.css', 'index.html', 'reports/edu-quality/question-taxonomy-2026.json']
 permissions:
   contents: read
 jobs:
@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
