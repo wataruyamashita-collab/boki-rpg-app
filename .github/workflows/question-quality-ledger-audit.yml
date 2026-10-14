@@ -1,0 +1,19 @@
+name: Canonical300 quality ledger validation
+on:
+  push:
+    branches: [audit/canonical300-quality-ledger-20261015, main]
+    paths: ['reports/edu-quality/question-quality-ledger-20261015*', '.github/workflows/question-quality-ledger-audit.yml']
+  pull_request:
+    paths: ['reports/edu-quality/question-quality-ledger-20261015*', '.github/workflows/question-quality-ledger-audit.yml']
+permissions:
+  contents: read
+jobs:
+  ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate fixed identities, 300 rows, source quotes, evidence and negative cases
+        run: node reports/edu-quality/question-quality-ledger-20261015.validate.cjs
