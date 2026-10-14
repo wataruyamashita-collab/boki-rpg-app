@@ -120,5 +120,21 @@ test('old completion cannot retain two-set proof from duplicate unaffected exam 
  m.state.examHistory=[{finishedAt:now,points:100,setSignature:affected},{finishedAt:now+1,points:100,setSignature:unaffected},{finishedAt:now+2,points:100,setSignature:unaffected}];m.refreshEvidenceIntegrity();assert(m.updateCompletion({skillMastery(){return 1;}}));
  const result=new Model(questions,storage(JSON.stringify(m.state)),'new',pool);assert(!result.storageWriteBlocked);assert.equal(result.state.completed,false);assert.equal(result.state.contentMigrationArchive.completed,true);assert.deepEqual(result.state.examHistory,clone(m.state.examHistory));
 });
+for(const target of ['L044','L045','J001'])test(target+' archived-only old exam is preserved without inventing new first exposure',()=>{
+ const V5=evaluate(cp.execFileSync('git',['show','2cf70526f3cdc18560f151d4d32134a49aef79cb:js/model.js'],{encoding:'utf8'}),'ProgressModel');
+ const store=storage(),v5=new V5(oldQuestions,store);v5.save();const oldM=new OldModel(oldQuestions,store);
+ assert(!oldM.storageWriteBlocked);assert.equal(oldM.state.learningEffectiveness.initialHistory,'complete');
+ const ids=[target,...Object.keys(oldQuestions).filter(id=>![target,'L044','L045'].includes(id)).slice(0,14)];
+ // Persisted shape issued by the old 'keep original and end' path. The
+ // unverified score is retained evidence, never authenticated as a success.
+ oldM.state.legacyProvenance.archivedExams.push({reason:'unverifiable-score',archivedAt:now,
+  session:{ids,startedAt:now-10000,endAt:now+10000,status:'RUNNING',scores:{[target]:{correct:false,earned:0,possible:target==='J001'?1:3,ratio:0}}}});
+ oldM.refreshEvidenceIntegrity();oldM.save();assert(OldModel.validateBackupState(oldM.state,oldQuestions));
+ const before=clone(oldM.state),result=new Model(questions,store);assert(!result.storageWriteBlocked);
+ assert.deepEqual(result.state.legacyProvenance,before.legacyProvenance,'original archived scores and provenance unchanged');
+ const targets=target==='J001'?[]:[target];assert.deepEqual(result.state.contentRecheckIds,targets);
+ for(const id of targets){assert(result.state.contentMigrationArchive.questions[id]);assert.equal(result.learningEffectivenessForQuestion(id).initialStatus,'unknown');assert.equal(result.learningMastery(id).score,0);assert.equal(result.statsForQuestion(id).correctCount,0);}
+ assert.deepEqual(new Model(questions,store).state,result.state);assert.deepEqual(Model.prepareBackupState(before,questions),clone(result.state));assert.deepEqual(Model.prepareBackupState(clone(result.state),questions),clone(result.state));
+});
 console.log(`LEDGER_OPENING ${passed} passed / ${failed} failed`);if(failed)process.exitCode=1;
 module.exports={BASE,old,OldModel,oldQuestions,questions,clone,storage,now,legacy};

@@ -14,8 +14,8 @@
   },
   "candidateFiles": {
     "data/questions.js": "b2fc0bee77f4745767c3eeb698841e7a29f2333c3af1afa953689fe0547c8b59",
-    "js/model.js": "7271290fd09ee6c93001aa8c0ff94b59a03fdd52d8c73f81c5551becb7db1ba4",
-    "tests/ledger-opening-migration.test.js": "4ec6186b0e7c1fa6b76b5e1bcc4dcc07eba31e06db688539c74c7a5f2c597a76",
+    "js/model.js": "9fafb92960072a204fc86e489bf88dfa9cec65151c4f807654d4e93f360094ff",
+    "tests/ledger-opening-migration.test.js": "63e791008112c0f648f3c98d645ef8c6cd4671550635c9e57b1f4aa785bbc1cb",
     "tests/ledger-opening-backup.test.js": "99bd1fbb49a5d2836c6f2955ce5cce91fee0502ad89b9068c537b25979224924",
     "tests/ledger-opening.browser.test.js": "590c919b67722b3a43a02eab3e283b176e3e1cdfed10e221e66972ad6dd55ef8",
     "tests/ledger-opening-history.browser.test.js": "c517f9dd913c1d1bf47ca098a79d75eb19111c108042dd40b0bef1e4b1aadb99",

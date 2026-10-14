@@ -756,10 +756,12 @@
         const exams=state.examHistory.filter(row => typeof row.setSignature==='string' && row.setSignature.split('|').includes(id));
         const session=originalSession?.ids.includes(id) ? originalSession : null;
         const lastReview=originalReview?.items?.some(row=>row.id===id) ? originalReview : null;
+        // Archived unverified sessions remain in provenance; exposure is not mastery.
+        const archivedExposure=state.legacyProvenance?.archivedExams.some(row=>row.session.ids.includes(id));
         const flags={answered:state.answeredIds.includes(id),correct:state.correctIds.includes(id),incorrect:state.incorrectIds.includes(id)};
         const hasEvidence=attempts.length || state.questionStats[id] || state.learningEffectiveness.questions[id] ||
           Object.values(flags).some(Boolean) || state.drafts[id] || state.reviewSchedule[id] || state.mistakeCounts[id] ||
-          Object.keys(assignments).length || exams.length || session || lastReview;
+          Object.keys(assignments).length || exams.length || session || lastReview || archivedExposure;
         if (hasEvidence) {
           archive.questions[id]=cloneContent({fromRevision:saved.contentRevision || 1,fromIdentity:CONTENT_IDENTITIES[id].legacy,toIdentity:versions[id],
             questionStats:state.questionStats[id] || null,attempts,flags,draft:state.drafts[id] || null,
