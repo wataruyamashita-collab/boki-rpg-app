@@ -12,6 +12,10 @@ for(const correct of [true,false]){
  for(const term of ['前期に費用計上済み','二重計上','前期10月〜3月','当期4月〜9月','−9,000 ＋ 18,000 ＋ 9,000 = 18,000','当期10月〜3月','負債','支払利息勘定の貸方','損益勘定の借方','未払利息勘定','次期繰越0円'])assert(text.includes(term),'missing reasoning: '+term);
  assert(m.checks.length>0,'supplementary independent check');
 }
-const protectedData=JSON.parse(JSON.stringify(s.window.QuestionData));delete protectedData.L039.explanation;delete protectedData.L039.explanationModel;
-assert.strictEqual(crypto.createHash('sha256').update(JSON.stringify(protectedData)).digest('hex'),'41b4b0efdfb65b67a2dc2cf5eb10af9781f2c4a710bd37159145bffac3c0dc57','all 299 questions and L039 non-explanation fields unchanged');
+// PR219's fixed baseline remains authoritative except the separately approved
+// L044/L045 prompt/explanation fields; all remaining fields are byte-equivalent.
+const cp=require('node:child_process'),old={window:{}};
+vm.runInNewContext(cp.execFileSync('git',['show','37086c6ae6511a249218533375bf6f19dac231d1:data/questions.js'],{encoding:'utf8',maxBuffer:8*1024*1024}),old);
+const project=data=>{const result=JSON.parse(JSON.stringify(data));for(const id of ['L044','L045'])for(const key of ['question','explanation','explanationModel'])delete result[id][key];return result;};
+assert.deepStrictEqual(project(s.window.QuestionData),project(old.window.QuestionData),'298 questions including L039, and all other fields of L044/L045 unchanged');
 console.log('L039 period allocation, teaching and protected data: PASS');

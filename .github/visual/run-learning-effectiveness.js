@@ -146,7 +146,7 @@ async function run(){
             assert.strictEqual(persisted.mistakes,beforeReload.mistakes);assert(persisted.valid);assert.deepStrictEqual(persisted.metric,beforeReload.metric);assert.strictEqual(persisted.character,beforeReload.character);
             await page.evaluate(async()=>{
               const c=window.App.controller,progress=JSON.parse(JSON.stringify(c.model.state)),character=JSON.parse(JSON.stringify(c.rpg.state));
-              const legacyInput=JSON.parse(JSON.stringify(progress));delete legacyInput.learningEffectiveness;delete legacyInput.learningEvidenceIntegrity;legacyInput.learningSchemaVersion=2;
+              const legacyInput=JSON.parse(JSON.stringify(progress));delete legacyInput.learningEffectiveness;delete legacyInput.learningEvidenceIntegrity;legacyInput.learningSchemaVersion=2;legacyInput.contentRevision=4;delete legacyInput.questionContentVersions.L044;delete legacyInput.questionContentVersions.L045;
               for(const row of legacyInput.attempts){delete row.mode;delete row.support;delete row.observationNumber;}
               const legacy=window.ProgressModel.prepareBackupState(legacyInput,c.questions);
               if(legacy.learningEffectiveness.initialHistory!=='unknown')throw Error('legacy coverage');
