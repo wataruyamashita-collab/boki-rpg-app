@@ -1,0 +1,62 @@
+name: Release214 fixed migration and live readiness (no deployment)
+on:
+  push:
+    branches: [audit/release214-predeploy-20261014]
+permissions:
+  contents: read
+  pages: read
+jobs:
+  migration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: harness
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: d4a5a7391d36e4e0771f14a1310c9ac172945b96
+          path: product
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install existing pinned Playwright tooling
+        working-directory: harness
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+      - name: Record fixed source and current Pages settings (read only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p evidence
+          git -C product rev-parse HEAD HEAD^{tree} > evidence/product-identity.txt
+          git -C harness rev-parse HEAD HEAD^{tree} > evidence/harness-identity.txt
+          git -C harness diff d4a5a7391d36e4e0771f14a1310c9ac172945b96 HEAD > evidence/harness.diff
+          cp harness/.github/visual/release214-update-contract.cjs evidence/
+          cp harness/.github/visual/release214-live-probe.cjs evidence/
+          gh api repos/wataruyamashita-collab/boki-rpg-app/pages > evidence/pages.json
+          gh api repos/wataruyamashita-collab/boki-rpg-app/pages/builds/latest > evidence/pages-build.json
+      - name: Same origin and scope 213 to 214 update, storage and offline return
+        env:
+          PWA_ROOT: ${{ github.workspace }}/product
+          PWA_OUTPUT: ${{ github.workspace }}/evidence
+        run: node harness/.github/visual/release214-update-contract.cjs
+      - name: Existing actual HTTPS Actions path readiness (published 213 only)
+        env:
+          PWA_ROOT: ${{ github.workspace }}/product
+          PWA_OUTPUT: ${{ github.workspace }}/evidence
+        run: node harness/.github/visual/release214-live-probe.cjs
+      - name: Confirm protected product files unchanged
+        if: always()
+        run: git -C product diff --exit-code HEAD
+      - name: Upload synthetic evidence and exact reproduction source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release214-predeploy-evidence
+          path: evidence/
+          retention-days: 30
+          if-no-files-found: error
