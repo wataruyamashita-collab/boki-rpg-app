@@ -1,0 +1,122 @@
+'use strict';
+// One-release, read-only deployment diagnostic. Never serves/replaces production assets.
+const assert=require('node:assert/strict'),fs=require('node:fs'),cp=require('node:child_process'),crypto=require('node:crypto');
+const {chromium,webkit,request}=require('playwright');
+const dns=require('node:dns').promises,net=require('node:net');
+const PIN='7655695a3532c8578143966208ece4854846587e',RELEASE='20261015-216',BASE='https://wataruyamashita-collab.github.io/boki-rpg-app/';
+const OUT='artifacts/live-release216';fs.mkdirSync(OUT,{recursive:true});
+const git=file=>cp.execFileSync('git',['show',PIN+':'+file],{maxBuffer:32*1024*1024}),hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+const manifest=JSON.parse(git('pwa-release-manifest.json')),files=[...Object.keys(manifest.assets),'index.html','form-a.html','manifest.webmanifest','icons/app-icon.svg','service-worker.js','pwa-release-manifest.json'];
+const unique=[...new Set(files)],expected=Object.fromEntries(unique.map(file=>[file,hash(git(file))]));assert.equal(unique.length,26);assert.equal(manifest.release,RELEASE);
+// Independently derived from the four transactions, not fixture.key or GradingEngine.
+const journals=[{id:'A',debit:'普通預金',credit:'売掛金',amount:42000,cash:0,voucher:'振替伝票'},{id:'B',debit:'買掛金',credit:'現金',amount:18000,cash:-18000,voucher:'出金伝票'},{id:'C',debit:'現金',credit:'売掛金',amount:18000,cash:18000,voucher:'入金伝票'},{id:'D',debit:'通信費',credit:'普通預金',amount:6000,cash:0,voucher:'振替伝票'}];
+assert.equal(journals.reduce((s,j)=>s+j.amount,0),84000);assert.equal(journals.reduce((s,j)=>s+j.cash,0),0);
+const key=Object.fromEntries(journals.map(j=>[j.id,j])),order=['C','A','D','B'];
+const good=order.map(id=>({id,voucher:key[id].voucher,amount:String(key[id].amount)}));
+const independent=rows=>{const details=rows.map(r=>({id:r.id,voucherCorrect:r.voucher===key[r.id].voucher,amountCorrect:Number(r.amount)===key[r.id].amount}));return {earned:details.filter(x=>x.voucherCorrect&&x.amountCorrect).length,classificationCorrect:details.filter(x=>x.voucherCorrect).length,amountCorrect:details.filter(x=>x.amountCorrect).length,details};};
+const report={pin:PIN,release:RELEASE,base:BASE,harness:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),run:process.env.GITHUB_RUN_ID||null,environment:{node:process.version,playwright:require('playwright/package.json').version,platform:process.platform},journals,independentTotals:{debit:84000,credit:84000,cash:0,bank:36000},assets:[],engines:[]};
+const save=()=>fs.writeFileSync(OUT+'/report.json',JSON.stringify(report,null,2));
+function logSyntheticEvidence(){
+ const bundle=Object.fromEntries(fs.readdirSync(OUT).filter(n=>n.endsWith('.json')).map(n=>[n,fs.readFileSync(OUT+'/'+n,'utf8')]));
+ const zipped=require('node:zlib').gzipSync(JSON.stringify(bundle));
+ fs.writeFileSync(OUT+'/synthetic-evidence.json.gz',zipped);
+ const parts=zipped.toString('base64').match(/.{1,4000}/g);
+ console.log('LIVE_SYNTHETIC_BUNDLE_SHA256 '+hash(zipped));
+ parts.forEach((s,i)=>console.log('LIVE_SYNTHETIC_BUNDLE_PART '+i+' '+parts.length+' '+s));
+}
+// Playwright offline emulation does not reliably disable worker networking in
+// Chromium and caused an internal WebKit navigation error. Deny only this
+// origin's resolved destination IPs in the disposable Actions runner instead.
+// No proxy, local asset server, route fulfillment or production SW replacement.
+const firewallRules=[];
+async function denyOrigin(){
+ assert.equal(process.env.GITHUB_ACTIONS,'true','firewall diagnostic only on Actions');
+ const proxyEnvironment=Object.fromEntries(['HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy'].map(k=>[k,Boolean(process.env[k])]));
+ assert(Object.values(proxyEnvironment).every(x=>!x),'destination firewall requires direct browser egress');
+ const host=new URL(BASE).hostname,addresses=[];
+ for(const family of [4,6]){
+  try{addresses.push(...await dns[family===4?'resolve4':'resolve6'](host));}
+  catch(e){if(!['ENODATA','ENOTFOUND'].includes(e.code))throw e;}
+ }
+ assert(addresses.length>0,'origin DNS addresses required');
+ for(const ip of [...new Set(addresses)]){
+  assert(net.isIP(ip));
+  const binary=net.isIP(ip)===6?'ip6tables':'iptables';
+  for(const protocol of ['tcp','udp']){
+   const args=['OUTPUT','-d',ip,'-p',protocol,'--dport','443','-m','comment','--comment','boki-live-'+process.env.GITHUB_RUN_ID,'-j','REJECT',...(protocol==='tcp'?['--reject-with','tcp-reset']:[])];
+   firewallRules.push({binary,args});
+   fs.writeFileSync(OUT+'/firewall-rules.json',JSON.stringify(firewallRules));
+   cp.execFileSync('sudo',['-n',binary,'-w','5','-I',...args],{timeout:10000});
+  }
+ }
+ return {host,addresses:[...new Set(addresses)],proxyEnvironment,method:'runner destination-IP TCP443 reset + UDP443 reject (shared Pages IPs); browser offline emulation disabled'};
+}
+function denialCounters(){
+ const lines=[...new Set(firewallRules.map(r=>r.binary))].flatMap(binary=>cp.execFileSync('sudo',['-n',binary,'-w','5','-L','OUTPUT','-v','-n','-x'],{encoding:'utf8',timeout:10000}).split('\n').filter(line=>line.includes('boki-live-'+process.env.GITHUB_RUN_ID)).map(line=>({binary,line:line.trim(),packets:Number(line.trim().split(/\s+/)[0])})));
+ return {lines,packets:lines.reduce((sum,r)=>sum+r.packets,0)};
+}
+function restoreOrigin(){
+ const failures=[];
+ while(firewallRules.length){
+  const r=firewallRules.pop();
+  try{
+   const check=()=>cp.spawnSync('sudo',['-n',r.binary,'-w','5','-C',...r.args],{timeout:10000}).status;
+   const present=check();assert([0,1].includes(present),'firewall query must succeed');
+   if(present===0)cp.execFileSync('sudo',['-n',r.binary,'-w','5','-D',...r.args],{timeout:10000});
+   assert.equal(check(),1,'removed rule must be absent');
+  }
+  catch(e){failures.push(r);}
+ }
+ firewallRules.push(...failures);
+ fs.writeFileSync(OUT+'/firewall-rules.json',JSON.stringify(firewallRules));
+ assert.equal(failures.length,0,'restore only diagnostic firewall rules');
+}
+async function uncachedProbe(page){return page.evaluate(async base=>{try{const r=await fetch(base+'not-cached-network-probe-'+crypto.randomUUID(),{cache:'no-store',signal:AbortSignal.timeout(10000)});return {blocked:false,status:r.status};}catch(e){return {blocked:true,error:e.name};}},BASE);}
+async function idb(page){return page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('boki-independent-transfer',1);r.onupgradeneeded=()=>{r.transaction.abort();reject(Error('expected existing product DB'));};r.onerror=()=>reject(r.error);r.onsuccess=()=>{const d=r.result,t=d.transaction('assessment','readonly'),q=t.objectStore('assessment').get('voucher-transfer-l050');q.onerror=()=>reject(q.error);t.oncomplete=()=>{resolve(q.result??null);d.close();};};}));}
+async function ls(page){return page.evaluate(()=>Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)])));}
+async function persist(page,name){const value={idb:await idb(page),localStorage:await ls(page)};fs.writeFileSync(OUT+'/'+name+'.json',JSON.stringify(value,null,2));return value;}
+async function ready(page){await page.waitForFunction(()=>window.App?.controller&&App.storageClientStatus==='ready',{},{timeout:60000});}
+async function dismiss(page){if(await page.locator('#app-notice-dialog').isVisible())await page.locator('#app-notice-confirm').click();}
+async function fill(page,rows){for(const r of rows){await page.locator('#voucher-'+r.id).selectOption(r.voucher);await page.locator('#amount-'+r.id).fill(r.amount);}await page.waitForFunction(()=>document.getElementById('status').textContent==='入力を保存しました。');await page.waitForFunction(()=>!document.getElementById('submit').disabled);const deadline=Date.now()+10000;for(;;){const s=await idb(page),draft=s.attempts.at(-1).draft;if(rows.every(r=>draft.some(x=>x.id===r.id&&x.amount===r.amount&&x.voucher===r.voucher)))break;if(Date.now()>deadline)throw Error('durable draft did not match inputs');await new Promise(resolve=>setTimeout(resolve,50));}}
+function score(receipt,rows){const e=independent(rows);for(const k of ['earned','classificationCorrect','amountCorrect'])assert.equal(receipt.result[k],e[k]);assert.equal(receipt.result.possible,4);assert.deepEqual(receipt.result.details,e.details);assert.equal(receipt.initialEligible,false);assert.equal(receipt.identity,'assessment:voucher-transfer-l050:form-a:v1');assert.equal(receipt.rubric,'voucher-row-pair-v1');assert.equal(receipt.protocol,'local-first-exposure-v1');}
+const cases=['https-assets','sw-control-scope','cache-coherence','rpg-correct-wrong-l050','rpg-draft-reload','form-first-exposure','form-partial-draft-reload','form-first-submit','form-receipt-reload','form-retake-diagnostics','rpg-form-isolation','offline-cache-form','offline-cache-rpg','online-return'];
+(async()=>{
+ const api=await request.newContext();try{for(const file of unique){const url=new URL(file,BASE).href+'?audit='+PIN,r=await api.get(url,{timeout:30000,headers:{'Cache-Control':'no-cache'}});assert.equal(r.status(),200,file);assert.equal(new URL(r.url()).origin,new URL(BASE).origin);const actual=hash(await r.body());assert.equal(actual,expected[file],file);report.assets.push({file,url:r.url(),status:r.status(),hash:actual});}save();}finally{await api.dispose();}
+ for(const[name,type]of Object.entries({chromium,webkit})){
+  const er={name,cases:[],requestsFailed:[],errors:[]};report.engines.push(er);let browser,context,page,probeContext,probePage,first,firstExposure,rpgBaseline,oldProgress,oldCharacter,draftBefore;
+  const run=async(id,fn)=>{try{const evidence=await fn();er.cases.push({id,status:'PASS',evidence});save();console.log(name,id,'PASS');}catch(e){er.cases.push({id,status:'FAIL',error:e.stack});save();throw e;}};
+  try{
+   browser=await type.launch();er.version=browser.version();context=await browser.newContext({serviceWorkers:'allow',viewport:{width:1280,height:900}});page=await context.newPage();page.on('pageerror',e=>er.errors.push(e.message));page.on('requestfailed',r=>er.requestsFailed.push({url:r.url(),error:r.failure()?.errorText}));
+   await run('https-assets',async()=>{const r=await page.goto(BASE,{waitUntil:'domcontentloaded'});assert.equal(r.status(),200);assert.equal(page.url(),BASE);await ready(page);assert((await page.locator('script[src*="js/app.js"]').getAttribute('src')).includes(RELEASE));return {url:page.url(),status:r.status(),assets:report.assets.length};});
+   await run('sw-control-scope',async()=>{await page.waitForFunction(()=>navigator.serviceWorker.controller);const proof=await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready,p=await App.storageClients(navigator.serviceWorker.controller);return {scope:r.scope,controller:navigator.serviceWorker.controller.scriptURL,state:navigator.serviceWorker.controller.state,proof:p,registrations:(await navigator.serviceWorker.getRegistrations()).map(x=>x.scope)};});assert.equal(proof.scope,BASE);assert.equal(proof.controller,new URL('service-worker.js',BASE).href);assert.equal(proof.proof.release,RELEASE);assert.equal(proof.registrations.length,1);return proof;});
+   await run('cache-coherence',async()=>{const cache=await page.evaluate(async()=>{const name='boki-rpg-20261015-216',c=await caches.open(name),entries=[];for(const req of await c.keys()){const r=await c.match(req),b=await r.arrayBuffer(),digest=await crypto.subtle.digest('SHA-256',b);entries.push({url:req.url,status:r.status,hash:Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('')});}return {names:await caches.keys(),entries};});assert.deepEqual(cache.names.filter(x=>x.startsWith('boki-rpg-')),['boki-rpg-'+RELEASE]);const shell=['','index.html','form-a.html','manifest.webmanifest','icons/app-icon.svg',...Object.keys(manifest.assets).map(x=>x+'?v='+RELEASE)];for(const path of shell){const entry=cache.entries.find(e=>e.url===new URL(path,BASE).href);assert(entry,'missing cache '+path);const file=path.split('?')[0]||'index.html';assert.equal(entry.hash,expected[file],path);assert.equal(entry.status,200);}for(const e of cache.entries){const u=new URL(e.url);assert(u.href.startsWith(BASE));const file=u.pathname.slice(new URL(BASE).pathname.length)||'index.html';assert.equal(e.hash,expected[file],file);if(u.searchParams.has('v'))assert.equal(u.searchParams.get('v'),RELEASE);}return cache;});
+   await run('rpg-correct-wrong-l050',async()=>{await page.evaluate(()=>{const c=App.controller;c.skipPlacement();c.showMode('training');c.start('J002',{fresh:true});c.view.applyRetryDraft(QuestionData.J002,{debit:[{account:'普通預金',amount:180000}],credit:[{account:'現金',amount:180000}]});c.submit();c.start('J003',{fresh:true});c.view.applyRetryDraft(QuestionData.J003,{debit:[{account:'当座預金',amount:500001}],credit:[{account:'普通預金',amount:500000}]});c.submit();c.start('L050',{fresh:true});c.view.applyRetryDraft(QuestionData.L050,{cells:{value1:50000,value2:20000,value3:30000}});c.submit();});const p=await page.evaluate(()=>App.controller.model.state),c=await page.evaluate(()=>App.controller.rpg.state);assert(p.correctIds.includes('J002'));assert(p.correctIds.includes('L050'));assert(p.incorrectIds.includes('J003'));assert.equal(p.mistakeCounts.J003,1);assert(p.reviewSchedule.J003);assert(c.rewardedIds.includes('J002'));assert(c.rewardedIds.includes('L050'));assert(!c.rewardedIds.includes('J003'));assert(c.xp>0);const mastery=await page.evaluate(()=>({right:App.controller.model.learningMastery('J002'),wrong:App.controller.model.learningMastery('J003')}));assert.equal(mastery.right.correctCount,1);assert.equal(mastery.wrong.incorrectCount,1);return {xp:c.xp,rewarded:c.rewardedIds,mastery,review:p.reviewSchedule};});
+   await run('rpg-draft-reload',async()=>{await page.evaluate(()=>{const c=App.controller;c.start('J004',{fresh:true});c.view.applyRetryDraft(QuestionData.J004,{debit:[{account:'仕入',amount:1234}],credit:[]});});await page.locator('[data-action="save"]').click();assert.equal(await page.locator('#save-status').textContent(),'入力内容を保存しました。');oldProgress=await page.evaluate(()=>structuredClone(App.controller.model.state));oldCharacter=await page.evaluate(()=>structuredClone(App.controller.rpg.state));draftBefore=oldProgress.drafts.J004;await page.goto(BASE+'?mode=training&question=J004');await ready(page);const after=await page.evaluate(()=>({p:App.controller.model.state,c:App.controller.rpg.state,input:App.controller.view.readAnswer(QuestionData.J004)}));for(const k of ['answeredIds','correctIds','incorrectIds','mistakeCounts','reviewSchedule','questionStats','drafts'])assert.deepEqual(after.p[k],oldProgress[k],k);assert.deepEqual(after.c,oldCharacter);assert.deepEqual(after.input,draftBefore);return {fieldsPreserved:7,entireCharacterPreserved:true,draft:after.input};});
+   await run('form-first-exposure',async()=>{await dismiss(page);await page.locator('[data-mode="training"]').click();rpgBaseline=await ls(page);await page.locator('a[href="form-a.html"]').click();await page.locator('#start').waitFor({state:'visible'});assert.equal(await idb(page),null);await page.locator('#start').click();await page.locator('#exercise').waitFor({state:'visible'});const s=await idb(page);assert.equal(s.attempts.length,1);assert(s.firstExposure);assert.equal(s.firstSubmission,null);assert.equal(s.attempts[0].status,'issued');assert.equal(s.attempts[0].initialEligible,false);assert.equal(s.attempts[0].provenance,'unknown');firstExposure=structuredClone(s.firstExposure);assert.deepEqual(await page.locator('.answer-row legend').allTextContents(),order.map(x=>'取引 '+x));assert.equal(await page.locator('#materials .material').count(),4);await persist(page,name+'-issued');return {firstExposure,spec:s.spec,rows:4};});
+   await run('form-partial-draft-reload',async()=>{await fill(page,[good[0],good[1]]);const before=await idb(page);assert.equal(before.firstSubmission,null);await page.reload();await page.locator('#exercise').waitFor({state:'visible'});assert.deepEqual(await idb(page),before);assert.equal(await page.locator('#amount-C').inputValue(),'18000');assert.equal(await page.locator('#voucher-A').inputValue(),'振替伝票');assert.equal(await page.locator('#amount-D').inputValue(),'');await persist(page,name+'-draft-reloaded');return {attemptId:before.attempts[0].id,draft:before.attempts[0].draft};});
+   await run('form-first-submit',async()=>{await fill(page,good);await page.locator('#submit').click();await page.locator('#result').waitFor({state:'visible'});const s=await idb(page);first=structuredClone(s.firstSubmission);score(first,good);assert.deepEqual(s.firstExposure,firstExposure);assert.equal(first.attemptId,firstExposure.attemptId);assert.equal(await page.locator('#score').textContent(),'4 / 4 取引正解');assert((await page.locator('#diagnostics').textContent()).includes('伝票分類 4/4 ・ 金額 4/4'));await persist(page,name+'-first-submission');return first;});
+   await run('form-receipt-reload',async()=>{const before=await idb(page);await page.reload();await page.locator('#result').waitFor({state:'visible'});assert.deepEqual(await idb(page),before);assert((await page.locator('#first-score').textContent()).includes('4/4（分類 4/4・金額 4/4）'));return {firstReceiptUnchanged:true};});
+   await run('form-retake-diagnostics',async()=>{await page.locator('#retry').click();await page.locator('#exercise').waitFor({state:'visible'});const wrong=structuredClone(good);wrong.find(x=>x.id==='A').voucher='入金伝票';wrong.find(x=>x.id==='D').amount='6001';await fill(page,wrong);await page.locator('#submit').click();await page.locator('#result').waitFor({state:'visible'});let s=await idb(page);assert.equal(s.attempts.length,2);score(s.attempts[1].receipt,wrong);assert.equal(s.attempts[1].receipt.result.earned,2);assert.equal(s.attempts[1].receipt.result.classificationCorrect,3);assert.equal(s.attempts[1].receipt.result.amountCorrect,3);assert.deepEqual(s.firstExposure,firstExposure);assert.deepEqual(s.firstSubmission,first);assert.equal(await page.locator('#score').textContent(),'2 / 4 取引正解');const before=s;await page.reload();await page.locator('#result').waitFor({state:'visible'});s=await idb(page);assert.deepEqual(s,before);await persist(page,name+'-retake');return s.attempts[1].receipt;});
+   await run('rpg-form-isolation',async()=>{assert.deepEqual(await ls(page),rpgBaseline);const p=JSON.parse(rpgBaseline['boki-rpg-progress-v3']);assert(p.correctIds.includes('L050'));assert.equal(p.questionStats.L050.correctCount,1);assert.equal((await idb(page)).attempts.length,2);return {allLocalStorageBytesUnchanged:true,L050CorrectCount:1,formAttempts:2};});
+   await run('offline-cache-form',async()=>{
+    // Network negative control gets a separate empty context and static real
+    // SVG document. It cannot inject intentional missing-resource worker errors
+    // into the product page. The kernel denial covers BOTH browser contexts.
+    // Product context keeps its real SW, cache and all pageerror assertions.
+    probeContext=await browser.newContext({serviceWorkers:'block'});probePage=await probeContext.newPage();
+    const probeDocument=await probePage.goto(BASE+'icons/app-icon.svg');assert.equal(probeDocument.status(),200);
+    const control=await probePage.evaluate(async()=>({url:location.href,controller:Boolean(navigator.serviceWorker.controller),caches:await caches.keys()}));
+    assert.equal(control.controller,false);assert.deepEqual(control.caches,[]);
+    const online=await uncachedProbe(probePage);assert.deepEqual(online,{blocked:false,status:404});er.networkDenial=await denyOrigin();er.networkDenial.controlContext=control;save();
+    const blocked=await uncachedProbe(probePage);er.networkDenial.counters=denialCounters();er.networkDenial.probe=blocked;save();
+    assert(er.networkDenial.counters.packets>0,'runner must observe actual rejected packets');assert.equal(blocked.blocked,true,'offline negative network control');assert.equal(blocked.error,'TypeError','transport rejection, not probe timeout');
+    const before=await idb(page),r=await page.goto(BASE+'form-a.html?offline-audit=1');await page.locator('#result').waitFor({state:'visible'});assert.equal(r.status(),200);assert(r.fromServiceWorker());assert.deepEqual(await idb(page),before);assert.deepEqual(await ls(page),rpgBaseline);
+    return {onlineControl:online,offlineNetworkControl:blocked,networkDenial:er.networkDenial,fromServiceWorker:r.fromServiceWorker(),receiptUnchanged:true};
+   });
+   await run('offline-cache-rpg',async()=>{const r=await page.goto(BASE+'?mode=training&question=J004&offline-audit=1');await ready(page);assert(r.fromServiceWorker());const p=await page.evaluate(()=>App.controller.model.state),c=await page.evaluate(()=>App.controller.rpg.state);for(const k of ['correctIds','incorrectIds','mistakeCounts','reviewSchedule','questionStats'])assert.deepEqual(p[k],oldProgress[k],k);assert.deepEqual(c,oldCharacter);assert.deepEqual(await page.evaluate(()=>App.controller.view.readAnswer(QuestionData.J004)),draftBefore);await page.evaluate(()=>{const c=App.controller;c.view.applyRetryDraft(QuestionData.J004,{debit:[{account:'仕入',amount:2345}],credit:[]});c.saveDraft(true);});await page.reload();await ready(page);assert.equal(await page.locator('.debit-amount').first().inputValue(),'2345');assert.equal(JSON.parse((await ls(page))['boki-rpg-progress-v3']).drafts.J004.debit[0].amount,2345);return {fromServiceWorker:r.fromServiceWorker(),offlineDraftPersisted:2345,historyAndRpgUnchanged:true};});
+   await run('online-return',async()=>{restoreOrigin();const onlineControl=await uncachedProbe(probePage);assert.deepEqual(onlineControl,{blocked:false,status:404});const response=await page.evaluate(async()=>{const r=await fetch('index.html?online-audit='+crypto.randomUUID(),{cache:'no-store'});return {status:r.status,text:await r.text()};});assert.equal(response.status,200);assert.equal(hash(Buffer.from(response.text)),expected['index.html']);await page.reload();await ready(page);assert.equal(await page.locator('.debit-amount').first().inputValue(),'2345');const before=await idb(page);await dismiss(page);await page.locator('[data-mode="training"]').click();const baseline=await ls(page);await page.locator('a[href="form-a.html"]').click();await page.locator('#result').waitFor({state:'visible'});assert.deepEqual(await idb(page),before);assert.deepEqual(await ls(page),baseline);assert.deepEqual(before.firstSubmission,first);await persist(page,name+'-online-final');assert.deepEqual(er.errors,[],'unexpected page errors');await page.screenshot({path:OUT+'/'+name+'-result.png',fullPage:true});return {onlineControl,onlineFreshResponse:200,persistedRpgDraft:2345,firstResultUnchanged:true};});
+  }catch(e){er.error=e.stack;for(const id of cases)if(!er.cases.some(x=>x.id===id))er.cases.push({id,status:'UNVERIFIED',reason:'prior dependency failed'});if(page)await page.screenshot({path:OUT+'/'+name+'-failure.png',fullPage:true}).catch(()=>{});}
+  finally{try{restoreOrigin();}finally{er.summary=Object.fromEntries(['PASS','FAIL','UNVERIFIED'].map(s=>[s,er.cases.filter(x=>x.status===s).length]));save();await probeContext?.close();await context?.close();await browser?.close();}}
+ }
+ for(const e of report.engines){assert.deepEqual(e.cases.map(x=>x.id),cases);assert.equal(new Set(e.cases.map(x=>x.id)).size,cases.length);}save();console.log('LIVE_REPORT_JSON '+JSON.stringify(report));logSyntheticEvidence();assert.equal(report.engines.length,2);assert(report.engines.every(x=>x.summary.PASS===cases.length),'incomplete live acceptance');
+})().catch(e=>{report.fatal=e.stack;save();console.error(e);process.exitCode=1;});
